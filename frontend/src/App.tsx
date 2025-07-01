@@ -1,32 +1,13 @@
-// src/App.tsx
-import { useEffect, useState } from "react";
-import { getItems } from "./api/items";
+import React from 'react';
+import { BrowserRouter } from 'react-router-dom';
+import AppRoutes from './routes';
 
-interface Item {
-  id: number;
-  name: string;
-  quantity: number;
-}
-
-function App() {
-  const [items, setItems] = useState<Item[]>([]);
-
-  useEffect(() => {
-    getItems().then(setItems);
-  }, []);
-
+const App: React.FC = () => {
   return (
-    <div>
-      <h1>Items</h1>
-      <ul>
-        {items.map((item) => (
-          <li key={item.id}>
-            {item.name} - {item.quantity}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <BrowserRouter>
+        <AppRoutes />
+    </BrowserRouter>
   );
-}
+};
 
 export default App;
