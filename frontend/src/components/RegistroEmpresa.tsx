@@ -48,14 +48,11 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
         password: formData.admin_password,
         nombre_completo: `${formData.admin_nombre} ${formData.admin_apellido_paterno} ${formData.admin_apellido_materno}`.trim()
       };
-
-      console.log('Datos a enviar:', registroData); // Debug
       
       await registrarEmpresa(registroData);
       alert('Empresa registrada exitosamente');
       onRegistroSuccess();
     } catch (err: any) {
-      console.error('Error en registro:', err); // Debug
       const errorMessage = err.response?.data?.detail || 
                           err.response?.data?.message || 
                           err.response?.data?.error ||
