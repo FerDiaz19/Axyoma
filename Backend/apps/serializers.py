@@ -1,80 +1,145 @@
+# -*- coding: utf-8 -*-
 from rest_framework import serializers
-from apps.surveys.models import Questionnaire, PlantSurvey, Question, AccessToken, Answer
-from apps.subscriptions.models import SubscriptionPlan, CompanySubscription, Payment
-from apps.employees.models import Plant, Department, Position, Employee
-from apps.users.models import Company, Role, User
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+from apps.users.models import PerfilUsuario, Empresa, Planta, Departamento, Puesto, Empleado
 
-class QuestionnaireSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Questionnaire
-        fields = '__all__'
+# Serializers para LOGIN
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
 
-class PlantSurveySerializer(serializers.ModelSerializer):
+# Serializers para REGISTRO DE EMPRESA
+class EmpresaRegistroSerializer(serializers.ModelSerializer):
+    # Datos del usuario administrador
+    usuario = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+    nombre_completo = serializers.CharField()
+    
     class Meta:
-        model = PlantSurvey
-        fields = '__all__'
+        model = Empresa
+        fields = ['nombre', 'rfc', 'direccion', 'email_contacto', 'telefono_contacto', 
+                 'usuario', 'password', 'nombre_completo']
+    
+    def create(self, validated_data):
+        # Extraer datos del usuario
+        usuario = validated_data.pop('usuario')
+        password = validated_data.pop('password')
+        nombre_completo = validated_data.pop('nombre_completo')
+        
+        # Separar el nombre completo
+        nombres = nombre_completo.strip().split(' ')
+        nombre = nombres[0] if nombres else ''
+        apellido_paterno = nombres[1] if len(nombres) > 1 else ''
+        apellido_materno = nombres[2] if len(nombres) > 2 else ''
+        
+        # Crear usuario Django
+        user = User.objects.create(
+            username=usuario,
+            email=validated_data.get('email_contacto', ''),
+            password=make_password(password)
+        )
+        
+        # Crear perfil de usuario
+        user_profile = PerfilUsuario.objects.create(
+            user=user,
+            nombre=nombre,
+            apellido_paterno=apellido_paterno,
+            apellido_materno=apellido_materno,
+            correo=validated_data.get('email_contacto', ''),
+            nivel_usuario='admin-empresa'
+        )
+        
+        # Crear empresa
+        empresa = Empresa.objects.create(
+            administrador=user_profile,
+            **validated_data
+        )
+        
+        return empresa
 
-class QuestionSerializer(serializers.ModelSerializer):
+# Serializers para PLANTAS, DEPARTAMENTOS Y PUESTOS
+class PlantaSerializer(serializers.ModelSerializer):
+    empresa_id = serializers.IntegerField(source='empresa.empresa_id', read_only=True)
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
+    
     class Meta:
-        model = Question
-        fields = '__all__'
+        model = Planta
+        fields = ['planta_id', 'nombre', 'direccion', 'fecha_registro', 'status', 'empresa_id', 'empresa_nombre']
 
-class AccessTokenSerializer(serializers.ModelSerializer):
+class DepartamentoSerializer(serializers.ModelSerializer):
+    planta_id = serializers.IntegerField(source='planta.planta_id', read_only=True)
+    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
+    
     class Meta:
-        model = AccessToken
-        fields = '__all__'
+        model = Departamento
+        fields = ['departamento_id', 'nombre', 'descripcion', 'fecha_registro', 'status', 'planta_id', 'planta_nombre']
+        read_only_fields = ['departamento_id', 'fecha_registro']
 
-class AnswerSerializer(serializers.ModelSerializer):
+class PuestoSerializer(serializers.ModelSerializer):
+    departamento_id = serializers.IntegerField(source='departamento.departamento_id', read_only=True)
+    departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
+    
     class Meta:
-        model = Answer
-        fields = '__all__'
+        model = Puesto
+        fields = ['puesto_id', 'nombre', 'descripcion', 'status', 'departamento_id', 'departamento_nombre']
+        read_only_fields = ['puesto_id']
 
-class SubscriptionPlanSerializer(serializers.ModelSerializer):
+# Serializers para EMPLEADOS
+class EmpleadoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SubscriptionPlan
-        fields = '__all__'
+        model = Empleado
+        fields = ['empleado_id', 'nombre', 'apellido_paterno', 'apellido_materno', 
+                 'genero', 'antiguedad', 'status', 'puesto', 'departamento', 'planta']
 
-class CompanySubscriptionSerializer(serializers.ModelSerializer):
+class EmpleadoCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = CompanySubscription
-        fields = '__all__'
+        model = Empleado
+        fields = ['nombre', 'apellido_paterno', 'apellido_materno', 
+                 'genero', 'antiguedad', 'puesto', 'departamento', 'planta']
 
-class PaymentSerializer(serializers.ModelSerializer):
+# Serializers para crear registros (sin campos read-only)
+class PlantaCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Payment
-        fields = '__all__'
+        model = Planta
+        fields = ['nombre', 'direccion']  # NO incluir empresa, se asigna automáticamente
 
-class PlantSerializer(serializers.ModelSerializer):
+class DepartamentoCreateSerializer(serializers.ModelSerializer):
+    planta_id = serializers.IntegerField()
+    
     class Meta:
-        model = Plant
-        fields = '__all__'
+        model = Departamento
+        fields = ['nombre', 'descripcion', 'planta_id']
+    
+    def validate_planta_id(self, value):
+        """Validar que la planta existe"""
+        try:
+            planta = Planta.objects.get(planta_id=value)
+            return value
+        except Planta.DoesNotExist:
+            raise serializers.ValidationError("La planta especificada no existe")
+    
+    def create(self, validated_data):
+        planta_id = validated_data.pop('planta_id')
+        planta = Planta.objects.get(planta_id=planta_id)
+        return Departamento.objects.create(planta=planta, **validated_data)
 
-class DepartmentSerializer(serializers.ModelSerializer):
+class PuestoCreateSerializer(serializers.ModelSerializer):
+    departamento_id = serializers.IntegerField()
+    
     class Meta:
-        model = Department
-        fields = '__all__'
-
-class PositionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Position
-        fields = '__all__'
-
-class EmployeeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Employee
-        fields = '__all__'
-
-class CompanySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Company
-        fields = '__all__'
-
-class RoleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Role
-        fields = '__all__'
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = '__all__'
+        model = Puesto
+        fields = ['nombre', 'descripcion', 'departamento_id']
+    
+    def validate_departamento_id(self, value):
+        """Validar que el departamento existe"""
+        try:
+            departamento = Departamento.objects.get(departamento_id=value)
+            return value
+        except Departamento.DoesNotExist:
+            raise serializers.ValidationError("El departamento especificado no existe")
+    
+    def create(self, validated_data):
+        departamento_id = validated_data.pop('departamento_id')
+        departamento = Departamento.objects.get(departamento_id=departamento_id)
+        return Puesto.objects.create(departamento=departamento, **validated_data)

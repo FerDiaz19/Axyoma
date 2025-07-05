@@ -1,13 +1,11 @@
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { Route, Routes } from 'react-router-dom';
 
-// Layout
-import Home from './layout/Home';
-
+// Components
+import Dashboard from './components/Dashboard';
 
 const AppRoutes = () => (
     <Routes>
-        {/* Public routes */}
-        <Route index element={<Home />} />
+        <Route index element={<Dashboard />} />
     </Routes>
 );
 
