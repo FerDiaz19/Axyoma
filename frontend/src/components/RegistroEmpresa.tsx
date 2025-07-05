@@ -39,21 +39,29 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
 
     try {
       const registroData = {
-        nombre: formData.nombre,
-        rfc: formData.rfc,
-        direccion: formData.direccion,
-        email_contacto: formData.email_contacto,
-        telefono_contacto: formData.telefono_contacto,
-        usuario: formData.admin_username,
+        nombre: formData.nombre.trim(),
+        rfc: formData.rfc.trim(),
+        direccion: formData.direccion.trim(),
+        email_contacto: formData.email_contacto.trim(),
+        telefono_contacto: formData.telefono_contacto.trim(),
+        usuario: formData.admin_username.trim(),
         password: formData.admin_password,
         nombre_completo: `${formData.admin_nombre} ${formData.admin_apellido_paterno} ${formData.admin_apellido_materno}`.trim()
       };
+
+      console.log('Datos a enviar:', registroData); // Debug
       
       await registrarEmpresa(registroData);
       alert('Empresa registrada exitosamente');
       onRegistroSuccess();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al registrar empresa');
+      console.error('Error en registro:', err); // Debug
+      const errorMessage = err.response?.data?.detail || 
+                          err.response?.data?.message || 
+                          err.response?.data?.error ||
+                          JSON.stringify(err.response?.data) ||
+                          'Error al registrar empresa';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

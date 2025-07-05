@@ -105,7 +105,28 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
-        return Empleado.objects.all()
+        # Filtrar empleados por empresa del usuario logueado
+        user = self.request.user
+        if hasattr(user, 'perfil'):
+            if user.perfil.nivel_usuario == 'admin-empresa':
+                try:
+                    empresa = Empresa.objects.get(administrador=user.perfil)
+                    # Obtener empleados de todas las plantas de esta empresa
+                    plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
+                    return Empleado.objects.filter(planta__in=plantas_empresa, status=True)
+                except Empresa.DoesNotExist:
+                    return Empleado.objects.none()
+            elif user.perfil.nivel_usuario == 'superadmin':
+                # Superadmin puede ver todos los empleados
+                return Empleado.objects.filter(status=True)
+            elif user.perfil.nivel_usuario == 'admin-planta':
+                # Admin de planta solo ve empleados de sus plantas asignadas
+                from apps.users.models import AdminPlanta
+                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
+                plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
+                return Empleado.objects.filter(planta__planta_id__in=plantas_ids, status=True)
+        
+        return Empleado.objects.none()
     
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -114,19 +135,83 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['get'])
     def plantas_disponibles(self, request):
-        plantas = Planta.objects.all()
+        # Filtrar plantas por empresa del usuario logueado
+        user = request.user
+        if hasattr(user, 'perfil'):
+            if user.perfil.nivel_usuario == 'admin-empresa':
+                try:
+                    empresa = Empresa.objects.get(administrador=user.perfil)
+                    plantas = Planta.objects.filter(empresa=empresa, status=True)
+                except Empresa.DoesNotExist:
+                    plantas = Planta.objects.none()
+            elif user.perfil.nivel_usuario == 'superadmin':
+                plantas = Planta.objects.filter(status=True)
+            elif user.perfil.nivel_usuario == 'admin-planta':
+                from apps.users.models import AdminPlanta
+                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
+                plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
+                plantas = Planta.objects.filter(planta_id__in=plantas_ids, status=True)
+            else:
+                plantas = Planta.objects.none()
+        else:
+            plantas = Planta.objects.none()
+            
         serializer = PlantaSerializer(plantas, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def departamentos_disponibles(self, request):
-        departamentos = Departamento.objects.all()
+        # Filtrar departamentos por empresa del usuario logueado
+        user = request.user
+        if hasattr(user, 'perfil'):
+            if user.perfil.nivel_usuario == 'admin-empresa':
+                try:
+                    empresa = Empresa.objects.get(administrador=user.perfil)
+                    plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
+                    departamentos = Departamento.objects.filter(planta__in=plantas_empresa, status=True)
+                except Empresa.DoesNotExist:
+                    departamentos = Departamento.objects.none()
+            elif user.perfil.nivel_usuario == 'superadmin':
+                departamentos = Departamento.objects.filter(status=True)
+            elif user.perfil.nivel_usuario == 'admin-planta':
+                from apps.users.models import AdminPlanta
+                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
+                plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
+                departamentos = Departamento.objects.filter(planta__planta_id__in=plantas_ids, status=True)
+            else:
+                departamentos = Departamento.objects.none()
+        else:
+            departamentos = Departamento.objects.none()
+            
         serializer = DepartamentoSerializer(departamentos, many=True)
         return Response(serializer.data)
     
     @action(detail=False, methods=['get'])
     def puestos_disponibles(self, request):
-        puestos = Puesto.objects.all()
+        # Filtrar puestos por empresa del usuario logueado
+        user = request.user
+        if hasattr(user, 'perfil'):
+            if user.perfil.nivel_usuario == 'admin-empresa':
+                try:
+                    empresa = Empresa.objects.get(administrador=user.perfil)
+                    plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
+                    departamentos_empresa = Departamento.objects.filter(planta__in=plantas_empresa, status=True)
+                    puestos = Puesto.objects.filter(departamento__in=departamentos_empresa, status=True)
+                except Empresa.DoesNotExist:
+                    puestos = Puesto.objects.none()
+            elif user.perfil.nivel_usuario == 'superadmin':
+                puestos = Puesto.objects.filter(status=True)
+            elif user.perfil.nivel_usuario == 'admin-planta':
+                from apps.users.models import AdminPlanta
+                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
+                plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
+                departamentos_planta = Departamento.objects.filter(planta__planta_id__in=plantas_ids, status=True)
+                puestos = Puesto.objects.filter(departamento__in=departamentos_planta, status=True)
+            else:
+                puestos = Puesto.objects.none()
+        else:
+            puestos = Puesto.objects.none()
+            
         serializer = PuestoSerializer(puestos, many=True)
         return Response(serializer.data)
     
@@ -134,7 +219,31 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
     def departamentos_por_planta(self, request):
         planta_id = request.query_params.get('planta_id')
         if planta_id:
-            departamentos = Departamento.objects.filter(planta_id=planta_id)
+            # Verificar que el usuario tenga acceso a esta planta
+            user = request.user
+            if hasattr(user, 'perfil'):
+                if user.perfil.nivel_usuario == 'admin-empresa':
+                    try:
+                        empresa = Empresa.objects.get(administrador=user.perfil)
+                        planta = Planta.objects.get(planta_id=planta_id, empresa=empresa, status=True)
+                        departamentos = Departamento.objects.filter(planta=planta, status=True)
+                    except (Empresa.DoesNotExist, Planta.DoesNotExist):
+                        return Response([])
+                elif user.perfil.nivel_usuario == 'superadmin':
+                    departamentos = Departamento.objects.filter(planta_id=planta_id, status=True)
+                elif user.perfil.nivel_usuario == 'admin-planta':
+                    from apps.users.models import AdminPlanta
+                    admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
+                    plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
+                    if int(planta_id) in plantas_ids:
+                        departamentos = Departamento.objects.filter(planta_id=planta_id, status=True)
+                    else:
+                        return Response([])
+                else:
+                    return Response([])
+            else:
+                return Response([])
+                
             serializer = DepartamentoSerializer(departamentos, many=True)
             return Response(serializer.data)
         return Response([])
@@ -143,7 +252,33 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
     def puestos_por_departamento(self, request):
         departamento_id = request.query_params.get('departamento_id')
         if departamento_id:
-            puestos = Puesto.objects.filter(departamento_id=departamento_id)
+            # Verificar que el usuario tenga acceso a este departamento
+            user = request.user
+            if hasattr(user, 'perfil'):
+                if user.perfil.nivel_usuario == 'admin-empresa':
+                    try:
+                        empresa = Empresa.objects.get(administrador=user.perfil)
+                        plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
+                        departamento = Departamento.objects.get(departamento_id=departamento_id, planta__in=plantas_empresa, status=True)
+                        puestos = Puesto.objects.filter(departamento=departamento, status=True)
+                    except (Empresa.DoesNotExist, Departamento.DoesNotExist):
+                        return Response([])
+                elif user.perfil.nivel_usuario == 'superadmin':
+                    puestos = Puesto.objects.filter(departamento_id=departamento_id, status=True)
+                elif user.perfil.nivel_usuario == 'admin-planta':
+                    from apps.users.models import AdminPlanta
+                    admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
+                    plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
+                    try:
+                        departamento = Departamento.objects.get(departamento_id=departamento_id, planta__planta_id__in=plantas_ids, status=True)
+                        puestos = Puesto.objects.filter(departamento=departamento, status=True)
+                    except Departamento.DoesNotExist:
+                        return Response([])
+                else:
+                    return Response([])
+            else:
+                return Response([])
+                
             serializer = PuestoSerializer(puestos, many=True)
             return Response(serializer.data)
         return Response([])
@@ -297,15 +432,17 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
                     empresa = Empresa.objects.get(administrador=user.perfil)
-                    plantas = Planta.objects.filter(empresa=empresa)
-                    return Departamento.objects.filter(planta__in=plantas)
+                    plantas = Planta.objects.filter(empresa=empresa, status=True)
+                    return Departamento.objects.filter(planta__in=plantas, status=True)
                 except Empresa.DoesNotExist:
                     return Departamento.objects.none()
+            elif user.perfil.nivel_usuario == 'superadmin':
+                return Departamento.objects.filter(status=True)
             elif user.perfil.nivel_usuario == 'admin-planta':
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
                 plantas = [ap.planta for ap in admin_plantas]
-                return Departamento.objects.filter(planta__in=plantas)
-        return Departamento.objects.all()
+                return Departamento.objects.filter(planta__in=plantas, status=True)
+        return Departamento.objects.none()
     
     def perform_create(self, serializer):
         # Validar que el usuario tenga acceso a la planta especificada
@@ -364,17 +501,19 @@ class PuestoViewSet(viewsets.ModelViewSet):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
                     empresa = Empresa.objects.get(administrador=user.perfil)
-                    plantas = Planta.objects.filter(empresa=empresa)
-                    departamentos = Departamento.objects.filter(planta__in=plantas)
-                    return Puesto.objects.filter(departamento__in=departamentos)
+                    plantas = Planta.objects.filter(empresa=empresa, status=True)
+                    departamentos = Departamento.objects.filter(planta__in=plantas, status=True)
+                    return Puesto.objects.filter(departamento__in=departamentos, status=True)
                 except Empresa.DoesNotExist:
                     return Puesto.objects.none()
+            elif user.perfil.nivel_usuario == 'superadmin':
+                return Puesto.objects.filter(status=True)
             elif user.perfil.nivel_usuario == 'admin-planta':
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
                 plantas = [ap.planta for ap in admin_plantas]
-                departamentos = Departamento.objects.filter(planta__in=plantas)
-                return Puesto.objects.filter(departamento__in=departamentos)
-        return Puesto.objects.all()
+                departamentos = Departamento.objects.filter(planta__in=plantas, status=True)
+                return Puesto.objects.filter(departamento__in=departamentos, status=True)
+        return Puesto.objects.none()
     
     def perform_create(self, serializer):
         # Validar que el usuario tenga acceso al departamento especificado

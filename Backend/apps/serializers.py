@@ -12,14 +12,39 @@ class LoginSerializer(serializers.Serializer):
 # Serializers para REGISTRO DE EMPRESA
 class EmpresaRegistroSerializer(serializers.ModelSerializer):
     # Datos del usuario administrador
-    usuario = serializers.CharField()
-    password = serializers.CharField(write_only=True)
-    nombre_completo = serializers.CharField()
+    usuario = serializers.CharField(required=True)
+    password = serializers.CharField(write_only=True, required=True)
+    nombre_completo = serializers.CharField(required=True)
     
     class Meta:
         model = Empresa
         fields = ['nombre', 'rfc', 'direccion', 'email_contacto', 'telefono_contacto', 
                  'usuario', 'password', 'nombre_completo']
+        extra_kwargs = {
+            'nombre': {'required': True},
+            'rfc': {'required': True},
+            'email_contacto': {'required': True}
+        }
+    
+    def validate(self, data):
+        # Validaciones adicionales
+        if not data.get('nombre', '').strip():
+            raise serializers.ValidationError("El nombre de la empresa es requerido")
+        if not data.get('rfc', '').strip():
+            raise serializers.ValidationError("El RFC es requerido")
+        if not data.get('usuario', '').strip():
+            raise serializers.ValidationError("El nombre de usuario es requerido")
+        if not data.get('password', '').strip():
+            raise serializers.ValidationError("La contraseña es requerida")
+        if not data.get('nombre_completo', '').strip():
+            raise serializers.ValidationError("El nombre completo del administrador es requerido")
+        
+        # Verificar que el usuario no exista
+        from django.contrib.auth.models import User
+        if User.objects.filter(username=data['usuario']).exists():
+            raise serializers.ValidationError("El nombre de usuario ya existe")
+            
+        return data
     
     def create(self, validated_data):
         # Extraer datos del usuario
