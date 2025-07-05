@@ -11,7 +11,7 @@ if not exist "Backend\manage.py" (
     exit /b 1
 )
 
-echo [1/7] Verificando PostgreSQL...
+echo [1/9] Verificando PostgreSQL...
 psql --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo ADVERTENCIA: PostgreSQL no encontrado en PATH.
@@ -19,12 +19,32 @@ if %errorlevel% neq 0 (
     echo.
 )
 
-echo [2/7] Creando base de datos...
+echo [2/9] Creando base de datos...
 psql -U postgres -c "CREATE DATABASE axyoma;" 2>nul
 echo Base de datos 'axyoma' verificada/creada.
 
-echo [3/7] Instalando dependencias del backend...
+echo [3/9] Configurando entorno virtual Python...
 cd Backend
+if not exist "env" (
+    echo Creando entorno virtual...
+    python -m venv env
+    if %errorlevel% neq 0 (
+        echo ERROR: Fallo creando entorno virtual
+        echo Asegurese de tener Python instalado
+        pause
+        exit /b 1
+    )
+)
+
+echo Activando entorno virtual...
+call env\Scripts\activate.bat
+if %errorlevel% neq 0 (
+    echo ERROR: Fallo activando entorno virtual
+    pause
+    exit /b 1
+)
+
+echo [4/9] Instalando dependencias del backend...
 pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo ERROR: Fallo instalando dependencias del backend
@@ -32,7 +52,7 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [4/7] Ejecutando migraciones...
+echo [5/9] Ejecutando migraciones...
 python manage.py makemigrations
 python manage.py makemigrations users
 python manage.py migrate
@@ -42,10 +62,10 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [5/7] Configurando base de datos adicional...
+echo [6/9] Configurando base de datos adicional...
 python setup_database.py
 
-echo [6/7] Insertando datos de prueba...
+echo [7/9] Insertando datos de prueba...
 python manage.py limpiar_datos
 python manage.py insertar_datos
 python manage.py crear_tokens
@@ -55,10 +75,10 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [6/7] Verificando configuracion...
+echo [8/9] Verificando configuracion...
 python manage.py verificar_datos
 
-echo [7/7] Instalando dependencias del frontend...
+echo [9/9] Instalando dependencias del frontend...
 cd ..\frontend
 npm install
 if %errorlevel% neq 0 (

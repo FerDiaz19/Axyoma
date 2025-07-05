@@ -11,8 +11,13 @@ if exist "env\Scripts\activate.bat" (
     echo Activando entorno virtual...
     call env\Scripts\activate.bat
 ) else (
-    echo ❌ Error: No se encontro el entorno virtual
-    echo Ejecuta setup_proyecto_completo.bat primero
+    echo ❌ Error: No se encontró el entorno virtual
+    echo.
+    echo SOLUCION:
+    echo 1. Ejecuta: setup_proyecto_completo.bat (configuración completa)
+    echo    O
+    echo 2. Ejecuta: crear_entorno.bat (solo entorno virtual)
+    echo.
     pause
     exit /b 1
 )
