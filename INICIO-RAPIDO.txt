@@ -1,0 +1,28 @@
+🚀 INICIO RAPIDO AXYOMA
+========================
+
+1. setup_proyecto_completo.bat  ← Configurar proyecto
+2. start-backend.bat            ← Iniciar backend (8000)
+3. start-frontend.bat           ← Iniciar frontend (3000)
+
+👤 USUARIOS DE PRUEBA:
+- ed-rubio@axyoma.com / 1234 (SuperAdmin)
+- juan.perez@codewave.com / 1234 (Admin Empresa)  
+- maria.gomez@codewave.com / 1234 (Admin Planta)
+
+� FLUJO EMPRESA:
+1. Login como admin empresa (juan.perez)
+2. Gestión de Plantas → Agregar plantas
+3. Estructura Organizacional → Crear departamentos y puestos
+4. Gestión de Empleados → Agregar empleados
+
+�🌐 URLs:
+- Frontend: http://localhost:3000
+- API: http://localhost:8000/api/
+
+📋 REQUISITOS:
+- Python 3.8+
+- Node.js 14+
+- PostgreSQL 12+
+
+⚠️ Si hay problemas con PostgreSQL: ejecutar crear-db.bat primero

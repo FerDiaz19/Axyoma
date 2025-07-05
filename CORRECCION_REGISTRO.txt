@@ -1,0 +1,72 @@
+=========================================================
+CORRECCIÓN: ERROR EN REGISTRO DE EMPRESAS
+=========================================================
+
+❌ PROBLEMA IDENTIFICADO:
+- Error: PerfilUsuario() got unexpected keyword arguments: 'contrasena'
+- Causa: El serializer EmpresaRegistroSerializer intentaba pasar un campo 'contrasena' 
+  que no existe en el modelo PerfilUsuario
+
+✅ SOLUCIÓN APLICADA:
+- Eliminado el campo 'contrasena' del serializer
+- La contraseña se maneja correctamente a través del modelo User de Django
+- El campo 'nivel_usuario' se establece correctamente como 'admin-empresa'
+
+=========================================================
+ARCHIVO CORREGIDO:
+Backend/apps/serializers.py - Línea 44
+
+ANTES:
+```python
+user_profile = PerfilUsuario.objects.create(
+    user=user,
+    nombre=nombre,
+    apellido_paterno=apellido_paterno,
+    apellido_materno=apellido_materno,
+    correo=validated_data.get('email_contacto', ''),
+    contrasena=password,  # ❌ CAMPO INEXISTENTE
+    nivel_usuario='admin-empresa'
+)
+```
+
+DESPUÉS:
+```python
+user_profile = PerfilUsuario.objects.create(
+    user=user,
+    nombre=nombre,
+    apellido_paterno=apellido_paterno,
+    apellido_materno=apellido_materno,
+    correo=validated_data.get('email_contacto', ''),
+    nivel_usuario='admin-empresa'  # ✅ CORRECTO
+)
+```
+
+=========================================================
+CÓMO PROBAR:
+
+1. **Iniciar servidor:**
+   ```
+   cd Backend
+   python manage.py runserver
+   ```
+
+2. **Probar registro desde frontend:**
+   - Ir a página de registro
+   - Llenar formulario de empresa
+   - Verificar que se registre sin errores
+
+3. **Probar con script:**
+   ```
+   python test_registro_empresa.py
+   ```
+
+=========================================================
+FUNCIONALIDAD RESTAURADA:
+✅ Registro de empresas funcionando
+✅ Creación automática de admin-empresa
+✅ Login con credenciales de empresa
+✅ Límite de plantas por empresa
+✅ Usuarios automáticos de planta
+✅ Sección para ver usuarios de planta
+
+=========================================================

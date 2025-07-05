@@ -1,0 +1,130 @@
+=========================================================
+FUNCIONALIDADES IMPLEMENTADAS - PLANTAS CON LÍMITE Y USUARIOS
+=========================================================
+
+✅ COMPLETADO:
+
+1. **LÍMITE DE 5 PLANTAS POR EMPRESA**
+   - El backend valida que no se puedan crear más de 5 plantas por empresa
+   - El frontend muestra el contador "Plantas (X/5)" 
+   - El formulario se deshabilita al alcanzar el límite
+   - Se muestra mensaje de advertencia cuando se alcanza el límite
+
+2. **CREACIÓN AUTOMÁTICA DE USUARIO DE PLANTA**
+   - Al crear una planta, se crea automáticamente un usuario admin-planta
+   - Username: admin_planta_{ID}
+   - Email: admin.planta.{ID}@{empresa}.com
+   - Contraseña generada aleatoriamente
+   - Nivel de usuario: admin-planta
+   - Se crea la relación AdminPlanta para asociar usuario con planta
+
+3. **SECCIÓN PARA VER USUARIOS DE PLANTA** ⭐ NUEVO
+   - Nueva pestaña "Usuarios de Planta" en Gestión de Estructura
+   - Muestra todos los usuarios creados automáticamente
+   - Información completa: username, email, nombre, fecha de creación
+   - Indica qué plantas tienen usuario y cuáles no
+   - Contador en la pestaña mostrando usuarios activos
+   - Interfaz visual atractiva con tarjetas informativas
+   - Ayuda contextual sobre cómo funcionan los usuarios
+
+=========================================================
+NUEVA PESTAÑA: USUARIOS DE PLANTA
+
+La nueva sección incluye:
+- 📋 Lista completa de usuarios de planta
+- 🏭 Asociación clara planta ↔ usuario  
+- 📧 Credenciales de acceso visibles
+- 📅 Fecha de creación del usuario
+- ⚠️ Indicador de plantas sin usuario
+- 💡 Notas explicativas sobre el sistema
+- 🎨 Interfaz moderna con tarjetas organizadas
+
+=========================================================
+CÓMO USAR LA NUEVA FUNCIONALIDAD:
+
+1. **Ver Usuarios de Planta:**
+   - Login como admin-empresa: admin_empresa_1 / admin123
+   - Ir a "Gestión de Estructura"
+   - Click en pestaña "Usuarios de Planta"
+   - Ver lista completa con credenciales
+
+2. **Información mostrada por usuario:**
+   - Nombre de la planta asociada
+   - Username para login
+   - Email del usuario
+   - Nombre completo
+   - Fecha de creación
+   - Estado (activo/inactivo)
+
+=========================================================
+ENDPOINTS AGREGADOS:
+
+Backend:
+- GET /plantas/usuarios_planta/ -> Lista usuarios de planta
+
+Frontend:
+- Servicio: obtenerUsuariosPlantas()
+- Interface: UsuarioPlanta
+- Componente: Sección usuarios en GestionEstructura
+
+=========================================================
+
+=========================================================
+CÓMO PROBAR:
+
+1. **Iniciar Backend:**
+   ```
+   cd Backend
+   python manage.py runserver
+   ```
+
+2. **Iniciar Frontend:**
+   ```
+   cd frontend
+   npm start
+   ```
+
+3. **Probar desde Frontend:**
+   - Login como admin-empresa: admin_empresa_1 / admin123
+   - Ir a "Gestión de Estructura" > tab "Plantas"
+   - Crear plantas hasta llegar al límite (5/5)
+   - Verificar que se deshabilita el formulario
+
+4. **Verificar Usuarios Creados:**
+   - Ejecutar: `python test_login_planta.py`
+   - Ver credenciales de usuarios de planta creados
+
+=========================================================
+USUARIOS DE PLANTA ACTUALES:
+
+Según la última ejecución:
+- admin_planta_14 (Nueva Planta 1)
+- admin_planta_15 (Nueva Planta 2) 
+- admin_planta_16 (Nueva Planta 3)
+
+Password temporal para pruebas: test123
+(En producción las contraseñas se generan automáticamente)
+
+=========================================================
+ARCHIVOS MODIFICADOS:
+
+Backend:
+- apps/views.py -> Límite y creación automática de usuario
+- test_limite_plantas.py -> Script de prueba con API
+- test_limpiar_y_crear.py -> Script para limpiar y probar
+- test_login_planta.py -> Script para probar login
+
+Frontend:
+- components/GestionEstructura.tsx -> UI con límite y contador
+- services/organizacionService.ts -> Manejo de errores
+
+=========================================================
+PRÓXIMOS PASOS:
+
+1. ✅ Límite de plantas implementado
+2. ✅ Usuario automático de planta implementado
+3. 🔄 Opcional: Dashboard específico para admin-planta
+4. 🔄 Opcional: Envío de credenciales por email
+5. 🔄 Opcional: Reset de contraseña para usuarios de planta
+
+=========================================================

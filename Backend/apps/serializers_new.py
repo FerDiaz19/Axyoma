@@ -1,0 +1,88 @@
+# -*- coding: utf-8 -*-
+from rest_framework import serializers
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password
+from apps.users.models import UserProfile, Empresa, Planta, Departamento, Puesto, Empleado
+
+# Serializers para LOGIN
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+
+# Serializers para REGISTRO DE EMPRESA
+class EmpresaRegistroSerializer(serializers.ModelSerializer):
+    # Datos del usuario administrador
+    usuario = serializers.CharField()
+    password = serializers.CharField(write_only=True)
+    nombre_completo = serializers.CharField()
+    
+    class Meta:
+        model = Empresa
+        fields = ['nombre', 'rfc', 'direccion', 'email_contacto', 'telefono_contacto', 
+                 'usuario', 'password', 'nombre_completo']
+    
+    def create(self, validated_data):
+        # Extraer datos del usuario
+        usuario = validated_data.pop('usuario')
+        password = validated_data.pop('password')
+        nombre_completo = validated_data.pop('nombre_completo')
+        
+        # Separar el nombre completo
+        nombres = nombre_completo.strip().split(' ')
+        nombre = nombres[0] if nombres else ''
+        apellido_paterno = nombres[1] if len(nombres) > 1 else ''
+        apellido_materno = nombres[2] if len(nombres) > 2 else ''
+        
+        # Crear usuario Django
+        user = User.objects.create(
+            username=usuario,
+            email=validated_data.get('email_contacto', ''),
+            password=make_password(password)
+        )
+        
+        # Crear perfil de usuario
+        user_profile = UserProfile.objects.create(
+            user=user,
+            nombre=nombre,
+            apellido_paterno=apellido_paterno,
+            apellido_materno=apellido_materno,
+            correo=validated_data.get('email_contacto', ''),
+            nivel_usuario='admin-empresa'
+        )
+        
+        # Crear empresa
+        empresa = Empresa.objects.create(
+            administrador=user_profile,
+            **validated_data
+        )
+        
+        return empresa
+
+# Serializers para PLANTAS, DEPARTAMENTOS Y PUESTOS
+class PlantaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Planta
+        fields = ['planta_id', 'nombre', 'direccion', 'fecha_registro', 'status', 'empresa']
+
+class DepartamentoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Departamento
+        fields = ['departamento_id', 'nombre', 'descripcion', 'fecha_registro', 'status', 'planta']
+
+class PuestoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Puesto
+        fields = ['puesto_id', 'nombre', 'descripcion', 'status', 'departamento']
+
+# Serializers para EMPLEADOS
+class EmpleadoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Empleado
+        fields = ['empleado_id', 'nombre', 'apellido_paterno', 'apellido_materno', 
+                 'genero', 'antiguedad', 'status', 'puesto', 'departamento', 'planta']
+
+class EmpleadoCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Empleado
+        fields = ['nombre', 'apellido_paterno', 'apellido_materno', 
+                 'genero', 'antiguedad', 'puesto', 'departamento', 'planta']

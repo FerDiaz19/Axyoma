@@ -1,0 +1,92 @@
+=========================================================
+DIAGNÓSTICO: PROBLEMAS CON RUTAS Y REGISTRO
+=========================================================
+
+❌ ERRORES REPORTADOS:
+- Not Found: /auth/login/ (404)
+- Bad Request: /api/empresas/registro/ (400)
+
+🔍 POSIBLES CAUSAS Y SOLUCIONES:
+
+1. **SERVIDOR NO ESTÁ CORRIENDO**
+   Solución:
+   ```
+   cd Backend
+   python manage.py runserver
+   ```
+
+2. **RUTAS INCORRECTAS EN FRONTEND**
+   Verificar que el frontend use:
+   - /api/auth/login/ (NO /auth/login/)
+   - /api/empresas/registro/ (correcto)
+
+3. **USUARIO DE PRUEBA NO EXISTE**
+   Crear usuario admin_empresa_1:
+   ```
+   python manage.py shell
+   from django.contrib.auth.models import User
+   from apps.users.models import PerfilUsuario, Empresa
+   
+   # Crear usuario
+   user = User.objects.create_user('admin_empresa_1', 'admin@test.com', 'admin123')
+   perfil = PerfilUsuario.objects.create(
+       user=user, nombre='Admin', apellido_paterno='Empresa',
+       correo='admin@test.com', nivel_usuario='admin-empresa'
+   )
+   empresa = Empresa.objects.create(
+       nombre='Empresa Test', rfc='TEST123', direccion='Dir test',
+       email_contacto='admin@test.com', telefono_contacto='555-TEST',
+       administrador=perfil
+   )
+   ```
+
+4. **PROBLEMA CON SERIALIZER DE REGISTRO**
+   Ya corregido: eliminado campo 'contrasena' inexistente
+
+5. **PROBLEMA CON CSRF O CORS**
+   Backend ya configurado con @csrf_exempt
+
+=========================================================
+COMANDOS DE VERIFICACIÓN:
+
+1. **Verificar servidor:**
+   ```
+   curl http://localhost:8000/api/auth/
+   ```
+
+2. **Probar login:**
+   ```
+   curl -X POST http://localhost:8000/api/auth/login/ \
+        -H "Content-Type: application/json" \
+        -d '{"username":"admin_empresa_1","password":"admin123"}'
+   ```
+
+3. **Probar registro:**
+   ```
+   curl -X POST http://localhost:8000/api/empresas/registro/ \
+        -H "Content-Type: application/json" \
+        -d '{"nombre":"Test","rfc":"TEST123","direccion":"Dir","email_contacto":"test@test.com","telefono_contacto":"555","usuario":"testuser","password":"test123","nombre_completo":"Test User"}'
+   ```
+
+=========================================================
+CHECKLIST DE SOLUCIÓN:
+
+□ 1. Servidor Django corriendo en puerto 8000
+□ 2. Usuario admin_empresa_1 existe en base de datos  
+□ 3. Frontend apuntando a /api/auth/login/ (con /api/)
+□ 4. No hay errores de CORS en browser console
+□ 5. Serializer de registro sin campo 'contrasena'
+□ 6. URLs configuradas correctamente en apps/urls.py
+
+=========================================================
+SCRIPTS DE AYUDA:
+
+- check_users.py -> Verificar usuarios existentes
+- test_quick.py -> Probar login/registro rápido
+- debug_rutas.py -> Probar todas las rutas
+
+PRÓXIMO PASO:
+Ejecutar: python manage.py runserver
+Y verificar en browser: http://localhost:8000/api/auth/
+
+=========================================================
