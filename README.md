@@ -1,6 +1,18 @@
 # Sistema Axyoma - Gestión Empresarial
 
-Sistema web completo desarrollado con **Django (Backend)** y **React (Frontend)** para la gestión de empresas, plantas, departamentos y empleados con diferentes niveles de administración.
+Si## 🛠️ Si algo falla
+
+### Error de Base de Datos
+```bash
+cd Backend
+python manage.py migrate
+```
+
+### Error de Dependencias
+```bash
+# Volver a ejecutar la configuración
+setup_proyecto_completo.bat
+```pleto desarrollado con **Django (Backend)** y **React (Frontend)** para la gestión de empresas, plantas, departamentos y empleados con diferentes niveles de administración.
 
 ## 🚀 Para Nuevos Desarrolladores
 

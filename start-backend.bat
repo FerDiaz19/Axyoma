@@ -14,9 +14,7 @@ if exist "env\Scripts\activate.bat" (
     echo ❌ Error: No se encontró el entorno virtual
     echo.
     echo SOLUCION:
-    echo 1. Ejecuta: setup_proyecto_completo.bat (configuración completa)
-    echo    O
-    echo 2. Ejecuta: crear_entorno.bat (solo entorno virtual)
+    echo Ejecuta: setup_proyecto_completo.bat
     echo.
     pause
     exit /b 1
