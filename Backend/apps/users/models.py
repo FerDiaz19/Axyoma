@@ -70,7 +70,7 @@ class AdminPlanta(models.Model):
 # DEPARTAMENTOS - Según el esquema SQL original
 class Departamento(models.Model):
     departamento_id = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=64, unique=True)
+    nombre = models.CharField(max_length=64)
     descripcion = models.TextField(blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
@@ -78,16 +78,19 @@ class Departamento(models.Model):
     
     class Meta:
         db_table = 'departamentos'
+        unique_together = ['nombre', 'planta']  # Nombre único solo dentro de la misma planta
 
 # PUESTOS - Según el esquema SQL original
 class Puesto(models.Model):
     puesto_id = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=64, unique=True)
+    nombre = models.CharField(max_length=64)
     descripcion = models.TextField(blank=True, null=True)
     status = models.BooleanField(default=True)
     departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
     
     class Meta:
+        db_table = 'puestos'
+        unique_together = ['nombre', 'departamento']  # Nombre único solo dentro del mismo departamento
         db_table = 'puestos'
 
 # EMPLEADOS - Según el esquema SQL original

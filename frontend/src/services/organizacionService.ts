@@ -93,14 +93,31 @@ export const obtenerDepartamentosPorPlanta = async (plantaId: number): Promise<D
 };
 
 export const crearDepartamento = async (departamento: Departamento): Promise<Departamento> => {
-  // Convertir planta_id para el backend
-  const departamentoData = {
-    nombre: departamento.nombre,
-    descripcion: departamento.descripcion || '',
-    planta_id: departamento.planta_id
-  };
-  const response = await api.post('/departamentos/', departamentoData);
-  return response.data;
+  try {
+    // Convertir planta_id para el backend
+    const departamentoData = {
+      nombre: departamento.nombre,
+      descripcion: departamento.descripcion || '',
+      planta_id: departamento.planta_id
+    };
+    const response = await api.post('/departamentos/', departamentoData);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error creando departamento:', error);
+    
+    if (error.response?.data?.nombre) {
+      throw new Error(error.response.data.nombre[0]);
+    } else if (error.response?.data?.planta_id) {
+      throw new Error(error.response.data.planta_id[0]);
+    } else if (error.response?.data?.non_field_errors) {
+      throw new Error(error.response.data.non_field_errors[0]);
+    } else if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error.response?.status === 400) {
+      throw new Error('Error al crear el departamento. Verifique que el nombre no esté duplicado en la planta.');
+    }
+    throw new Error('Error al crear el departamento');
+  }
 };
 
 export const actualizarDepartamento = async (id: number, departamento: Departamento): Promise<Departamento> => {
@@ -124,14 +141,31 @@ export const obtenerPuestosPorDepartamento = async (departamentoId: number): Pro
 };
 
 export const crearPuesto = async (puesto: Puesto): Promise<Puesto> => {
-  // Convertir departamento_id para el backend
-  const puestoData = {
-    nombre: puesto.nombre,
-    descripcion: puesto.descripcion || '',
-    departamento_id: puesto.departamento_id
-  };
-  const response = await api.post('/puestos/', puestoData);
-  return response.data;
+  try {
+    // Convertir departamento_id para el backend
+    const puestoData = {
+      nombre: puesto.nombre,
+      descripcion: puesto.descripcion || '',
+      departamento_id: puesto.departamento_id
+    };
+    const response = await api.post('/puestos/', puestoData);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error creando puesto:', error);
+    
+    if (error.response?.data?.nombre) {
+      throw new Error(error.response.data.nombre[0]);
+    } else if (error.response?.data?.departamento_id) {
+      throw new Error(error.response.data.departamento_id[0]);
+    } else if (error.response?.data?.non_field_errors) {
+      throw new Error(error.response.data.non_field_errors[0]);
+    } else if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error.response?.status === 400) {
+      throw new Error('Error al crear el puesto. Verifique que el nombre no esté duplicado en el departamento.');
+    }
+    throw new Error('Error al crear el puesto');
+  }
 };
 
 export const actualizarPuesto = async (id: number, puesto: Puesto): Promise<Puesto> => {

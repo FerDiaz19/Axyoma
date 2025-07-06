@@ -103,9 +103,9 @@ const GestionEstructura: React.FC = () => {
       setNuevoDepartamento({ nombre: '', descripcion: '', planta_id: 0 });
       cargarDatos();
       alert('Departamento creado exitosamente');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creando departamento:', error);
-      alert('Error al crear departamento');
+      alert(error.message || 'Error al crear departamento');
     }
   };
 
@@ -116,9 +116,9 @@ const GestionEstructura: React.FC = () => {
       setNuevoPuesto({ nombre: '', descripcion: '', departamento_id: 0 });
       cargarDatos();
       alert('Puesto creado exitosamente');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creando puesto:', error);
-      alert('Error al crear puesto');
+      alert(error.message || 'Error al crear puesto');
     }
   };
 

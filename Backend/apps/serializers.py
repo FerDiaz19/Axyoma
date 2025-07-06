@@ -144,6 +144,23 @@ class DepartamentoCreateSerializer(serializers.ModelSerializer):
         except Planta.DoesNotExist:
             raise serializers.ValidationError("La planta especificada no existe")
     
+    def validate(self, data):
+        """Validar que no exista un departamento con el mismo nombre en la misma planta"""
+        nombre = data.get('nombre')
+        planta_id = data.get('planta_id')
+        
+        if nombre and planta_id:
+            try:
+                planta = Planta.objects.get(planta_id=planta_id)
+                if Departamento.objects.filter(nombre=nombre, planta=planta).exists():
+                    raise serializers.ValidationError({
+                        'nombre': 'Ya existe un departamento con este nombre en la planta seleccionada'
+                    })
+            except Planta.DoesNotExist:
+                pass  # El error se maneja en validate_planta_id
+        
+        return data
+    
     def create(self, validated_data):
         planta_id = validated_data.pop('planta_id')
         planta = Planta.objects.get(planta_id=planta_id)
@@ -163,6 +180,23 @@ class PuestoCreateSerializer(serializers.ModelSerializer):
             return value
         except Departamento.DoesNotExist:
             raise serializers.ValidationError("El departamento especificado no existe")
+    
+    def validate(self, data):
+        """Validar que no exista un puesto con el mismo nombre en el mismo departamento"""
+        nombre = data.get('nombre')
+        departamento_id = data.get('departamento_id')
+        
+        if nombre and departamento_id:
+            try:
+                departamento = Departamento.objects.get(departamento_id=departamento_id)
+                if Puesto.objects.filter(nombre=nombre, departamento=departamento).exists():
+                    raise serializers.ValidationError({
+                        'nombre': 'Ya existe un puesto con este nombre en el departamento seleccionado'
+                    })
+            except Departamento.DoesNotExist:
+                pass  # El error se maneja en validate_departamento_id
+        
+        return data
     
     def create(self, validated_data):
         departamento_id = validated_data.pop('departamento_id')
