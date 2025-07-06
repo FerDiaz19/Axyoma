@@ -98,13 +98,30 @@ const GestionEstructura: React.FC = () => {
 
   const handleCrearDepartamento = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log('🔧 Intentando crear departamento:', nuevoDepartamento);
+    console.log('🔧 Nombre del departamento:', JSON.stringify(nuevoDepartamento.nombre));
+    
+    // Validaciones básicas
+    if (!nuevoDepartamento.nombre.trim()) {
+      alert('El nombre del departamento es requerido');
+      return;
+    }
+    
+    if (nuevoDepartamento.planta_id === 0) {
+      alert('Debe seleccionar una planta');
+      return;
+    }
+    
     try {
-      await crearDepartamento(nuevoDepartamento);
+      const resultado = await crearDepartamento(nuevoDepartamento);
+      console.log('✅ Departamento creado:', resultado);
+      
       setNuevoDepartamento({ nombre: '', descripcion: '', planta_id: 0 });
       cargarDatos();
       alert('Departamento creado exitosamente');
     } catch (error: any) {
-      console.error('Error creando departamento:', error);
+      console.error('❌ Error creando departamento:', error);
       alert(error.message || 'Error al crear departamento');
     }
   };

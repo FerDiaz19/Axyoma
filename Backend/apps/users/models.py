@@ -79,6 +79,15 @@ class Departamento(models.Model):
     class Meta:
         db_table = 'departamentos'
         unique_together = ['nombre', 'planta']  # Nombre único solo dentro de la misma planta
+    
+    def save(self, *args, **kwargs):
+        # Normalizar el nombre antes de guardar
+        if self.nombre:
+            self.nombre = self.nombre.strip()
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"{self.nombre} - {self.planta.nombre}"
 
 # PUESTOS - Según el esquema SQL original
 class Puesto(models.Model):

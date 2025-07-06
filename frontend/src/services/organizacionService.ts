@@ -96,14 +96,21 @@ export const crearDepartamento = async (departamento: Departamento): Promise<Dep
   try {
     // Convertir planta_id para el backend
     const departamentoData = {
-      nombre: departamento.nombre,
-      descripcion: departamento.descripcion || '',
+      nombre: departamento.nombre.trim(),
+      descripcion: departamento.descripcion?.trim() || '',
       planta_id: departamento.planta_id
     };
+    
+    console.log('🔍 Creando departamento con datos:', departamentoData);
+    console.log('🔍 Nombre original:', JSON.stringify(departamento.nombre));
+    console.log('🔍 Nombre procesado:', JSON.stringify(departamentoData.nombre));
+    
     const response = await api.post('/departamentos/', departamentoData);
+    console.log('✅ Departamento creado exitosamente:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('Error creando departamento:', error);
+    console.error('❌ Error creando departamento:', error);
+    console.error('❌ Datos enviados:', { departamento });
     
     if (error.response?.data?.nombre) {
       throw new Error(error.response.data.nombre[0]);

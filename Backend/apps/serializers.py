@@ -136,6 +136,20 @@ class DepartamentoCreateSerializer(serializers.ModelSerializer):
         model = Departamento
         fields = ['nombre', 'descripcion', 'planta_id']
     
+    def validate_nombre(self, value):
+        """Validar y normalizar el nombre del departamento"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("El nombre del departamento es requerido")
+        
+        # Normalizar espacios y asegurar UTF-8
+        nombre_limpio = value.strip()
+        if len(nombre_limpio) < 2:
+            raise serializers.ValidationError("El nombre debe tener al menos 2 caracteres")
+        if len(nombre_limpio) > 64:
+            raise serializers.ValidationError("El nombre no puede exceder 64 caracteres")
+        
+        return nombre_limpio
+    
     def validate_planta_id(self, value):
         """Validar que la planta existe"""
         try:
