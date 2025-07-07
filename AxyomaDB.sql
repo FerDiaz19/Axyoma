@@ -133,9 +133,11 @@ CREATE TABLE PLANES_SUSCRIPCION (
     status BOOLEAN DEFAULT TRUE
 );
 
--- EJEMPLO:
+-- PLANES BASE DEL SISTEMA:
 INSERT INTO PLANES_SUSCRIPCION (nombre, descripcion, duracion, precio) VALUES
-    ( 'Suscripción Única', 'Acceso completo a las funcionalidades', 30, 899.99);
+    ('Plan Básico (1 Mes)', 'Plan mensual con funcionalidades básicas', 30, 299.00),
+    ('Plan Profesional (3 Meses)', 'Plan trimestral con descuento y funcionalidades avanzadas', 90, 799.00),
+    ('Plan Anual', 'Plan anual con máximo descuento y todas las funcionalidades', 365, 2999.00);
 
 SELECT * FROM PLANES_SUSCRIPCION;
 
@@ -151,7 +153,10 @@ CREATE TABLE SUSCRIPCION_EMPRESA (
     suscripcion_id INT AUTO_INCREMENT PRIMARY KEY,
     fecha_inicio DATE NOT NULL,
     fecha_fin DATE,
+    estado ENUM('Activa', 'Suspendida', 'Cancelada') DEFAULT 'Activa',
     status BOOLEAN DEFAULT TRUE,
+    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_actualizacion DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
     plan_suscripcion INT NOT NULL,
     empresa INT NOT NULL,
@@ -161,7 +166,7 @@ CREATE TABLE SUSCRIPCION_EMPRESA (
 );
 
 -- EJEMPLO:
-INSERT INTO SUSCRIPCION_EMPRESA (fecha_inicio, fecha_fin, plan_suscripcion, empresa) VALUES  ('2025-06-01', '2025-08-30', 1, 1);
+INSERT INTO SUSCRIPCION_EMPRESA (fecha_inicio, fecha_fin, estado, plan_suscripcion, empresa) VALUES  ('2025-06-01', '2025-08-30', 'Activa', 1, 1);
 SELECT * FROM SUSCRIPCION_EMPRESA;
 
 -- -------------------------------------------------------------------------- --
@@ -178,14 +183,15 @@ CREATE TABLE PAGOS (
     monto_pago DECIMAL(10,2) NOT NULL,
     fecha_pago DATE NOT NULL,
     transaccion_id VARCHAR(64),
+    estado_pago ENUM('Pendiente', 'Completado', 'Fallido') DEFAULT 'Pendiente',
 
     suscripcion_empresa INT NOT NULL,
     FOREIGN KEY (suscripcion_empresa) REFERENCES SUSCRIPCION_EMPRESA(suscripcion_id)
 );
 
 -- EJEMPLO:
-INSERT INTO PAGOS (costo, monto_pago, fecha_pago, transaccion_id, suscripcion_empresa)
-VALUES ( 899.99, 899.99, '2025-06-01', 'TXN-ABC123', 1 );
+INSERT INTO PAGOS (costo, monto_pago, fecha_pago, transaccion_id, estado_pago, suscripcion_empresa)
+VALUES ( 899.99, 899.99, '2025-06-01', 'TXN-ABC123', 'Completado', 1 );
 
 SELECT * FROM PAGOS;
 

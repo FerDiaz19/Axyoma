@@ -1,0 +1,357 @@
+/* ============================================================================
+   SUBSCRIPTION ALERT - ALERTA DE SUSCRIPCIÓN
+   ============================================================================ */
+
+.subscription-alert-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.subscription-alert-container {
+  max-width: 800px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.subscription-alert {
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  position: relative;
+}
+
+/* ============================================================================
+   VARIANTES DE ALERTA
+   ============================================================================ */
+
+.subscription-alert.warning {
+  border-top: 6px solid #ffc107;
+}
+
+.subscription-alert.danger {
+  border-top: 6px solid #dc3545;
+}
+
+.subscription-alert.info {
+  border-top: 6px solid #17a2b8;
+}
+
+/* ============================================================================
+   HEADER DE ALERTA
+   ============================================================================ */
+
+.alert-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 2rem;
+  text-align: center;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.alert-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+.alert-header h2 {
+  color: #2c3e50;
+  font-size: 2rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+/* ============================================================================
+   CONTENIDO DE ALERTA
+   ============================================================================ */
+
+.alert-content {
+  padding: 2rem;
+}
+
+.alert-message {
+  font-size: 1.3rem;
+  color: #2c3e50;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.alert-description {
+  font-size: 1.1rem;
+  color: #6c757d;
+  line-height: 1.6;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+/* ============================================================================
+   ESTADO DE FUNCIONALIDADES
+   ============================================================================ */
+
+.functionality-status {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.functionality-status h3 {
+  color: #2c3e50;
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 600;
+}
+
+.features-section {
+  margin-bottom: 1.5rem;
+}
+
+.features-section:last-child {
+  margin-bottom: 0;
+}
+
+.features-section h4 {
+  color: #495057;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.feature-item:last-child {
+  border-bottom: none;
+}
+
+.feature-icon {
+  font-size: 1.1rem;
+  width: 24px;
+  text-align: center;
+}
+
+.features-list.available .feature-item {
+  color: #28a745;
+}
+
+.features-list.restricted .feature-item {
+  color: #dc3545;
+  opacity: 0.7;
+}
+
+.features-list.restricted .feature-item span:last-child {
+  text-decoration: line-through;
+}
+
+/* ============================================================================
+   ACCIONES DE ALERTA
+   ============================================================================ */
+
+.alert-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  padding: 0 2rem;
+}
+
+.subscription-btn {
+  padding: 1rem 2rem;
+  background: linear-gradient(45deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  min-width: 200px;
+}
+
+.subscription-btn:hover {
+  background: linear-gradient(45deg, #0056b3, #004085);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.continue-btn {
+  padding: 1rem 2rem;
+  background: transparent;
+  color: #6c757d;
+  border: 2px solid #dee2e6;
+  border-radius: 12px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 200px;
+}
+
+.continue-btn:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+  color: #495057;
+}
+
+/* ============================================================================
+   FOOTER DE ALERTA
+   ============================================================================ */
+
+.alert-footer {
+  background: #f8f9fa;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.support-info {
+  color: #6c757d;
+  font-size: 0.95rem;
+  text-align: center;
+  margin: 0;
+  padding: 1rem;
+  background: #e3f2fd;
+  border-radius: 8px;
+  border-left: 4px solid #2196f3;
+}
+
+/* ============================================================================
+   BOTONES GLOBALES
+   ============================================================================ */
+
+.btn-primary {
+  background: linear-gradient(45deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(45deg, #0056b3, #004085);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: #6c757d;
+  border: 2px solid #dee2e6;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+  color: #495057;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .subscription-alert-overlay {
+    padding: 0.5rem;
+  }
+  
+  .alert-header {
+    padding: 1.5rem;
+  }
+  
+  .alert-header h2 {
+    font-size: 1.5rem;
+  }
+  
+  .alert-icon {
+    font-size: 3rem;
+  }
+  
+  .alert-content {
+    padding: 1.5rem;
+  }
+  
+  .alert-message {
+    font-size: 1.1rem;
+  }
+  
+  .alert-description {
+    font-size: 1rem;
+  }
+  
+  .alert-actions {
+    flex-direction: column;
+    padding: 0 1.5rem;
+  }
+  
+  .subscription-btn,
+  .continue-btn {
+    min-width: auto;
+    width: 100%;
+  }
+  
+  .alert-footer {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .alert-header {
+    padding: 1rem;
+  }
+  
+  .alert-header h2 {
+    font-size: 1.3rem;
+  }
+  
+  .alert-icon {
+    font-size: 2.5rem;
+  }
+  
+  .alert-content {
+    padding: 1rem;
+  }
+  
+  .functionality-status {
+    padding: 1rem;
+  }
+  
+  .alert-actions {
+    padding: 0 1rem;
+  }
+  
+  .alert-footer {
+    padding: 1rem;
+  }
+}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { registrarEmpresa } from '../services/empresaService';
+import PlanSelection from './PlanSelection';
 import '../css/RegistroEmpresa.css';
 
 interface RegistroEmpresaProps {
@@ -8,6 +9,8 @@ interface RegistroEmpresaProps {
 }
 
 const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, onSwitchToLogin }) => {
+  const [paso, setPaso] = useState<'registro' | 'seleccion_plan'>('registro');
+  const [empresaRegistrada, setEmpresaRegistrada] = useState<{id: number, nombre: string} | null>(null);
   const [formData, setFormData] = useState({
     nombre: '',
     rfc: '',
@@ -49,9 +52,15 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
         nombre_completo: `${formData.admin_nombre} ${formData.admin_apellido_paterno} ${formData.admin_apellido_materno}`.trim()
       };
       
-      await registrarEmpresa(registroData);
-      alert('Empresa registrada exitosamente');
-      onRegistroSuccess();
+      const response = await registrarEmpresa(registroData);
+      
+      // Si el registro fue exitoso, pasar a selección de plan
+      setEmpresaRegistrada({
+        id: response.empresa_id,
+        nombre: response.nombre
+      });
+      setPaso('seleccion_plan');
+      
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || 
                           err.response?.data?.message || 
@@ -63,6 +72,29 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
       setLoading(false);
     }
   };
+
+  const handlePlanSelected = () => {
+    // Plan seleccionado exitosamente, completar el registro
+    alert('¡Registro completado exitosamente! Ya puedes acceder a tu cuenta.');
+    onRegistroSuccess();
+  };
+
+  const handleSkipPlan = () => {
+    // Usuario decidió omitir la selección de plan
+    alert('Empresa registrada. Podrás seleccionar un plan más tarde desde tu panel de administración.');
+    onRegistroSuccess();
+  };
+
+  // Si estamos en el paso de selección de plan, mostrar el componente correspondiente
+  if (paso === 'seleccion_plan' && empresaRegistrada) {
+    return (
+      <PlanSelection
+        empresaId={empresaRegistrada.id}
+        onPlanSelected={handlePlanSelected}
+        onSkip={handleSkipPlan}
+      />
+    );
+  }
 
   return (
     <div className="registro-container">

@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'apps',
     'apps.surveys',
     'apps.subscriptions',
-    'apps.employees',
     'apps.users',
 ]
 

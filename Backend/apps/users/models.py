@@ -42,6 +42,33 @@ class Empresa(models.Model):
     
     class Meta:
         db_table = 'empresas'
+    
+    def __str__(self):
+        return self.nombre
+    
+    @property
+    def tiene_suscripcion_activa(self):
+        """Verifica si la empresa tiene una suscripción activa"""
+        try:
+            return self.suscripcion.esta_activa
+        except:
+            return False
+    
+    @property
+    def dias_restantes_suscripcion(self):
+        """Obtiene los días restantes de la suscripción"""
+        try:
+            return self.suscripcion.dias_restantes
+        except:
+            return 0
+    
+    @property
+    def estado_suscripcion(self):
+        """Obtiene el estado de la suscripción"""
+        try:
+            return self.suscripcion.estado
+        except:
+            return 'sin_suscripcion'
 
 # PLANTAS - Según el esquema SQL original
 class Planta(models.Model):

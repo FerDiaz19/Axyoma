@@ -41,11 +41,22 @@ interface Puesto {
   departamento_id: number; // Cambiado para coincidir con el backend
 }
 
-const EmpleadosCRUD: React.FC = () => {
+interface EmpleadosCRUDProps {
+  userData?: any; // Para filtrar por planta cuando es Admin Planta
+}
+
+const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
   const [plantas, setPlantas] = useState<Planta[]>([]);
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [puestos, setPuestos] = useState<Puesto[]>([]);
+  
+  // Estados para filtros
+  const [filtroNombre, setFiltroNombre] = useState('');
+  const [filtroDepartamento, setFiltroDepartamento] = useState('');
+  const [filtroPuesto, setFiltroPuesto] = useState('');
+  const [empleadosFiltrados, setEmpleadosFiltrados] = useState<Empleado[]>([]);
+  
   const [formData, setFormData] = useState<Empleado>({
     nombre: '',
     apellido_paterno: '',
@@ -65,6 +76,33 @@ const EmpleadosCRUD: React.FC = () => {
     loadData();
   }, []);
 
+  useEffect(() => {
+    // Filtrar empleados cuando cambian los filtros o empleados
+    let filtrados = empleados;
+    
+    if (filtroNombre.trim()) {
+      filtrados = filtrados.filter(empleado =>
+        empleado.nombre.toLowerCase().includes(filtroNombre.toLowerCase()) ||
+        empleado.apellido_paterno.toLowerCase().includes(filtroNombre.toLowerCase()) ||
+        (empleado.apellido_materno && empleado.apellido_materno.toLowerCase().includes(filtroNombre.toLowerCase()))
+      );
+    }
+    
+    if (filtroDepartamento) {
+      filtrados = filtrados.filter(empleado => 
+        empleado.departamento === parseInt(filtroDepartamento)
+      );
+    }
+    
+    if (filtroPuesto) {
+      filtrados = filtrados.filter(empleado => 
+        empleado.puesto === parseInt(filtroPuesto)
+      );
+    }
+    
+    setEmpleadosFiltrados(filtrados);
+  }, [empleados, filtroNombre, filtroDepartamento, filtroPuesto]);
+
   const loadData = async () => {
     try {
       const [empleadosData, plantasData, departamentosData, puestosData] = await Promise.all([
@@ -74,10 +112,28 @@ const EmpleadosCRUD: React.FC = () => {
         getPuestos()
       ]);
       
-      setEmpleados(empleadosData);
-      setPlantas(plantasData);
-      setDepartamentos(departamentosData);
-      setPuestos(puestosData);
+      // Si es Admin Planta, filtrar solo datos de su planta asignada
+      if (userData?.tipo_dashboard === 'admin-planta' && userData?.planta_id) {
+        const empleadosDePlanta = empleadosData.filter(emp => emp.planta === userData.planta_id);
+        const departamentosDePlanta = departamentosData.filter(dept => dept.planta_id === userData.planta_id);
+        const puestosDePlanta = puestosData.filter(puesto => 
+          departamentosDePlanta.some(dept => dept.departamento_id === puesto.departamento_id)
+        );
+        
+        setEmpleados(empleadosDePlanta);
+        setPlantas([{ planta_id: userData.planta_id, nombre: userData.nombre_planta }]);
+        setDepartamentos(departamentosDePlanta);
+        setPuestos(puestosDePlanta);
+        
+        // Pre-seleccionar la planta para nuevos empleados
+        setFormData(prev => ({ ...prev, planta: userData.planta_id }));
+      } else {
+        // Admin Empresa puede ver todos los datos de su empresa
+        setEmpleados(empleadosData);
+        setPlantas(plantasData);
+        setDepartamentos(departamentosData);
+        setPuestos(puestosData);
+      }
     } catch (err: any) {
       console.error('Error cargando datos:', err);
       setError('Error al cargar datos');
@@ -145,12 +201,19 @@ const EmpleadosCRUD: React.FC = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('¿Estás seguro de eliminar este empleado?')) {
+    const empleado = empleados.find(emp => emp.empleado_id === id);
+    const nombreCompleto = empleado ? `${empleado.nombre} ${empleado.apellido_paterno} ${empleado.apellido_materno || ''}`.trim() : 'este empleado';
+    
+    const confirmMessage = `¿Está seguro de eliminar al empleado "${nombreCompleto}"?\n\nEsta acción NO se puede deshacer.`;
+    
+    if (window.confirm(confirmMessage)) {
       try {
         await deleteEmpleado(id);
         await loadData();
+        alert('Empleado eliminado exitosamente');
       } catch (err: any) {
         setError('Error al eliminar empleado');
+        alert('Error al eliminar el empleado');
       }
     }
   };
@@ -175,6 +238,70 @@ const EmpleadosCRUD: React.FC = () => {
       <h2>Gestión de Empleados</h2>
       
       {error && <div className="error-message">{error}</div>}
+      
+      {/* Filtros */}
+      <div className="filtros">
+        <div className="filtros-row">
+          <div className="filtro-group">
+            <label>Buscar por nombre:</label>
+            <input
+              type="text"
+              placeholder="Nombre o apellidos..."
+              value={filtroNombre}
+              onChange={(e) => setFiltroNombre(e.target.value)}
+              className="filtro-input"
+            />
+          </div>
+          
+          <div className="filtro-group">
+            <label>Departamento:</label>
+            <select
+              value={filtroDepartamento}
+              onChange={(e) => setFiltroDepartamento(e.target.value)}
+              className="filtro-select"
+            >
+              <option value="">Todos los departamentos</option>
+              {departamentos.map((dept) => (
+                <option key={dept.departamento_id} value={dept.departamento_id}>
+                  {dept.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="filtro-group">
+            <label>Puesto:</label>
+            <select
+              value={filtroPuesto}
+              onChange={(e) => setFiltroPuesto(e.target.value)}
+              className="filtro-select"
+            >
+              <option value="">Todos los puestos</option>
+              {puestos.map((puesto) => (
+                <option key={puesto.puesto_id} value={puesto.puesto_id}>
+                  {puesto.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        
+        {(filtroNombre || filtroDepartamento || filtroPuesto) && (
+          <div className="filtros-info">
+            Mostrando {empleadosFiltrados.length} de {empleados.length} empleados
+            <button 
+              onClick={() => {
+                setFiltroNombre('');
+                setFiltroDepartamento('');
+                setFiltroPuesto('');
+              }}
+              className="btn-clear-filters"
+            >
+              Limpiar filtros
+            </button>
+          </div>
+        )}
+      </div>
       
       <div className="crud-actions">
         <button 
@@ -257,20 +384,30 @@ const EmpleadosCRUD: React.FC = () => {
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="planta">Planta:</label>
-              <select
-                id="planta"
-                name="planta"
-                value={formData.planta || ''}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Seleccionar planta</option>
-                {plantas.map(planta => (
-                  <option key={planta.planta_id} value={planta.planta_id}>
-                    {planta.nombre}
-                  </option>
-                ))}
-              </select>
+              {userData?.tipo_dashboard === 'admin-planta' ? (
+                <input
+                  type="text"
+                  value={userData?.nombre_planta || 'Planta no asignada'}
+                  disabled
+                  className="readonly-input"
+                  title="Como Admin de Planta, solo puedes gestionar empleados de tu planta asignada"
+                />
+              ) : (
+                <select
+                  id="planta"
+                  name="planta"
+                  value={formData.planta || ''}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Seleccionar planta</option>
+                  {plantas.map(planta => (
+                    <option key={planta.planta_id} value={planta.planta_id}>
+                      {planta.nombre}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="form-group">
@@ -338,7 +475,7 @@ const EmpleadosCRUD: React.FC = () => {
             </tr>
           </thead>
           <tbody>
-            {empleados.map(empleado => (
+            {empleadosFiltrados.map(empleado => (
               <tr key={empleado.empleado_id}>
                 <td>{empleado.nombre}</td>
                 <td>{`${empleado.apellido_paterno} ${empleado.apellido_materno || ''}`}</td>

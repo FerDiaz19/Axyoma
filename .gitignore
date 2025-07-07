@@ -61,6 +61,15 @@ Thumbs.db
 *.temp
 test_*.py
 *_test.py
+*_prueba.py
+*_debug.py
+verificar_*.py
+verificar_*.bat
+prueba_*.py
+prueba_*.bat
+crear_*.bat
+debug_*.bat
+setup_*.py
 TEMP_*
 DEBUG_*
 LIMPIEZA_*

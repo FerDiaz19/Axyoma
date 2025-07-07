@@ -1,0 +1,164 @@
+Sección de tablas Base (antes de que funcione el sw).
+1. Tipo-Evaluación
+2. Evaluaciones
+3. Secciones-Eval
+4.Preguntas
+5. Conjunto-Opciones
+6. Opciones-Conjunto
+7. Sección-Preguntas
+8.Usuarios
+9.Planes-Suscripción
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE TABLE TIPOS_EVALUACION (
+    tipo_evaluacion_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(64) NOT NULL UNIQUE,
+    descripcion TEXT
+);
+
+-- EJEMPLO:
+INSERT INTO TIPOS_EVALUACION (nombre, descripcion) VALUES
+    ( 'Normativa', 'Evaluaciones basadas en normativas oficiales' ),
+    ( 'Interna', 'Evaluaciones creadas para fines de evaluación internos' );
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE TABLE EVALUACIONES (
+    evaluacion_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(128) NOT NULL,
+    descripcion TEXT,
+    status BOOLEAN DEFAULT TRUE,
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    tipo_evaluacion INT NOT NULL,
+    empresa INT,
+    
+    FOREIGN KEY(tipo_evaluacion) REFERENCES TIPOS_EVALUACION(tipo_evaluacion_id),
+    FOREIGN KEY(empresa) REFERENCES EMPRESAS(empresa_id)
+);
+
+-- EJEMPLO:
+INSERT INTO EVALUACIONES (nombre, descripcion, tipo_evaluacion, empresa) VALUES
+    ( 'Evaluación NOM-035 Inicial', 'Evaluación de los factores de riesgo psicosocial según NOM-035.', 1, NULL ),
+    ( 'Evaluación de Desempeño Q2', 'Evaluación trimestral de desempeño para empleados de desarrollo.', 2, 1 ),
+    ( 'Evaluación Liderazgo 360', 'Evaluación de liderazgo para gerentes.', 3, 1 );
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE TABLE SECCIONES_EVAL (
+    seccion_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    descripcion TEXT,
+    numero_orden INT NOT NULL,
+    evaluacion INT NOT NULL,
+
+    FOREIGN KEY (evaluacion) REFERENCES EVALUACIONES(evaluacion_id)
+);
+
+-- EJEMPLO:
+INSERT INTO SECCIONES_EVAL (evaluacion, nombre, descripcion, numero_orden) VALUES
+    ( 1, 'Identificación Laboral', 'Datos del puesto y horario.', 1 ),
+    ( 1, 'Factores de Riesgo Psicosocial', 'Preguntas sobre el ambiente de trabajo.', 2 ),
+    ( 1, 'Entorno Organizacional', 'Percepción del clima y organización.', 3 ),
+    ( 2, 'Habilidades Técnicas', 'Evaluación de conocimientos técnicos.', 1 ),
+    ( 2, 'Colaboración y Comunicación', 'Evaluación de habilidades blandas.', 2 );
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE TABLE PREGUNTAS (
+    pregunta_id INT AUTO_INCREMENT PRIMARY KEY,
+    texto_pregunta TEXT NOT NULL,
+    tipo_pregunta ENUM('Abierta', 'Múltiple', 'Escala', 'Bool') NOT NULL,
+    es_obligatoria BOOLEAN DEFAULT TRUE,
+    pregunta_padre INT,
+    activador_padre VARCHAR(255),
+
+    FOREIGN KEY(pregunta_padre) REFERENCES PREGUNTAS(pregunta_id)
+);
+
+-- EJEMPLO:
+INSERT INTO PREGUNTAS (texto_pregunta, tipo_pregunta, es_obligatoria, pregunta_padre, activador_padre) VALUES
+    ( '¿Trabaja usted en horario nocturno?', 'Bool', TRUE, NULL, NULL ),
+    ( '¿Experimenta estrés debido a la carga de trabajo?', 'Escala', TRUE, NULL, NULL ),
+    ( '¿Qué tipo de apoyo necesita para manejar el estrés?', 'Abierta', FALSE, 2, '4' ),
+    ( '¿Considera que su entorno de trabajo es seguro?', 'Bool', TRUE, NULL, NULL ),
+    ( '¿Cuál de las siguientes herramientas de software utiliza más frecuentemente?', 'Multiple', TRUE, NULL, NULL ),
+    ( 'Por favor, describa cualquier incidente de seguridad que haya presenciado.', 'Abierta', FALSE, 4, 'FALSE' );
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE TABLE CONJUNTOS_OPCIONES (
+    conjunto_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(64) NOT NULL UNIQUE,
+    descripcion TEXT,
+    predefinido BOOLEAN DEFAULT FALSE
+);
+
+-- EJEMPLO:
+INSERT INTO CONJUNTOS_OPCIONES (nombre, descripcion, predefinido) VALUES
+    ( 'Likert 5-Puntos (Acuerdo)', 'Escala estándar de 5 puntos para preguntas de acuerdo/desacuerdo.', TRUE ),
+    ( 'Sí/No', 'Opciones de respuesta Sí o No.', TRUE ),
+    ( 'Nivel de Satisfacción', 'Escala de 1 a 10 para medir satisfacción.', FALSE ),
+    ( 'Opciones de Software', 'Opciones para elegir un software favorito.', FALSE );
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE TABLE OPCIONES_CONJUNTO (
+    opcion_conjunto_id INT AUTO_INCREMENT PRIMARY KEY,
+    texto_opcion VARCHAR(256) NOT NULL,
+    valor_booleano BOOLEAN,
+    valor_numerico INT,
+    puntuaje_escala INT,
+    numero_orden INT NOT NULL,
+    conjunto_opciones INT NOT NULL,
+    
+    FOREIGN KEY(conjunto_opciones) REFERENCES CONJUNTOS_OPCIONES(conjunto_id)
+);
+
+-- EJEMPLO (Conjunto Likert):
+INSERT INTO OPCIONES_CONJUNTO (conjunto_opciones, texto_opcion, valor_numerico, puntuaje_escala, numero_orden) VALUES
+    ( 1, 'Totalmente en desacuerdo', 1, 1, 1),
+    ( 1, 'En desacuerdo', 2, 2, 2),
+    ( 1, 'Ni de acuerdo ni en desacuerdo', 3, 3, 3),
+    ( 1, 'De acuerdo', 4, 4, 4),
+    ( 1, 'Totalmente de acuerdo', 5, 5, 5);
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE TABLE SECCION_PREGUNTAS (
+    seccion INT NOT NULL,
+    pregunta INT NOT NULL,
+    conjunto_opciones INT,
+
+    PRIMARY KEY (seccion, pregunta),
+    FOREIGN KEY (seccion) REFERENCES SECCIONES_EVAL(seccion_id),
+    FOREIGN KEY (pregunta) REFERENCES PREGUNTAS(pregunta_id),
+    FOREIGN KEY (conjunto_opciones) REFERENCES CONJUNTOS_OPCIONES(conjunto_id)
+);
+
+-- EJEMPLO (Factores de Riesgo Psicosocial):
+INSERT INTO SECCION_PREGUNTAS (seccion, pregunta, conjunto_opciones) VALUES
+    ( 2, 2, 1 ), -- Pregunta "¿Experimenta estrés...?" (Escala) usa Conjunto Likert.
+    ( 2, 3, NULL ); -- Pregunta "¿Qué tipo de apoyo...?" (Abierta) no usa conjunto.
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE TABLE USUARIOS (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(128) NOT NULL,
+    apellido_paterno VARCHAR(64) NOT NULL,
+    apellido_materno VARCHAR(64),
+    correo VARCHAR(255) NOT NULL UNIQUE,
+    contrasena VARCHAR(255) NOT NULL,
+    fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
+    nivel_usuario ENUM('superadmin', 'admin-empresa', 'admin-planta') NOT NULL,
+    status BOOLEAN DEFAULT TRUE,
+
+    admin_empresa INT,
+    FOREIGN KEY(admin_empresa) REFERENCES USUARIOS(id)
+);
+
+-- EJEMPLOS:
+INSERT INTO USUARIOS (nombre, apellido_paterno, correo, contrasena, nivel_usuario, admin_empresa) VALUES
+    ( 'Ed', 'Rubio', 'ed-rubio@axyoma.com', '1234', 'superadmin', NULL ),
+    ( 'Juan', 'Perez', 'juan.perez@codewave.com', '1234', 'admin-empresa', NULL);
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+CREATE TABLE PLANES_SUSCRIPCION (
+    plan_id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(64) NOT NULL,
+    descripcion TEXT,
+    duracion INT NOT NULL,
+    precio DECIMAL(10,2) NOT NULL,
+    status BOOLEAN DEFAULT TRUE
+);
+
+-- EJEMPLO:
+INSERT INTO PLANES_SUSCRIPCION (nombre, descripcion, duracion, precio) VALUES
+    ( 'Suscripción Única', 'Acceso completo a las funcionalidades', 30, 899.99);
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

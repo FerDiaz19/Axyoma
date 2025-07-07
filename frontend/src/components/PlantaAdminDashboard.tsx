@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import EmpleadosCRUD from './EmpleadosCRUD';
+import {
+  obtenerDepartamentos, crearDepartamento, actualizarDepartamento, eliminarDepartamento,
+  obtenerPuestos, crearPuesto, actualizarPuesto, eliminarPuesto,
+  Departamento, Puesto
+} from '../services/organizacionService';
 import { logout } from '../services/authService';
 import '../css/PlantaAdminDashboard.css';
-
-interface Empleado {
-  id: number;
-  nombre: string;
-  apellido_paterno: string;
-  puesto: string;
-  departamento: string;
-  antiguedad: number;
-  status: boolean;
-}
 
 interface PlantaAdminDashboardProps {
   userData: any;
@@ -18,23 +14,52 @@ interface PlantaAdminDashboardProps {
 }
 
 const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'empleados' | 'evaluaciones' | 'reportes'>('empleados');
-  const [empleados, setEmpleados] = useState<Empleado[]>([]);
+  const [activeSection, setActiveSection] = useState<'departamentos' | 'puestos' | 'empleados'>('departamentos');
+  const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
+  const [puestos, setPuestos] = useState<Puesto[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  // Verificar si la empresa está suspendida
+  const isEmpresaSuspendida = userData?.empresa_suspendida || userData?.advertencia?.tipo === 'empresa_suspendida';
+  
+  // Estados para formularios - Admin Planta solo puede trabajar con SU planta
+  const [nuevoDepartamento, setNuevoDepartamento] = useState<Departamento>({ 
+    nombre: '', 
+    descripcion: '', 
+    planta_id: userData?.planta_id || 0 // Usar la planta asignada del usuario
+  });
+  const [nuevoPuesto, setNuevoPuesto] = useState<Puesto>({ 
+    nombre: '', 
+    descripcion: '', 
+    departamento_id: 0 
+  });
+
+  // Estados para edición
+  const [editingDepartamento, setEditingDepartamento] = useState<Departamento | null>(null);
+  const [editingPuesto, setEditingPuesto] = useState<Puesto | null>(null);
+  
+  // Estados para filtros
+  const [filtroNombre, setFiltroNombre] = useState('');
+  const [filtroDepartamento, setFiltroDepartamento] = useState('');
 
   useEffect(() => {
-    cargarDatos();
-  }, []);
+    if (userData?.planta_id) {
+      cargarDatos();
+    }
+  }, [userData?.planta_id]);
 
   const cargarDatos = async () => {
     setLoading(true);
     try {
-      // Datos mock para empleados de la planta
-      setEmpleados([
-        { id: 1, nombre: 'Ana', apellido_paterno: 'Torres', puesto: 'Operario', departamento: 'Producción', antiguedad: 3, status: true },
-        { id: 2, nombre: 'Luis', apellido_paterno: 'García', puesto: 'Supervisor', departamento: 'Calidad', antiguedad: 5, status: true },
-        { id: 3, nombre: 'Carmen', apellido_paterno: 'López', puesto: 'Técnico', departamento: 'Mantenimiento', antiguedad: 2, status: true }
+      const [departamentosData, puestosData] = await Promise.all([
+        obtenerDepartamentos(), 
+        obtenerPuestos()
       ]);
+      
+      // Filtrar solo los departamentos y puestos de la planta asignada al usuario
+      const departamentosDePlanta = departamentosData.filter(dept => dept.planta_id === userData?.planta_id);
+      setDepartamentos(departamentosDePlanta);
+      setPuestos(puestosData);
     } catch (error) {
       console.error('Error cargando datos:', error);
     } finally {
@@ -47,188 +72,417 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
     onLogout();
   };
 
-  const renderEmpleados = () => (
-    <div className="section-content">
-      <div className="section-header">
-        <h3>Empleados de mi Planta</h3>
-        <button className="btn-primary">Nuevo Empleado</button>
-      </div>
+  // Funciones para departamentos
+  const handleCrearDepartamento = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!nuevoDepartamento.nombre.trim()) {
+      alert('El nombre del departamento es requerido');
+      return;
+    }
+    
+    // Admin Planta solo puede crear departamentos en SU planta asignada
+    const departamentoData = {
+      ...nuevoDepartamento,
+      planta_id: userData?.planta_id
+    };
+    
+    try {
+      if (editingDepartamento) {
+        await actualizarDepartamento(editingDepartamento.departamento_id!, departamentoData);
+        alert('Departamento actualizado exitosamente');
+      } else {
+        await crearDepartamento(departamentoData);
+        alert('Departamento creado exitosamente');
+      }
       
-      <div className="stats-grid">
-        <div className="stat-card">
-          <h4>Total Empleados</h4>
-          <span className="stat-number">{empleados.length}</span>
-        </div>
-        <div className="stat-card">
-          <h4>Empleados Activos</h4>
-          <span className="stat-number">{empleados.filter(e => e.status).length}</span>
-        </div>
-        <div className="stat-card">
-          <h4>Antigüedad Promedio</h4>
-          <span className="stat-number">
-            {empleados.length > 0 ? Math.round(empleados.reduce((sum, e) => sum + e.antiguedad, 0) / empleados.length) : 0} años
-          </span>
-        </div>
-      </div>
+      setNuevoDepartamento({ nombre: '', descripcion: '', planta_id: userData?.planta_id || 0 });
+      setEditingDepartamento(null);
+      cargarDatos();
+    } catch (error: any) {
+      console.error('Error con departamento:', error);
+      alert(error.message || 'Error al procesar departamento');
+    }
+  };
 
-      <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Puesto</th>
-              <th>Departamento</th>
-              <th>Antigüedad</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {empleados.map((empleado) => (
-              <tr key={empleado.id}>
-                <td>{empleado.nombre} {empleado.apellido_paterno}</td>
-                <td>{empleado.puesto}</td>
-                <td>{empleado.departamento}</td>
-                <td>{empleado.antiguedad} años</td>
-                <td>
-                  <span className={`status ${empleado.status ? 'active' : 'inactive'}`}>
-                    {empleado.status ? 'Activo' : 'Inactivo'}
-                  </span>
-                </td>
-                <td>
-                  <button className="btn-action">Ver</button>
-                  <button className="btn-action">Editar</button>
-                  <button className="btn-action">Evaluar</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
+  const handleEditarDepartamento = (departamento: Departamento) => {
+    setEditingDepartamento(departamento);
+    setNuevoDepartamento({
+      nombre: departamento.nombre,
+      descripcion: departamento.descripcion || '',
+      planta_id: departamento.planta_id
+    });
+  };
+
+  const handleEliminarDepartamento = async (departamento: Departamento) => {
+    const confirmMessage = `¿Está seguro de eliminar el departamento "${departamento.nombre}"?\\n\\nEsta acción también eliminará todos los puestos y empleados asociados.\\n\\nEsta acción NO se puede deshacer.`;
+    
+    if (window.confirm(confirmMessage)) {
+      try {
+        await eliminarDepartamento(departamento.departamento_id!);
+        cargarDatos();
+        alert('Departamento eliminado exitosamente');
+      } catch (error: any) {
+        console.error('Error eliminando departamento:', error);
+        alert(error.message || 'Error al eliminar departamento');
+      }
+    }
+  };
+
+  // Funciones para puestos
+  const handleCrearPuesto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!nuevoPuesto.nombre.trim()) {
+      alert('El nombre del puesto es requerido');
+      return;
+    }
+    
+    if (nuevoPuesto.departamento_id === 0) {
+      alert('Debe seleccionar un departamento');
+      return;
+    }
+    
+    try {
+      if (editingPuesto) {
+        await actualizarPuesto(editingPuesto.puesto_id!, nuevoPuesto);
+        alert('Puesto actualizado exitosamente');
+      } else {
+        await crearPuesto(nuevoPuesto);
+        alert('Puesto creado exitosamente');
+      }
+      
+      setNuevoPuesto({ nombre: '', descripcion: '', departamento_id: 0 });
+      setEditingPuesto(null);
+      cargarDatos();
+    } catch (error: any) {
+      console.error('Error con puesto:', error);
+      alert(error.message || 'Error al procesar puesto');
+    }
+  };
+
+  const handleEditarPuesto = (puesto: Puesto) => {
+    setEditingPuesto(puesto);
+    setNuevoPuesto({
+      nombre: puesto.nombre,
+      descripcion: puesto.descripcion || '',
+      departamento_id: puesto.departamento_id
+    });
+  };
+
+  const handleEliminarPuesto = async (puesto: Puesto) => {
+    const confirmMessage = `¿Está seguro de eliminar el puesto "${puesto.nombre}"?\\n\\nEsta acción también eliminará todos los empleados asociados a este puesto.\\n\\nEsta acción NO se puede deshacer.`;
+    
+    if (window.confirm(confirmMessage)) {
+      try {
+        await eliminarPuesto(puesto.puesto_id!);
+        cargarDatos();
+        alert('Puesto eliminado exitosamente');
+      } catch (error: any) {
+        console.error('Error eliminando puesto:', error);
+        alert(error.message || 'Error al eliminar puesto');
+      }
+    }
+  };
+
+  const cancelarEdicion = () => {
+    setEditingDepartamento(null);
+    setEditingPuesto(null);
+    setNuevoDepartamento({ nombre: '', descripcion: '', planta_id: 0 });
+    setNuevoPuesto({ nombre: '', descripcion: '', departamento_id: 0 });
+  };
+
+  // Filtrar datos
+  const departamentosFiltrados = departamentos.filter(dept =>
+    dept.nombre.toLowerCase().includes(filtroNombre.toLowerCase())
   );
 
-  const renderEvaluaciones = () => (
-    <div className="section-content">
-      <div className="section-header">
-        <h3>Evaluaciones de Planta</h3>
-        <button className="btn-primary">Nueva Evaluación</button>
-      </div>
-
-      <div className="evaluaciones-grid">
-        <div className="eval-card">
-          <h4>📋 Evaluaciones Pendientes</h4>
-          <span className="eval-number">12</span>
-          <p>Empleados por evaluar</p>
-          <button className="btn-secondary">Ver Pendientes</button>
-        </div>
-        <div className="eval-card">
-          <h4>✅ Evaluaciones Completadas</h4>
-          <span className="eval-number">28</span>
-          <p>Este mes</p>
-          <button className="btn-secondary">Ver Resultados</button>
-        </div>
-        <div className="eval-card">
-          <h4>⏰ Próximas Evaluaciones</h4>
-          <span className="eval-number">8</span>
-          <p>Esta semana</p>
-          <button className="btn-secondary">Programar</button>
-        </div>
-      </div>
-
-      <div className="recent-evaluations">
-        <h4>Evaluaciones Recientes</h4>
-        <div className="eval-list">
-          <div className="eval-item">
-            <span className="eval-employee">Ana Torres</span>
-            <span className="eval-type">Evaluación 360°</span>
-            <span className="eval-date">Hace 2 días</span>
-            <span className="eval-status completed">Completada</span>
-          </div>
-          <div className="eval-item">
-            <span className="eval-employee">Luis García</span>
-            <span className="eval-type">NOM-035</span>
-            <span className="eval-date">Hace 1 semana</span>
-            <span className="eval-status pending">Pendiente</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderReportes = () => (
-    <div className="section-content">
-      <h3>Reportes de Planta</h3>
-      <div className="reports-grid">
-        <div className="report-card">
-          <h4>📊 Reporte de Productividad</h4>
-          <p>Métricas de rendimiento por departamento</p>
-          <button className="btn-secondary">Generar</button>
-        </div>
-        <div className="report-card">
-          <h4>👥 Reporte de Personal</h4>
-          <p>Estadísticas de empleados y rotación</p>
-          <button className="btn-secondary">Generar</button>
-        </div>
-        <div className="report-card">
-          <h4>📈 Reporte de Evaluaciones</h4>
-          <p>Resultados y tendencias de evaluaciones</p>
-          <button className="btn-secondary">Generar</button>
-        </div>
-        <div className="report-card">
-          <h4>⚠️ Reporte de Incidencias</h4>
-          <p>Alertas y problemas detectados</p>
-          <button className="btn-secondary">Generar</button>
-        </div>
-      </div>
-    </div>
-  );
+  const puestosFiltrados = puestos.filter(puesto => {
+    const matchesNombre = puesto.nombre.toLowerCase().includes(filtroNombre.toLowerCase());
+    const matchesDepartamento = filtroDepartamento === '' || puesto.departamento_id.toString() === filtroDepartamento;
+    return matchesNombre && matchesDepartamento;
+  });
 
   if (loading) {
-    return <div className="loading">Cargando panel de planta...</div>;
+    return <div className="loading">Cargando datos...</div>;
   }
 
   return (
-    <div className="planta-admin-dashboard">
+    <div className="dashboard">
       <header className="dashboard-header">
-        <div className="header-left">
-          <h1>🏭 Admin de Planta</h1>
-          <span className="welcome">Bienvenido, {userData?.nombre_completo}</span>
-          <span className="planta-info">Planta: Oficina Central Tijuana</span>
+        <div className="header-info">
+          <h1>Panel de Administración - Planta</h1>
+          <p className="planta-info">
+            Planta: <strong>{userData?.nombre_planta || 'No asignada'}</strong>
+            {isEmpresaSuspendida && (
+              <span className="status-suspended">⚠️ EMPRESA SUSPENDIDA</span>
+            )}
+          </p>
         </div>
-        <div className="header-right">
-          <span className="user-badge">Admin Planta</span>
-          <button onClick={handleLogout} className="logout-btn">
-            Cerrar Sesión
-          </button>
+        <div className="user-info">
+          <span>{userData?.nombre_completo || userData?.usuario}</span>
+          <span>({userData?.nivel_usuario})</span>
         </div>
+        <button onClick={handleLogout} className="logout-btn">
+          Cerrar Sesión
+        </button>
       </header>
 
+      {/* Mensaje de advertencia para empresa suspendida */}
+      {isEmpresaSuspendida && (
+        <div className="suspension-warning">
+          <div className="warning-content">
+            <h3>⚠️ {userData?.advertencia?.mensaje || 'Empresa Suspendida'}</h3>
+            <p>{userData?.advertencia?.detalles || 'Las funcionalidades están limitadas. Contacte con soporte para reactivar su suscripción.'}</p>
+          </div>
+        </div>
+      )}
+
       <nav className="dashboard-nav">
+        <button 
+          className={activeSection === 'departamentos' ? 'active' : ''}
+          onClick={() => setActiveSection('departamentos')}
+        >
+          🏢 Departamentos ({departamentos.length})
+        </button>
+        <button 
+          className={activeSection === 'puestos' ? 'active' : ''}
+          onClick={() => setActiveSection('puestos')}
+        >
+          💼 Puestos ({puestos.length})
+        </button>
         <button 
           className={activeSection === 'empleados' ? 'active' : ''}
           onClick={() => setActiveSection('empleados')}
         >
-          👥 Empleados ({empleados.length})
-        </button>
-        <button 
-          className={activeSection === 'evaluaciones' ? 'active' : ''}
-          onClick={() => setActiveSection('evaluaciones')}
-        >
-          📋 Evaluaciones
-        </button>
-        <button 
-          className={activeSection === 'reportes' ? 'active' : ''}
-          onClick={() => setActiveSection('reportes')}
-        >
-          📊 Reportes
+          👥 Empleados
         </button>
       </nav>
 
       <main className="dashboard-content">
-        {activeSection === 'empleados' && renderEmpleados()}
-        {activeSection === 'evaluaciones' && renderEvaluaciones()}
-        {activeSection === 'reportes' && renderReportes()}
+        {/* Sección de Departamentos */}
+        {activeSection === 'departamentos' && (
+          <div className="departamentos-section">
+            <div className="section-header">
+              <h2>Gestión de Departamentos</h2>
+              <p>Administre los departamentos de su planta asignada: <strong>{userData?.nombre_planta}</strong></p>
+            </div>
+
+            {/* Filtros */}
+            <div className="filtros">
+              <input
+                type="text"
+                placeholder="Buscar departamentos..."
+                value={filtroNombre}
+                onChange={(e) => setFiltroNombre(e.target.value)}
+                className="filtro-input"
+              />
+            </div>
+
+            {/* Formulario */}
+            <form onSubmit={handleCrearDepartamento} className="create-form">
+              <h3>{editingDepartamento ? 'Editar Departamento' : 'Crear Nuevo Departamento'}</h3>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nombre del Departamento:</label>
+                  <input
+                    type="text"
+                    value={nuevoDepartamento.nombre}
+                    onChange={(e) => setNuevoDepartamento({ ...nuevoDepartamento, nombre: e.target.value })}
+                    placeholder="Ej: Mantenimiento"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Planta Asignada:</label>
+                  <input
+                    type="text"
+                    value={userData?.nombre_planta || 'Planta no asignada'}
+                    disabled
+                    className="readonly-input"
+                    title="Como Admin de Planta, solo puedes gestionar departamentos de tu planta asignada"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Descripción:</label>
+                <textarea
+                  value={nuevoDepartamento.descripcion}
+                  onChange={(e) => setNuevoDepartamento({ ...nuevoDepartamento, descripcion: e.target.value })}
+                  placeholder="Descripción del departamento"
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary">
+                  {editingDepartamento ? 'Actualizar' : 'Crear'} Departamento
+                </button>
+                {editingDepartamento && (
+                  <button type="button" onClick={cancelarEdicion} className="btn btn-secondary">
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+
+            {/* Lista de departamentos */}
+            <div className="items-grid">
+              {departamentosFiltrados.map((departamento) => (
+                <div key={departamento.departamento_id} className="item-card">
+                  <h4>{departamento.nombre}</h4>
+                  <p className="description">{departamento.descripcion}</p>
+                  <p className="meta">Planta: {departamento.planta_nombre}</p>
+                  
+                  <div className="actions">
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={() => handleEditarDepartamento(departamento)}
+                    >
+                      Editar
+                    </button>
+                    <button 
+                      className="btn btn-danger"
+                      onClick={() => handleEliminarDepartamento(departamento)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {departamentosFiltrados.length === 0 && (
+              <div className="empty-state">
+                <p>No hay departamentos que coincidan con la búsqueda</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sección de Puestos */}
+        {activeSection === 'puestos' && (
+          <div className="puestos-section">
+            <div className="section-header">
+              <h2>Gestión de Puestos</h2>
+              <p>Administre los puestos de trabajo de sus departamentos</p>
+            </div>
+
+            {/* Filtros */}
+            <div className="filtros">
+              <input
+                type="text"
+                placeholder="Buscar puestos..."
+                value={filtroNombre}
+                onChange={(e) => setFiltroNombre(e.target.value)}
+                className="filtro-input"
+              />
+              <select
+                value={filtroDepartamento}
+                onChange={(e) => setFiltroDepartamento(e.target.value)}
+                className="filtro-select"
+              >
+                <option value="">Todos los departamentos</option>
+                {departamentos.map((dept) => (
+                  <option key={dept.departamento_id} value={dept.departamento_id}>
+                    {dept.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Formulario */}
+            <form onSubmit={handleCrearPuesto} className="create-form">
+              <h3>{editingPuesto ? 'Editar Puesto' : 'Crear Nuevo Puesto'}</h3>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nombre del Puesto:</label>
+                  <input
+                    type="text"
+                    value={nuevoPuesto.nombre}
+                    onChange={(e) => setNuevoPuesto({ ...nuevoPuesto, nombre: e.target.value })}
+                    placeholder="Ej: Técnico en Mantenimiento"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Departamento:</label>
+                  <select
+                    value={nuevoPuesto.departamento_id}
+                    onChange={(e) => setNuevoPuesto({ ...nuevoPuesto, departamento_id: parseInt(e.target.value) })}
+                    required
+                  >
+                    <option value={0}>Seleccionar departamento</option>
+                    {departamentos.map((dept) => (
+                      <option key={dept.departamento_id} value={dept.departamento_id}>
+                        {dept.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Descripción:</label>
+                <textarea
+                  value={nuevoPuesto.descripcion}
+                  onChange={(e) => setNuevoPuesto({ ...nuevoPuesto, descripcion: e.target.value })}
+                  placeholder="Descripción del puesto"
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary">
+                  {editingPuesto ? 'Actualizar' : 'Crear'} Puesto
+                </button>
+                {editingPuesto && (
+                  <button type="button" onClick={cancelarEdicion} className="btn btn-secondary">
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+
+            {/* Lista de puestos */}
+            <div className="items-grid">
+              {puestosFiltrados.map((puesto) => (
+                <div key={puesto.puesto_id} className="item-card">
+                  <h4>{puesto.nombre}</h4>
+                  <p className="description">{puesto.descripcion}</p>
+                  <p className="meta">Departamento: {puesto.departamento_nombre}</p>
+                  
+                  <div className="actions">
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={() => handleEditarPuesto(puesto)}
+                    >
+                      Editar
+                    </button>
+                    <button 
+                      className="btn btn-danger"
+                      onClick={() => handleEliminarPuesto(puesto)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {puestosFiltrados.length === 0 && (
+              <div className="empty-state">
+                <p>No hay puestos que coincidan con la búsqueda</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sección de Empleados */}
+        {activeSection === 'empleados' && <EmpleadosCRUD userData={userData} />}
       </main>
     </div>
   );

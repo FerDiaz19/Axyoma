@@ -1,0 +1,318 @@
+/* ============================================================================
+   PLAN SELECTION - SELECCIÓN DE PLAN DE SUSCRIPCIÓN
+   ============================================================================ */
+
+.plan-selection-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  min-height: 100vh;
+}
+
+.plan-selection-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.plan-selection-header h2 {
+  color: #2c3e50;
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+
+.plan-selection-header p {
+  color: #6c757d;
+  font-size: 1.2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ============================================================================
+   GRID DE PLANES
+   ============================================================================ */
+
+.planes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.plan-card {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 3px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.plan-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(45deg, #007bff, #0056b3);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.plan-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.plan-card:hover::before {
+  transform: scaleX(1);
+}
+
+.plan-card.selected {
+  border-color: #007bff;
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 123, 255, 0.2);
+}
+
+.plan-card.selected::before {
+  transform: scaleX(1);
+}
+
+/* ============================================================================
+   CONTENIDO DEL PLAN
+   ============================================================================ */
+
+.plan-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e9ecef;
+  padding-bottom: 1.5rem;
+}
+
+.plan-header h3 {
+  color: #2c3e50;
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.plan-price .price {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #007bff;
+}
+
+.plan-price .period {
+  font-size: 1.2rem;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.plan-description {
+  margin-bottom: 1.5rem;
+}
+
+.plan-description p {
+  color: #6c757d;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* ============================================================================
+   LÍMITES Y CARACTERÍSTICAS
+   ============================================================================ */
+
+.plan-limits {
+  margin-bottom: 1.5rem;
+}
+
+.limit-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.limit-item .icon {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+.limit-item span:last-child {
+  color: #495057;
+  font-weight: 500;
+}
+
+.plan-features {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.plan-features h4 {
+  color: #2c3e50;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.plan-features p {
+  color: #6c757d;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ============================================================================
+   BOTÓN DE SELECCIÓN
+   ============================================================================ */
+
+.select-plan-btn {
+  width: 100%;
+  padding: 1rem 2rem;
+  background: linear-gradient(45deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.select-plan-btn:hover {
+  background: linear-gradient(45deg, #0056b3, #004085);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+}
+
+.select-plan-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.select-plan-btn.selected {
+  background: linear-gradient(45deg, #28a745, #1e7e34);
+}
+
+.select-plan-btn.selected:hover {
+  background: linear-gradient(45deg, #1e7e34, #155724);
+}
+
+/* ============================================================================
+   FOOTER
+   ============================================================================ */
+
+.plan-selection-footer {
+  text-align: center;
+  border-top: 1px solid #e9ecef;
+  padding-top: 2rem;
+}
+
+.payment-info {
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+  padding: 1rem;
+  background: #e3f2fd;
+  border-radius: 8px;
+  border-left: 4px solid #2196f3;
+}
+
+.skip-btn {
+  padding: 0.75rem 2rem;
+  background: transparent;
+  color: #6c757d;
+  border: 2px solid #dee2e6;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.skip-btn:hover {
+  background: #f8f9fa;
+  border-color: #adb5bd;
+  color: #495057;
+}
+
+.skip-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   LOADING STATE
+   ============================================================================ */
+
+.loading {
+  text-align: center;
+  padding: 4rem 2rem;
+  font-size: 1.5rem;
+  color: #6c757d;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .plan-selection-container {
+    padding: 1rem;
+  }
+  
+  .plan-selection-header h2 {
+    font-size: 2rem;
+  }
+  
+  .planes-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .plan-card {
+    padding: 1.5rem;
+  }
+  
+  .plan-price .price {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .plan-selection-header h2 {
+    font-size: 1.75rem;
+  }
+  
+  .plan-selection-header p {
+    font-size: 1rem;
+  }
+  
+  .plan-card {
+    padding: 1rem;
+  }
+}

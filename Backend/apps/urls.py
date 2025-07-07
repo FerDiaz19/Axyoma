@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import AuthViewSet, EmpresaViewSet, EmpleadoViewSet, PlantaViewSet, DepartamentoViewSet, PuestoViewSet, EstructuraViewSet
+from .views import AuthViewSet, EmpresaViewSet, EmpleadoViewSet, PlantaViewSet, DepartamentoViewSet, PuestoViewSet, EstructuraViewSet, SuperAdminViewSet, SuscripcionViewSet
 
 router = DefaultRouter()
 router.register(r'auth', AuthViewSet, basename='auth')
@@ -10,6 +10,8 @@ router.register(r'plantas', PlantaViewSet)
 router.register(r'departamentos', DepartamentoViewSet)
 router.register(r'puestos', PuestoViewSet)
 router.register(r'estructura', EstructuraViewSet, basename='estructura')
+router.register(r'superadmin', SuperAdminViewSet, basename='superadmin')
+router.register(r'suscripciones', SuscripcionViewSet, basename='suscripciones')
 
 urlpatterns = [
     path('', include(router.urls)),

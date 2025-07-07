@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  obtenerPlantas, crearPlanta, eliminarPlanta,
-  obtenerDepartamentos, crearDepartamento, eliminarDepartamento,
-  obtenerPuestos, crearPuesto, eliminarPuesto,
+  obtenerPlantas, crearPlanta, actualizarPlanta, eliminarPlanta,
+  obtenerDepartamentos, crearDepartamento, actualizarDepartamento, eliminarDepartamento,
+  obtenerPuestos, crearPuesto, actualizarPuesto, eliminarPuesto,
   obtenerUsuariosPlantas,
   Planta, Departamento, Puesto, UsuarioPlanta
 } from '../services/organizacionService';
@@ -29,6 +29,15 @@ const GestionEstructura: React.FC = () => {
     descripcion: '', 
     departamento_id: 0 
   });
+
+  // Estados para edición
+  const [editingDepartamento, setEditingDepartamento] = useState<Departamento | null>(null);
+  const [editingPuesto, setEditingPuesto] = useState<Puesto | null>(null);
+  
+  // Estados para filtros
+  const [filtroNombre, setFiltroNombre] = useState('');
+  const [filtroDepartamento, setFiltroDepartamento] = useState('');
+  const [filtroPuesto, setFiltroPuesto] = useState('');
 
   useEffect(() => {
     cargarDatos();
@@ -96,6 +105,27 @@ const GestionEstructura: React.FC = () => {
     }
   };
 
+  const handleEliminarPlanta = async (plantaId: number) => {
+    const planta = plantas.find(p => p.planta_id === plantaId);
+    if (!planta) {
+      alert('Planta no encontrada');
+      return;
+    }
+    
+    const confirmMessage = `¿Está seguro de eliminar la planta "${planta.nombre}"?\n\nEsta acción también eliminará todos los departamentos, puestos y empleados asociados.\n\nEsta acción NO se puede deshacer.`;
+    
+    if (window.confirm(confirmMessage)) {
+      try {
+        await eliminarPlanta(plantaId);
+        cargarDatos();
+        alert('Planta eliminada exitosamente');
+      } catch (error: any) {
+        console.error('Error eliminando planta:', error);
+        alert(error.message || 'Error al eliminar planta');
+      }
+    }
+  };
+
   const handleCrearDepartamento = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -139,43 +169,93 @@ const GestionEstructura: React.FC = () => {
     }
   };
 
-  const handleEliminarPlanta = async (id: number) => {
-    if (window.confirm('¿Estás seguro de eliminar esta planta?')) {
-      try {
-        await eliminarPlanta(id);
-        cargarDatos();
-        alert('Planta eliminada');
-      } catch (error) {
-        console.error('Error eliminando planta:', error);
-        alert('Error al eliminar planta');
-      }
+  // Funciones para editar departamentos
+  const handleEditarDepartamento = (departamento: Departamento) => {
+    setEditingDepartamento(departamento);
+    setNuevoDepartamento({
+      nombre: departamento.nombre,
+      descripcion: departamento.descripcion || '',
+      planta_id: departamento.planta_id
+    });
+  };
+
+  const handleActualizarDepartamento = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDepartamento) return;
+
+    try {
+      await actualizarDepartamento(editingDepartamento.departamento_id!, nuevoDepartamento);
+      setNuevoDepartamento({ nombre: '', descripcion: '', planta_id: 0 });
+      setEditingDepartamento(null);
+      cargarDatos();
+      alert('Departamento actualizado exitosamente');
+    } catch (error: any) {
+      console.error('Error actualizando departamento:', error);
+      alert(error.message || 'Error al actualizar departamento');
     }
   };
 
-  const handleEliminarDepartamento = async (id: number) => {
-    if (window.confirm('¿Estás seguro de eliminar este departamento?')) {
+  const handleEliminarDepartamento = async (departamento: Departamento) => {
+    const confirmMessage = `¿Está seguro de eliminar el departamento "${departamento.nombre}"?\n\nEsta acción también eliminará todos los puestos y empleados asociados.\n\nEsta acción NO se puede deshacer.`;
+    
+    if (window.confirm(confirmMessage)) {
       try {
-        await eliminarDepartamento(id);
+        await eliminarDepartamento(departamento.departamento_id!);
         cargarDatos();
-        alert('Departamento eliminado');
-      } catch (error) {
+        alert('Departamento eliminado exitosamente');
+      } catch (error: any) {
         console.error('Error eliminando departamento:', error);
-        alert('Error al eliminar departamento');
+        alert(error.message || 'Error al eliminar departamento');
       }
     }
   };
 
-  const handleEliminarPuesto = async (id: number) => {
-    if (window.confirm('¿Estás seguro de eliminar este puesto?')) {
+  // Funciones para editar puestos
+  const handleEditarPuesto = (puesto: Puesto) => {
+    setEditingPuesto(puesto);
+    setNuevoPuesto({
+      nombre: puesto.nombre,
+      descripcion: puesto.descripcion || '',
+      departamento_id: puesto.departamento_id
+    });
+  };
+
+  const handleActualizarPuesto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPuesto) return;
+
+    try {
+      await actualizarPuesto(editingPuesto.puesto_id!, nuevoPuesto);
+      setNuevoPuesto({ nombre: '', descripcion: '', departamento_id: 0 });
+      setEditingPuesto(null);
+      cargarDatos();
+      alert('Puesto actualizado exitosamente');
+    } catch (error: any) {
+      console.error('Error actualizando puesto:', error);
+      alert(error.message || 'Error al actualizar puesto');
+    }
+  };
+
+  const handleEliminarPuesto = async (puesto: Puesto) => {
+    const confirmMessage = `¿Está seguro de eliminar el puesto "${puesto.nombre}"?\n\nEsta acción también eliminará todos los empleados asociados a este puesto.\n\nEsta acción NO se puede deshacer.`;
+    
+    if (window.confirm(confirmMessage)) {
       try {
-        await eliminarPuesto(id);
+        await eliminarPuesto(puesto.puesto_id!);
         cargarDatos();
-        alert('Puesto eliminado');
-      } catch (error) {
+        alert('Puesto eliminado exitosamente');
+      } catch (error: any) {
         console.error('Error eliminando puesto:', error);
-        alert('Error al eliminar puesto');
+        alert(error.message || 'Error al eliminar puesto');
       }
     }
+  };
+
+  const cancelarEdicion = () => {
+    setEditingDepartamento(null);
+    setEditingPuesto(null);
+    setNuevoDepartamento({ nombre: '', descripcion: '', planta_id: 0 });
+    setNuevoPuesto({ nombre: '', descripcion: '', departamento_id: 0 });
   };
 
   if (loading) {
@@ -331,7 +411,7 @@ const GestionEstructura: React.FC = () => {
                       <p>Planta: {planta?.nombre}</p>
                       <div className="actions">
                         <button 
-                          onClick={() => handleEliminarDepartamento(departamento.departamento_id!)}
+                          onClick={() => handleEliminarDepartamento(departamento)}
                           className="delete-btn"
                         >
                           Eliminar
@@ -409,7 +489,7 @@ const GestionEstructura: React.FC = () => {
                       <p>Planta: {planta?.nombre}</p>
                       <div className="actions">
                         <button 
-                          onClick={() => handleEliminarPuesto(puesto.puesto_id!)}
+                          onClick={() => handleEliminarPuesto(puesto)}
                           className="delete-btn"
                         >
                           Eliminar
