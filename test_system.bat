@@ -30,9 +30,9 @@ if %errorlevel% neq 0 (
 )
 
 echo [4/6] Verificando conexion a base de datos...
-psql -U postgres -h localhost -p 5432 -d axyoma_db -c "\q" >nul 2>&1
+psql -U postgres -h localhost -p 5432 -d axyomadb -c "\q" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ❌ No se puede conectar a 'axyoma_db'
+    echo ❌ No se puede conectar a 'axyomadb'
     echo    Ejecuta setup_project.bat para crear la base de datos
     exit /b 1
 ) else (

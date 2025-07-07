@@ -38,14 +38,14 @@ if not exist "apps\mock_data.json" (
 
 REM Verificar conexion a PostgreSQL
 echo Verificando conexion a PostgreSQL...
-psql -U postgres -h localhost -p 5432 -d axyoma_db -c "\q" >nul 2>&1
+psql -U postgres -h localhost -p 5432 -d axyomadb -c "\q" >nul 2>&1
 if %errorlevel% neq 0 (
     echo ERROR: No se puede conectar a PostgreSQL
     echo.
     echo SOLUCION:
     echo 1. Verifica que PostgreSQL este instalado y ejecutandose
-    echo 2. Verifica que la base de datos 'axyoma_db' exista
-    echo 3. Verifica las credenciales: usuario=postgres, password=admin
+    echo 2. Verifica que la base de datos 'axyomadb' exista
+    echo 3. Verifica las credenciales: usuario=postgres, password=123456789
     echo 4. Si es la primera vez, ejecuta setup_project.bat
     pause
     exit /b 1

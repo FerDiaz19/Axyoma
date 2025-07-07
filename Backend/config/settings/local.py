@@ -10,9 +10,9 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'axyoma_db',
+        'NAME': 'axyomadb',
         'USER': 'postgres',
-        'PASSWORD': 'admin',
+        'PASSWORD': '123456789',
         'HOST': 'localhost',
         'PORT': '5432',
         'CONN_MAX_AGE': 600,

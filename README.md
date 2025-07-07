@@ -7,7 +7,7 @@ Sistema completo de gestión de empleados con arquitectura de suscripciones para
 ### Obligatorios
 - **Python 3.8+** (con pip)
 - **Node.js 16+** (con npm)
-- **PostgreSQL 12+** (usuario: postgres, password: admin)
+- **PostgreSQL 12+** (usuario: postgres, password: 123456789)
 
 ### Verificar Instalación
 ```bash
@@ -42,7 +42,7 @@ start_system.bat
 - **Frontend**: React + TypeScript
 - **Autenticación**: Token-based
 - **Suscripciones**: Sistema automatizado de pagos
-- **Base de Datos**: PostgreSQL (axyoma_db)
+- **Base de Datos**: PostgreSQL (axyomadb)
 
 ## 👥 Tipos de Usuario
 

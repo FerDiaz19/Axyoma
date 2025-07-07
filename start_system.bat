@@ -84,7 +84,7 @@ psql --version >nul 2>&1
 if %errorlevel% neq 0 (
     echo ERROR: PostgreSQL no esta instalado o no esta en PATH
     echo Descarga e instala PostgreSQL desde https://www.postgresql.org/download/windows/
-    echo Configura: usuario=postgres, password=admin, puerto=5432
+    echo Configura: usuario=postgres, password=123456789, puerto=5432
     pause
     exit /b 1
 ) else (
@@ -92,14 +92,14 @@ if %errorlevel% neq 0 (
 )
 
 REM Verificar conexion a base de datos
-psql -U postgres -h localhost -p 5432 -d axyoma_db -c "\q" >nul 2>&1
+psql -U postgres -h localhost -p 5432 -d axyomadb -c "\q" >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ERROR: No se puede conectar a la base de datos 'axyoma_db'
+    echo ERROR: No se puede conectar a la base de datos 'axyomadb'
     echo Ejecuta setup_project.bat para crear la base de datos
     pause
     exit /b 1
 ) else (
-    echo ✓ Base de datos 'axyoma_db' accesible
+    echo ✓ Base de datos 'axyomadb' accesible
 )
 
 echo.
@@ -151,7 +151,7 @@ echo 💡 Si hay problemas:
 echo    1. Verifica que los puertos 8000 y 3000 esten libres
 echo    2. Ejecuta setup_project.bat si es la primera vez
 echo    3. Revisa que Python 3.8+, Node.js 16+ y PostgreSQL esten instalados
-echo    4. Verifica que PostgreSQL este ejecutandose (usuario: postgres, password: admin)
+echo    4. Verifica que PostgreSQL este ejecutandose (usuario: postgres, password: 123456789)
 echo.
 echo El navegador se abrira automaticamente en http://localhost:3000
 echo.

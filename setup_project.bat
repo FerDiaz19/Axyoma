@@ -24,7 +24,7 @@ if %errorlevel% neq 0 (
     echo 1. Descarga PostgreSQL desde https://www.postgresql.org/download/windows/
     echo 2. Durante la instalacion, configura:
     echo    - Usuario: postgres
-    echo    - Password: admin
+    echo    - Password: 123456789
     echo    - Puerto: 5432
     echo 3. Asegurate de marcar "Add to PATH" durante la instalacion
     echo 4. Despues de instalar, ejecuta este script nuevamente
@@ -35,16 +35,16 @@ if %errorlevel% neq 0 (
 )
 
 echo [3/5] Creando base de datos...
-echo Creando base de datos 'axyoma_db'...
-psql -U postgres -h localhost -p 5432 -c "DROP DATABASE IF EXISTS axyoma_db;" 2>nul
-psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE axyoma_db;" 2>nul
+echo Creando base de datos 'axyomadb'...
+psql -U postgres -h localhost -p 5432 -c "DROP DATABASE IF EXISTS axyomadb;" 2>nul
+psql -U postgres -h localhost -p 5432 -c "CREATE DATABASE axyomadb;" 2>nul
 if %errorlevel% neq 0 (
     echo Verificando conexion a PostgreSQL...
     psql -U postgres -h localhost -p 5432 -c "\l" >nul 2>&1
     if %errorlevel% neq 0 (
         echo ERROR: No se puede conectar a PostgreSQL
         echo Verifica que el servicio este ejecutandose y las credenciales sean correctas
-        echo Usuario: postgres, Password: admin, Puerto: 5432
+        echo Usuario: postgres, Password: 123456789, Puerto: 5432
         pause
         exit /b 1
     ) else (
@@ -53,7 +53,7 @@ if %errorlevel% neq 0 (
         exit /b 1
     )
 ) else (
-    echo ✓ Base de datos 'axyoma_db' creada exitosamente
+    echo ✓ Base de datos 'axyomadb' creada exitosamente
 )
 
 echo [4/5] Instalando dependencias del Backend...
@@ -109,8 +109,8 @@ echo.
 echo ===== SETUP COMPLETADO =====
 echo.
 echo ✅ REQUISITOS VERIFICADOS:
-echo    ✓ PostgreSQL configurado (usuario: postgres, password: admin)
-echo    ✓ Base de datos 'axyoma_db' creada
+echo    ✓ PostgreSQL configurado (usuario: postgres, password: 123456789)
+echo    ✓ Base de datos 'axyomadb' creada
 echo    ✓ Dependencias del backend instaladas
 echo    ✓ Migraciones de Django ejecutadas
 echo    ✓ Dependencias del frontend instaladas
