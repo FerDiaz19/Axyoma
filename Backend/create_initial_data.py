@@ -16,7 +16,7 @@ django.setup()
 from django.contrib.auth.models import User
 from apps.models import (
     Empresa, Usuario, Planta, Departamento, Puesto, 
-    PlanSuscripcion, Suscripcion, Empleado
+    PlanSuscripcion, Suscripcion, Empleado, AdminPlanta
 )
 from datetime import datetime, timedelta
 
@@ -157,25 +157,29 @@ def create_initial_data():
         
         print(f"   ✅ Suscripción creada: Plan {suscripcion.plan_suscripcion.nombre}")
 
-        # 6. Crear Planta
-        print("🏭 Creando planta...")
+        # 6. Crear Planta Principal de la empresa (automática al registrarse)
+        print("🏭 Creando planta principal de la empresa...")
         
-        planta, created = Planta.objects.get_or_create(
+        planta_principal, created = Planta.objects.get_or_create(
             nombre='Planta Principal',
             empresa=empresa,
             defaults={
-                'direccion': 'Parque Industrial Norte, Zona 1, Lote 15',
+                'direccion': 'Av. Revolución 1234, Col. San Ángel, CDMX',  # Misma dirección que la empresa inicialmente
                 'status': True
             }
         )
         
-        print(f"   ✅ Planta creada: {planta.nombre}")
+        print(f"   ✅ Planta Principal creada: {planta_principal.nombre} (planta donde contrató el servicio)")
         
-        # 7. Crear Departamentos
-        print("🏢 Creando departamentos...")
+        # 7. Crear Departamentos en la Planta Principal
+        print("🏢 Creando departamentos en la planta principal...")
         
         departamentos_data = [
+            # Departamentos administrativos
+            {'nombre': 'Administración', 'descripcion': 'Gestión administrativa general'},
             {'nombre': 'Recursos Humanos', 'descripcion': 'Gestión del personal y nómina'},
+            {'nombre': 'Finanzas', 'descripcion': 'Gestión financiera y contable'},
+            # Departamentos operativos
             {'nombre': 'Producción', 'descripcion': 'Operaciones de manufactura'},
             {'nombre': 'Calidad', 'descripcion': 'Control y aseguramiento de calidad'},
             {'nombre': 'Mantenimiento', 'descripcion': 'Mantenimiento de equipos e instalaciones'},
@@ -186,23 +190,31 @@ def create_initial_data():
         for dept_data in departamentos_data:
             dept, created = Departamento.objects.get_or_create(
                 nombre=dept_data['nombre'],
-                planta=planta,
+                planta=planta_principal,
                 defaults={
                     'descripcion': dept_data['descripcion']
                 }
             )
             departamentos.append(dept)
         
-        print(f"   ✅ Creados {len(departamentos)} departamentos")
+        print(f"   ✅ Creados {len(departamentos)} departamentos en la planta principal")
         
-        # 8. Crear Puestos
+        # 8. Crear Puestos para todos los departamentos
         print("💼 Creando puestos...")
         
         puestos_data = [
+            # Administración
+            {'nombre': 'Gerente General', 'departamento': 'Administración'},
+            {'nombre': 'Asistente Administrativo', 'departamento': 'Administración'},
+            
             # Recursos Humanos
             {'nombre': 'Gerente de RRHH', 'departamento': 'Recursos Humanos'},
             {'nombre': 'Especialista en Nómina', 'departamento': 'Recursos Humanos'},
             {'nombre': 'Reclutador', 'departamento': 'Recursos Humanos'},
+            
+            # Finanzas
+            {'nombre': 'Contador', 'departamento': 'Finanzas'},
+            {'nombre': 'Analista Financiero', 'departamento': 'Finanzas'},
             
             # Producción
             {'nombre': 'Supervisor de Producción', 'departamento': 'Producción'},
@@ -232,7 +244,7 @@ def create_initial_data():
                 )
                 puestos.append(puesto)
         
-        print(f"   ✅ Creados {len(puestos)} puestos")
+        print(f"   ✅ Creados {len(puestos)} puestos en la planta principal")
         
         # 9. Crear Usuario Admin Planta
         print("👤 Creando Admin Planta...")
@@ -263,16 +275,29 @@ def create_initial_data():
             }
         )
         
-        print(f"   ✅ Admin Planta creado: {admin_planta.correo}")
+        # Asignar la planta al admin_planta usando la tabla intermedia
+        admin_planta_asignacion, created = AdminPlanta.objects.get_or_create(
+            usuario=admin_planta,
+            planta=planta_principal,
+            defaults={
+                'status': True
+            }
+        )
+        
+        print(f"   ✅ Admin Planta creado: {admin_planta.correo} - Planta: {planta_principal.nombre}")
         
         # 10. Crear empleados de muestra
         print("👥 Creando empleados de muestra...")
         
         empleados_data = [
+            # Empleados administrativos
+            {'nombre': 'Laura', 'apellido_paterno': 'Jiménez', 'apellido_materno': 'Ruiz', 'genero': 'Femenino', 'puesto': 'Especialista en Nómina', 'antiguedad': 2},
+            {'nombre': 'Pedro', 'apellido_paterno': 'González', 'apellido_materno': 'Morales', 'genero': 'Masculino', 'puesto': 'Contador', 'antiguedad': 4},
+            
+            # Empleados operativos
             {'nombre': 'Carlos', 'apellido_paterno': 'Martínez', 'apellido_materno': 'Sánchez', 'genero': 'Masculino', 'puesto': 'Supervisor de Producción', 'antiguedad': 5},
             {'nombre': 'Ana', 'apellido_paterno': 'López', 'apellido_materno': 'García', 'genero': 'Femenino', 'puesto': 'Inspector de Calidad', 'antiguedad': 3},
             {'nombre': 'Roberto', 'apellido_paterno': 'Hernández', 'apellido_materno': 'Morales', 'genero': 'Masculino', 'puesto': 'Técnico de Mantenimiento', 'antiguedad': 7},
-            {'nombre': 'Laura', 'apellido_paterno': 'Jiménez', 'apellido_materno': 'Ruiz', 'genero': 'Femenino', 'puesto': 'Especialista en Nómina', 'antiguedad': 2},
             {'nombre': 'Diego', 'apellido_paterno': 'Vargas', 'apellido_materno': 'Castro', 'genero': 'Masculino', 'puesto': 'Operador de Máquina', 'antiguedad': 4},
         ]
         
@@ -283,7 +308,7 @@ def create_initial_data():
                 empleado, created = Empleado.objects.get_or_create(
                     nombre=emp_data['nombre'],
                     apellido_paterno=emp_data['apellido_paterno'],
-                    planta=planta,
+                    planta=planta_principal,
                     defaults={
                         'apellido_materno': emp_data['apellido_materno'],
                         'genero': emp_data['genero'],
@@ -296,14 +321,15 @@ def create_initial_data():
                 if created:
                     empleados_creados += 1
         
-        print(f"   ✅ Creados {empleados_creados} empleados")
+        print(f"   ✅ Creados {empleados_creados} empleados en la planta principal")
     
     print("\n🎉 ¡DATOS INICIALES CREADOS EXITOSAMENTE!")
     print("\n📊 RESUMEN:")
     print(f"   ✅ {PlanSuscripcion.objects.count()} planes de suscripción")
     print(f"   ✅ {Usuario.objects.count()} usuarios del sistema")
     print(f"   ✅ {Empresa.objects.count()} empresa")
-    print(f"   ✅ {Planta.objects.count()} planta")
+    print(f"   ✅ {Planta.objects.count()} planta principal (automática al registrarse)")
+    print(f"   ✅ {AdminPlanta.objects.count()} asignaciones admin-planta")
     print(f"   ✅ {Departamento.objects.count()} departamentos")
     print(f"   ✅ {Puesto.objects.count()} puestos")
     print(f"   ✅ {Empleado.objects.count()} empleados")
@@ -317,7 +343,9 @@ def create_initial_data():
     print("\n🏢 EMPRESA CREADA:")
     print("   📋 Nombre: CodeWave Technologies S.A. de C.V.")
     print("   📄 RFC: CWT240701ABC")
-    print("   💳 Plan: Profesional (200 empleados, 5 plantas)")
+    print("   🏭 Planta Principal: Creada automáticamente al registrarse")
+    print("   💳 Plan: Profesional (activo)")
+    print("   📝 Nota: Puede crear plantas adicionales desde 'Gestión de Plantas'")
     
     return True
 

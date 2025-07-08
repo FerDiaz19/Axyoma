@@ -49,26 +49,41 @@ class Empresa(models.Model):
     @property
     def tiene_suscripcion_activa(self):
         """Verifica si la empresa tiene una suscripción activa"""
+        from apps.subscriptions.models import SuscripcionEmpresa
         try:
-            return self.suscripcion.esta_activa
+            suscripcion_activa = SuscripcionEmpresa.objects.filter(
+                empresa=self,
+                status=True,
+                estado='Activa'
+            ).first()
+            return suscripcion_activa.esta_activa if suscripcion_activa else False
         except:
             return False
     
     @property
-    def dias_restantes_suscripcion(self):
-        """Obtiene los días restantes de la suscripción"""
+    def suscripcion_activa(self):
+        """Obtiene la suscripción activa más reciente de la empresa"""
+        from apps.subscriptions.models import SuscripcionEmpresa
         try:
-            return self.suscripcion.dias_restantes
+            return SuscripcionEmpresa.objects.filter(
+                empresa=self,
+                status=True,
+                estado='Activa'
+            ).order_by('-fecha_inicio').first()
         except:
-            return 0
+            return None
+    
+    @property
+    def dias_restantes_suscripcion(self):
+        """Obtiene los días restantes de la suscripción activa"""
+        suscripcion = self.suscripcion_activa
+        return suscripcion.dias_restantes if suscripcion else 0
     
     @property
     def estado_suscripcion(self):
-        """Obtiene el estado de la suscripción"""
-        try:
-            return self.suscripcion.estado
-        except:
-            return 'sin_suscripcion'
+        """Obtiene el estado de la suscripción activa"""
+        suscripcion = self.suscripcion_activa
+        return suscripcion.estado if suscripcion else 'sin_suscripcion'
 
 # PLANTAS - Según el esquema SQL original
 class Planta(models.Model):

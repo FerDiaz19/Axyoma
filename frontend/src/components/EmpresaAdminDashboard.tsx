@@ -2,9 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import EmpleadosCRUD from './EmpleadosCRUD';
 import GestionEstructura from './GestionEstructura';
 import GestionPlantas from './GestionPlantas';
+import GestionDepartamentos from './GestionDepartamentos';
+import GestionPuestos from './GestionPuestos';
 import { logout } from '../services/authService';
 import '../css/Dashboard.css';
 import '../css/GestionPlantas.css';
+import '../css/EmpresaAdminDashboard.css';
 
 interface EmpresaAdminDashboardProps {
   userData: any;
@@ -12,7 +15,7 @@ interface EmpresaAdminDashboardProps {
 }
 
 const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'plantas' | 'empleados' | 'estructura' | 'evaluaciones' | 'reportes'>('plantas');
+  const [activeSection, setActiveSection] = useState<'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'estructura' | 'evaluaciones' | 'reportes'>('plantas');
   const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -110,131 +113,159 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
   };
 
   if (loading) {
-    return (
-      <div className="dashboard">
-        <header className="dashboard-header">
-          <h1>Panel de Administración - Empresa</h1>
-          <div className="empresa-info">
-            <span>Cargando...</span>
-          </div>
-        </header>
-        <div className="loading-subscription">
-          <p>Verificando estado de suscripción...</p>
-        </div>
-      </div>
-    );
+    return <div className="loading">🔄 Cargando información de la empresa...</div>;
   }
 
   return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <h1>Panel de Administración - Empresa</h1>
-        <div className="empresa-info">
-          <span>{userData?.nombre_empresa || 'Empresa'}</span>
-          <span>({userData?.usuario})</span>
-          {isEmpresaSuspendida && (
-            <span className="status-suspended">⚠️ SUSPENDIDA</span>
-          )}
-          {subscriptionInfo?.tiene_suscripcion && subscriptionInfo?.estado === 'activa' && (
-            <span className="status-active" style={{ color: '#28a745', fontWeight: 'bold' }}>
-              ✅ ACTIVA ({subscriptionInfo.dias_restantes} días)
-            </span>
-          )}
-        </div>
-        <button onClick={handleLogout} className="logout-btn">
-          Cerrar Sesión
-        </button>
-      </header>
-
-      {/* Información de suscripción activa */}
-      {subscriptionInfo?.tiene_suscripcion && subscriptionInfo?.estado === 'activa' && (
-        <div className="subscription-active-info" style={{ 
-          margin: '20px 0', 
-          padding: '15px', 
-          backgroundColor: '#d4edda', 
-          borderRadius: '5px', 
-          border: '1px solid #c3e6cb' 
-        }}>
-          <h4 style={{ color: '#155724', margin: '0 0 10px 0' }}>✅ Suscripción Activa</h4>
-          <div style={{ display: 'flex', gap: '20px', color: '#155724' }}>
-            <span>Plan: {subscriptionInfo.suscripcion?.plan_nombre}</span>
-            <span>Días restantes: {subscriptionInfo.dias_restantes}</span>
-            <span>Vence: {subscriptionInfo.fecha_vencimiento}</span>
+    <div className="dashboard empresa-admin-dashboard">
+      {/* Sidebar - Always visible */}
+      <aside className="dashboard-sidebar">
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            <h2>🏢 AXYOMA</h2>
+            <span className="sidebar-subtitle">Admin Empresa</span>
           </div>
         </div>
-      )}
+        <nav className="sidebar-nav">
+          <button 
+            className={activeSection === 'plantas' ? 'active' : ''}
+            onClick={() => setActiveSection('plantas')}
+          >
+            <span className="nav-icon">🏭</span>
+            <span className="nav-text">Gestión de Plantas</span>
+          </button>
+          <button 
+            className={activeSection === 'departamentos' ? 'active' : ''}
+            onClick={() => setActiveSection('departamentos')}
+          >
+            <span className="nav-icon">🏢</span>
+            <span className="nav-text">Departamentos</span>
+          </button>
+          <button 
+            className={activeSection === 'puestos' ? 'active' : ''}
+            onClick={() => setActiveSection('puestos')}
+          >
+            <span className="nav-icon">💼</span>
+            <span className="nav-text">Puestos</span>
+          </button>
+          <button 
+            className={activeSection === 'estructura' ? 'active' : ''}
+            onClick={() => setActiveSection('estructura')}
+          >
+            <span className="nav-icon">🏗️</span>
+            <span className="nav-text">Estructura Organizacional</span>
+          </button>
+          <button 
+            className={activeSection === 'empleados' ? 'active' : ''}
+            onClick={() => setActiveSection('empleados')}
+          >
+            <span className="nav-icon">👥</span>
+            <span className="nav-text">Gestión de Empleados</span>
+          </button>
+          <button 
+            className={activeSection === 'evaluaciones' ? 'active' : ''}
+            onClick={() => setActiveSection('evaluaciones')}
+          >
+            <span className="nav-icon">📊</span>
+            <span className="nav-text">Evaluaciones</span>
+          </button>
+          <button 
+            className={activeSection === 'reportes' ? 'active' : ''}
+            onClick={() => setActiveSection('reportes')}
+          >
+            <span className="nav-icon">📋</span>
+            <span className="nav-text">Reportes</span>
+          </button>
+        </nav>
+      </aside>
 
-      {/* Mensaje de advertencia para empresa suspendida */}
-      {isEmpresaSuspendida && (
-        <div className="suspension-warning">
-          <div className="warning-content">
-            <h3>⚠️ {getSuspensionMessage()}</h3>
-            <p>
-              {subscriptionInfo?.estado === 'sin_suscripcion' && 
-                'Para acceder a todas las funcionalidades, debe activar una suscripción.'}
-              {subscriptionInfo?.estado === 'pendiente_pago' && 
-                'Complete el pago para activar su suscripción y acceder a todas las funcionalidades.'}
-              {subscriptionInfo?.estado === 'vencida' && 
-                'Su suscripción ha vencido. Renueve su plan para continuar usando el sistema.'}
-              {!subscriptionInfo?.estado && 
-                'Las funcionalidades están limitadas. Contacte con soporte para reactivar su suscripción.'}
-            </p>
-            <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
-              <button 
-                className="renewal-button" 
-                onClick={() => window.location.href = '/plan-selection'}
-                style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-              >
-                🔄 Activar Suscripción
-              </button>
-              <button 
-                onClick={loadSubscriptionInfo}
-                style={{ padding: '10px 20px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
-              >
-                🔃 Verificar Estado
-              </button>
+      {/* Main content area */}
+      <div className="main-content">
+        {/* Header */}
+        <header className="dashboard-header">
+          <div className="header-left">
+            <h1>Panel de Administración - Empresa</h1>
+            <p className="header-subtitle">Gestión integral de la empresa</p>
+          </div>
+          <div className="header-right">
+            <div className="empresa-info">
+              <div className="empresa-avatar">
+                <span className="avatar-icon">🏢</span>
+              </div>
+              <div className="empresa-details">
+                <span className="empresa-name">{userData?.nombre_empresa || 'Empresa'}</span>
+                <span className="empresa-user">({userData?.usuario})</span>
+              </div>
+              {isEmpresaSuspendida && (
+                <span className="status-suspended">⚠️ SUSPENDIDA</span>
+              )}
+              {subscriptionInfo?.tiene_suscripcion && subscriptionInfo?.estado === 'activa' && (
+                <span className="status-active">
+                  ✅ ACTIVA ({subscriptionInfo.dias_restantes} días)
+                </span>
+              )}
             </div>
+            <button onClick={handleLogout} className="logout-btn">
+              <span className="logout-icon">🚪</span>
+              Cerrar Sesión
+            </button>
           </div>
-        </div>
-      )}
+        </header>
 
-      <nav className="dashboard-nav">
-        <button 
-          className={activeSection === 'plantas' ? 'active' : ''}
-          onClick={() => setActiveSection('plantas')}
-        >
-          Gestión de Plantas
-        </button>
-        <button 
-          className={activeSection === 'estructura' ? 'active' : ''}
-          onClick={() => setActiveSection('estructura')}
-        >
-          Estructura Organizacional
-        </button>
-        <button 
-          className={activeSection === 'empleados' ? 'active' : ''}
-          onClick={() => setActiveSection('empleados')}
-        >
-          Gestión de Empleados
-        </button>
-        <button 
-          className={activeSection === 'evaluaciones' ? 'active' : ''}
-          onClick={() => setActiveSection('evaluaciones')}
-        >
-          Evaluaciones
-        </button>
-        <button 
-          className={activeSection === 'reportes' ? 'active' : ''}
-          onClick={() => setActiveSection('reportes')}
-        >
-          Reportes
-        </button>
-      </nav>
+        {/* Content area */}
+        <main className="dashboard-content">
+          {/* Información de suscripción activa */}
+          {subscriptionInfo?.tiene_suscripcion && subscriptionInfo?.estado === 'activa' && (
+            <div className="subscription-alert">
+              <div className="warning-content">
+                <h3>✅ Suscripción Activa</h3>
+                <div style={{ display: 'flex', gap: '20px', color: '#155724' }}>
+                  <span>Plan: {subscriptionInfo.suscripcion?.plan_nombre}</span>
+                  <span>Días restantes: {subscriptionInfo.dias_restantes}</span>
+                  <span>Vence: {subscriptionInfo.fecha_vencimiento}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
-      <main className="dashboard-content">
+          {/* Mensaje de advertencia para empresa suspendida */}
+          {isEmpresaSuspendida && (
+            <div className="subscription-warning">
+              <div className="warning-content">
+                <h3>⚠️ {getSuspensionMessage()}</h3>
+                <p>
+                  {subscriptionInfo?.estado === 'sin_suscripcion' && 
+                    'Para acceder a todas las funcionalidades, debe activar una suscripción.'}
+                  {subscriptionInfo?.estado === 'pendiente_pago' && 
+                    'Complete el pago para activar su suscripción y acceder a todas las funcionalidades.'}
+                  {subscriptionInfo?.estado === 'vencida' && 
+                    'Su suscripción ha vencido. Renueve su plan para continuar usando el sistema.'}
+                  {!subscriptionInfo?.estado && 
+                    'Las funcionalidades están limitadas. Contacte con soporte para reactivar su suscripción.'}
+                </p>
+                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                  <button 
+                    className="renewal-button" 
+                    onClick={() => window.location.href = '/plan-selection'}
+                  >
+                    🔄 Activar Suscripción
+                  </button>
+                  <button 
+                    onClick={loadSubscriptionInfo}
+                    className="action-button"
+                    style={{ backgroundColor: '#6c757d' }}
+                  >
+                    🔃 Verificar Estado
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         {activeSection === 'plantas' && (
           <GestionPlantas empresaId={userData?.empresa_id} />
         )}
+        {activeSection === 'departamentos' && <GestionDepartamentos />}
+        {activeSection === 'puestos' && <GestionPuestos />}
         {activeSection === 'estructura' && <GestionEstructura />}
         {activeSection === 'empleados' && <EmpleadosCRUD userData={userData} />}
         {activeSection === 'evaluaciones' && (
@@ -307,7 +338,8 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
             )}
           </div>
         )}
-      </main>
+        </main>
+      </div>
     </div>
   );
 };

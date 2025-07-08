@@ -208,61 +208,99 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
   });
 
   if (loading) {
-    return <div className="loading">Cargando datos...</div>;
+    return <div className="loading">🔄 Cargando datos de la planta...</div>;
   }
 
   return (
-    <div className="dashboard">
-      <header className="dashboard-header">
-        <div className="header-info">
-          <h1>Panel de Administración - Planta</h1>
-          <p className="planta-info">
-            Planta: <strong>{userData?.nombre_planta || 'No asignada'}</strong>
-            <br />
-            Empresa: <strong>{userData?.nombre_empresa || 'No asignada'}</strong>
-            {tieneSuscripcionActiva && (
-              <span className="status-active" style={{ color: '#28a745', fontWeight: 'bold', marginLeft: '10px' }}>
-                ✅ ACTIVA ({suscripcionEmpresa?.dias_restantes || 0} días)
-              </span>
-            )}
-            {isEmpresaSuspendida && (
-              <span className="status-suspended">⚠️ EMPRESA SIN SUSCRIPCIÓN</span>
-            )}
-          </p>
-        </div>
-        <div className="user-info">
-          <span>{userData?.nombre_completo || userData?.usuario}</span>
-          <span>({userData?.nivel_usuario})</span>
-        </div>
-        <button onClick={handleLogout} className="logout-btn">
-          Cerrar Sesión
-        </button>
-      </header>
-
-      {/* Información de suscripción activa para plantas */}
-      {tieneSuscripcionActiva && (
-        <div className="subscription-active-info" style={{ 
-          margin: '20px 0', 
-          padding: '15px', 
-          backgroundColor: '#d4edda', 
-          borderRadius: '5px', 
-          border: '1px solid #c3e6cb' 
-        }}>
-          <h4 style={{ color: '#155724', margin: '0 0 10px 0' }}>✅ Empresa con Suscripción Activa</h4>
-          <div style={{ display: 'flex', gap: '20px', color: '#155724' }}>
-            <span>Plan: {suscripcionEmpresa?.plan_nombre}</span>
-            <span>Días restantes: {suscripcionEmpresa?.dias_restantes}</span>
-            <span>Estado: {suscripcionEmpresa?.estado}</span>
+    <div className="dashboard planta-admin-dashboard">
+      {/* Sidebar - Always visible */}
+      <aside className="dashboard-sidebar">
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            <h2>🏭 AXYOMA</h2>
+            <span className="sidebar-subtitle">Admin Planta</span>
           </div>
-          <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: '#155724' }}>
-            Su planta tiene acceso completo gracias a la suscripción activa de la empresa.
-          </p>
+        </div>
+        <nav className="sidebar-nav">
+          <button 
+            className={activeSection === 'departamentos' ? 'active' : ''}
+            onClick={() => setActiveSection('departamentos')}
+          >
+            <span className="nav-icon">🏢</span>
+            <span className="nav-text">Gestión de Departamentos</span>
+          </button>
+          <button 
+            className={activeSection === 'puestos' ? 'active' : ''}
+            onClick={() => setActiveSection('puestos')}
+          >
+            <span className="nav-icon">💼</span>
+            <span className="nav-text">Gestión de Puestos</span>
+          </button>
+          <button 
+            className={activeSection === 'empleados' ? 'active' : ''}
+            onClick={() => setActiveSection('empleados')}
+          >
+            <span className="nav-icon">👥</span>
+            <span className="nav-text">Gestión de Empleados</span>
+          </button>
+        </nav>
+      </aside>
+
+      {/* Main content area */}
+      <div className="main-content">
+        {/* Header */}
+        <header className="dashboard-header">
+          <div className="header-left">
+            <h1>Panel de Administración - Planta</h1>
+            <p className="header-subtitle">Gestión de departamentos, puestos y empleados</p>
+          </div>
+          <div className="header-right">
+            <div className="planta-info">
+              <div className="planta-avatar">
+                <span className="avatar-icon">🏭</span>
+              </div>
+              <div className="planta-details">
+                <span className="planta-name">{userData?.nombre_planta || 'No asignada'}</span>
+                <span className="planta-user">({userData?.usuario})</span>
+                <span className="empresa-name">{userData?.nombre_empresa || 'No asignada'}</span>
+              </div>
+              {tieneSuscripcionActiva && (
+                <span className="status-active">
+                  ✅ ACTIVA ({suscripcionEmpresa?.dias_restantes || 0} días)
+                </span>
+              )}
+              {isEmpresaSuspendida && (
+                <span className="status-suspended">⚠️ SIN SUSCRIPCIÓN</span>
+              )}
+            </div>
+            <button onClick={handleLogout} className="logout-btn">
+              <span className="logout-icon">🚪</span>
+              Cerrar Sesión
+            </button>
+          </div>
+        </header>
+
+        {/* Content area */}
+        <main className="dashboard-content">{/* Información de suscripción activa para plantas */}
+      {tieneSuscripcionActiva && (
+        <div className="subscription-alert">
+          <div className="warning-content">
+            <h3>✅ Empresa con Suscripción Activa</h3>
+            <div style={{ display: 'flex', gap: '20px', color: '#155724' }}>
+              <span>Plan: {suscripcionEmpresa?.plan_nombre}</span>
+              <span>Días restantes: {suscripcionEmpresa?.dias_restantes}</span>
+              <span>Estado: {suscripcionEmpresa?.estado}</span>
+            </div>
+            <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: '#155724' }}>
+              Su planta tiene acceso completo gracias a la suscripción activa de la empresa.
+            </p>
+          </div>
         </div>
       )}
 
       {/* Mensaje de advertencia para empresa suspendida */}
       {isEmpresaSuspendida && !tieneSuscripcionActiva && (
-        <div className="suspension-warning">
+        <div className="subscription-warning">
           <div className="warning-content">
             <h3>⚠️ {userData?.advertencia?.mensaje || 'Empresa sin Suscripción Activa'}</h3>
             <p>
@@ -276,29 +314,8 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
           </div>
         </div>
       )}
-
-      <nav className="dashboard-nav">
-        <button 
-          className={activeSection === 'departamentos' ? 'active' : ''}
-          onClick={() => setActiveSection('departamentos')}
-        >
-          🏢 Departamentos ({departamentos.length})
-        </button>
-        <button 
-          className={activeSection === 'puestos' ? 'active' : ''}
-          onClick={() => setActiveSection('puestos')}
-        >
-          💼 Puestos ({puestos.length})
-        </button>
-        <button 
-          className={activeSection === 'empleados' ? 'active' : ''}
-          onClick={() => setActiveSection('empleados')}
-        >
-          👥 Empleados
-        </button>
-      </nav>
-
-      <main className="dashboard-content">
+      {/* Contenido principal */}
+      <div className="main-content-area">
         {/* Sección de Departamentos */}
         {activeSection === 'departamentos' && (
           <div className="departamentos-section">
@@ -522,7 +539,9 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
 
         {/* Sección de Empleados */}
         {activeSection === 'empleados' && <EmpleadosCRUD userData={userData} />}
-      </main>
+      </div>
+        </main>
+      </div>
     </div>
   );
 };

@@ -39,6 +39,29 @@ Esto automáticamente:
 - ✅ Inicia Backend (puerto 8000)
 - ✅ Inicia Frontend (puerto 3000)
 
+## 🏗️ Arquitectura Organizacional
+
+## 🏗️ Arquitectura Organizacional
+
+### Flujo de Registro de Empresas
+**Cuando una empresa se registra por primera vez:**
+1. ✅ Se crea el usuario admin-empresa
+2. ✅ Se crea la empresa
+3. ✅ **Se crea automáticamente la "Planta Principal"** (donde contrató el servicio)
+4. ✅ Se crean departamentos básicos (Administración, RRHH, Finanzas, Operaciones)
+5. ✅ Se crean puestos básicos en cada departamento
+6. ✅ Se activa la suscripción al plan seleccionado
+
+### Expansión de Plantas
+- **Crear plantas adicionales**: Solo cuando la empresa se expande a nuevas ubicaciones
+- **Cada planta adicional**: Puede tener su propio admin-planta asignado
+- **Gestión centralizada**: El admin-empresa puede gestionar todas las plantas
+
+### Estructura por Defecto
+- **1 Empresa** = **1 Planta Principal** (automática)
+- **Planta Principal** = Donde está ubicada la empresa que contrató el servicio
+- **Departamentos y Puestos**: Listos para empezar a registrar empleados
+
 ## 🏗️ Arquitectura PostgreSQL
 
 ### Modelos Principales
@@ -47,6 +70,7 @@ apps/users/models.py:
 ├── PerfilUsuario (usuarios)
 ├── Empresa (empresas)  
 ├── Planta (plantas)
+├── AdminPlanta (admin_plantas) - Tabla intermedia
 ├── Departamento (departamentos)
 ├── Puesto (puestos)
 └── Empleado (empleados)
@@ -62,6 +86,8 @@ apps/subscriptions/models.py:
 /api/auth/              # Login y autenticación
 /api/empresas/          # CRUD empresas
 /api/plantas/           # CRUD plantas
+/api/departamentos/     # CRUD departamentos
+/api/puestos/           # CRUD puestos
 /api/empleados/         # CRUD empleados
 /api/suscripciones/     # Sistema de suscripciones (legacy)
 /api/subscriptions/     # Sistema de suscripciones (PostgreSQL)
@@ -87,7 +113,19 @@ suscripcion.esta_por_vencer  # 7 días o menos
 suscripcion.dias_restantes  # Cálculo automático
 ```
 
-### 3. Gestión de Pagos
+### 3. Gestión de Plantas y Administradores
+```python
+# Los administradores de planta se asignan mediante tabla intermedia
+admin_planta_asignacion = AdminPlanta.objects.create(
+    usuario=admin_planta,
+    planta=planta,
+    status=True
+)
+
+# Una empresa puede tener múltiples plantas
+# Un admin-planta puede estar asignado a múltiples plantas
+```
+### 4. Gestión de Pagos
 ```python
 # Crear pago automáticamente activa suscripción
 pago = Pago.objects.create(

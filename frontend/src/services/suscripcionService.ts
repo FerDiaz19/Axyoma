@@ -208,8 +208,11 @@ export const suscribirseYPagar = async (empresaId: number, planId: number): Prom
     
     // 2. Procesar pago automático
     console.log('💳 Paso 2: Procesando pago automático...');
-    const montoPago = suscripcion.plan_precio || 0;
+    const montoPago = suscripcion.precio || suscripcion.plan_precio || 0;
     const transaccionId = `AUTO-${Date.now()}`;
+    
+    console.log(`💰 Monto del pago: $${montoPago}`);
+    console.log(`🔗 Transacción ID: ${transaccionId}`);
     
     const pagoResult = await procesarPago(suscripcion.suscripcion_id, montoPago, transaccionId);
     

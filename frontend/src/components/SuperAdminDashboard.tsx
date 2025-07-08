@@ -1662,38 +1662,14 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
 
   return (
     <div className="dashboard superadmin-dashboard">
-      {/* Header with hamburger button */}
-      <header className="dashboard-header">
-        <div className="header-left">
-          <button 
-            className="hamburger-btn"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label="Toggle menu"
-          >
-            <span className="hamburger-line"></span>
-            <span className="hamburger-line"></span>
-            <span className="hamburger-line"></span>
-          </button>
-          <div className="header-info">
-            <h1>👑 Panel de Super Administrador</h1>
-            <p>Control total del sistema Axyoma</p>
+      {/* Sidebar - Always visible */}
+      <aside className="dashboard-sidebar">
+        <div className="sidebar-header">
+          <div className="sidebar-logo">
+            <h2>👑 AXYOMA</h2>
+            <span className="sidebar-subtitle">Super Admin Panel</span>
           </div>
         </div>
-        <div className="header-right">
-          <div className="user-info">
-            <span>{userData?.nombre_completo || userData?.usuario}</span>
-            <span>({userData?.nivel_usuario})</span>
-          </div>
-          <button onClick={handleLogout} className="logout-btn">
-            Cerrar Sesión
-          </button>
-        </div>
-      </header>
-
-      {/* Layout with sidebar and main content */}
-      <div className="dashboard-layout">
-        {/* Sidebar */}
-        <aside className={`dashboard-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
           <nav className="sidebar-nav">
             <button 
               className={activeSection === 'estadisticas' ? 'active' : ''}
@@ -1765,12 +1741,36 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               <span className="nav-icon">💰</span>
               <span className="nav-text">Pagos ({pagos.length})</span>
             </button>
-          </nav>
-        </aside>
+        </nav>
+      </aside>
 
-        {/* Main content */}
-        <main className={`dashboard-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
-          {activeSection === 'estadisticas' && renderEstadisticas()}
+      {/* Main content area */}
+      <div className="main-content">
+        {/* Header */}
+        <header className="dashboard-header">
+          <div className="header-left">
+            <h1>Panel de Super Administrador</h1>
+            <p className="header-subtitle">Control total del sistema Axyoma</p>
+          </div>
+          <div className="header-right">
+            <div className="user-info">
+              <div className="user-avatar">
+                <span className="avatar-icon">👤</span>
+              </div>
+              <div className="user-details">
+                <span className="user-name">{userData?.nombre_completo || userData?.usuario}</span>
+                <span className="user-role">{userData?.nivel_usuario}</span>
+              </div>
+            </div>
+            <button onClick={handleLogout} className="logout-btn">
+              <span className="logout-icon">🚪</span>
+              Cerrar Sesión
+            </button>
+          </div>
+        </header>
+
+        {/* Content area */}
+        <main className="dashboard-content">{activeSection === 'estadisticas' && renderEstadisticas()}
           {activeSection === 'empresas' && renderEmpresas()}
           {activeSection === 'usuarios' && renderUsuarios()}
           {activeSection === 'plantas' && renderPlantas()}
@@ -1780,8 +1780,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           {activeSection === 'planes' && renderPlanes()}
           {activeSection === 'suscripciones' && renderSuscripciones()}
           {activeSection === 'pagos' && renderPagos()}
-        </main>
-      </div>
 
       {modalEditar.isOpen && (
         <EditModal
@@ -1847,6 +1845,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           ]}
         />
       )}
+        </main>
+      </div>
     </div>
   );
 };

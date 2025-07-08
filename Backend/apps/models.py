@@ -3,7 +3,7 @@
 Archivo para centralizar la importación de modelos
 """
 
-from apps.users.models import PerfilUsuario as Usuario, Empresa, Planta, Departamento, Puesto, Empleado
+from apps.users.models import PerfilUsuario as Usuario, Empresa, Planta, Departamento, Puesto, Empleado, AdminPlanta
 from apps.subscriptions.models import PlanSuscripcion, SuscripcionEmpresa as Suscripcion
 
 # Importar otros modelos si existen

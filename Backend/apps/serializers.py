@@ -47,41 +47,171 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        # Extraer datos del usuario
-        usuario = validated_data.pop('usuario')
-        password = validated_data.pop('password')
-        nombre_completo = validated_data.pop('nombre_completo')
+        from django.db import transaction
         
-        # Separar el nombre completo
-        nombres = nombre_completo.strip().split(' ')
-        nombre = nombres[0] if nombres else ''
-        apellido_paterno = nombres[1] if len(nombres) > 1 else ''
-        apellido_materno = nombres[2] if len(nombres) > 2 else ''
-        
-        # Crear usuario Django
-        user = User.objects.create(
-            username=usuario,
-            email=validated_data.get('email_contacto', ''),
-            password=make_password(password)
-        )
-        
-        # Crear perfil de usuario
-        user_profile = PerfilUsuario.objects.create(
-            user=user,
-            nombre=nombre,
-            apellido_paterno=apellido_paterno,
-            apellido_materno=apellido_materno,
-            correo=validated_data.get('email_contacto', ''),
-            nivel_usuario='admin-empresa'
-        )
-        
-        # Crear empresa
-        empresa = Empresa.objects.create(
-            administrador=user_profile,
-            **validated_data
-        )
-        
-        return empresa
+        with transaction.atomic():
+            # Extraer datos del usuario
+            usuario = validated_data.pop('usuario')
+            password = validated_data.pop('password')
+            nombre_completo = validated_data.pop('nombre_completo')
+            
+            # Separar el nombre completo
+            nombres = nombre_completo.strip().split(' ')
+            nombre = nombres[0] if nombres else ''
+            apellido_paterno = nombres[1] if len(nombres) > 1 else ''
+            apellido_materno = nombres[2] if len(nombres) > 2 else ''
+            
+            # Crear usuario Django
+            user = User.objects.create(
+                username=usuario,
+                email=validated_data.get('email_contacto', ''),
+                password=make_password(password)
+            )
+            
+            # Crear perfil de usuario
+            user_profile = PerfilUsuario.objects.create(
+                user=user,
+                nombre=nombre,
+                apellido_paterno=apellido_paterno,
+                apellido_materno=apellido_materno,
+                correo=validated_data.get('email_contacto', ''),
+                nivel_usuario='admin-empresa'
+            )
+            
+            # Crear empresa
+            empresa = Empresa.objects.create(
+                administrador=user_profile,
+                **validated_data
+            )
+            
+            # CREAR AUTOMÁTICAMENTE LA PLANTA PRINCIPAL
+            planta_principal = Planta.objects.create(
+                nombre='Planta Principal',
+                empresa=empresa,
+                direccion=empresa.direccion,  # Misma dirección que la empresa
+                status=True
+            )
+            
+            # CREAR DEPARTAMENTOS BÁSICOS
+            departamentos_data = [
+                {'nombre': 'Administración', 'descripcion': 'Gestión administrativa general'},
+                {'nombre': 'Recursos Humanos', 'descripcion': 'Gestión del personal y nómina'},
+                {'nombre': 'Finanzas', 'descripcion': 'Gestión financiera y contable'},
+                {'nombre': 'Producción', 'descripcion': 'Operaciones de manufactura'},
+                {'nombre': 'Calidad', 'descripcion': 'Control y aseguramiento de calidad'},
+                {'nombre': 'Mantenimiento', 'descripcion': 'Mantenimiento de equipos e instalaciones'},
+                {'nombre': 'Logística', 'descripcion': 'Almacén y distribución'},
+            ]
+            
+            departamentos = []
+            for dept_data in departamentos_data:
+                dept = Departamento.objects.create(
+                    nombre=dept_data['nombre'],
+                    descripcion=dept_data['descripcion'],
+                    planta=planta_principal
+                )
+                departamentos.append(dept)
+            
+            # CREAR PUESTOS BÁSICOS
+            puestos_data = [
+                # Administración
+                {'nombre': 'Gerente General', 'departamento': 'Administración'},
+                {'nombre': 'Asistente Administrativo', 'departamento': 'Administración'},
+                
+                # Recursos Humanos
+                {'nombre': 'Gerente de RRHH', 'departamento': 'Recursos Humanos'},
+                {'nombre': 'Especialista en Nómina', 'departamento': 'Recursos Humanos'},
+                {'nombre': 'Reclutador', 'departamento': 'Recursos Humanos'},
+                
+                # Finanzas
+                {'nombre': 'Contador', 'departamento': 'Finanzas'},
+                {'nombre': 'Analista Financiero', 'departamento': 'Finanzas'},
+                
+                # Producción
+                {'nombre': 'Supervisor de Producción', 'departamento': 'Producción'},
+                {'nombre': 'Operador de Máquina', 'departamento': 'Producción'},
+                {'nombre': 'Técnico de Proceso', 'departamento': 'Producción'},
+                
+                # Calidad
+                {'nombre': 'Inspector de Calidad', 'departamento': 'Calidad'},
+                {'nombre': 'Auditor Interno', 'departamento': 'Calidad'},
+                
+                # Mantenimiento
+                {'nombre': 'Técnico de Mantenimiento', 'departamento': 'Mantenimiento'},
+                {'nombre': 'Electricista Industrial', 'departamento': 'Mantenimiento'},
+                
+                # Logística
+                {'nombre': 'Coordinador de Almacén', 'departamento': 'Logística'},
+                {'nombre': 'Montacarguista', 'departamento': 'Logística'},
+            ]
+            
+            for puesto_data in puestos_data:
+                dept = next((d for d in departamentos if d.nombre == puesto_data['departamento']), None)
+                if dept:
+                    Puesto.objects.create(
+                        nombre=puesto_data['nombre'],
+                        departamento=dept
+                    )
+            
+            # CREAR SUSCRIPCIÓN BÁSICA AUTOMÁTICA
+            try:
+                from apps.subscriptions.models import PlanSuscripcion, SuscripcionEmpresa, Pago
+                from django.utils import timezone
+                from datetime import timedelta
+                
+                # Buscar un plan básico o crear uno por defecto
+                plan_basico = PlanSuscripcion.objects.filter(
+                    nombre__icontains='básico',
+                    status=True
+                ).first()
+                
+                if not plan_basico:
+                    plan_basico = PlanSuscripcion.objects.filter(
+                        status=True
+                    ).first()
+                
+                if not plan_basico:
+                    # Crear plan básico por defecto
+                    plan_basico = PlanSuscripcion.objects.create(
+                        nombre="Básico",
+                        descripcion="Plan básico para empresas nuevas",
+                        duracion=30,
+                        precio=499.00,
+                        status=True
+                    )
+                
+                # Crear suscripción automática
+                fecha_inicio = timezone.now().date()
+                fecha_fin = fecha_inicio + timedelta(days=plan_basico.duracion)
+                
+                suscripcion = SuscripcionEmpresa.objects.create(
+                    empresa=empresa,
+                    plan_suscripcion=plan_basico,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin,
+                    estado='Activa',
+                    status=True
+                )
+                
+                # Crear pago automático como completado
+                Pago.objects.create(
+                    suscripcion=suscripcion,
+                    costo=plan_basico.precio,
+                    monto_pago=plan_basico.precio,
+                    estado_pago='Completado',
+                    fecha_pago=timezone.now(),
+                    transaccion_id=f"AUTO-{empresa.empresa_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+                    usuario=user  # Vincular el pago con el usuario que registró la empresa
+                )
+                
+            except Exception as e:
+                # Si falla la creación de la suscripción, solo logear el error
+                # pero no fallar la creación de la empresa
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error creando suscripción automática: {str(e)}")
+            
+            return empresa
 
 # Serializers para PLANTAS, DEPARTAMENTOS Y PUESTOS
 class PlantaSerializer(serializers.ModelSerializer):
