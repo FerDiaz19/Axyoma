@@ -56,7 +56,14 @@ yarn-error.log*
 ehthumbs.db
 Thumbs.db
 
-# Archivos temporales del proyecto
+# ARCHIVOS INNECESARIOS - BLOQUEAR TODO
+# Documentación auto-generada
+*.md
+!README.md
+!DEVELOPER_GUIDE.md
+
+# Scripts de prueba y diagnóstico
+*.ps1
 *.tmp
 *.temp
 test_*.py
@@ -79,6 +86,12 @@ FUNCIONALIDADES_*
 INICIO-RAPIDO*
 README_*
 SISTEMA_*
+PROBAR_*.bat
+INICIAR_*.bat
+demo_*.ps1
+diagnose_*.ps1
+fix_*.bat
+reset_*.ps1
 
 # Archivos de configuración local
 Backend/config/settings/production.py
