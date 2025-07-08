@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import ValidationError
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
@@ -74,7 +75,18 @@ class AuthViewSet(viewsets.ViewSet):
             username = serializer.validated_data['username']
             password = serializer.validated_data['password']
             
+            # Intentar autenticar con username primero
             user = authenticate(username=username, password=password)
+            
+            # Si no funciona, intentar con email
+            if not user:
+                try:
+                    # Buscar usuario por email
+                    user_by_email = User.objects.get(email=username)
+                    user = authenticate(username=user_by_email.username, password=password)
+                except User.DoesNotExist:
+                    pass
+            
             if user and hasattr(user, 'perfil'):
                 profile = user.perfil
                 

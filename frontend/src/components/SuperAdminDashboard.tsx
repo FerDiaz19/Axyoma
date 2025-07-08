@@ -64,6 +64,7 @@ interface SuperAdminDashboardProps {
 const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onLogout }) => {
   const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos'>('estadisticas');
   const [loading, setLoading] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true); // Estado para controlar el sidebar
   
   // Estados para datos
   const [estadisticas, setEstadisticas] = useState<SuperAdminEstadisticas | null>(null);
@@ -1661,95 +1662,126 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
 
   return (
     <div className="dashboard superadmin-dashboard">
+      {/* Header with hamburger button */}
       <header className="dashboard-header">
-        <div className="header-info">
-          <h1>👑 Panel de Super Administrador</h1>
-          <p>Control total del sistema Axyoma</p>
+        <div className="header-left">
+          <button 
+            className="hamburger-btn"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label="Toggle menu"
+          >
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+            <span className="hamburger-line"></span>
+          </button>
+          <div className="header-info">
+            <h1>👑 Panel de Super Administrador</h1>
+            <p>Control total del sistema Axyoma</p>
+          </div>
         </div>
-        <div className="user-info">
-          <span>{userData?.nombre_completo || userData?.usuario}</span>
-          <span>({userData?.nivel_usuario})</span>
+        <div className="header-right">
+          <div className="user-info">
+            <span>{userData?.nombre_completo || userData?.usuario}</span>
+            <span>({userData?.nivel_usuario})</span>
+          </div>
+          <button onClick={handleLogout} className="logout-btn">
+            Cerrar Sesión
+          </button>
         </div>
-        <button onClick={handleLogout} className="logout-btn">
-          Cerrar Sesión
-        </button>
       </header>
 
-      <nav className="dashboard-nav">
-        <button 
-          className={activeSection === 'estadisticas' ? 'active' : ''}
-          onClick={() => setActiveSection('estadisticas')}
-        >
-          📊 Estadísticas
-        </button>
-        <button 
-          className={activeSection === 'empresas' ? 'active' : ''}
-          onClick={() => setActiveSection('empresas')}
-        >
-          🏢 Empresas ({empresas.length})
-        </button>
-        <button 
-          className={activeSection === 'usuarios' ? 'active' : ''}
-          onClick={() => setActiveSection('usuarios')}
-        >
-          👥 Usuarios ({usuarios.length})
-        </button>
-        <button 
-          className={activeSection === 'plantas' ? 'active' : ''}
-          onClick={() => setActiveSection('plantas')}
-        >
-          🏭 Plantas ({plantas.length})
-        </button>
-        <button 
-          className={activeSection === 'departamentos' ? 'active' : ''}
-          onClick={() => setActiveSection('departamentos')}
-        >
-          🏢 Departamentos ({departamentos.length})
-        </button>
-        <button 
-          className={activeSection === 'puestos' ? 'active' : ''}
-          onClick={() => setActiveSection('puestos')}
-        >
-          💼 Puestos ({puestos.length})
-        </button>
-        <button 
-          className={activeSection === 'empleados' ? 'active' : ''}
-          onClick={() => setActiveSection('empleados')}
-        >
-          👤 Empleados ({empleados.length})
-        </button>
-        <button 
-          className={activeSection === 'suscripciones' ? 'active' : ''}
-          onClick={() => setActiveSection('suscripciones')}
-        >
-          💳 Suscripciones ({suscripciones.length})
-        </button>
-        <button 
-          className={activeSection === 'planes' ? 'active' : ''}
-          onClick={() => setActiveSection('planes')}
-        >
-          📋 Planes ({planes.length})
-        </button>
-        <button 
-          className={activeSection === 'pagos' ? 'active' : ''}
-          onClick={() => setActiveSection('pagos')}
-        >
-          💰 Pagos ({pagos.length})
-        </button>
-      </nav>
+      {/* Layout with sidebar and main content */}
+      <div className="dashboard-layout">
+        {/* Sidebar */}
+        <aside className={`dashboard-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
+          <nav className="sidebar-nav">
+            <button 
+              className={activeSection === 'estadisticas' ? 'active' : ''}
+              onClick={() => setActiveSection('estadisticas')}
+            >
+              <span className="nav-icon">📊</span>
+              <span className="nav-text">Estadísticas</span>
+            </button>
+            <button 
+              className={activeSection === 'empresas' ? 'active' : ''}
+              onClick={() => setActiveSection('empresas')}
+            >
+              <span className="nav-icon">🏢</span>
+              <span className="nav-text">Empresas ({empresas.length})</span>
+            </button>
+            <button 
+              className={activeSection === 'usuarios' ? 'active' : ''}
+              onClick={() => setActiveSection('usuarios')}
+            >
+              <span className="nav-icon">👥</span>
+              <span className="nav-text">Usuarios ({usuarios.length})</span>
+            </button>
+            <button 
+              className={activeSection === 'plantas' ? 'active' : ''}
+              onClick={() => setActiveSection('plantas')}
+            >
+              <span className="nav-icon">🏭</span>
+              <span className="nav-text">Plantas ({plantas.length})</span>
+            </button>
+            <button 
+              className={activeSection === 'departamentos' ? 'active' : ''}
+              onClick={() => setActiveSection('departamentos')}
+            >
+              <span className="nav-icon">🏢</span>
+              <span className="nav-text">Departamentos ({departamentos.length})</span>
+            </button>
+            <button 
+              className={activeSection === 'puestos' ? 'active' : ''}
+              onClick={() => setActiveSection('puestos')}
+            >
+              <span className="nav-icon">💼</span>
+              <span className="nav-text">Puestos ({puestos.length})</span>
+            </button>
+            <button 
+              className={activeSection === 'empleados' ? 'active' : ''}
+              onClick={() => setActiveSection('empleados')}
+            >
+              <span className="nav-icon">👤</span>
+              <span className="nav-text">Empleados ({empleados.length})</span>
+            </button>
+            <button 
+              className={activeSection === 'suscripciones' ? 'active' : ''}
+              onClick={() => setActiveSection('suscripciones')}
+            >
+              <span className="nav-icon">💳</span>
+              <span className="nav-text">Suscripciones ({suscripciones.length})</span>
+            </button>
+            <button 
+              className={activeSection === 'planes' ? 'active' : ''}
+              onClick={() => setActiveSection('planes')}
+            >
+              <span className="nav-icon">📋</span>
+              <span className="nav-text">Planes ({planes.length})</span>
+            </button>
+            <button 
+              className={activeSection === 'pagos' ? 'active' : ''}
+              onClick={() => setActiveSection('pagos')}
+            >
+              <span className="nav-icon">💰</span>
+              <span className="nav-text">Pagos ({pagos.length})</span>
+            </button>
+          </nav>
+        </aside>
 
-      <main className="dashboard-content">
-        {activeSection === 'estadisticas' && renderEstadisticas()}
-        {activeSection === 'empresas' && renderEmpresas()}
-        {activeSection === 'usuarios' && renderUsuarios()}
-        {activeSection === 'plantas' && renderPlantas()}
-        {activeSection === 'departamentos' && renderDepartamentos()}
-        {activeSection === 'puestos' && renderPuestos()}
-        {activeSection === 'empleados' && renderEmpleados()}
-        {activeSection === 'planes' && renderPlanes()}
-        {activeSection === 'suscripciones' && renderSuscripciones()}
-        {activeSection === 'pagos' && renderPagos()}
-      </main>
+        {/* Main content */}
+        <main className={`dashboard-content ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+          {activeSection === 'estadisticas' && renderEstadisticas()}
+          {activeSection === 'empresas' && renderEmpresas()}
+          {activeSection === 'usuarios' && renderUsuarios()}
+          {activeSection === 'plantas' && renderPlantas()}
+          {activeSection === 'departamentos' && renderDepartamentos()}
+          {activeSection === 'puestos' && renderPuestos()}
+          {activeSection === 'empleados' && renderEmpleados()}
+          {activeSection === 'planes' && renderPlanes()}
+          {activeSection === 'suscripciones' && renderSuscripciones()}
+          {activeSection === 'pagos' && renderPagos()}
+        </main>
+      </div>
 
       {modalEditar.isOpen && (
         <EditModal

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   getEmpleados, 
   createEmpleado, 
@@ -72,38 +72,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    // Filtrar empleados cuando cambian los filtros o empleados
-    let filtrados = empleados;
-    
-    if (filtroNombre.trim()) {
-      filtrados = filtrados.filter(empleado =>
-        empleado.nombre.toLowerCase().includes(filtroNombre.toLowerCase()) ||
-        empleado.apellido_paterno.toLowerCase().includes(filtroNombre.toLowerCase()) ||
-        (empleado.apellido_materno && empleado.apellido_materno.toLowerCase().includes(filtroNombre.toLowerCase()))
-      );
-    }
-    
-    if (filtroDepartamento) {
-      filtrados = filtrados.filter(empleado => 
-        empleado.departamento === parseInt(filtroDepartamento)
-      );
-    }
-    
-    if (filtroPuesto) {
-      filtrados = filtrados.filter(empleado => 
-        empleado.puesto === parseInt(filtroPuesto)
-      );
-    }
-    
-    setEmpleadosFiltrados(filtrados);
-  }, [empleados, filtroNombre, filtroDepartamento, filtroPuesto]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const [empleadosData, plantasData, departamentosData, puestosData] = await Promise.all([
         getEmpleados(),
@@ -138,7 +107,38 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
       console.error('Error cargando datos:', err);
       setError('Error al cargar datos');
     }
-  };
+  }, [userData]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    // Filtrar empleados cuando cambian los filtros o empleados
+    let filtrados = empleados;
+    
+    if (filtroNombre.trim()) {
+      filtrados = filtrados.filter(empleado =>
+        empleado.nombre.toLowerCase().includes(filtroNombre.toLowerCase()) ||
+        empleado.apellido_paterno.toLowerCase().includes(filtroNombre.toLowerCase()) ||
+        (empleado.apellido_materno && empleado.apellido_materno.toLowerCase().includes(filtroNombre.toLowerCase()))
+      );
+    }
+    
+    if (filtroDepartamento) {
+      filtrados = filtrados.filter(empleado => 
+        empleado.departamento === parseInt(filtroDepartamento)
+      );
+    }
+    
+    if (filtroPuesto) {
+      filtrados = filtrados.filter(empleado => 
+        empleado.puesto === parseInt(filtroPuesto)
+      );
+    }
+    
+    setEmpleadosFiltrados(filtrados);
+  }, [empleados, filtroNombre, filtroDepartamento, filtroPuesto]);
 
   const filteredDepartamentos = departamentos.filter(dept => dept.planta_id === formData.planta);
   
