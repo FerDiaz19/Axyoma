@@ -74,9 +74,9 @@ echo    - Base de datos: axyomadb (usuario: postgres, password: 123456789)
 echo    - El backend se conectará automáticamente
 echo.
 echo 👤 Usuarios de prueba:
-echo    SuperAdmin:     ed-rubio@axyoma.com / 1234
-echo    Admin Empresa:  juan.perez@codewave.com / 1234
-echo    Admin Planta:   maria.gomez@codewave.com / 1234
+echo    SuperAdmin:     superadmin / admin123
+echo    Admin Empresa:  admin / admin123
+echo    Admin Planta:   planta1 / admin123
 echo.
 echo 🚀 Para iniciar el sistema usa: start_system.bat
 echo.

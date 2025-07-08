@@ -17,15 +17,15 @@ if not exist "frontend" (
     exit /b 1
 )
 
-if not exist "start_backend.bat" (
-    echo ERROR: start_backend.bat no encontrado
+if not exist "start-backend.bat" (
+    echo ERROR: start-backend.bat no encontrado
     echo Los archivos del proyecto estan incompletos
     pause
     exit /b 1
 )
 
-if not exist "start_frontend.bat" (
-    echo ERROR: start_frontend.bat no encontrado
+if not exist "start-frontend.bat" (
+    echo ERROR: start-frontend.bat no encontrado
     echo Los archivos del proyecto estan incompletos
     pause
     exit /b 1
@@ -79,27 +79,23 @@ if %errorlevel% neq 0 (
     echo ✓ npm encontrado
 )
 
-REM Verificar PostgreSQL
+REM Verificar PostgreSQL (opcional - será verificado por el backend)
 psql --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ERROR: PostgreSQL no esta instalado o no esta en PATH
-    echo Descarga e instala PostgreSQL desde https://www.postgresql.org/download/windows/
-    echo Configura: usuario=postgres, password=123456789, puerto=5432
-    pause
-    exit /b 1
+    echo ⚠️  PostgreSQL no encontrado en PATH
+    echo    El backend intentará conectarse directamente
 ) else (
     echo ✓ PostgreSQL encontrado
 )
 
-REM Verificar conexion a base de datos
-psql -U postgres -h localhost -p 5432 -d axyomadb -c "\q" >nul 2>&1
-if %errorlevel% neq 0 (
-    echo ERROR: No se puede conectar a la base de datos 'axyomadb'
-    echo Ejecuta setup_project.bat para crear la base de datos
+REM Verificar entorno virtual del backend
+if exist "Backend\env\Scripts\activate.bat" (
+    echo ✓ Entorno virtual encontrado
+) else (
+    echo ❌ Entorno virtual no encontrado
+    echo    Ejecuta setup_project.bat para crear el entorno
     pause
     exit /b 1
-) else (
-    echo ✓ Base de datos 'axyomadb' accesible
 )
 
 echo.
@@ -108,14 +104,14 @@ echo.
 
 echo [1/2] Iniciando Backend (Django)...
 echo        Abriendo ventana separada para el backend...
-start "AXYOMA Backend - Django" cmd /k "start_backend.bat"
+start "AXYOMA Backend - Django" cmd /k "start-backend.bat"
 
 echo [2/2] Esperando 5 segundos antes de iniciar Frontend...
 timeout /t 5 /nobreak >nul
 
 echo        Iniciando Frontend (React)...
 echo        Abriendo ventana separada para el frontend...
-start "AXYOMA Frontend - React" cmd /k "start_frontend.bat"
+start "AXYOMA Frontend - React" cmd /k "start-frontend.bat"
 
 echo.
 echo ===== SISTEMA INICIADO CORRECTAMENTE =====
@@ -125,9 +121,9 @@ echo    Backend (API):  http://localhost:8000
 echo    Frontend (Web): http://localhost:3000
 echo.
 echo 👤 Usuarios de prueba:
-echo    SuperAdmin:     superadmin / admin123
-echo    Admin Empresa:  admin / admin123  
-echo    Admin Planta:   planta1 / admin123
+echo    SuperAdmin:     ed-rubio@axyoma.com / 1234
+echo    Admin Empresa:  juan.perez@codewave.com / 1234  
+echo    Admin Planta:   maria.gomez@codewave.com / 1234
 echo.
 echo 📋 Funcionalidades principales:
 echo    ✓ Sistema de autenticacion con roles
