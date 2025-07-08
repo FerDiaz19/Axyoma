@@ -145,64 +145,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       cargarDatosPorSeccion();
     }
   }, [activeSection, filtroTexto, filtroStatus, filtroNivelUsuario, filtroEmpresa, cargarDatosPorSeccion]);
-        case 'empresas':
-          const empresasData = await getEmpresas(params);
-          setEmpresas(empresasData.empresas);
-          break;
-          
-        case 'usuarios':
-          if (filtroNivelUsuario) {
-            params.nivel_usuario = filtroNivelUsuario;
-          }
-          if (filtroStatus !== 'all') {
-            params.activo = filtroStatus === 'active' ? 'true' : 'false';
-            delete params.status;
-          }
-          const usuariosData = await getUsuarios(params);
-          setUsuarios(usuariosData.usuarios);
-          break;
-          
-        case 'plantas':
-          if (filtroEmpresa) {
-            params.empresa_id = filtroEmpresa;
-          }
-          const plantasData = await getPlantas(params);
-          setPlantas(plantasData.plantas);
-          break;
-          
-        case 'departamentos':
-          if (filtroEmpresa) {
-            params.empresa_id = filtroEmpresa;
-          }
-          const departamentosData = await getDepartamentos(params);
-          setDepartamentos(departamentosData.departamentos);
-          break;
-          
-        case 'puestos':
-          if (filtroEmpresa) {
-            params.empresa_id = filtroEmpresa;
-          }
-          const puestosData = await getPuestos(params);
-          setPuestos(puestosData.puestos);
-          break;
-          
-        case 'empleados':
-          if (filtroEmpresa) {
-            params.empresa_id = filtroEmpresa;
-          }
-          const empleadosData = await getEmpleados(params);
-          setEmpleados(empleadosData.empleados);
-          break;
-      }
-      
-      console.log(`✅ SuperAdmin: Datos de ${activeSection} cargados exitosamente`);
-    } catch (error) {
-      console.error(`❌ SuperAdmin: Error cargando ${activeSection}:`, error);
-      alert(`Error al cargar ${activeSection}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [activeSection, filtroTexto, filtroStatus, filtroNivelUsuario, filtroEmpresa]);
 
   const handleLogout = () => {
     logout();

@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import EmpleadosCRUD from './EmpleadosCRUD';
 import GestionEstructura from './GestionEstructura';
 import GestionPlantas from './GestionPlantas';
 import { logout } from '../services/authService';
-import { obtenerSuscripcionActual } from '../services/suscripcionService';
 import '../css/Dashboard.css';
 import '../css/GestionPlantas.css';
 
@@ -17,8 +16,41 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
   const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  const loadSubscriptionInfo = useCallback(async () => {
+    try {
+      console.log('🔄 Cargando información de suscripción...');
+      // Usar empresa_id de userData si está disponible
+      const empresaId = userData?.empresa_id;
+      if (empresaId) {
+        const { obtenerInfoSuscripcionEmpresa } = await import('../services/suscripcionService');
+        const info = await obtenerInfoSuscripcionEmpresa(empresaId);
+        console.log('✅ Información de suscripción recibida:', info);
+        setSubscriptionInfo(info);
+      } else {
+        throw new Error('No se encontró empresa_id en userData');
+      }
+    } catch (error) {
+      console.error('❌ Error loading subscription info:', error);
+      setSubscriptionInfo({ 
+        tiene_suscripcion: false, 
+        estado: 'sin_suscripcion', 
+        requiere_pago: true 
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [userData?.empresa_id]);
+
   useEffect(() => {
-    loadSubscriptionInfo();
+    // Usar la información de suscripción que viene del login en lugar de hacer una nueva llamada
+    if (userData?.suscripcion) {
+      console.log('🔄 Usando información de suscripción del login:', userData.suscripcion);
+      setSubscriptionInfo(userData.suscripcion);
+      setLoading(false);
+    } else {
+      // Solo como fallback si no hay información en userData
+      loadSubscriptionInfo();
+    }
     
     // Verificar si hay un parámetro que indique que se debe refrescar
     const urlParams = new URLSearchParams(window.location.search);
@@ -43,25 +75,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, []);
-
-  const loadSubscriptionInfo = async () => {
-    try {
-      console.log('🔄 Cargando información de suscripción...');
-      const info = await obtenerSuscripcionActual();
-      console.log('✅ Información de suscripción recibida:', info);
-      setSubscriptionInfo(info);
-    } catch (error) {
-      console.error('❌ Error loading subscription info:', error);
-      setSubscriptionInfo({ 
-        tiene_suscripcion: false, 
-        estado: 'sin_suscripcion', 
-        requiere_pago: true 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [userData, loadSubscriptionInfo]);
 
   const handleLogout = () => {
     logout();

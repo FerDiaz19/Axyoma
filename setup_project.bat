@@ -52,12 +52,9 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo [4/4] Configurando archivos iniciales...
+echo [4/4] Configurando base de datos PostgreSQL...
 cd ..
-if not exist "Backend\apps\mock_data.json" (
-    echo Creando archivo de datos mock inicial...
-    echo {"planes_adicionales":{},"next_plan_id":4,"suscripciones":{},"next_suscripcion_id":1,"pagos":{},"next_pago_id":1,"empresa_suscripcion_map":{},"timestamp":""} > Backend\apps\mock_data.json
-)
+echo Base de datos configurada para PostgreSQL únicamente
 
 echo.
 echo ===== SETUP COMPLETADO =====
@@ -78,6 +75,6 @@ echo    SuperAdmin:     ed-rubio@axyoma.com / 1234
 echo    Admin Empresa:  juan.perez@codewave.com / 1234
 echo    Admin Planta:   maria.gomez@codewave.com / 1234
 echo.
-echo 🚀 Para iniciar el sistema usa: start_system.bat
+echo 🚀 Para iniciar el sistema usa: start.bat
 echo.
 pause

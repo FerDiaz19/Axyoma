@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import EmpleadosCRUD from './EmpleadosCRUD';
 import {
   obtenerDepartamentos, crearDepartamento, actualizarDepartamento, eliminarDepartamento,
@@ -19,8 +19,12 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
   const [puestos, setPuestos] = useState<Puesto[]>([]);
   const [loading, setLoading] = useState(false);
   
-  // Verificar si la empresa está suspendida
-  const isEmpresaSuspendida = userData?.empresa_suspendida || userData?.advertencia?.tipo === 'empresa_suspendida';
+  // Verificar estado de suscripción de la empresa (herencia)
+  const suscripcionEmpresa = userData?.suscripcion;
+  const tieneSuscripcionActiva = suscripcionEmpresa?.tiene_suscripcion && suscripcionEmpresa?.estado === 'activa';
+  const isEmpresaSuspendida = userData?.empresa_suspendida || 
+                             userData?.advertencia?.tipo === 'empresa_suspendida' ||
+                             !tieneSuscripcionActiva;
   
   // Estados para formularios - Admin Planta solo puede trabajar con SU planta
   const [nuevoDepartamento, setNuevoDepartamento] = useState<Departamento>({ 
@@ -42,13 +46,7 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroDepartamento, setFiltroDepartamento] = useState('');
 
-  useEffect(() => {
-    if (userData?.planta_id) {
-      cargarDatos();
-    }
-  }, [userData?.planta_id]);
-
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     setLoading(true);
     try {
       const [departamentosData, puestosData] = await Promise.all([
@@ -65,7 +63,13 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
     } finally {
       setLoading(false);
     }
-  };
+  }, [userData?.planta_id]);
+
+  useEffect(() => {
+    if (userData?.planta_id) {
+      cargarDatos();
+    }
+  }, [userData?.planta_id, cargarDatos]);
 
   const handleLogout = () => {
     logout();
@@ -214,8 +218,15 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
           <h1>Panel de Administración - Planta</h1>
           <p className="planta-info">
             Planta: <strong>{userData?.nombre_planta || 'No asignada'}</strong>
+            <br />
+            Empresa: <strong>{userData?.nombre_empresa || 'No asignada'}</strong>
+            {tieneSuscripcionActiva && (
+              <span className="status-active" style={{ color: '#28a745', fontWeight: 'bold', marginLeft: '10px' }}>
+                ✅ ACTIVA ({suscripcionEmpresa?.dias_restantes || 0} días)
+              </span>
+            )}
             {isEmpresaSuspendida && (
-              <span className="status-suspended">⚠️ EMPRESA SUSPENDIDA</span>
+              <span className="status-suspended">⚠️ EMPRESA SIN SUSCRIPCIÓN</span>
             )}
           </p>
         </div>
@@ -228,12 +239,40 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
         </button>
       </header>
 
+      {/* Información de suscripción activa para plantas */}
+      {tieneSuscripcionActiva && (
+        <div className="subscription-active-info" style={{ 
+          margin: '20px 0', 
+          padding: '15px', 
+          backgroundColor: '#d4edda', 
+          borderRadius: '5px', 
+          border: '1px solid #c3e6cb' 
+        }}>
+          <h4 style={{ color: '#155724', margin: '0 0 10px 0' }}>✅ Empresa con Suscripción Activa</h4>
+          <div style={{ display: 'flex', gap: '20px', color: '#155724' }}>
+            <span>Plan: {suscripcionEmpresa?.plan_nombre}</span>
+            <span>Días restantes: {suscripcionEmpresa?.dias_restantes}</span>
+            <span>Estado: {suscripcionEmpresa?.estado}</span>
+          </div>
+          <p style={{ margin: '5px 0 0 0', fontSize: '0.9em', color: '#155724' }}>
+            Su planta tiene acceso completo gracias a la suscripción activa de la empresa.
+          </p>
+        </div>
+      )}
+
       {/* Mensaje de advertencia para empresa suspendida */}
-      {isEmpresaSuspendida && (
+      {isEmpresaSuspendida && !tieneSuscripcionActiva && (
         <div className="suspension-warning">
           <div className="warning-content">
-            <h3>⚠️ {userData?.advertencia?.mensaje || 'Empresa Suspendida'}</h3>
-            <p>{userData?.advertencia?.detalles || 'Las funcionalidades están limitadas. Contacte con soporte para reactivar su suscripción.'}</p>
+            <h3>⚠️ {userData?.advertencia?.mensaje || 'Empresa sin Suscripción Activa'}</h3>
+            <p>
+              {userData?.advertencia?.detalles || 
+               'La empresa no tiene una suscripción activa. Las funcionalidades están limitadas.'}
+            </p>
+            <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#721c24' }}>
+              <strong>Nota:</strong> Como administrador de planta, contacte al administrador de la empresa 
+              para activar o renovar la suscripción.
+            </p>
           </div>
         </div>
       )}

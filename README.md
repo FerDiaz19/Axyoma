@@ -22,7 +22,7 @@ psql --version
 ### Para Usuarios
 ```bash
 # Iniciar sistema completo
-start_system.bat
+start.bat
 ```
 
 ### Para Nuevos Desarrolladores
@@ -31,18 +31,18 @@ start_system.bat
 setup_project.bat
 
 # Después usar
-start_system.bat
+start.bat
 ```
 
 📖 **Guía completa**: Ver [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
 
 ## 🏗️ Arquitectura
 
-- **Backend**: Django + PostgreSQL
+- **Backend**: Django + PostgreSQL (100% PostgreSQL, sin SQLite)
 - **Frontend**: React + TypeScript
 - **Autenticación**: Token-based
-- **Suscripciones**: Sistema automatizado de pagos
-- **Base de Datos**: PostgreSQL (axyomadb)
+- **Suscripciones**: Sistema PostgreSQL con planes y pagos automatizados
+- **Base de Datos**: PostgreSQL únicamente (axyomadb)
 
 ## 👥 Tipos de Usuario
 
@@ -134,10 +134,15 @@ Axyoma2/
 
 El sistema incluye datos mock para desarrollo y testing sin necesidad de configurar base de datos.
 
-### Usuarios de Prueba
-- **SuperAdmin**: `superadmin` / `admin123`
-- **Admin Empresa**: `admin` / `admin123`
-- **Admin Planta**: `planta1` / `admin123`
+### Usuarios de Prueba PostgreSQL (Creados automáticamente)
+- **SuperAdmin**: `ed-rubio@axyoma.com` / `1234`
+- **Admin Empresa**: `juan.perez@codewave.com` / `1234` (CodeWave Technologies)
+- **Admin Planta**: `maria.gomez@codewave.com` / `1234` (Planta Principal)
+
+### Estructura Empresarial Base
+- **Empresa**: CodeWave Technologies (RFC: CWT240701ABC)
+- **Planta**: Planta Principal
+- **Administradores**: Correctamente asignados con relaciones PostgreSQL
 
 ## 📝 Notas de Desarrollo
 
@@ -145,8 +150,32 @@ El sistema incluye datos mock para desarrollo y testing sin necesidad de configu
 - El sistema garantiza **una sola suscripción activa por empresa**
 - Los estados se actualizan automáticamente tras pagos
 - El SuperAdmin puede ver el tiempo restante de cada empresa
-- Los datos se persisten en `Backend/apps/mock_data.json`
+- **Todos los datos se almacenan en PostgreSQL** (sin SQLite ni archivos mock)
+- Los planes básicos se crean automáticamente al iniciar el sistema
+
+## 🔧 Sistema PostgreSQL Únicamente
+
+✅ **Lo que está implementado y FUNCIONANDO:**
+- Modelos Django para planes, suscripciones y pagos
+- ViewSets PostgreSQL para todas las operaciones CRUD
+- Migraciones automáticas al iniciar con `start.bat`
+- Creación automática de usuarios originales
+- Creación automática de planes básicos (Mensual $299, Trimestral $799, Anual $2999)
+- APIs REST completamente funcionales
+- Script de reseteo completo de BD para desarrollo
+
+❌ **Lo que se eliminó:**
+- Dependencias de mock_storage.py
+- Referencias a SQLite
+- Archivos JSON para datos temporales
+- Scripts Python innecesarios (más de 10 archivos eliminados)
+
+⚡ **Solución de problemas:**
+- Si hay errores de migraciones: `cd Backend && python reset_database.py`
+- Luego ejecutar: `start.bat`
 
 ---
 
-**Desarrollado para UTT4B - Sistema de gestión empresarial con suscripciones**
+**Desarrollado para UTT4B - Sistema de gestión empresarial con suscripciones PostgreSQL**
+
+**✨ ESTADO: COMPLETAMENTE FUNCIONAL ✨**

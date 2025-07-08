@@ -98,10 +98,11 @@ class Pago(models.Model):
     pago_id = models.AutoField(primary_key=True)
     costo = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Costo")
     monto_pago = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto Pagado")
-    fecha_pago = models.DateField(verbose_name="Fecha de Pago")
+    fecha_pago = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Pago")
+    fecha_vencimiento = models.DateField(null=True, blank=True, verbose_name="Fecha de Vencimiento")
     transaccion_id = models.CharField(max_length=64, null=True, blank=True, verbose_name="ID de Transacción")
     estado_pago = models.CharField(max_length=20, choices=ESTADO_PAGO_CHOICES, default='Pendiente', verbose_name="Estado del Pago")
-    suscripcion_empresa = models.ForeignKey(SuscripcionEmpresa, on_delete=models.CASCADE, verbose_name="Suscripción")
+    suscripcion = models.ForeignKey(SuscripcionEmpresa, on_delete=models.CASCADE, verbose_name="Suscripción", related_name='pagos')
 
     class Meta:
         db_table = 'pagos'
@@ -110,4 +111,4 @@ class Pago(models.Model):
         ordering = ['-fecha_pago']
 
     def __str__(self):
-        return f"Pago ${self.monto_pago} - {self.suscripcion_empresa.empresa.nombre}"
+        return f"Pago ${self.monto_pago} - {self.suscripcion.empresa.nombre}"
