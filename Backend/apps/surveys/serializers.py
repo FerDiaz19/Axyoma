@@ -11,16 +11,16 @@ class PreguntaEvaluacionSerializer(serializers.ModelSerializer):
         
 class EvaluacionSerializer(serializers.ModelSerializer):
     preguntas = PreguntaEvaluacionSerializer(many=True, read_only=True)
-    creado_por_nombre = serializers.ReadOnlyField()
-    empresa_nombre = serializers.ReadOnlyField()
-    planta_nombre = serializers.ReadOnlyField()
-    tipo_display = serializers.ReadOnlyField()
-    estado_display = serializers.ReadOnlyField()
-    total_preguntas = serializers.ReadOnlyField()
+    creado_por_nombre = serializers.CharField(source='creado_por.get_full_name', read_only=True)
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
+    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
     
     class Meta:
         model = Evaluacion
         fields = '__all__'
+        read_only_fields = ['creado_por', 'fecha_creacion', 'fecha_actualizacion']
         
     def validate(self, data):
         """
@@ -28,6 +28,7 @@ class EvaluacionSerializer(serializers.ModelSerializer):
         y que las evaluaciones internas tengan empresa asignada
         """
         request = self.context.get('request')
+        
         if request and request.user:
             user = request.user
             
@@ -37,13 +38,16 @@ class EvaluacionSerializer(serializers.ModelSerializer):
                     "Solo los superusuarios pueden crear evaluaciones normativas"
                 )
             
-            # Si es interna, debe tener empresa asignada
-            if data.get('tipo') == 'interna':
-                if not data.get('empresa') and hasattr(user, 'perfil'):
-                    # Asignar automáticamente la empresa del usuario
+            # Si es interna, debe tener empresa asignada (excepto superusuarios)
+            if data.get('tipo') == 'interna' and not user.is_superuser:
+                if not data.get('empresa'):
+                    # Buscar la empresa donde el usuario es administrador
+                    from apps.users.models import Empresa
                     try:
-                        data['empresa'] = user.perfil.administrador_empresa
-                    except:
+                        if hasattr(user, 'perfil'):
+                            empresa = Empresa.objects.get(administrador=user.perfil)
+                            data['empresa'] = empresa
+                    except Empresa.DoesNotExist:
                         pass
                 
                 if not data.get('empresa'):
@@ -55,22 +59,21 @@ class EvaluacionSerializer(serializers.ModelSerializer):
 
 class EvaluacionListSerializer(serializers.ModelSerializer):
     """
-    Serializer optimizado para listar evaluaciones
+    Serializer simplificado para listar evaluaciones
     """
-    creado_por_nombre = serializers.ReadOnlyField()
-    empresa_nombre = serializers.ReadOnlyField()
-    planta_nombre = serializers.ReadOnlyField()
-    tipo_display = serializers.ReadOnlyField()
-    estado_display = serializers.ReadOnlyField()
-    total_preguntas = serializers.ReadOnlyField()
+    creado_por_nombre = serializers.CharField(source='creado_por.get_full_name', read_only=True)
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
+    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
+    tipo_display = serializers.CharField(source='get_tipo_display', read_only=True)
+    estado_display = serializers.CharField(source='get_estado_display', read_only=True)
+    total_preguntas = serializers.IntegerField(source='preguntas.count', read_only=True)
     
     class Meta:
         model = Evaluacion
         fields = [
-            'id', 'titulo', 'descripcion', 'tipo', 'estado', 'fecha_creacion', 
-            'fecha_actualizacion', 'creado_por_nombre', 'empresa_nombre', 
-            'planta_nombre', 'tipo_display', 'estado_display', 'total_preguntas',
-            'instrucciones', 'tiempo_limite'
+            'id', 'titulo', 'descripcion', 'tipo', 'tipo_display', 
+            'estado', 'estado_display', 'fecha_creacion', 'fecha_actualizacion',
+            'creado_por_nombre', 'empresa_nombre', 'planta_nombre', 'total_preguntas'
         ]
 
 class EmpleadoSimpleSerializer(serializers.ModelSerializer):

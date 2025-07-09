@@ -44,7 +44,10 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ empresaId, onPlanSelected
         
         let successMessage = '¡Suscripción activada exitosamente!';
         if (result.pago) {
-          successMessage += `\n\nDetalles del pago:\n- Monto: ${formatearPrecio(parseFloat(result.pago.monto_pago))}\n- Transacción: ${result.pago.transaccion_id}\n- Estado: ${result.pago.estado_pago}`;
+          const monto = result.pago.monto_pago || result.pago.costo || 0;
+          const transaccion = result.pago.transaccion_id || 'N/A';
+          const estado = result.pago.estado_pago || 'completado';
+          successMessage += `\n\nDetalles del pago:\n- Monto: ${formatearPrecio(monto)}\n- Transacción: ${transaccion}\n- Estado: ${estado}`;
         }
         successMessage += '\n\nYa puedes acceder a todas las funcionalidades.';
         

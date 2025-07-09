@@ -45,7 +45,7 @@ class Evaluacion(models.Model):
     class Meta:
         verbose_name = "Evaluación"
         verbose_name_plural = "Evaluaciones"
-        ordering = ['-fecha_creacion']
+        ordering = ['-id']  # Usar id en lugar de fecha_creacion
         
     def __str__(self):
         return f"{self.titulo} ({self.get_tipo_display()})"
@@ -94,18 +94,18 @@ class Evaluacion(models.Model):
         return self.preguntas.count()
     
     @property
-    def fecha_creacion(self):
+    def fecha_creacion_formatted(self):
         """
-        Compatibilidad con el frontend
+        Fecha de creación formateada para el frontend
         """
-        return self.fecha_registro
+        return self.fecha_creacion.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_creacion else None
     
     @property
-    def fecha_actualizacion(self):
+    def fecha_actualizacion_formatted(self):
         """
-        Compatibilidad con el frontend
+        Fecha de actualización formateada para el frontend
         """
-        return self.fecha_registro
+        return self.fecha_actualizacion.strftime('%Y-%m-%d %H:%M:%S') if self.fecha_actualizacion else None
     
     @property
     def titulo_evaluacion(self):
@@ -218,7 +218,7 @@ class AplicacionEvaluacion(models.Model):
     class Meta:
         verbose_name = "Aplicación de Evaluación"
         verbose_name_plural = "Aplicaciones de Evaluación"
-        ordering = ['-fecha_creacion']
+        ordering = ['-id']
         
     def __str__(self):
         return f"{self.evaluacion.titulo} - {self.fecha_programada.strftime('%d/%m/%Y')}"

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getAuthToken, getAuthHeaders, handleAuthError } from '../utils/auth';
 import '../css/GestionEvaluaciones.css';
 
 interface Evaluacion {
@@ -111,13 +112,20 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
   const cargarEvaluaciones = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/surveys/evaluaciones/', {
-        headers: {
-          'Authorization': `Token ${token}`,
-          'Content-Type': 'application/json'
-        }
+      const token = getAuthToken();
+      
+      if (!token) {
+        setError('No se encontró token de autenticación');
+        return;
+      }
+      
+      const response = await fetch('http://localhost:8000/api/surveys/evaluaciones/', {
+        headers: getAuthHeaders()
       });
+
+      if (handleAuthError(response)) {
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -134,13 +142,20 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
 
   const cargarPreguntas = async (evaluacionId: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/surveys/preguntas/?evaluacion_id=${evaluacionId}`, {
-        headers: {
-          'Authorization': `Token ${token}`,
-          'Content-Type': 'application/json'
-        }
+      const token = getAuthToken();
+      
+      if (!token) {
+        setError('No se encontró token de autenticación');
+        return;
+      }
+      
+      const response = await fetch(`http://localhost:8000/api/surveys/preguntas/?evaluacion_id=${evaluacionId}`, {
+        headers: getAuthHeaders()
       });
+
+      if (handleAuthError(response)) {
+        return;
+      }
 
       if (response.ok) {
         const data = await response.json();
@@ -157,10 +172,16 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
     e.preventDefault();
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        setError('No se encontró token de autenticación');
+        return;
+      }
+      
       const url = editingEvaluacion 
-        ? `/api/surveys/evaluaciones/${editingEvaluacion.id}/`
-        : '/api/surveys/evaluaciones/';
+        ? `http://localhost:8000/api/surveys/evaluaciones/${editingEvaluacion.id}/`
+        : 'http://localhost:8000/api/surveys/evaluaciones/';
       
       const method = editingEvaluacion ? 'PUT' : 'POST';
       
@@ -180,6 +201,8 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
         await cargarEvaluaciones();
         setShowModal(false);
         resetForm();
+      } else if (response.status === 401) {
+        setError('Token de autenticación inválido. Por favor, inicie sesión nuevamente.');
       } else {
         const errorData = await response.json();
         setError(errorData.detail || 'Error al guardar evaluación');
@@ -195,10 +218,16 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
     if (!evaluacionSeleccionada) return;
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        setError('No se encontró token de autenticación');
+        return;
+      }
+      
       const url = editingPregunta 
-        ? `/api/surveys/preguntas/${editingPregunta.id}/`
-        : '/api/surveys/preguntas/';
+        ? `http://localhost:8000/api/surveys/preguntas/${editingPregunta.id}/`
+        : 'http://localhost:8000/api/surveys/preguntas/';
       
       const method = editingPregunta ? 'PUT' : 'POST';
       
@@ -217,6 +246,8 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
       if (response.ok) {
         await cargarPreguntas(evaluacionSeleccionada.id);
         resetPreguntaForm();
+      } else if (response.status === 401) {
+        setError('Token de autenticación inválido. Por favor, inicie sesión nuevamente.');
       } else {
         const errorData = await response.json();
         setError(errorData.detail || 'Error al guardar pregunta');
@@ -232,8 +263,14 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/surveys/evaluaciones/${id}/desactivar/`, {
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        setError('No se encontró token de autenticación');
+        return;
+      }
+      
+      const response = await fetch(`http://localhost:8000/api/surveys/evaluaciones/${id}/desactivar/`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${token}`,
@@ -243,6 +280,8 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
 
       if (response.ok) {
         await cargarEvaluaciones();
+      } else if (response.status === 401) {
+        setError('Token de autenticación inválido. Por favor, inicie sesión nuevamente.');
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Error al desactivar evaluación');
@@ -254,8 +293,14 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
 
   const handleActivar = async (id: number) => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/surveys/evaluaciones/${id}/activar/`, {
+      const token = localStorage.getItem('authToken');
+      
+      if (!token) {
+        setError('No se encontró token de autenticación');
+        return;
+      }
+      
+      const response = await fetch(`http://localhost:8000/api/surveys/evaluaciones/${id}/activar/`, {
         method: 'POST',
         headers: {
           'Authorization': `Token ${token}`,
@@ -265,6 +310,8 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
 
       if (response.ok) {
         await cargarEvaluaciones();
+      } else if (response.status === 401) {
+        setError('Token de autenticación inválido. Por favor, inicie sesión nuevamente.');
       } else {
         const errorData = await response.json();
         setError(errorData.error || 'Error al activar evaluación');
@@ -525,20 +572,46 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
                     Editar
                   </button>
                   
-                  {evaluacion.estado === 'activa' ? (
-                    <button 
-                      className="btn-danger"
-                      onClick={() => handleDesactivar(evaluacion.id)}
-                    >
-                      Desactivar
-                    </button>
-                  ) : (
-                    <button 
-                      className="btn-primary"
-                      onClick={() => handleActivar(evaluacion.id)}
-                    >
-                      Activar
-                    </button>
+                  {/* Las evaluaciones normativas no pueden ser desactivadas por usuarios normales */}
+                  {evaluacion.tipo === 'interna' && (
+                    <>
+                      {evaluacion.estado === 'activa' ? (
+                        <button 
+                          className="btn-danger"
+                          onClick={() => handleDesactivar(evaluacion.id)}
+                        >
+                          Desactivar
+                        </button>
+                      ) : (
+                        <button 
+                          className="btn-primary"
+                          onClick={() => handleActivar(evaluacion.id)}
+                        >
+                          Activar
+                        </button>
+                      )}
+                    </>
+                  )}
+                  
+                  {/* Solo superusuario puede desactivar evaluaciones normativas */}
+                  {evaluacion.tipo === 'normativa' && usuario.is_superuser && (
+                    <>
+                      {evaluacion.estado === 'activa' ? (
+                        <button 
+                          className="btn-danger"
+                          onClick={() => handleDesactivar(evaluacion.id)}
+                        >
+                          Desactivar
+                        </button>
+                      ) : (
+                        <button 
+                          className="btn-primary"
+                          onClick={() => handleActivar(evaluacion.id)}
+                        >
+                          Activar
+                        </button>
+                      )}
+                    </>
                   )}
                 </>
               )}
@@ -588,7 +661,15 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
                 <label>Tipo:</label>
                 <select
                   value={formData.tipo}
-                  onChange={(e) => setFormData({...formData, tipo: e.target.value as 'normativa' | 'interna'})}
+                  onChange={(e) => {
+                    const nuevoTipo = e.target.value as 'normativa' | 'interna';
+                    setFormData({
+                      ...formData, 
+                      tipo: nuevoTipo,
+                      // Limpiar tiempo límite si es normativa
+                      tiempo_limite: nuevoTipo === 'normativa' ? '' : formData.tiempo_limite
+                    });
+                  }}
                   disabled={!puedeCrearNormativa() && formData.tipo === 'normativa'}
                 >
                   <option value="interna">Interna</option>
@@ -596,6 +677,11 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
                     <option value="normativa">Normativa</option>
                   )}
                 </select>
+                {formData.tipo === 'normativa' && (
+                  <small className="form-help">
+                    Las evaluaciones normativas son visibles para todas las empresas
+                  </small>
+                )}
               </div>
 
               <div className="form-group">
@@ -607,15 +693,22 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
                 />
               </div>
 
-              <div className="form-group">
-                <label>Tiempo límite (minutos):</label>
-                <input
-                  type="number"
-                  value={formData.tiempo_limite}
-                  onChange={(e) => setFormData({...formData, tiempo_limite: e.target.value})}
-                  min="1"
-                />
-              </div>
+              {/* Solo mostrar tiempo límite para evaluaciones internas */}
+              {formData.tipo === 'interna' && (
+                <div className="form-group">
+                  <label>Tiempo límite (minutos):</label>
+                  <input
+                    type="number"
+                    value={formData.tiempo_limite}
+                    onChange={(e) => setFormData({...formData, tiempo_limite: e.target.value})}
+                    min="1"
+                    placeholder="Opcional - dejar vacío para sin límite"
+                  />
+                  <small className="form-help">
+                    Las evaluaciones normativas no requieren tiempo límite
+                  </small>
+                </div>
+              )}
 
               <div className="form-group">
                 <label>Estado:</label>
