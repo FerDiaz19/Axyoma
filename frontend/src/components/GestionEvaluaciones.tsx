@@ -476,6 +476,11 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
           </select>
         </div>
       </div>
+      
+      <div className="filtros-contador">
+        <strong>{evaluacionesFiltradas.length}</strong> evaluaciones encontradas
+        {busqueda && <span>para "{busqueda}"</span>}
+      </div>
 
       <div className="evaluaciones-grid">
         {evaluacionesFiltradas.map(evaluacion => (
@@ -812,16 +817,18 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
                         Editar
                       </button>
                       <button 
-                        className="btn-secondary btn-small"
+                        className="btn-reorder"
                         onClick={() => handleReordenarPregunta(pregunta.id!, pregunta.orden - 1)}
                         disabled={pregunta.orden === 1}
+                        title="Mover hacia arriba"
                       >
                         ↑
                       </button>
                       <button 
-                        className="btn-secondary btn-small"
+                        className="btn-reorder"
                         onClick={() => handleReordenarPregunta(pregunta.id!, pregunta.orden + 1)}
                         disabled={pregunta.orden === preguntas.length}
+                        title="Mover hacia abajo"
                       >
                         ↓
                       </button>

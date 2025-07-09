@@ -50,36 +50,69 @@ class Evaluacion(models.Model):
     def __str__(self):
         return f"{self.titulo} ({self.get_tipo_display()})"
     
-    @property
-    def tipo_display(self):
-        return self.get_tipo_display()
-        
-    @property
-    def estado_display(self):
-        return self.get_estado_display()
-    
-    @property
-    def creado_por_nombre(self):
-        return f"{self.creado_por.first_name} {self.creado_por.last_name}".strip() or self.creado_por.username
-    
-    @property
-    def empresa_nombre(self):
-        return self.empresa.nombre if self.empresa else None
-    
-    @property
-    def planta_nombre(self):
-        return self.planta.nombre if self.planta else None
-    
-    @property
-    def total_preguntas(self):
-        return self.preguntas.count()
-    
     def is_normativa(self):
-        return self.tipo == 'normativa'
         return self.tipo == 'normativa'
     
     def is_interna(self):
         return self.tipo == 'interna'
+    
+    @property
+    def creado_por_nombre(self):
+        """
+        Nombre completo del usuario que creó la evaluación
+        """
+        if self.creado_por.first_name and self.creado_por.last_name:
+            return f"{self.creado_por.first_name} {self.creado_por.last_name}"
+        return self.creado_por.username
+    
+    @property
+    def empresa_nombre(self):
+        """
+        Nombre de la empresa asociada
+        """
+        return self.empresa.nombre if self.empresa else None
+    
+    @property
+    def tipo_display(self):
+        """
+        Nombre display del tipo de evaluación
+        """
+        return dict(self.TIPO_EVALUACION_CHOICES).get(self.tipo, self.tipo)
+    
+    @property
+    def estado_display(self):
+        """
+        Nombre display del estado
+        """
+        return dict(self.ESTADO_CHOICES).get(self.estado, self.estado)
+    
+    @property
+    def total_preguntas(self):
+        """
+        Total de preguntas en la evaluación
+        """
+        return self.preguntas.count()
+    
+    @property
+    def fecha_creacion(self):
+        """
+        Compatibilidad con el frontend
+        """
+        return self.fecha_registro
+    
+    @property
+    def fecha_actualizacion(self):
+        """
+        Compatibilidad con el frontend
+        """
+        return self.fecha_registro
+    
+    @property
+    def titulo_evaluacion(self):
+        """
+        Compatibilidad con el frontend (usa el campo titulo directamente)
+        """
+        return self.titulo
     
     def can_user_edit(self, user):
         """
@@ -91,7 +124,13 @@ class Evaluacion(models.Model):
         if hasattr(user, 'perfil'):
             perfil = user.perfil
             if perfil.nivel_usuario in ['admin-empresa', 'admin-planta']:
-                return self.is_interna() and self.empresa == perfil.administrador_empresa
+                # Buscar la empresa del usuario a través de la tabla de empresas
+                from apps.users.models import Empresa
+                try:
+                    empresa_usuario = Empresa.objects.get(administrador=perfil)
+                    return self.is_interna() and self.empresa == empresa_usuario
+                except Empresa.DoesNotExist:
+                    return False
         
         return False
     
@@ -105,8 +144,13 @@ class Evaluacion(models.Model):
         if hasattr(user, 'perfil'):
             perfil = user.perfil
             if perfil.nivel_usuario in ['admin-empresa', 'admin-planta']:
-                return (self.is_normativa() or 
-                       (self.is_interna() and self.empresa == perfil.administrador_empresa))
+                from apps.users.models import Empresa
+                try:
+                    empresa_usuario = Empresa.objects.get(administrador=perfil)
+                    return (self.is_normativa() or 
+                           (self.is_interna() and self.empresa == empresa_usuario))
+                except Empresa.DoesNotExist:
+                    return self.is_normativa()
         
         return False
 
