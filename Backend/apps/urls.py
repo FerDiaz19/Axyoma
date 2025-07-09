@@ -17,4 +17,5 @@ router.register(r'subscriptions', SubscriptionViewSet, basename='subscriptions')
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('surveys/', include('apps.surveys.urls')),
 ]

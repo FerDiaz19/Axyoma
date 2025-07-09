@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import EmpleadosCRUD from './EmpleadosCRUD';
+import GestionEvaluaciones from './GestionEvaluaciones';
 import {
   obtenerDepartamentos, crearDepartamento, actualizarDepartamento, eliminarDepartamento,
   obtenerPuestos, crearPuesto, actualizarPuesto, eliminarPuesto,
@@ -14,7 +15,7 @@ interface PlantaAdminDashboardProps {
 }
 
 const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'departamentos' | 'puestos' | 'empleados'>('departamentos');
+  const [activeSection, setActiveSection] = useState<'departamentos' | 'puestos' | 'empleados' | 'evaluaciones'>('departamentos');
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [puestos, setPuestos] = useState<Puesto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -242,6 +243,13 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
           >
             <span className="nav-icon">👥</span>
             <span className="nav-text">Gestión de Empleados</span>
+          </button>
+          <button 
+            className={activeSection === 'evaluaciones' ? 'active' : ''}
+            onClick={() => setActiveSection('evaluaciones')}
+          >
+            <span className="nav-icon">📝</span>
+            <span className="nav-text">Evaluaciones</span>
           </button>
         </nav>
       </aside>
@@ -539,6 +547,22 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
 
         {/* Sección de Empleados */}
         {activeSection === 'empleados' && <EmpleadosCRUD userData={userData} />}
+        
+        {/* Sección de Evaluaciones */}
+        {activeSection === 'evaluaciones' && (
+          <GestionEvaluaciones 
+            usuario={{
+              is_superuser: false,
+              perfil_usuario: {
+                tipo_usuario: 'AdminPlanta',
+                empresa: {
+                  id: userData?.empresa_id || 0,
+                  nombre: userData?.empresa_nombre || 'Mi Empresa'
+                }
+              }
+            }}
+          />
+        )}
       </div>
         </main>
       </div>

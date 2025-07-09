@@ -4,6 +4,7 @@ import GestionEstructura from './GestionEstructura';
 import GestionPlantas from './GestionPlantas';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
+import GestionEvaluaciones from './GestionEvaluaciones';
 import { logout } from '../services/authService';
 import '../css/Dashboard.css';
 import '../css/GestionPlantas.css';
@@ -269,24 +270,18 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
         {activeSection === 'estructura' && <GestionEstructura />}
         {activeSection === 'empleados' && <EmpleadosCRUD userData={userData} />}
         {activeSection === 'evaluaciones' && (
-          <div className="coming-soon">
-            <h2>Evaluaciones</h2>
-            <p>Módulo de evaluaciones en desarrollo...</p>
-            <div className="stats-grid">
-              <div className="stat-card">
-                <h3>Evaluaciones Activas</h3>
-                <p className="stat-number">5</p>
-              </div>
-              <div className="stat-card">
-                <h3>Evaluaciones Completadas</h3>
-                <p className="stat-number">12</p>
-              </div>
-              <div className="stat-card">
-                <h3>Empleados Evaluados</h3>
-                <p className="stat-number">45</p>
-              </div>
-            </div>
-          </div>
+          <GestionEvaluaciones 
+            usuario={{
+              is_superuser: false,
+              perfil_usuario: {
+                tipo_usuario: 'AdminEmpresa',
+                empresa: {
+                  id: userData?.empresa_id || 0,
+                  nombre: userData?.empresa_nombre || 'Mi Empresa'
+                }
+              }
+            }}
+          />
         )}
         {activeSection === 'reportes' && (
           <div className="coming-soon">
