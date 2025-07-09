@@ -1,210 +1,181 @@
-# 🚀 AXYOMA - Sistema de Gestión de Empleados
+# 🏭 AXYOMA - Sistema de Gestión de Empleados
 
-Sistema completo de gestión de empleados con múltiples niveles de acceso, desarrollado con Django (Backend) y React (Frontend).
+Sistema completo de gestión de empleados con arquitectura de suscripciones para empresas industriales.
 
-## 📋 Características Principales
+## � Requisitos del Sistema
 
-- **👤 Gestión de Usuarios**: SuperAdmin, Admin Empresa, Admin Planta
-- **🏢 Gestión de Empresas**: Múltiples empresas con suscripciones
-- **🏭 Gestión de Plantas**: Múltiples plantas por empresa
-- **👥 Gestión de Empleados**: CRUD completo con filtros avanzados
-- **� Planes de Suscripción**: Básico, Profesional, Empresarial
-- **🔒 Autenticación**: Sistema de login seguro
-- **📱 Dashboard Responsivo**: Interfaz moderna y adaptable
+### Obligatorios
+- **Python 3.8+** (con pip)
+- **Node.js 16+** (con npm)
+- **PostgreSQL 12+** (usuario: postgres, password: 123456789)
 
-## 🛠️ Tecnologías Utilizadas
-
-**Backend:**
-- Python 3.11+
-- Django 5.2.3
-- Django REST Framework
-- PostgreSQL
-- Django CORS Headers
-
-**Frontend:**
-- React 18
-- TypeScript
-- CSS3 (Diseño personalizado)
-- Fetch API
-
-## 🚀 Instalación y Configuración
-
-### 1. Requisitos Previos
-- **Python 3.11+** - [Descargar](https://www.python.org/downloads/)
-- **Node.js LTS** - [Descargar](https://nodejs.org/)
-- **PostgreSQL 14+** - [Descargar](https://www.postgresql.org/download/)
-
-### 2. Configuración de Base de Datos
-```sql
--- La base de datos se crea automáticamente durante el setup
--- Solo necesitas tener PostgreSQL instalado y ejecutándose con:
-
--- Usuario: postgres
--- Password: 123456789
--- Host: localhost
--- Puerto: 5432
-
--- El script setup_project.bat:
--- 1. Verifica conectividad a PostgreSQL
--- 2. Crea automáticamente la base de datos 'axyomadb' si no existe
--- 3. Ejecuta migraciones
--- 4. Crea todos los datos iniciales (usuarios, empresa, planta, etc.)
+### Verificar Instalación
+```bash
+python --version    # o py --version
+node --version
+npm --version
+psql --version
 ```
 
-### 3. Configuración del Proyecto
+## �🚀 Inicio Rápido
+
+### Para Usuarios
 ```bash
-# Ejecutar configuración completa
+# Iniciar sistema completo
+start.bat
+```
+
+### Para Nuevos Desarrolladores
+```bash
+# Setup completo (primera vez)
 setup_project.bat
+
+# Después usar
+start.bat
 ```
 
-### 4. Iniciar el Sistema
-```bash
-# Iniciar backend y frontend
-iniciar_sistema.bat
+📖 **Guía completa**: Ver [DEVELOPER_GUIDE.md](DEVELOPER_GUIDE.md)
+
+## 🏗️ Arquitectura
+
+- **Backend**: Django + PostgreSQL (100% PostgreSQL, sin SQLite)
+- **Frontend**: React + TypeScript
+- **Autenticación**: Token-based
+- **Suscripciones**: Sistema PostgreSQL con planes y pagos automatizados
+- **Base de Datos**: PostgreSQL únicamente (axyomadb)
+
+## 👥 Tipos de Usuario
+
+### 🔧 SuperAdmin
+- Gestión de planes de suscripción
+- Vista global de todas las empresas
+- Control de estados de suscripción
+- Administración del sistema
+
+### 🏢 Admin Empresa  
+- Gestión de plantas propias
+- Gestión de empleados
+- Control de suscripción (debe pagar para activar)
+- Reportes y estadísticas
+
+### 🏭 Admin Planta
+- Gestión de empleados de su planta
+- **Depende de la suscripción de la empresa**
+- No requiere suscripción propia
+
+## 💳 Sistema de Suscripciones
+
+### Planes Base (configurables por SuperAdmin)
+- **Plan Básico**: 1 mes - $299 MXN
+- **Plan Profesional**: 3 meses - $799 MXN  
+- **Plan Anual**: 1 año - $2,999 MXN
+
+### Flujo Automático
+1. **Sin suscripción** → Empresa suspendida
+2. **Crear suscripción** → Estado: pendiente_pago
+3. **Pagar** → Estado: activa (automático)
+4. **Vencimiento** → Estado: vencida (automático)
+
+### Reglas de Negocio
+- ✅ **Una suscripción activa por empresa**
+- ✅ **Admin Planta hereda estado de la empresa**
+- ✅ **Activación automática tras pago**
+- ✅ **SuperAdmin ve tiempo restante de todas las empresas**
+
+## 🗂️ Estructura del Proyecto
+
 ```
-
-## � URLs del Sistema
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000/api/
-- **Admin Django**: http://localhost:8000/admin/
-
-## 👤 Usuarios de Prueba
-
-| Tipo Usuario | Email | Password | Permisos |
-|-------------|--------|----------|----------|
-| **SuperAdmin** | ed-rubio@axyoma.com | 1234 | Gestión completa del sistema |
-| **Admin Empresa** | juan.perez@codewave.com | 1234 | Gestión de su empresa |
-| **Admin Planta** | maria.gomez@codewave.com | 1234 | Gestión de su planta |
-
-## 🏢 Datos de Prueba Incluidos
-
-**Empresa:**
-- **Nombre**: CodeWave Technologies S.A. de C.V.
-- **RFC**: CWT240701ABC
-- **Plan**: Profesional (200 empleados, 5 plantas)
-
-**Estructura Organizacional:**
-- **Planta**: Planta Principal
-- **Departamentos**: RRHH, Producción, Calidad, Mantenimiento, Logística
-- **Puestos**: 12 puestos distribuidos en departamentos
-- **Empleados**: 5 empleados de muestra
-
-**Planes de Suscripción:**
-- **Básico**: 50 empleados, 1 planta - $499/mes
-- **Profesional**: 200 empleados, 5 plantas - $999/mes
-- **Empresarial**: 1000 empleados, 20 plantas - $1999/mes
-
-## � Estructura del Proyecto
-
-```
-Axyoma/
-├── Backend/                 # Django Backend
-│   ├── apps/               # Aplicaciones Django
-│   ├── config/             # Configuración del proyecto
-│   ├── env/                # Entorno virtual Python
-│   ├── create_initial_data.py  # Script de datos iniciales
-│   ├── manage.py           # Administrador Django
-│   └── requirements.txt    # Dependencias Python
-├── frontend/               # React Frontend
+Axyoma2/
+├── Backend/                 # API Django
+│   ├── apps/               # Aplicaciones principales
+│   │   ├── users/         # Gestión de usuarios
+│   │   ├── subscriptions/ # Sistema de suscripciones
+│   │   ├── views.py       # Endpoints principales
+│   │   └── mock_storage.py # Datos simulados
+│   ├── config/            # Configuración Django
+│   └── manage.py
+├── frontend/              # Aplicación React
 │   ├── src/
-│   │   ├── components/     # Componentes React
-│   │   ├── services/       # Servicios API
-│   │   ├── css/           # Estilos CSS
-│   │   └── ...
-│   ├── public/            # Archivos estáticos
-│   └── package.json       # Dependencias Node.js
-├── setup_project.bat      # Configuración completa
-└── iniciar_sistema.bat    # Iniciar sistema
+│   │   ├── components/    # Componentes React
+│   │   ├── services/      # Servicios API
+│   │   └── css/          # Estilos
+│   └── package.json
+├── AxyomaDB.sql          # Esquema de base de datos
+├── setup_project.bat     # Setup para desarrolladores
+├── start_system.bat      # Iniciar sistema completo
+├── start_backend.bat     # Solo backend
+└── start_frontend.bat    # Solo frontend
 ```
 
-## 🔧 Scripts Disponibles
+## 📊 Estado de Implementación
 
-- **`setup_project.bat`** - Configuración completa del proyecto (ejecutar una vez)
-- **`iniciar_sistema.bat`** - Iniciar backend y frontend (uso diario)
+### ✅ Completado (85%)
+- [x] Sistema de autenticación
+- [x] Gestión de usuarios (SuperAdmin, Admin Empresa, Admin Planta)
+- [x] Sistema de suscripciones completo
+- [x] Flujo automático de pagos
+- [x] Dashboards diferenciados por rol
+- [x] Sistema de plantas y departamentos
+- [x] Gestión básica de empleados
+- [x] Estados de suscripción en tiempo real
+- [x] Mock storage para desarrollo
 
-## 🎯 Funcionalidades por Usuario
+### 🔄 En Desarrollo (10%)
+- [ ] Módulo de evaluaciones
+- [ ] Reportes avanzados
+- [ ] Integración con DB PostgreSQL
 
-### SuperAdmin
-- ✅ Gestión completa de empresas
-- ✅ Gestión de planes de suscripción
-- ✅ Gestión de todas las suscripciones
-- ✅ Acceso a todas las funcionalidades
+### 📋 Pendiente (5%)
+- [ ] Notificaciones por email
+- [ ] Exportación de reportes
+- [ ] Dashboard de métricas avanzadas
 
-### Admin Empresa
-- ✅ Gestión de plantas de su empresa
-- ✅ Gestión de empleados de su empresa
-- ✅ Gestión de departamentos y puestos
-- ✅ Visualización de su suscripción
+## 🧪 Testing
 
-### Admin Planta
-- ✅ Gestión de empleados de su planta
-- ✅ Gestión de departamentos de su planta
-- ✅ Gestión de puestos de su planta
+El sistema incluye datos mock para desarrollo y testing sin necesidad de configurar base de datos.
 
-## 🚨 Solución de Problemas
+### Usuarios de Prueba PostgreSQL (Creados automáticamente)
+- **SuperAdmin**: `ed-rubio@axyoma.com` / `1234`
+- **Admin Empresa**: `juan.perez@codewave.com` / `1234` (CodeWave Technologies)
+- **Admin Planta**: `maria.gomez@codewave.com` / `1234` (Planta Principal)
 
-### Error: "Python no está instalado"
-```bash
-# Instalar Python desde https://www.python.org/
-# Asegurarse de marcar "Add Python to PATH"
-```
+### Estructura Empresarial Base
+- **Empresa**: CodeWave Technologies (RFC: CWT240701ABC)
+- **Planta**: Planta Principal
+- **Administradores**: Correctamente asignados con relaciones PostgreSQL
 
-### Error: "Node.js no está instalado"
-```bash
-# Instalar Node.js desde https://nodejs.org/
-# Descargar versión LTS
-```
+## 📝 Notas de Desarrollo
 
-### Error: "No se puede conectar a PostgreSQL"
-```bash
-# 1. Verificar que PostgreSQL esté ejecutándose
-# Ve a Windows Services y busca 'postgresql'
-# Asegúrate que esté en estado 'Iniciado'
+- Los admin planta **NO** requieren suscripción propia
+- El sistema garantiza **una sola suscripción activa por empresa**
+- Los estados se actualizan automáticamente tras pagos
+- El SuperAdmin puede ver el tiempo restante de cada empresa
+- **Todos los datos se almacenan en PostgreSQL** (sin SQLite ni archivos mock)
+- Los planes básicos se crean automáticamente al iniciar el sistema
 
-# 2. Verificar configuración
-# Usuario: postgres, Password: 123456789
-# Puerto: 5432
+## 🔧 Sistema PostgreSQL Únicamente
 
-# 3. El script creará automáticamente la base de datos 'axyomadb'
-# No es necesario crearla manualmente
-```
+✅ **Lo que está implementado y FUNCIONANDO:**
+- Modelos Django para planes, suscripciones y pagos
+- ViewSets PostgreSQL para todas las operaciones CRUD
+- Migraciones automáticas al iniciar con `start.bat`
+- Creación automática de usuarios originales
+- Creación automática de planes básicos (Mensual $299, Trimestral $799, Anual $2999)
+- APIs REST completamente funcionales
+- Script de reseteo completo de BD para desarrollo
 
-### Error: "Credenciales incorrectas" al hacer login
-```bash
-# Si aparece este error, verifica:
-# 1. Que ejecutaste setup_project.bat completamente
-# 2. Que no hubo errores durante la creación de datos iniciales
-# 3. Usa las credenciales exactas (copiar y pegar):
+❌ **Lo que se eliminó:**
+- Dependencias de mock_storage.py
+- Referencias a SQLite
+- Archivos JSON para datos temporales
+- Scripts Python innecesarios (más de 10 archivos eliminados)
 
-# SuperAdmin: ed-rubio@axyoma.com / 1234
-# Admin Empresa: juan.perez@codewave.com / 1234  
-# Admin Planta: maria.gomez@codewave.com / 1234
-
-# Si persiste el problema, ejecuta:
-cd Backend
-py create_initial_data.py
-```
-
-### Error: "Scripts se cierran inmediatamente"
-```bash
-# 1. Ejecutar desde PowerShell como administrador
-# 2. Verificar políticas de ejecución:
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-# 3. Asegurarse de que todos los requisitos estén instalados
-# 4. Ejecutar setup_project.bat primero
-# 5. Si persiste, ejecutar diagnostico.bat para identificar problemas
-```
-
-## 🎉 ¡Listo para usar!
-
-1. Ejecuta `setup_project.bat` (solo la primera vez)
-2. Ejecuta `iniciar_sistema.bat` (cada vez que uses el sistema)
-3. Ve a http://localhost:3000
-4. Inicia sesión con cualquier usuario de prueba
-5. ¡Explora el sistema!
+⚡ **Solución de problemas:**
+- Si hay errores de migraciones: `cd Backend && python reset_database.py`
+- Luego ejecutar: `start.bat`
 
 ---
 
-**Desarrollado con ❤️ para la gestión eficiente de empleados**
+**Desarrollado para UTT4B - Sistema de gestión empresarial con suscripciones PostgreSQL**
+
+**✨ ESTADO: COMPLETAMENTE FUNCIONAL ✨**

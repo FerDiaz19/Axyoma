@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils import timezone
 from datetime import datetime, timedelta
-from django.contrib.auth.models import User
 from apps.users.models import Empresa
 
 class PlanSuscripcion(models.Model):
@@ -104,7 +103,6 @@ class Pago(models.Model):
     transaccion_id = models.CharField(max_length=64, null=True, blank=True, verbose_name="ID de Transacción")
     estado_pago = models.CharField(max_length=20, choices=ESTADO_PAGO_CHOICES, default='Pendiente', verbose_name="Estado del Pago")
     suscripcion = models.ForeignKey(SuscripcionEmpresa, on_delete=models.CASCADE, verbose_name="Suscripción", related_name='pagos')
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Usuario que realizó el pago", null=True, blank=True)
 
     class Meta:
         db_table = 'pagos'
@@ -113,5 +111,4 @@ class Pago(models.Model):
         ordering = ['-fecha_pago']
 
     def __str__(self):
-        usuario_info = f" - {self.usuario.username}" if self.usuario else ""
-        return f"Pago ${self.monto_pago} - {self.suscripcion.empresa.nombre}{usuario_info}"
+        return f"Pago ${self.monto_pago} - {self.suscripcion.empresa.nombre}"

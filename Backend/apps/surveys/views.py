@@ -26,14 +26,30 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
             # SuperAdmin ve todas las evaluaciones
             return Evaluacion.objects.all()
         
-        if hasattr(user, 'perfil_usuario'):
-            perfil = user.perfil_usuario
-            if perfil.es_admin_empresa() or perfil.es_admin_planta():
+        if hasattr(user, 'perfil'):
+            from apps.users.models import Empresa
+            
+            # Obtener la empresa del usuario
+            empresa_usuario = None
+            if user.perfil.nivel_usuario == 'admin-empresa':
+                try:
+                    empresa_usuario = Empresa.objects.get(administrador=user.perfil)
+                except Empresa.DoesNotExist:
+                    pass
+            elif user.perfil.nivel_usuario == 'admin-planta':
+                try:
+                    from apps.users.models import AdminPlanta
+                    admin_planta = AdminPlanta.objects.get(usuario=user.perfil)
+                    empresa_usuario = admin_planta.planta.empresa
+                except:
+                    pass
+            
+            if empresa_usuario:
                 # AdminEmpresa/AdminPlanta ven evaluaciones normativas y sus propias internas
                 return Evaluacion.objects.filter(
                     Q(tipo='normativa') | 
-                    Q(tipo='interna', empresa=perfil.empresa)
-                )
+                    Q(tipo='interna', empresa=empresa_usuario)
+                ).distinct()
         
         return Evaluacion.objects.none()
     

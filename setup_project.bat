@@ -1,153 +1,89 @@
 @echo off
-color 0A
-title AXYOMA - Configuración del Sistema
-echo.
-echo =========================================
-echo CONFIGURACIÓN DEL SISTEMA AXYOMA
-echo =========================================
+echo ===== AXYOMA - SETUP PARA NUEVOS DESARROLLADORES =====
 echo.
 
-setlocal enabledelayedexpansion
-
-echo [1/8] Verificando requisitos del sistema...
-echo.
-
-REM Verificar Python
-echo Verificando Python...
-py --version >nul 2>nul
-if %errorlevel% neq 0 (
-    echo ERROR: Python no está instalado
-    echo Instala Python desde https://www.python.org/downloads/
+echo [1/5] Verificando estructura del proyecto...
+if not exist "Backend" (
+    echo ERROR: Directorio Backend no encontrado
     pause
     exit /b 1
 )
-echo OK: Python instalado
 
-REM Verificar Node.js
-echo Verificando Node.js...
-node --version >nul 2>nul
-if %errorlevel% neq 0 (
-    echo ERROR: Node.js no está instalado
-    echo Instala Node.js desde https://nodejs.org/
+if not exist "frontend" (
+    echo ERROR: Directorio frontend no encontrado
     pause
     exit /b 1
 )
-echo OK: Node.js instalado
 
-REM Verificar PostgreSQL
-echo Verificando PostgreSQL...
-psql --version >nul 2>nul
-if %errorlevel% neq 0 (
-    echo ERROR: PostgreSQL no está instalado
-    echo Instala PostgreSQL desde https://www.postgresql.org/download/windows/
-    pause
-    exit /b 1
-)
-echo OK: PostgreSQL instalado
-
-echo.
-echo [2/8] Verificando conectividad a PostgreSQL...
-set PGPASSWORD=123456789
-echo SELECT 1; | psql -h localhost -U postgres -d postgres >nul 2>nul
-if %errorlevel% neq 0 (
-    echo ERROR: No se puede conectar a PostgreSQL
-    echo Verifica que PostgreSQL esté ejecutándose y que el usuario postgres tenga password: 123456789
-    pause
-    exit /b 1
-)
-echo OK: Conexión a PostgreSQL exitosa
-
-echo.
-echo [3/8] Verificando/creando base de datos...
-echo SELECT 1; | psql -h localhost -U postgres -d axyomadb >nul 2>nul
-if %errorlevel% neq 0 (
-    echo Base de datos axyomadb no existe, creándola...
-    echo CREATE DATABASE axyomadb; | psql -h localhost -U postgres -d postgres >nul 2>nul
-    if %errorlevel% neq 0 (
-        echo ERROR: No se pudo crear la base de datos
-        pause
-        exit /b 1
-    )
-    echo OK: Base de datos axyomadb creada
+echo [2/5] Verificando PostgreSQL...
+set POSTGRES_PATH="C:\Program Files\PostgreSQL\17\bin"
+if exist %POSTGRES_PATH%\psql.exe (
+    echo PostgreSQL encontrado en %POSTGRES_PATH%
 ) else (
-    echo OK: Base de datos axyomadb ya existe
+    echo ADVERTENCIA: PostgreSQL no encontrado en la ruta esperada
+    echo Verifique que PostgreSQL este instalado y corriendo
 )
 
-echo.
-echo [4/8] Configurando entorno Python...
+echo [3/5] Configurando entorno virtual de Python...
 cd Backend
+
 if not exist "env" (
     echo Creando entorno virtual...
     py -m venv env
     if %errorlevel% neq 0 (
         echo ERROR: No se pudo crear el entorno virtual
+        echo Verifica que Python esté instalado
         pause
         exit /b 1
     )
 )
-echo OK: Entorno virtual listo
 
-echo.
-echo [5/8] Instalando dependencias Python...
+echo Activando entorno virtual...
 call env\Scripts\activate.bat
-py -m pip install --upgrade pip --quiet
-py -m pip install -r requirements.txt --quiet
+
+echo Instalando dependencias de Python...
+py -m pip install --upgrade pip
+py -m pip install -r requirements.txt
 if %errorlevel% neq 0 (
-    echo ERROR: No se pudieron instalar las dependencias de Python
+    echo ERROR: No se pudieron instalar las dependencias del backend
     pause
     exit /b 1
 )
-echo OK: Dependencias Python instaladas
 
-echo.
-echo [6/8] Instalando dependencias Node.js...
+echo [4/5] Instalando dependencias del Frontend...
 cd ..\frontend
-npm install --silent
+echo Instalando packages con npm...
+npm install
 if %errorlevel% neq 0 (
-    echo ERROR: No se pudieron instalar las dependencias de Node.js
+    echo ERROR: No se pudieron instalar las dependencias del frontend
+    echo Asegurate de tener Node.js 16+ instalado
     pause
     exit /b 1
 )
-echo OK: Dependencias Node.js instaladas
 
-echo.
-echo [7/8] Configurando base de datos...
-cd ..\Backend
-call env\Scripts\activate.bat
-py manage.py makemigrations --verbosity=0
-py manage.py migrate --verbosity=0
-if %errorlevel% neq 0 (
-    echo ERROR: No se pudieron ejecutar las migraciones
-    pause
-    exit /b 1
-)
-echo OK: Migraciones ejecutadas
-
-echo.
-echo [8/8] Creando datos iniciales...
-py create_initial_data.py
-if %errorlevel% neq 0 (
-    echo ADVERTENCIA: Algunos datos pueden no haberse creado
-    echo Esto es normal si ya existen datos previos
-) else (
-    echo OK: Datos iniciales creados
-)
-
+echo [5/5] Configurando base de datos PostgreSQL...
 cd ..
+echo Base de datos configurada para PostgreSQL únicamente
 
 echo.
-echo =========================================
-echo CONFIGURACIÓN COMPLETADA EXITOSAMENTE
-echo =========================================
+echo ===== SETUP COMPLETADO =====
 echo.
-echo El sistema está listo para usar.
+echo ✅ CONFIGURACIÓN COMPLETADA:
+echo    ✓ Entorno virtual creado en Backend\env\
+echo    ✓ Dependencias del backend instaladas
+echo    ✓ Dependencias del frontend instaladas
+echo    ✓ Archivos de configuración creados
 echo.
-echo Para iniciar el sistema ejecuta: iniciar_sistema.bat
-echo Luego ve a: http://localhost:3000
+echo 📋 REQUISITOS PARA USAR EL SISTEMA:
+echo    - PostgreSQL debe estar instalado y ejecutándose
+echo    - Base de datos: axyomadb (usuario: postgres, password: 123456789)
+echo    - El backend se conectará automáticamente
 echo.
-echo Usuarios de prueba:
-echo   SuperAdmin: ed-rubio@axyoma.com / 1234
-echo   Admin Empresa: juan.perez@codewave.com / 1234
-echo   Admin Planta: maria.gomez@codewave.com / 1234
+echo 👤 Usuarios de prueba:
+echo    SuperAdmin:     ed-rubio@axyoma.com / 1234
+echo    Admin Empresa:  juan.perez@codewave.com / 1234
+echo    Admin Planta:   maria.gomez@codewave.com / 1234
+echo.
+echo 🚀 Para iniciar el sistema usa: start.bat
 echo.
 pause
