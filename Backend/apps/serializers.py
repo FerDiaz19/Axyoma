@@ -153,15 +153,63 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                         departamento=dept
                     )
             
-            # NO CREAR SUSCRIPCIÓN AUTOMÁTICA
-            # La suscripción se creará solo cuando el usuario seleccione un plan específico
-            # o cuando utilice el endpoint de crear suscripción
-            
-            print(f'✅ Empresa "{empresa.nombre}" registrada exitosamente')
-            print(f'   - Planta principal: {planta_principal.nombre}')
-            print(f'   - Departamentos: {len(departamentos)}')
-            print(f'   - Administrador: {user.username}')
-            print(f'   - Sin suscripción automática (se asignará cuando seleccione plan)')
+            # CREAR SUSCRIPCIÓN BÁSICA AUTOMÁTICA
+            try:
+                from apps.subscriptions.models import PlanSuscripcion, SuscripcionEmpresa, Pago
+                from django.utils import timezone
+                from datetime import timedelta
+                
+                # Buscar un plan básico o crear uno por defecto
+                plan_basico = PlanSuscripcion.objects.filter(
+                    nombre__icontains='básico',
+                    status=True
+                ).first()
+                
+                if not plan_basico:
+                    plan_basico = PlanSuscripcion.objects.filter(
+                        status=True
+                    ).first()
+                
+                if not plan_basico:
+                    # Crear plan básico por defecto
+                    plan_basico = PlanSuscripcion.objects.create(
+                        nombre="Básico",
+                        descripcion="Plan básico para empresas nuevas",
+                        duracion=30,
+                        precio=499.00,
+                        status=True
+                    )
+                
+                # Crear suscripción automática
+                fecha_inicio = timezone.now().date()
+                fecha_fin = fecha_inicio + timedelta(days=plan_basico.duracion)
+                
+                suscripcion = SuscripcionEmpresa.objects.create(
+                    empresa=empresa,
+                    plan_suscripcion=plan_basico,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin,
+                    estado='Activa',
+                    status=True
+                )
+                
+                # Crear pago automático como completado
+                Pago.objects.create(
+                    suscripcion=suscripcion,
+                    costo=plan_basico.precio,
+                    monto_pago=plan_basico.precio,
+                    estado_pago='Completado',
+                    fecha_pago=timezone.now(),
+                    transaccion_id=f"AUTO-{empresa.empresa_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+                    usuario=user  # Vincular el pago con el usuario que registró la empresa
+                )
+                
+            except Exception as e:
+                # Si falla la creación de la suscripción, solo logear el error
+                # pero no fallar la creación de la empresa
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Error creando suscripción automática: {str(e)}")
             
             return empresa
 

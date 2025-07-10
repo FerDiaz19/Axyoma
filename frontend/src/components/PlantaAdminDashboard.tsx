@@ -109,7 +109,7 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
     }
   };
 
-  const iniciarEdicion = (departamento: Departamento) => {
+  const handleEditarDepartamento = (departamento: Departamento) => {
     setEditingDepartamento(departamento);
     setNuevoDepartamento({
       nombre: departamento.nombre,
@@ -118,15 +118,12 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
     });
   };
 
-  const handleEliminarDepartamento = async (departamentoId: number) => {
-    const dept = departamentos.find(d => d.departamento_id === departamentoId);
-    if (!dept) return;
-    
-    const confirmMessage = `¿Está seguro de eliminar el departamento "${dept.nombre}"?\\n\\nEsta acción también eliminará todos los puestos y empleados asociados.\\n\\nEsta acción NO se puede deshacer.`;
+  const handleEliminarDepartamento = async (departamento: Departamento) => {
+    const confirmMessage = `¿Está seguro de eliminar el departamento "${departamento.nombre}"?\\n\\nEsta acción también eliminará todos los puestos y empleados asociados.\\n\\nEsta acción NO se puede deshacer.`;
     
     if (window.confirm(confirmMessage)) {
       try {
-        await eliminarDepartamento(departamentoId);
+        await eliminarDepartamento(departamento.departamento_id!);
         cargarDatos();
         alert('Departamento eliminado exitosamente');
       } catch (error: any) {
@@ -168,7 +165,7 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
     }
   };
 
-  const iniciarEdicionPuesto = (puesto: Puesto) => {
+  const handleEditarPuesto = (puesto: Puesto) => {
     setEditingPuesto(puesto);
     setNuevoPuesto({
       nombre: puesto.nombre,
@@ -177,15 +174,12 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
     });
   };
 
-  const handleEliminarPuesto = async (puestoId: number) => {
-    const puesto = puestos.find(p => p.puesto_id === puestoId);
-    if (!puesto) return;
-    
+  const handleEliminarPuesto = async (puesto: Puesto) => {
     const confirmMessage = `¿Está seguro de eliminar el puesto "${puesto.nombre}"?\\n\\nEsta acción también eliminará todos los empleados asociados a este puesto.\\n\\nEsta acción NO se puede deshacer.`;
     
     if (window.confirm(confirmMessage)) {
       try {
-        await eliminarPuesto(puestoId);
+        await eliminarPuesto(puesto.puesto_id!);
         cargarDatos();
         alert('Puesto eliminado exitosamente');
       } catch (error: any) {
@@ -197,15 +191,16 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
 
   const cancelarEdicion = () => {
     setEditingDepartamento(null);
-    setNuevoDepartamento({ nombre: '', descripcion: '', planta_id: userData?.planta_id || 0 });
-  };
-
-  const cancelarEdicionPuesto = () => {
     setEditingPuesto(null);
+    setNuevoDepartamento({ nombre: '', descripcion: '', planta_id: 0 });
     setNuevoPuesto({ nombre: '', descripcion: '', departamento_id: 0 });
   };
 
   // Filtrar datos
+  const departamentosFiltrados = departamentos.filter(dept =>
+    dept.nombre.toLowerCase().includes(filtroNombre.toLowerCase())
+  );
+
   const puestosFiltrados = puestos.filter(puesto => {
     const matchesNombre = puesto.nombre.toLowerCase().includes(filtroNombre.toLowerCase());
     const matchesDepartamento = filtroDepartamento === '' || puesto.departamento_id.toString() === filtroDepartamento;
@@ -213,11 +208,11 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
   });
 
   if (loading) {
-    return <div className="loading">Cargando datos...</div>;
+    return <div className="loading">🔄 Cargando datos de la planta...</div>;
   }
 
   return (
-    <div className="dashboard">
+    <div className="dashboard planta-admin-dashboard">
       {/* Sidebar - Always visible */}
       <aside className="dashboard-sidebar">
         <div className="sidebar-header">
@@ -232,21 +227,21 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
             onClick={() => setActiveSection('departamentos')}
           >
             <span className="nav-icon">🏢</span>
-            <span className="nav-text">Departamentos</span>
+            <span className="nav-text">Gestión de Departamentos</span>
           </button>
           <button 
             className={activeSection === 'puestos' ? 'active' : ''}
             onClick={() => setActiveSection('puestos')}
           >
             <span className="nav-icon">💼</span>
-            <span className="nav-text">Puestos</span>
+            <span className="nav-text">Gestión de Puestos</span>
           </button>
           <button 
             className={activeSection === 'empleados' ? 'active' : ''}
             onClick={() => setActiveSection('empleados')}
           >
             <span className="nav-icon">👥</span>
-            <span className="nav-text">Empleados</span>
+            <span className="nav-text">Gestión de Empleados</span>
           </button>
         </nav>
       </aside>
@@ -257,28 +252,26 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
         <header className="dashboard-header">
           <div className="header-left">
             <h1>Panel de Administración - Planta</h1>
-            <p className="header-subtitle">
-              Planta: <strong>{userData?.nombre_planta || 'No asignada'}</strong> - 
-              Empresa: <strong>{userData?.nombre_empresa || 'No asignada'}</strong>
-            </p>
+            <p className="header-subtitle">Gestión de departamentos, puestos y empleados</p>
           </div>
           <div className="header-right">
-            <div className="user-info">
-              <div className="user-avatar">
-                <span className="avatar-icon">👤</span>
+            <div className="planta-info">
+              <div className="planta-avatar">
+                <span className="avatar-icon">🏭</span>
               </div>
-              <div className="user-details">
-                <span className="user-name">{userData?.nombre_completo || userData?.usuario}</span>
-                <span className="user-role">Admin Planta</span>
-                {tieneSuscripcionActiva && (
-                  <span className="status-active" style={{ color: '#28a745', fontWeight: 'bold' }}>
-                    ✅ ACTIVA ({suscripcionEmpresa?.dias_restantes || 0} días)
-                  </span>
-                )}
-                {isEmpresaSuspendida && (
-                  <span className="status-suspended">⚠️ EMPRESA SIN SUSCRIPCIÓN</span>
-                )}
+              <div className="planta-details">
+                <span className="planta-name">{userData?.nombre_planta || 'No asignada'}</span>
+                <span className="planta-user">({userData?.usuario})</span>
+                <span className="empresa-name">{userData?.nombre_empresa || 'No asignada'}</span>
               </div>
+              {tieneSuscripcionActiva && (
+                <span className="status-active">
+                  ✅ ACTIVA ({suscripcionEmpresa?.dias_restantes || 0} días)
+                </span>
+              )}
+              {isEmpresaSuspendida && (
+                <span className="status-suspended">⚠️ SIN SUSCRIPCIÓN</span>
+              )}
             </div>
             <button onClick={handleLogout} className="logout-btn">
               <span className="logout-icon">🚪</span>
@@ -287,16 +280,12 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
           </div>
         </header>
 
-        {/* Información de suscripción activa para plantas */}
-        {tieneSuscripcionActiva && (
-          <div className="subscription-active-info" style={{ 
-            margin: '20px 0', 
-            padding: '15px', 
-            backgroundColor: '#d4edda', 
-            borderRadius: '5px', 
-            border: '1px solid #c3e6cb' 
-          }}>
-            <h4 style={{ color: '#155724', margin: '0 0 10px 0' }}>✅ Empresa con Suscripción Activa</h4>
+        {/* Content area */}
+        <main className="dashboard-content">{/* Información de suscripción activa para plantas */}
+      {tieneSuscripcionActiva && (
+        <div className="subscription-alert">
+          <div className="warning-content">
+            <h3>✅ Empresa con Suscripción Activa</h3>
             <div style={{ display: 'flex', gap: '20px', color: '#155724' }}>
               <span>Plan: {suscripcionEmpresa?.plan_nombre}</span>
               <span>Días restantes: {suscripcionEmpresa?.dias_restantes}</span>
@@ -306,47 +295,161 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
               Su planta tiene acceso completo gracias a la suscripción activa de la empresa.
             </p>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* Mensaje de advertencia para empresa suspendida */}
-        {isEmpresaSuspendida && !tieneSuscripcionActiva && (
-          <div className="suspension-warning">
-            <div className="warning-content">
-              <h3>⚠️ {userData?.advertencia?.mensaje || 'Empresa sin Suscripción Activa'}</h3>
-              <p>
-                {userData?.advertencia?.detalles || 
-                 'La empresa no tiene una suscripción activa. Las funcionalidades están limitadas.'}
-              </p>
-              <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#721c24' }}>
-                <strong>Nota:</strong> Como administrador de planta, contacte al administrador de la empresa 
-                para activar o renovar la suscripción.
-              </p>
+      {/* Mensaje de advertencia para empresa suspendida */}
+      {isEmpresaSuspendida && !tieneSuscripcionActiva && (
+        <div className="subscription-warning">
+          <div className="warning-content">
+            <h3>⚠️ {userData?.advertencia?.mensaje || 'Empresa sin Suscripción Activa'}</h3>
+            <p>
+              {userData?.advertencia?.detalles || 
+               'La empresa no tiene una suscripción activa. Las funcionalidades están limitadas.'}
+            </p>
+            <p style={{ marginTop: '10px', fontSize: '0.9em', color: '#721c24' }}>
+              <strong>Nota:</strong> Como administrador de planta, contacte al administrador de la empresa 
+              para activar o renovar la suscripción.
+            </p>
+          </div>
+        </div>
+      )}
+      {/* Contenido principal */}
+      <div className="main-content-area">
+        {/* Sección de Departamentos */}
+        {activeSection === 'departamentos' && (
+          <div className="departamentos-section">
+            <div className="section-header">
+              <h2>Gestión de Departamentos</h2>
+              <p>Administre los departamentos de su planta asignada: <strong>{userData?.nombre_planta}</strong></p>
             </div>
+
+            {/* Filtros */}
+            <div className="filtros">
+              <input
+                type="text"
+                placeholder="Buscar departamentos..."
+                value={filtroNombre}
+                onChange={(e) => setFiltroNombre(e.target.value)}
+                className="filtro-input"
+              />
+            </div>
+
+            {/* Formulario */}
+            <form onSubmit={handleCrearDepartamento} className="create-form">
+              <h3>{editingDepartamento ? 'Editar Departamento' : 'Crear Nuevo Departamento'}</h3>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nombre del Departamento:</label>
+                  <input
+                    type="text"
+                    value={nuevoDepartamento.nombre}
+                    onChange={(e) => setNuevoDepartamento({ ...nuevoDepartamento, nombre: e.target.value })}
+                    placeholder="Ej: Mantenimiento"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Planta Asignada:</label>
+                  <input
+                    type="text"
+                    value={userData?.nombre_planta || 'Planta no asignada'}
+                    disabled
+                    className="readonly-input"
+                    title="Como Admin de Planta, solo puedes gestionar departamentos de tu planta asignada"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Descripción:</label>
+                <textarea
+                  value={nuevoDepartamento.descripcion}
+                  onChange={(e) => setNuevoDepartamento({ ...nuevoDepartamento, descripcion: e.target.value })}
+                  placeholder="Descripción del departamento"
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary">
+                  {editingDepartamento ? 'Actualizar' : 'Crear'} Departamento
+                </button>
+                {editingDepartamento && (
+                  <button type="button" onClick={cancelarEdicion} className="btn btn-secondary">
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+
+            {/* Lista de departamentos */}
+            <div className="items-grid">
+              {departamentosFiltrados.map((departamento) => (
+                <div key={departamento.departamento_id} className="item-card">
+                  <h4>{departamento.nombre}</h4>
+                  <p className="description">{departamento.descripcion}</p>
+                  <p className="meta">Planta: {departamento.planta_nombre}</p>
+                  
+                  <div className="actions">
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={() => handleEditarDepartamento(departamento)}
+                    >
+                      Editar
+                    </button>
+                    <button 
+                      className="btn btn-danger"
+                      onClick={() => handleEliminarDepartamento(departamento)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {departamentosFiltrados.length === 0 && (
+              <div className="empty-state">
+                <p>No hay departamentos que coincidan con la búsqueda</p>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Content area */}
-        <main className="dashboard-content">
-          {activeSection === 'departamentos' && (
-            <div className="coming-soon">
-              <h2>Gestión de Departamentos</h2>
-              <p>Administre los departamentos de su planta: <strong>{userData?.nombre_planta}</strong></p>
-              <p>Módulo en desarrollo...</p>
-            </div>
-          )}
-
-          {activeSection === 'puestos' && (
-            <div className="coming-soon">
+        {/* Sección de Puestos */}
+        {activeSection === 'puestos' && (
+          <div className="puestos-section">
+            <div className="section-header">
               <h2>Gestión de Puestos</h2>
-              <p>Administre los puestos de los departamentos de su planta</p>
-              <p>Módulo en desarrollo...</p>
+              <p>Administre los puestos de trabajo de sus departamentos</p>
             </div>
-          )}
 
-          {activeSection === 'empleados' && (
-            <EmpleadosCRUD userData={userData} />
-          )}
+            {/* Filtros */}
+            <div className="filtros">
+              <input
+                type="text"
+                placeholder="Buscar puestos..."
+                value={filtroNombre}
+                onChange={(e) => setFiltroNombre(e.target.value)}
+                className="filtro-input"
+              />
+              <select
+                value={filtroDepartamento}
+                onChange={(e) => setFiltroDepartamento(e.target.value)}
+                className="filtro-select"
+              >
+                <option value="">Todos los departamentos</option>
+                {departamentos.map((dept) => (
+                  <option key={dept.departamento_id} value={dept.departamento_id}>
+                    {dept.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
 
+<<<<<<< HEAD
 <<<<<<< HEAD
           {activeSection === 'evaluaciones' && (
             <GestionEvaluaciones 
@@ -455,6 +558,115 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
         {activeSection === 'empleados' && <EmpleadosCRUD userData={userData} />}
       </div>
 >>>>>>> parent of 2766511 (si)
+=======
+            {/* Formulario */}
+            <form onSubmit={handleCrearPuesto} className="create-form">
+              <h3>{editingPuesto ? 'Editar Puesto' : 'Crear Nuevo Puesto'}</h3>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nombre del Puesto:</label>
+                  <input
+                    type="text"
+                    value={nuevoPuesto.nombre}
+                    onChange={(e) => setNuevoPuesto({ ...nuevoPuesto, nombre: e.target.value })}
+                    placeholder="Ej: Técnico en Mantenimiento"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Departamento:</label>
+                  <select
+                    value={nuevoPuesto.departamento_id}
+                    onChange={(e) => setNuevoPuesto({ ...nuevoPuesto, departamento_id: parseInt(e.target.value) })}
+                    required
+                  >
+                    <option value={0}>Seleccionar departamento</option>
+                    {departamentos.map((dept) => (
+                      <option key={dept.departamento_id} value={dept.departamento_id}>
+                        {dept.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Descripción:</label>
+                <textarea
+                  value={nuevoPuesto.descripcion}
+                  onChange={(e) => setNuevoPuesto({ ...nuevoPuesto, descripcion: e.target.value })}
+                  placeholder="Descripción del puesto"
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary">
+                  {editingPuesto ? 'Actualizar' : 'Crear'} Puesto
+                </button>
+                {editingPuesto && (
+                  <button type="button" onClick={cancelarEdicion} className="btn btn-secondary">
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+
+            {/* Lista de puestos */}
+            <div className="items-grid">
+              {puestosFiltrados.map((puesto) => (
+                <div key={puesto.puesto_id} className="item-card">
+                  <h4>{puesto.nombre}</h4>
+                  <p className="description">{puesto.descripcion}</p>
+                  <p className="meta">Departamento: {puesto.departamento_nombre}</p>
+                  
+                  <div className="actions">
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={() => handleEditarPuesto(puesto)}
+                    >
+                      Editar
+                    </button>
+                    <button 
+                      className="btn btn-danger"
+                      onClick={() => handleEliminarPuesto(puesto)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {puestosFiltrados.length === 0 && (
+              <div className="empty-state">
+                <p>No hay puestos que coincidan con la búsqueda</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sección de Empleados */}
+        {activeSection === 'empleados' && <EmpleadosCRUD userData={userData} />}
+        
+        {/* Sección de Evaluaciones */}
+        {activeSection === 'evaluaciones' && (
+          <GestionEvaluaciones 
+            usuario={{
+              is_superuser: false,
+              perfil_usuario: {
+                tipo_usuario: 'AdminPlanta',
+                empresa: {
+                  id: userData?.empresa_id || 0,
+                  nombre: userData?.empresa_nombre || 'Mi Empresa'
+                }
+              }
+            }}
+          />
+        )}
+      </div>
+>>>>>>> parent of 27737a2 (emoji cara sonrojada)
         </main>
       </div>
     </div>

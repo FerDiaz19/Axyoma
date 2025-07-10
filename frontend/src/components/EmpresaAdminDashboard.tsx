@@ -3,14 +3,25 @@ import EmpleadosCRUD from './EmpleadosCRUD';
 import GestionEstructura from './GestionEstructura';
 import GestionPlantas from './GestionPlantas';
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+import GestionDepartamentos from './GestionDepartamentos';
+import GestionPuestos from './GestionPuestos';
+>>>>>>> parent of 27737a2 (emoji cara sonrojada)
 import GestionEvaluaciones from './GestionEvaluaciones';
 =======
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
 >>>>>>> parent of 2766511 (si)
 import { logout } from '../services/authService';
+<<<<<<< HEAD
 import '../css/ModernDashboard.css';
 import '../css/Dashboard.css'; // Mantener estilos originales como fallback
+=======
+import '../css/Dashboard.css';
+import '../css/GestionPlantas.css';
+import '../css/EmpresaAdminDashboard.css';
+>>>>>>> parent of 27737a2 (emoji cara sonrojada)
 
 interface EmpresaAdminDashboardProps {
   userData: any;
@@ -18,7 +29,7 @@ interface EmpresaAdminDashboardProps {
 }
 
 const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'plantas' | 'empleados' | 'estructura' | 'evaluaciones' | 'reportes'>('plantas');
+  const [activeSection, setActiveSection] = useState<'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'estructura' | 'evaluaciones' | 'reportes'>('plantas');
   const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -71,6 +82,10 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
     onLogout();
   };
 
+<<<<<<< HEAD
+=======
+  // Verificar si la empresa está suspendida o sin suscripción
+>>>>>>> parent of 27737a2 (emoji cara sonrojada)
   const shouldShowSuspended = subscriptionInfo && 
     !subscriptionInfo.tiene_suscripcion && 
     subscriptionInfo.requiere_pago &&
@@ -139,6 +154,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
   };
 
   if (loading) {
+<<<<<<< HEAD
     return (
       <div className="modern-dashboard">
         <div className="loading-container">
@@ -153,12 +169,21 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
   return (
     <div className="modern-dashboard">
       {/* Sidebar Navigation */}
+=======
+    return <div className="loading">🔄 Cargando información de la empresa...</div>;
+  }
+
+  return (
+    <div className="dashboard empresa-admin-dashboard">
+      {/* Sidebar - Always visible */}
+>>>>>>> parent of 27737a2 (emoji cara sonrojada)
       <aside className="dashboard-sidebar">
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <h2>🏢 AXYOMA</h2>
             <span className="sidebar-subtitle">Admin Empresa</span>
           </div>
+<<<<<<< HEAD
           <div className="user-info">
             <div className="user-avatar">
               {userData?.usuario?.charAt(0).toUpperCase() || 'A'}
@@ -208,7 +233,87 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
                   <span>Días restantes: {subscriptionInfo.dias_restantes}</span>
                   <span>Vence: {subscriptionInfo.fecha_vencimiento}</span>
                 </div>
+=======
+        </div>
+        <nav className="sidebar-nav">
+          <button 
+            className={activeSection === 'plantas' ? 'active' : ''}
+            onClick={() => setActiveSection('plantas')}
+          >
+            <span className="nav-icon">🏭</span>
+            <span className="nav-text">Gestión de Plantas</span>
+          </button>
+          <button 
+            className={activeSection === 'departamentos' ? 'active' : ''}
+            onClick={() => setActiveSection('departamentos')}
+          >
+            <span className="nav-icon">🏢</span>
+            <span className="nav-text">Departamentos</span>
+          </button>
+          <button 
+            className={activeSection === 'puestos' ? 'active' : ''}
+            onClick={() => setActiveSection('puestos')}
+          >
+            <span className="nav-icon">💼</span>
+            <span className="nav-text">Puestos</span>
+          </button>
+          <button 
+            className={activeSection === 'estructura' ? 'active' : ''}
+            onClick={() => setActiveSection('estructura')}
+          >
+            <span className="nav-icon">🏗️</span>
+            <span className="nav-text">Estructura Organizacional</span>
+          </button>
+          <button 
+            className={activeSection === 'empleados' ? 'active' : ''}
+            onClick={() => setActiveSection('empleados')}
+          >
+            <span className="nav-icon">👥</span>
+            <span className="nav-text">Gestión de Empleados</span>
+          </button>
+          <button 
+            className={activeSection === 'evaluaciones' ? 'active' : ''}
+            onClick={() => setActiveSection('evaluaciones')}
+          >
+            <span className="nav-icon">📊</span>
+            <span className="nav-text">Evaluaciones</span>
+          </button>
+          <button 
+            className={activeSection === 'reportes' ? 'active' : ''}
+            onClick={() => setActiveSection('reportes')}
+          >
+            <span className="nav-icon">📋</span>
+            <span className="nav-text">Reportes</span>
+          </button>
+        </nav>
+      </aside>
+
+      {/* Main content area */}
+      <div className="main-content">
+        {/* Header */}
+        <header className="dashboard-header">
+          <div className="header-left">
+            <h1>Panel de Administración - Empresa</h1>
+            <p className="header-subtitle">Gestión integral de la empresa</p>
+          </div>
+          <div className="header-right">
+            <div className="empresa-info">
+              <div className="empresa-avatar">
+                <span className="avatar-icon">🏢</span>
               </div>
+              <div className="empresa-details">
+                <span className="empresa-name">{userData?.nombre_empresa || 'Empresa'}</span>
+                <span className="empresa-user">({userData?.usuario})</span>
+>>>>>>> parent of 27737a2 (emoji cara sonrojada)
+              </div>
+              {isEmpresaSuspendida && (
+                <span className="status-suspended">⚠️ SUSPENDIDA</span>
+              )}
+              {subscriptionInfo?.tiene_suscripcion && subscriptionInfo?.estado === 'activa' && (
+                <span className="status-active">
+                  ✅ ACTIVA ({subscriptionInfo.dias_restantes} días)
+                </span>
+              )}
             </div>
           )}
 
@@ -338,6 +443,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
           </div>
         </header>
 
+<<<<<<< HEAD
         <div className="main-content">
           {isEmpresaSuspendida ? (
             <div className="suspension-warning">
@@ -379,6 +485,129 @@ const ReportesSection: React.FC = () => {
       <div className="coming-soon">
         <h4>� Próximamente</h4>
         <p>Esta sección estará disponible en futuras actualizaciones.</p>
+=======
+        {/* Content area */}
+        <main className="dashboard-content">
+          {/* Información de suscripción activa */}
+          {subscriptionInfo?.tiene_suscripcion && subscriptionInfo?.estado === 'activa' && (
+            <div className="subscription-alert">
+              <div className="warning-content">
+                <h3>✅ Suscripción Activa</h3>
+                <div style={{ display: 'flex', gap: '20px', color: '#155724' }}>
+                  <span>Plan: {subscriptionInfo.suscripcion?.plan_nombre}</span>
+                  <span>Días restantes: {subscriptionInfo.dias_restantes}</span>
+                  <span>Vence: {subscriptionInfo.fecha_vencimiento}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Mensaje de advertencia para empresa suspendida */}
+          {isEmpresaSuspendida && (
+            <div className="subscription-warning">
+              <div className="warning-content">
+                <h3>⚠️ {getSuspensionMessage()}</h3>
+                <p>
+                  {subscriptionInfo?.estado === 'sin_suscripcion' && 
+                    'Para acceder a todas las funcionalidades, debe activar una suscripción.'}
+                  {subscriptionInfo?.estado === 'pendiente_pago' && 
+                    'Complete el pago para activar su suscripción y acceder a todas las funcionalidades.'}
+                  {subscriptionInfo?.estado === 'vencida' && 
+                    'Su suscripción ha vencido. Renueve su plan para continuar usando el sistema.'}
+                  {!subscriptionInfo?.estado && 
+                    'Las funcionalidades están limitadas. Contacte con soporte para reactivar su suscripción.'}
+                </p>
+                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                  <button 
+                    className="renewal-button" 
+                    onClick={() => window.location.href = '/plan-selection'}
+                  >
+                    🔄 Activar Suscripción
+                  </button>
+                  <button 
+                    onClick={loadSubscriptionInfo}
+                    className="action-button"
+                    style={{ backgroundColor: '#6c757d' }}
+                  >
+                    🔃 Verificar Estado
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        {activeSection === 'plantas' && (
+          <GestionPlantas empresaId={userData?.empresa_id} />
+        )}
+        {activeSection === 'departamentos' && <GestionDepartamentos />}
+        {activeSection === 'puestos' && <GestionPuestos />}
+        {activeSection === 'estructura' && <GestionEstructura />}
+        {activeSection === 'empleados' && <EmpleadosCRUD userData={userData} />}
+        {activeSection === 'evaluaciones' && (
+          <GestionEvaluaciones 
+            usuario={{
+              is_superuser: false,
+              perfil_usuario: {
+                tipo_usuario: 'AdminEmpresa',
+                empresa: {
+                  id: userData?.empresa_id || 0,
+                  nombre: userData?.empresa_nombre || 'Mi Empresa'
+                }
+              }
+            }}
+          />
+        )}
+        {activeSection === 'reportes' && (
+          <div className="coming-soon">
+            {isEmpresaSuspendida ? (
+              <div className="subscription-expired">
+                <h2>❌ {getSuspensionMessage()}</h2>
+                <p>
+                  {subscriptionInfo?.estado === 'sin_suscripcion' && 
+                    'Para acceder a reportes y estadísticas, debe activar una suscripción.'}
+                  {subscriptionInfo?.estado === 'pendiente_pago' && 
+                    'Complete el pago de su suscripción para acceder a reportes y estadísticas.'}
+                  {subscriptionInfo?.estado === 'vencida' && 
+                    'Su suscripción ha vencido. Renueve su plan para acceder a reportes y estadísticas.'}
+                  {!subscriptionInfo?.estado && 
+                    'Su suscripción ha expirado. Para acceder a estadísticas y reportes, debe renovar su plan.'}
+                </p>
+                <div className="expired-message">
+                  <h3>🚫 Funciones No Disponibles:</h3>
+                  <ul>
+                    <li>• Reportes detallados</li>
+                    <li>• Estadísticas avanzadas</li>
+                    <li>• Análisis de rendimiento</li>
+                    <li>• Exportación de datos</li>
+                  </ul>
+                  <button className="renewal-button" onClick={() => window.location.href = '/plan-selection'}>
+                    � Activar Suscripción
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h2>Reportes y Estadísticas</h2>
+                <p>Módulo de reportes en desarrollo...</p>
+                <div className="stats-grid">
+                  <div className="stat-card">
+                    <h3>Total Empleados</h3>
+                    <p className="stat-number">45</p>
+                  </div>
+                  <div className="stat-card">
+                    <h3>Departamentos</h3>
+                    <p className="stat-number">8</p>
+                  </div>
+                  <div className="stat-card">
+                    <h3>Plantas</h3>
+                    <p className="stat-number">3</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        </main>
+>>>>>>> parent of 27737a2 (emoji cara sonrojada)
       </div>
     </div>
   );

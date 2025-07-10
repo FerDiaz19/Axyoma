@@ -65,7 +65,7 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
   const [formData, setFormData] = useState({
     titulo: '',
     descripcion: '',
-    tipo: (usuario.is_superuser ? 'normativa' : 'interna') as 'normativa' | 'interna',
+    tipo: 'interna' as 'normativa' | 'interna',
     estado: 'activa' as 'activa' | 'inactiva',
     instrucciones: '',
     tiempo_limite: ''
@@ -451,23 +451,14 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
   };
 
   const puedeCrearNormativa = () => {
-    // Solo SuperAdmin puede crear evaluaciones normativas
     return usuario.is_superuser;
-  };
-
-  const puedeCrearInterna = () => {
-    // Solo Admin Empresa puede crear evaluaciones internas
-    return !usuario.is_superuser && usuario.perfil_usuario?.tipo_usuario === 'admin-empresa';
   };
 
   const puedeEditarEvaluacion = (evaluacion: Evaluacion) => {
     if (usuario.is_superuser) {
-      // SuperAdmin solo puede editar evaluaciones normativas
       return evaluacion.tipo === 'normativa';
     }
-    // Admin Empresa solo puede editar evaluaciones internas de su empresa
-    return evaluacion.tipo === 'interna' && 
-           evaluacion.empresa_nombre === usuario.perfil_usuario?.empresa?.nombre;
+    return evaluacion.tipo === 'interna';
   };
 
   if (loading) {
@@ -679,23 +670,16 @@ const GestionEvaluaciones: React.FC<GestionEvaluacionesProps> = ({ usuario }) =>
                       tiempo_limite: nuevoTipo === 'normativa' ? '' : formData.tiempo_limite
                     });
                   }}
+                  disabled={!puedeCrearNormativa() && formData.tipo === 'normativa'}
                 >
-                  {/* SuperAdmin solo puede crear normativas */}
-                  {usuario.is_superuser ? (
+                  <option value="interna">Interna</option>
+                  {puedeCrearNormativa() && (
                     <option value="normativa">Normativa</option>
-                  ) : (
-                    /* Admin Empresa solo puede crear internas */
-                    <option value="interna">Interna</option>
                   )}
                 </select>
                 {formData.tipo === 'normativa' && (
                   <small className="form-help">
-                    ✅ Las evaluaciones normativas son visibles para todas las empresas del sistema
-                  </small>
-                )}
-                {formData.tipo === 'interna' && (
-                  <small className="form-help">
-                    ℹ️ Las evaluaciones internas solo son visibles para su empresa
+                    Las evaluaciones normativas son visibles para todas las empresas
                   </small>
                 )}
               </div>

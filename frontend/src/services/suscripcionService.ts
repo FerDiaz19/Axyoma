@@ -69,7 +69,7 @@ export const formatearFecha = (fecha: string): string => {
 export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
   try {
     console.log('🔄 Obteniendo planes de suscripción...');
-    const response = await api.get('/subscriptions/planes/');
+    const response = await api.get('/suscripciones/listar_planes/');
     console.log('✅ Planes obtenidos:', response.data);
     return response.data;
   } catch (error) {
@@ -81,7 +81,7 @@ export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
 export const obtenerSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
   try {
     console.log('🔄 Obteniendo suscripciones...');
-    const response = await api.get('/subscriptions/suscripciones/');
+    const response = await api.get('/suscripciones/listar_suscripciones/');
     console.log('✅ Suscripciones obtenidas:', response.data);
     return response.data;
   } catch (error) {
@@ -93,7 +93,7 @@ export const obtenerSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
 export const obtenerPagos = async (): Promise<Pago[]> => {
   try {
     console.log('🔄 Obteniendo pagos...');
-    const response = await api.get('/subscriptions/pagos/');
+    const response = await api.get('/suscripciones/listar_pagos/');
     console.log('✅ Pagos obtenidos:', response.data);
     return response.data;
   } catch (error) {
@@ -105,7 +105,7 @@ export const obtenerPagos = async (): Promise<Pago[]> => {
 export const crearSuscripcion = async (empresaId: number, planId: number): Promise<any> => {
   try {
     console.log(`🔄 Creando suscripción para empresa ${empresaId} con plan ${planId}...`);
-    const response = await api.post('/subscriptions/crear_suscripcion/', {
+    const response = await api.post('/suscripciones/crear_suscripcion/', {
       empresa_id: empresaId,
       plan_id: planId
     });
@@ -120,7 +120,7 @@ export const crearSuscripcion = async (empresaId: number, planId: number): Promi
 export const procesarPago = async (suscripcionId: number, montoPago: number, transaccionId?: string): Promise<any> => {
   try {
     console.log(`🔄 Procesando pago para suscripción ${suscripcionId}...`);
-    const response = await api.post('/subscriptions/procesar_pago/', {
+    const response = await api.post('/suscripciones/procesar_pago/', {
       suscripcion_id: suscripcionId,
       monto_pago: montoPago,
       transaccion_id: transaccionId
@@ -136,7 +136,7 @@ export const procesarPago = async (suscripcionId: number, montoPago: number, tra
 export const crearPlan = async (planData: Omit<PlanSuscripcion, 'plan_id'>): Promise<PlanSuscripcion> => {
   try {
     console.log('🔄 Creando nuevo plan:', planData);
-    const response = await api.post('/subscriptions/crear_plan/', planData);
+    const response = await api.post('/suscripciones/crear_plan/', planData);
     console.log('✅ Plan creado:', response.data);
     return response.data;
   } catch (error) {
@@ -148,7 +148,7 @@ export const crearPlan = async (planData: Omit<PlanSuscripcion, 'plan_id'>): Pro
 export const actualizarPlan = async (planId: number, planData: Partial<PlanSuscripcion>): Promise<PlanSuscripcion> => {
   try {
     console.log(`🔄 Actualizando plan ${planId}:`, planData);
-    const response = await api.put(`/subscriptions/actualizar_plan/`, {
+    const response = await api.put(`/suscripciones/actualizar_plan/`, {
       plan_id: planId,
       ...planData
     });
@@ -163,7 +163,7 @@ export const actualizarPlan = async (planId: number, planData: Partial<PlanSuscr
 export const eliminarPlan = async (planId: number): Promise<void> => {
   try {
     console.log(`🔄 Eliminando plan ${planId}...`);
-    await api.delete(`/subscriptions/eliminar_plan/`, {
+    await api.delete(`/suscripciones/eliminar_plan/`, {
       data: { plan_id: planId }
     });
     console.log('✅ Plan eliminado');
@@ -176,7 +176,7 @@ export const eliminarPlan = async (planId: number): Promise<void> => {
 export const cambiarEstadoPlan = async (planId: number, nuevoEstado: boolean): Promise<void> => {
   try {
     console.log(`🔄 Cambiando estado del plan ${planId} a ${nuevoEstado}...`);
-    await api.put(`/subscriptions/cambiar_estado_plan/`, {
+    await api.put(`/suscripciones/cambiar_estado_plan/`, {
       plan_id: planId,
       status: nuevoEstado
     });
@@ -280,7 +280,7 @@ export const obtenerSuscripcionActual = async (): Promise<any> => {
 export const obtenerInfoSuscripcionEmpresa = async (empresaId: number): Promise<any> => {
   try {
     console.log(`🔄 Obteniendo información de suscripción para empresa ${empresaId}...`);
-    const response = await api.get(`/subscriptions/info_suscripcion_empresa/?empresa_id=${empresaId}`);
+    const response = await api.get(`/suscripciones/info_suscripcion_empresa/?empresa_id=${empresaId}`);
     console.log('✅ Información de suscripción obtenida:', response.data);
     return response.data;
   } catch (error) {
@@ -305,7 +305,7 @@ export const renovarSuscripcion = async (empresaId: number, planId: number): Pro
 export const suspenderSuscripcion = async (suscripcionId: number): Promise<void> => {
   try {
     console.log(`🔄 Suspendiendo suscripción ${suscripcionId}...`);
-    await api.put(`/subscriptions/suspender_suscripcion/`, {
+    await api.put(`/suscripciones/suspender_suscripcion/`, {
       suscripcion_id: suscripcionId
     });
     console.log('✅ Suscripción suspendida');
@@ -318,7 +318,7 @@ export const suspenderSuscripcion = async (suscripcionId: number): Promise<void>
 export const reactivarSuscripcion = async (suscripcionId: number): Promise<void> => {
   try {
     console.log(`🔄 Reactivando suscripción ${suscripcionId}...`);
-    await api.put(`/subscriptions/reactivar_suscripcion/`, {
+    await api.put(`/suscripciones/reactivar_suscripcion/`, {
       suscripcion_id: suscripcionId
     });
     console.log('✅ Suscripción reactivada');

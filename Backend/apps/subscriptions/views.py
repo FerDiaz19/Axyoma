@@ -57,9 +57,9 @@ class SubscriptionViewSet(viewsets.ViewSet):
                 'dias_restantes': 0
             }
     
-    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    @action(detail=False, methods=['get'])
     def planes(self, request):
-        """Obtener todos los planes disponibles - PÚBLICO"""
+        """Obtener todos los planes disponibles"""
         try:
             planes = PlanSuscripcion.objects.filter(status=True).values(
                 'plan_id', 'nombre', 'descripcion', 'precio', 'duracion'
