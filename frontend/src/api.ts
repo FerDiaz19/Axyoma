@@ -21,4 +21,20 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
+// Interceptor para manejar errores de autenticación
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            // Token inválido o expirado
+            console.warn('Token de autenticación inválido o expirado');
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            // Recargar la página para forzar el login
+            window.location.reload();
+        }
+        return Promise.reject(error);
+    }
+);
+
 export default api;

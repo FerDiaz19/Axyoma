@@ -30,6 +30,11 @@ const Dashboard: React.FC = () => {
     setUserData(data);
     localStorage.setItem('userData', JSON.stringify(data));
     
+    // Asegurar que el token esté guardado (ya debe estar desde authService.login)
+    if (data.token && !localStorage.getItem('authToken')) {
+      localStorage.setItem('authToken', data.token);
+    }
+    
     // Verificar si necesita mostrar alerta de suscripción
     checkSubscriptionAlert(data);
   };
@@ -146,8 +151,7 @@ const Dashboard: React.FC = () => {
         {!showRegistro ? (
           <div>
             <Login 
-              onLoginSuccess={handleLoginSuccess} 
-              onSwitchToRegister={() => setShowRegistro(true)}
+              onLogin={handleLoginSuccess} 
             />
           </div>
         ) : (

@@ -22,10 +22,19 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ empresaId, onPlanSelected
     setLoading(true);
     try {
       const response = await listarPlanes();
-      setPlanes(response.filter((plan: PlanSuscripcion) => plan.status));
+      console.log('📋 Planes cargados:', response);
+      
+      if (Array.isArray(response)) {
+        const planesActivos = response.filter((plan: PlanSuscripcion) => plan.status !== false);
+        setPlanes(planesActivos);
+      } else {
+        console.error('❌ La respuesta no es un array:', response);
+        setPlanes([]);
+      }
     } catch (error) {
-      console.error('Error cargando planes:', error);
+      console.error('❌ Error cargando planes:', error);
       alert('Error al cargar los planes disponibles');
+      setPlanes([]);
     } finally {
       setLoading(false);
     }
@@ -82,12 +91,27 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ empresaId, onPlanSelected
       </div>
 
       <div className="planes-grid">
-        {planes.map((plan) => (
-          <div 
-            key={plan.plan_id} 
-            className={`plan-card ${selectedPlan === plan.plan_id ? 'selected' : ''}`}
-            onClick={() => setSelectedPlan(plan.plan_id)}
-          >
+        {planes.length === 0 ? (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '40px', 
+            background: '#f9f9f9', 
+            borderRadius: '10px',
+            color: '#666'
+          }}>
+            <h3>😔 No hay planes disponibles</h3>
+            <p>Por favor, contacta con soporte técnico.</p>
+            <button onClick={cargarPlanes} style={{ marginTop: '10px' }}>
+              🔄 Reintentar cargar planes
+            </button>
+          </div>
+        ) : (
+          planes.map((plan) => (
+            <div 
+              key={plan.plan_id} 
+              className={`plan-card ${selectedPlan === plan.plan_id ? 'selected' : ''}`}
+              onClick={() => setSelectedPlan(plan.plan_id)}
+            >
             <div className="plan-header">
               <h3>{plan.nombre}</h3>
               <div className="plan-price">
@@ -121,8 +145,9 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ empresaId, onPlanSelected
                 <>💳 Seleccionar Plan</>
               )}
             </button>
-          </div>
-        ))}
+            </div>
+          ))
+        )}
       </div>
 
       <div className="plan-selection-footer">

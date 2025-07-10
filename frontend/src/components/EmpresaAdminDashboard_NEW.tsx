@@ -5,7 +5,6 @@ import GestionPlantas from './GestionPlantas';
 import GestionEvaluaciones from './GestionEvaluaciones';
 import { logout } from '../services/authService';
 import '../css/ModernDashboard.css';
-import '../css/Dashboard.css'; // Mantener estilos originales como fallback
 
 interface EmpresaAdminDashboardProps {
   userData: any;
@@ -13,7 +12,7 @@ interface EmpresaAdminDashboardProps {
 }
 
 const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'plantas' | 'empleados' | 'estructura' | 'evaluaciones' | 'reportes'>('plantas');
+  const [activeSection, setActiveSection] = useState<'overview' | 'plantas' | 'empleados' | 'estructura' | 'evaluaciones' | 'reportes'>('overview');
   const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -75,47 +74,28 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
                              userData?.advertencia?.tipo === 'empresa_suspendida' ||
                              shouldShowSuspended;
 
-  // Menú de navegación - manteniendo estructura original
+  // Menú de navegación
   const menuItems = [
-    { id: 'plantas', label: 'Gestión de Plantas', icon: '🏭', description: 'Gestión de plantas industriales' },
-    { id: 'empleados', label: 'Gestión de Empleados', icon: '👥', description: 'Administración de personal' },
-    { id: 'estructura', label: 'Estructura Organizacional', icon: '🏗️', description: 'Departamentos y puestos' },
-    { id: 'evaluaciones', label: 'Gestión de Evaluaciones', icon: '📝', description: 'Gestión de evaluaciones' },
+    { id: 'overview', label: 'Panel General', icon: '📊', description: 'Vista general del sistema' },
+    { id: 'plantas', label: 'Plantas', icon: '🏭', description: 'Gestión de plantas industriales' },
+    { id: 'empleados', label: 'Empleados', icon: '👥', description: 'Administración de personal' },
+    { id: 'estructura', label: 'Estructura', icon: '🏗️', description: 'Departamentos y puestos' },
+    { id: 'evaluaciones', label: 'Evaluaciones', icon: '📝', description: 'Gestión de evaluaciones' },
     { id: 'reportes', label: 'Reportes', icon: '📈', description: 'Análisis y reportes' }
   ];
 
   const renderActiveSection = () => {
-    // Mostrar advertencia de suspensión si es necesario
-    if (isEmpresaSuspendida && activeSection === 'reportes') {
-      return (
-        <div className="suspension-warning">
-          <div className="warning-card">
-            <div className="warning-icon">🚫</div>
-            <div className="warning-content">
-              <h3>Acceso Restringido a Reportes</h3>
-              <p>
-                Su empresa no tiene una suscripción activa. 
-                Los reportes requieren una suscripción para acceder.
-              </p>
-            </div>
-          </div>
-        </div>
-      );
-    }
-
     switch (activeSection) {
+      case 'overview':
+        return <OverviewSection subscriptionInfo={subscriptionInfo} userData={userData} />;
       case 'plantas':
         return <GestionPlantas empresaId={userData?.empresa_id} />;
       case 'empleados':
-        return <EmpleadosCRUD userData={userData} />;
+        return <EmpleadosCRUD />;
       case 'estructura':
         return <GestionEstructura />;
       case 'evaluaciones':
-        return (
-          <GestionEvaluaciones 
-            usuario={userData}
-          />
-        );
+        return <GestionEvaluaciones usuario={userData} />;
       case 'reportes':
         return subscriptionInfo?.tiene_suscripcion ? (
           <ReportesSection />
@@ -125,11 +105,17 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
               <span className="upgrade-icon">🔒</span>
               <h3>Sección Premium</h3>
               <p>Los reportes requieren una suscripción activa.</p>
+              <button 
+                className="upgrade-btn"
+                onClick={() => setActiveSection('overview')}
+              >
+                Ver Planes
+              </button>
             </div>
           </div>
         );
       default:
-        return <GestionPlantas empresaId={userData?.empresa_id} />;
+        return <OverviewSection subscriptionInfo={subscriptionInfo} userData={userData} />;
     }
   };
 
@@ -241,10 +227,10 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
                   </p>
                   <button 
                     className="activate-btn"
-                    onClick={() => setActiveSection('plantas')}
+                    onClick={() => setActiveSection('overview')}
                   >
                     <span>💳</span>
-                    Ver Gestión de Plantas
+                    Activar Suscripción
                   </button>
                 </div>
               </div>
@@ -260,16 +246,74 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
   );
 };
 
+// Componente Overview
+const OverviewSection: React.FC<{subscriptionInfo: any, userData: any}> = ({ subscriptionInfo, userData }) => {
+  return (
+    <div className="overview-section">
+      <div className="stats-grid">
+        <div className="stat-card">
+          <div className="stat-icon">🏢</div>
+          <div className="stat-info">
+            <h3>{userData?.nombre_empresa || 'Mi Empresa'}</h3>
+            <p>Empresa Principal</p>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">💼</div>
+          <div className="stat-info">
+            <h3>{subscriptionInfo?.plan_nombre || 'Sin Plan'}</h3>
+            <p>Plan Actual</p>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">⏰</div>
+          <div className="stat-info">
+            <h3>{subscriptionInfo?.dias_restantes || 0}</h3>
+            <p>Días Restantes</p>
+          </div>
+        </div>
+        
+        <div className="stat-card">
+          <div className="stat-icon">✅</div>
+          <div className="stat-info">
+            <h3>{subscriptionInfo?.tiene_suscripcion ? 'Activa' : 'Inactiva'}</h3>
+            <p>Estado</p>
+          </div>
+        </div>
+      </div>
+
+      {!subscriptionInfo?.tiene_suscripcion && (
+        <div className="upgrade-prompt">
+          <h3>🚀 Desbloquea todo el potencial de Axyoma</h3>
+          <p>Activa una suscripción para acceder a todas las funcionalidades premium.</p>
+          <div className="features-list">
+            <div className="feature-item">
+              <span>📊</span>
+              <span>Reportes avanzados</span>
+            </div>
+            <div className="feature-item">
+              <span>👥</span>
+              <span>Gestión ilimitada de empleados</span>
+            </div>
+            <div className="feature-item">
+              <span>🔐</span>
+              <span>Seguridad empresarial</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 // Componente Reportes
 const ReportesSection: React.FC = () => {
   return (
     <div className="reportes-section">
       <h3>📈 Reportes y Análisis</h3>
       <p>Aquí podrás acceder a todos los reportes de tu empresa.</p>
-      <div className="coming-soon">
-        <h4>� Próximamente</h4>
-        <p>Esta sección estará disponible en futuras actualizaciones.</p>
-      </div>
     </div>
   );
 };

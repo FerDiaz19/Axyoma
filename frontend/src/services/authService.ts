@@ -21,6 +21,12 @@ const context = "auth/";
 
 export const login = async (data: LoginData): Promise<LoginResponse> => {
   const response = await api.post<LoginResponse>(`${context}login/`, data);
+  
+  // Guardar el token en localStorage para futuras requests
+  if (response.data.token) {
+    localStorage.setItem('authToken', response.data.token);
+  }
+  
   return response.data;
 };
 
