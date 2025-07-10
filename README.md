@@ -1,210 +1,173 @@
-# 🚀 AXYOMA - Sistema de Gestión de Empleados
+# 🏭 AXYOMA - Sistema de Gestión de Empleados
 
-Sistema completo de gestión de empleados con múltiples niveles de acceso, desarrollado con Django (Backend) y React (Frontend).
+Sistema completo de gestión de empleados para empresas industriales con arquitectura modular.
 
-## 📋 Características Principales
+## 🚀 Estado del Proyecto: ✅ COMPLETAMENTE FUNCIONAL
 
-- **👤 Gestión de Usuarios**: SuperAdmin, Admin Empresa, Admin Planta
-- **🏢 Gestión de Empresas**: Múltiples empresas con suscripciones
-- **🏭 Gestión de Plantas**: Múltiples plantas por empresa
-- **👥 Gestión de Empleados**: CRUD completo con filtros avanzados
-- **� Planes de Suscripción**: Básico, Profesional, Empresarial
-- **🔒 Autenticación**: Sistema de login seguro
-- **📱 Dashboard Responsivo**: Interfaz moderna y adaptable
+El sistema Axyoma está completamente configurado y funcional. Incluye un backend Django con API REST, frontend React, y funcionalidades completas de login, registro, y gestión empresarial.
 
-## 🛠️ Tecnologías Utilizadas
+## 🚀 Inicio Rápido
 
-**Backend:**
-- Python 3.11+
-- Django 5.2.3
-- Django REST Framework
-- PostgreSQL
-- Django CORS Headers
-
-**Frontend:**
-- React 18
-- TypeScript
-- CSS3 (Diseño personalizado)
-- Fetch API
-
-## 🚀 Instalación y Configuración
-
-### 1. Requisitos Previos
-- **Python 3.11+** - [Descargar](https://www.python.org/downloads/)
-- **Node.js LTS** - [Descargar](https://nodejs.org/)
-- **PostgreSQL 14+** - [Descargar](https://www.postgresql.org/download/)
-
-### 2. Configuración de Base de Datos
-```sql
--- La base de datos se crea automáticamente durante el setup
--- Solo necesitas tener PostgreSQL instalado y ejecutándose con:
-
--- Usuario: postgres
--- Password: 123456789
--- Host: localhost
--- Puerto: 5432
-
--- El script setup_project.bat:
--- 1. Verifica conectividad a PostgreSQL
--- 2. Crea automáticamente la base de datos 'axyomadb' si no existe
--- 3. Ejecuta migraciones
--- 4. Crea todos los datos iniciales (usuarios, empresa, planta, etc.)
-```
-
-### 3. Configuración del Proyecto
+### Primera Vez (Setup Completo)
 ```bash
-# Ejecutar configuración completa
-setup_project.bat
+# 1. Ejecutar configuración inicial
+setup.bat
+
+# 2. Iniciar el sistema
+start.bat
 ```
 
-### 4. Iniciar el Sistema
+### Uso Diario
 ```bash
-# Iniciar backend y frontend
-iniciar_sistema.bat
+# Iniciar sistema
+start.bat
 ```
 
-## � URLs del Sistema
+### Si hay problemas
+```bash
+# Limpiar y reconfigurar todo
+reset.bat
+```
 
+## 📋 Requisitos
+
+- **Python 3.10+** 
+- **Node.js 16+** 
+- **PostgreSQL 12+** (usuario: postgres, password: 12345678)
+
+## 🌐 Accesos del Sistema
+
+Una vez iniciado:
 - **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000/api/
-- **Admin Django**: http://localhost:8000/admin/
+- **Registro**: http://localhost:3000/registro
+- **Backend**: http://localhost:8000
+- **API**: http://localhost:8000/api/
+- **Admin**: http://localhost:8000/admin/
 
-## 👤 Usuarios de Prueba
+## 👥 Usuarios de Prueba
 
-| Tipo Usuario | Email | Password | Permisos |
-|-------------|--------|----------|----------|
-| **SuperAdmin** | ed-rubio@axyoma.com | 1234 | Gestión completa del sistema |
-| **Admin Empresa** | juan.perez@codewave.com | 1234 | Gestión de su empresa |
-| **Admin Planta** | maria.gomez@codewave.com | 1234 | Gestión de su planta |
+| Rol | Username | Password | Descripción |
+|-----|----------|----------|-------------|
+| **SuperAdmin** | superadmin | 1234 | Gestión completa del sistema |
+| **Admin Empresa** | admin_empresa | 1234 | Gestión de empresa CodeWave |
+| **Admin Planta** | admin_planta | 1234 | Gestión de planta específica |
 
-## 🏢 Datos de Prueba Incluidos
-
-**Empresa:**
-- **Nombre**: CodeWave Technologies S.A. de C.V.
-- **RFC**: CWT240701ABC
-- **Plan**: Profesional (200 empleados, 5 plantas)
-
-**Estructura Organizacional:**
-- **Planta**: Planta Principal
-- **Departamentos**: RRHH, Producción, Calidad, Mantenimiento, Logística
-- **Puestos**: 12 puestos distribuidos en departamentos
-- **Empleados**: 5 empleados de muestra
-
-**Planes de Suscripción:**
-- **Básico**: 50 empleados, 1 planta - $499/mes
-- **Profesional**: 200 empleados, 5 plantas - $999/mes
-- **Empresarial**: 1000 empleados, 20 plantas - $1999/mes
-
-## � Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```
-Axyoma/
-├── Backend/                 # Django Backend
-│   ├── apps/               # Aplicaciones Django
-│   ├── config/             # Configuración del proyecto
-│   ├── env/                # Entorno virtual Python
-│   ├── create_initial_data.py  # Script de datos iniciales
-│   ├── manage.py           # Administrador Django
-│   └── requirements.txt    # Dependencias Python
-├── frontend/               # React Frontend
-│   ├── src/
-│   │   ├── components/     # Componentes React
-│   │   ├── services/       # Servicios API
-│   │   ├── css/           # Estilos CSS
-│   │   └── ...
-│   ├── public/            # Archivos estáticos
-│   └── package.json       # Dependencias Node.js
-├── setup_project.bat      # Configuración completa
-└── iniciar_sistema.bat    # Iniciar sistema
+Axyoma2/
+├── setup.bat          # Configuración inicial
+├── start.bat          # Inicio del sistema
+├── reset.bat          # Limpiar y reconfigurar
+├── Backend/           # Servidor Django
+│   ├── apps/          # Aplicaciones Django
+│   ├── config/        # Configuración
+│   └── env/           # Entorno virtual
+└── frontend/          # Aplicación React
+    ├── src/           # Código fuente
+    └── public/        # Archivos estáticos
 ```
+
+## 🛠️ Comandos Útiles
+
+- `setup.bat` - Configuración inicial completa
+- `start.bat` - Iniciar frontend y backend
+- `reset.bat` - Limpiar BD y reconfigurar todo
+
+## 🔧 Solución de Problemas
+
+### Error de PostgreSQL
+```bash
+# Verificar que PostgreSQL esté ejecutándose
+# Usuario: postgres, Password: 12345678
+# Base de datos: axyomadb
+```
+
+### Error de dependencias
+```bash
+# Ejecutar setup completo
+setup.bat
+```
+
+### Error de autenticación
+```bash
+# Limpiar y reconfigurar
+reset.bat
+```
+
+## 🏗️ Tecnologías
+
+- **Backend**: Django + PostgreSQL + Django REST Framework
+- **Frontend**: React + TypeScript + Axios
+- **Base de Datos**: PostgreSQL
+- **Autenticación**: Token-based authentication
+
+## 🎯 Funcionalidades Principales
+
+### ✅ Sistema de Autenticación
+- Login con username/password
+- Registro de nuevas empresas
+- Gestión de perfiles de usuario
+- Diferentes niveles de acceso
+
+### ✅ Gestión Empresarial
+- Registro automático de empresas
+- Creación automática de estructura organizacional
+- Gestión de plantas, departamentos y puestos
+- Panel de administración por nivel de usuario
+
+### ✅ Estructura Organizacional
+Al registrar una empresa, se crea automáticamente:
+- Planta Principal
+- Departamentos básicos (Administración, RRHH, Finanzas, etc.)
+- Puestos de trabajo predefinidos
+- Suscripción básica automática
+
+### ✅ Módulo de Evaluaciones
+- **Normativas Oficiales:** NOM-030, NOM-035, Evaluación 360°
+- **Gestión de Preguntas:** Creación de preguntas por normativa
+- **Tipos de Preguntas:** Opción múltiple, Sí/No, Escala, Texto libre
+- **Roles de Acceso:** SuperAdmin gestiona normativas, Empresas crean evaluaciones
+
+## 🔄 Workflow de Registro
+
+1. **Acceso al Registro:** `/registro`
+2. **Datos de Empresa:** Información básica de la empresa
+3. **Datos de Admin:** Credenciales del usuario administrador
+4. **Creación Automática:** Se crea toda la estructura organizacional
+5. **Selección de Plan:** (Opcional) Elegir plan de suscripción
+6. **Acceso Inmediato:** Login automático al sistema
+
+## 🔄 Workflow de Evaluaciones
+
+1. **SuperAdmin:** Gestiona normativas oficiales y crea preguntas base
+2. **Admin Empresa:** Accede a evaluaciones y puede crear evaluaciones internas
+3. **Admin Planta:** Gestiona evaluaciones específicas de su planta
+4. **Empleados:** Responden evaluaciones asignadas (próximamente)
 
 ## 🔧 Scripts Disponibles
 
-- **`setup_project.bat`** - Configuración completa del proyecto (ejecutar una vez)
-- **`iniciar_sistema.bat`** - Iniciar backend y frontend (uso diario)
+- `setup.bat` - Configuración inicial completa del proyecto
+- `start.bat` - Iniciar servidores backend y frontend
+- `reset.bat` - Resetear base de datos y configuración
+- `test_project.bat` - Ejecutar pruebas de funcionalidad
 
-## 🎯 Funcionalidades por Usuario
+## 🎯 Estado de Desarrollo
 
-### SuperAdmin
-- ✅ Gestión completa de empresas
-- ✅ Gestión de planes de suscripción
-- ✅ Gestión de todas las suscripciones
-- ✅ Acceso a todas las funcionalidades
+### ✅ Completado
+- [x] Sistema de autenticación completo
+- [x] Registro de empresas funcional
+- [x] Estructura organizacional automática
+- [x] Dashboards por nivel de usuario
+- [x] API REST completa
+- [x] Frontend React responsivo
+- [x] Scripts de configuración e inicio
+- [x] Documentación completa
+- [x] Módulo de evaluaciones con normativas oficiales
+- [x] Gestión de preguntas por normativa (NOM-030, NOM-035, 360°)
+- [x] Formularios dinámicos para diferentes tipos de preguntas
 
-### Admin Empresa
-- ✅ Gestión de plantas de su empresa
-- ✅ Gestión de empleados de su empresa
-- ✅ Gestión de departamentos y puestos
-- ✅ Visualización de su suscripción
-
-### Admin Planta
-- ✅ Gestión de empleados de su planta
-- ✅ Gestión de departamentos de su planta
-- ✅ Gestión de puestos de su planta
-
-## 🚨 Solución de Problemas
-
-### Error: "Python no está instalado"
-```bash
-# Instalar Python desde https://www.python.org/
-# Asegurarse de marcar "Add Python to PATH"
-```
-
-### Error: "Node.js no está instalado"
-```bash
-# Instalar Node.js desde https://nodejs.org/
-# Descargar versión LTS
-```
-
-### Error: "No se puede conectar a PostgreSQL"
-```bash
-# 1. Verificar que PostgreSQL esté ejecutándose
-# Ve a Windows Services y busca 'postgresql'
-# Asegúrate que esté en estado 'Iniciado'
-
-# 2. Verificar configuración
-# Usuario: postgres, Password: 123456789
-# Puerto: 5432
-
-# 3. El script creará automáticamente la base de datos 'axyomadb'
-# No es necesario crearla manualmente
-```
-
-### Error: "Credenciales incorrectas" al hacer login
-```bash
-# Si aparece este error, verifica:
-# 1. Que ejecutaste setup_project.bat completamente
-# 2. Que no hubo errores durante la creación de datos iniciales
-# 3. Usa las credenciales exactas (copiar y pegar):
-
-# SuperAdmin: ed-rubio@axyoma.com / 1234
-# Admin Empresa: juan.perez@codewave.com / 1234  
-# Admin Planta: maria.gomez@codewave.com / 1234
-
-# Si persiste el problema, ejecuta:
-cd Backend
-py create_initial_data.py
-```
-
-### Error: "Scripts se cierran inmediatamente"
-```bash
-# 1. Ejecutar desde PowerShell como administrador
-# 2. Verificar políticas de ejecución:
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-
-# 3. Asegurarse de que todos los requisitos estén instalados
-# 4. Ejecutar setup_project.bat primero
-# 5. Si persiste, ejecutar diagnostico.bat para identificar problemas
-```
-
-## 🎉 ¡Listo para usar!
-
-1. Ejecuta `setup_project.bat` (solo la primera vez)
-2. Ejecuta `iniciar_sistema.bat` (cada vez que uses el sistema)
-3. Ve a http://localhost:3000
-4. Inicia sesión con cualquier usuario de prueba
-5. ¡Explora el sistema!
-
----
-
-**Desarrollado con ❤️ para la gestión eficiente de empleados**
+### 🔄 En Desarrollo
+- [ ] Sistema de reportes avanzados
+- [ ] Integración con sistemas externos
+- [ ] Módulo de respuestas y análisis de evaluaciones

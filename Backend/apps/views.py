@@ -5,7 +5,6 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import ValidationError
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
-from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
@@ -25,9 +24,10 @@ class AuthViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
     
     def get_subscription_info(self, empresa):
-        """Obtiene información de suscripción de PostgreSQL"""
+        """Obtiene información de suscripción - NUEVA LÓGICA"""
         try:
             from apps.subscriptions.models import SuscripcionEmpresa
+            from django.utils import timezone
             
             # Buscar suscripción activa de la empresa
             suscripcion = SuscripcionEmpresa.objects.filter(
@@ -39,23 +39,42 @@ class AuthViewSet(viewsets.ViewSet):
                 return {
                     'tiene_suscripcion': False,
                     'estado': 'sin_suscripcion',
-                    'mensaje': 'La empresa no tiene una suscripción activa',
+                    'mensaje': 'No tiene suscripción activa. Seleccione un plan para acceder a reportes.',
                     'requiere_pago': True,
-                    'dias_restantes': 0
+                    'dias_restantes': 0,
+                    'acceso_reportes': False
                 }
+            
+            # Verificar si está vencida
+            if suscripcion.fecha_fin < timezone.now().date():
+                # Marcar como vencida
+                suscripcion.estado = 'Vencida'
+                suscripcion.save()
+                
+                return {
+                    'tiene_suscripcion': False,
+                    'estado': 'vencida',
+                    'mensaje': 'Su suscripción ha vencido. Renueve para acceder a reportes.',
+                    'requiere_pago': True,
+                    'dias_restantes': 0,
+                    'acceso_reportes': False
+                }
+            
+            # Suscripción activa
+            dias_restantes = (suscripcion.fecha_fin - timezone.now().date()).days
             
             return {
                 'tiene_suscripcion': True,
-                'estado': suscripcion.estado.lower(),
+                'estado': 'activa',
                 'plan_nombre': suscripcion.plan_suscripcion.nombre,
                 'fecha_inicio': suscripcion.fecha_inicio.isoformat(),
-                'fecha_fin': suscripcion.fecha_fin.isoformat() if suscripcion.fecha_fin else None,
-                'dias_restantes': suscripcion.dias_restantes,
-                'esta_activa': suscripcion.esta_activa,
-                'esta_por_vencer': suscripcion.esta_por_vencer,
+                'fecha_fin': suscripcion.fecha_fin.isoformat(),
+                'dias_restantes': dias_restantes,
+                'esta_por_vencer': dias_restantes <= 7,
                 'precio': float(suscripcion.plan_suscripcion.precio),
                 'duracion': suscripcion.plan_suscripcion.duracion,
-                'requiere_pago': not suscripcion.esta_activa
+                'requiere_pago': False,
+                'acceso_reportes': True
             }
             
         except Exception as e:
@@ -65,7 +84,8 @@ class AuthViewSet(viewsets.ViewSet):
                 'estado': 'error',
                 'mensaje': f'Error al obtener información de suscripción: {str(e)}',
                 'requiere_pago': True,
-                'dias_restantes': 0
+                'dias_restantes': 0,
+                'acceso_reportes': False
             }
     
     @action(detail=False, methods=['post'])
@@ -75,18 +95,7 @@ class AuthViewSet(viewsets.ViewSet):
             username = serializer.validated_data['username']
             password = serializer.validated_data['password']
             
-            # Intentar autenticar con username primero
             user = authenticate(username=username, password=password)
-            
-            # Si no funciona, intentar con email
-            if not user:
-                try:
-                    # Buscar usuario por email
-                    user_by_email = User.objects.get(email=username)
-                    user = authenticate(username=user_by_email.username, password=password)
-                except User.DoesNotExist:
-                    pass
-            
             if user and hasattr(user, 'perfil'):
                 profile = user.perfil
                 
@@ -2092,68 +2101,28 @@ class SuscripcionViewSet(viewsets.ViewSet):
     def listar_suscripciones(self, request):
         """Lista todas las suscripciones de empresas"""
         try:
-            from apps.subscriptions.models import SuscripcionEmpresa, Pago
+            from apps.subscriptions.models import SuscripcionEmpresa
             
             suscripciones = SuscripcionEmpresa.objects.select_related(
                 'empresa', 'plan_suscripcion'
-            ).all()
+            ).values(
+                'suscripcion_id',
+                'empresa__nombre',
+                'empresa__empresa_id',
+                'plan_suscripcion__nombre',
+                'plan_suscripcion__precio',
+                'plan_suscripcion__duracion',
+                'fecha_inicio',
+                'fecha_fin',
+                'estado',
+                'status'
+            )
             
-            suscripciones_list = []
-            
-            for suscripcion in suscripciones:
-                # Información de empresa
-                empresa_nombre = suscripcion.empresa.nombre if suscripcion.empresa else "Empresa #undefined"
-                empresa_id = suscripcion.empresa.empresa_id if suscripcion.empresa else None
-                
-                # Información de plan
-                plan_nombre = suscripcion.plan_suscripcion.nombre if suscripcion.plan_suscripcion else "Plan #undefined"
-                plan_precio = float(suscripcion.plan_suscripcion.precio) if suscripcion.plan_suscripcion else 0.0
-                plan_duracion = suscripcion.plan_suscripcion.duracion if suscripcion.plan_suscripcion else 0
-                
-                # Información del último pago
-                ultimo_pago = Pago.objects.filter(suscripcion=suscripcion).order_by('-fecha_pago').first()
-                usuario_pago = None
-                if ultimo_pago and ultimo_pago.usuario:
-                    usuario_pago = {
-                        'username': ultimo_pago.usuario.username,
-                        'email': ultimo_pago.usuario.email,
-                        'nombre_completo': None
-                    }
-                    
-                    # Obtener información del perfil si existe
-                    try:
-                        perfil = ultimo_pago.usuario.perfil
-                        usuario_pago['nombre_completo'] = f"{perfil.nombre} {perfil.apellido_paterno}"
-                    except:
-                        pass
-                
-                suscripciones_list.append({
-                    'suscripcion_id': suscripcion.suscripcion_id,
-                    'empresa__nombre': empresa_nombre,
-                    'empresa__empresa_id': empresa_id,
-                    'plan_suscripcion__nombre': plan_nombre,
-                    'plan_suscripcion__precio': plan_precio,
-                    'plan_suscripcion__duracion': plan_duracion,
-                    'fecha_inicio': suscripcion.fecha_inicio.isoformat() if suscripcion.fecha_inicio else None,
-                    'fecha_fin': suscripcion.fecha_fin.isoformat() if suscripcion.fecha_fin else None,
-                    'estado': suscripcion.estado,
-                    'status': suscripcion.status,
-                    'dias_restantes': suscripcion.dias_restantes,
-                    'esta_activa': suscripcion.esta_activa,
-                    'usuario_pago': usuario_pago,
-                    'total_pagos': Pago.objects.filter(suscripcion=suscripcion).count(),
-                    'pagos_completados': Pago.objects.filter(suscripcion=suscripcion, estado_pago='Completado').count()
-                })
-            
-            return Response(suscripciones_list)
+            return Response(list(suscripciones))
             
         except Exception as e:
-            error_msg = f'Error obteniendo suscripciones: {str(e)}'
-            print(f"❌ {error_msg}")
-            import traceback
-            traceback.print_exc()
             return Response(
-                {'error': error_msg}, 
+                {'error': f'Error obteniendo suscripciones: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -2169,35 +2138,25 @@ class SuscripcionViewSet(viewsets.ViewSet):
             empresa_id = data.get('empresa_id')
             plan_id = data.get('plan_id')
             
-            print(f"🔄 Creando suscripción - empresa_id: {empresa_id}, plan_id: {plan_id}")
-            
             if not empresa_id or not plan_id:
-                error_msg = f'empresa_id y plan_id son requeridos. Recibido: empresa_id={empresa_id}, plan_id={plan_id}'
-                print(f"❌ {error_msg}")
                 return Response(
-                    {'error': error_msg}, 
+                    {'error': 'empresa_id y plan_id son requeridos'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
             try:
                 empresa = Empresa.objects.get(empresa_id=empresa_id)
-                print(f"✅ Empresa encontrada: {empresa.nombre}")
             except Empresa.DoesNotExist:
-                error_msg = f'Empresa con ID {empresa_id} no encontrada'
-                print(f"❌ {error_msg}")
                 return Response(
-                    {'error': error_msg}, 
+                    {'error': f'Empresa con ID {empresa_id} no encontrada'}, 
                     status=status.HTTP_404_NOT_FOUND
                 )
             
             try:
                 plan = PlanSuscripcion.objects.get(plan_id=plan_id)
-                print(f"✅ Plan encontrado: {plan.nombre} - ${plan.precio}")
             except PlanSuscripcion.DoesNotExist:
-                error_msg = f'Plan con ID {plan_id} no encontrado'
-                print(f"❌ {error_msg}")
                 return Response(
-                    {'error': error_msg}, 
+                    {'error': f'Plan con ID {plan_id} no encontrado'}, 
                     status=status.HTTP_404_NOT_FOUND
                 )
             
@@ -2208,15 +2167,10 @@ class SuscripcionViewSet(viewsets.ViewSet):
             ).first()
             
             if suscripcion_existente:
-                # En lugar de dar error, actualizar la suscripción existente
-                print(f"Empresa {empresa.nombre} ya tiene suscripción activa. Actualizando...")
-                
-                # Desactivar suscripción anterior
-                suscripcion_existente.status = False
-                suscripcion_existente.save()
-                
-                # Continuar con la creación de nueva suscripción
-                print(f"Suscripción anterior desactivada. Creando nueva suscripción...")
+                return Response(
+                    {'error': 'La empresa ya tiene una suscripción activa'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
             with transaction.atomic():
                 # Crear nueva suscripción
@@ -2264,12 +2218,8 @@ class SuscripcionViewSet(viewsets.ViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
-            error_msg = f'Error creando suscripción: {str(e)}'
-            print(f"❌ {error_msg}")
-            import traceback
-            traceback.print_exc()
             return Response(
-                {'error': error_msg, 'details': str(e)}, 
+                {'error': f'Error creando suscripción: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -2352,45 +2302,31 @@ class SuscripcionViewSet(viewsets.ViewSet):
             monto_pago = data.get('monto_pago')
             transaccion_id = data.get('transaccion_id', '')
             
-            print(f"🔄 Procesando pago - suscripcion_id: {suscripcion_id}, monto_pago: {monto_pago}")
-            
             if not suscripcion_id or not monto_pago:
-                error_msg = f'suscripcion_id y monto_pago son requeridos. Recibido: suscripcion_id={suscripcion_id}, monto_pago={monto_pago}'
-                print(f"❌ {error_msg}")
                 return Response(
-                    {'error': error_msg}, 
+                    {'error': 'suscripcion_id y monto_pago son requeridos'}, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
             try:
                 suscripcion = SuscripcionEmpresa.objects.get(suscripcion_id=suscripcion_id)
-                print(f"✅ Suscripción encontrada: {suscripcion.plan_suscripcion.nombre} para {suscripcion.empresa.nombre}")
             except SuscripcionEmpresa.DoesNotExist:
-                error_msg = f'Suscripción con ID {suscripcion_id} no encontrada'
-                print(f"❌ {error_msg}")
                 return Response(
-                    {'error': error_msg}, 
+                    {'error': f'Suscripción con ID {suscripcion_id} no encontrada'}, 
                     status=status.HTTP_404_NOT_FOUND
                 )
             
             with transaction.atomic():
-                # Crear el pago con el usuario que lo realizó
                 pago = Pago.objects.create(
                     suscripcion=suscripcion,
                     costo=suscripcion.plan_suscripcion.precio,
                     monto_pago=float(monto_pago),
                     estado_pago='Completado',
-                    transaccion_id=transaccion_id or f"PAGO-{suscripcion_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
-                    usuario=request.user if request.user.is_authenticated else None
+                    transaccion_id=transaccion_id
                 )
-                
-                print(f"✅ Pago creado: ${pago.monto_pago} - ID: {pago.pago_id}")
-                if pago.usuario:
-                    print(f"👤 Usuario que realizó el pago: {pago.usuario.username}")
                 
                 # Activar suscripción si estaba suspendida
                 if suscripcion.estado != 'Activa':
-                    print(f"🔄 Activando suscripción (estado anterior: {suscripcion.estado})")
                     suscripcion.estado = 'Activa'
                     suscripcion.status = True
                     suscripcion.save()
@@ -2401,26 +2337,18 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     'pago_id': pago.pago_id,
                     'monto': float(pago.monto_pago),
                     'fecha': pago.fecha_pago.isoformat(),
-                    'estado': pago.estado_pago,
-                    'transaccion_id': pago.transaccion_id,
-                    'usuario': pago.usuario.username if pago.usuario else None
+                    'estado': pago.estado_pago
                 }
             })
             
         except SuscripcionEmpresa.DoesNotExist:
-            error_msg = 'Suscripción no encontrada'
-            print(f"❌ {error_msg}")
             return Response(
-                {'error': error_msg}, 
+                {'error': 'Suscripción no encontrada'}, 
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
-            error_msg = f'Error procesando pago: {str(e)}'
-            print(f"❌ {error_msg}")
-            import traceback
-            traceback.print_exc()
             return Response(
-                {'error': error_msg, 'details': str(e)}, 
+                {'error': f'Error procesando pago: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
     
@@ -2447,80 +2375,5 @@ class SuscripcionViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response(
                 {'error': f'Error obteniendo información de suscripción: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    @action(detail=False, methods=['get'], permission_classes=[])
-    def obtener_pagos_suscripcion(self, request):
-        """Obtener pagos de una suscripción con información del usuario"""
-        try:
-            from apps.subscriptions.models import SuscripcionEmpresa, Pago
-            
-            suscripcion_id = request.GET.get('suscripcion_id')
-            
-            if not suscripcion_id:
-                return Response(
-                    {'error': 'suscripcion_id es requerido'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            try:
-                suscripcion = SuscripcionEmpresa.objects.get(suscripcion_id=suscripcion_id)
-            except SuscripcionEmpresa.DoesNotExist:
-                return Response(
-                    {'error': 'Suscripción no encontrada'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            # Obtener pagos de la suscripción
-            pagos = Pago.objects.filter(suscripcion=suscripcion).order_by('-fecha_pago')
-            
-            pagos_list = []
-            for pago in pagos:
-                usuario_info = None
-                if pago.usuario:
-                    usuario_info = {
-                        'username': pago.usuario.username,
-                        'email': pago.usuario.email,
-                        'nombre_completo': None,
-                        'nivel_usuario': None
-                    }
-                    
-                    # Obtener información del perfil si existe
-                    try:
-                        perfil = pago.usuario.perfil
-                        usuario_info['nombre_completo'] = f"{perfil.nombre} {perfil.apellido_paterno}"
-                        usuario_info['nivel_usuario'] = perfil.nivel_usuario
-                    except:
-                        pass
-                
-                pagos_list.append({
-                    'pago_id': pago.pago_id,
-                    'monto_pago': float(pago.monto_pago),
-                    'costo': float(pago.costo),
-                    'fecha_pago': pago.fecha_pago.isoformat(),
-                    'estado_pago': pago.estado_pago,
-                    'transaccion_id': pago.transaccion_id,
-                    'usuario': usuario_info
-                })
-            
-            return Response({
-                'suscripcion': {
-                    'suscripcion_id': suscripcion.suscripcion_id,
-                    'empresa': suscripcion.empresa.nombre,
-                    'plan': suscripcion.plan_suscripcion.nombre,
-                    'estado': suscripcion.estado
-                },
-                'pagos': pagos_list,
-                'total_pagos': len(pagos_list)
-            })
-            
-        except Exception as e:
-            error_msg = f'Error obteniendo pagos: {str(e)}'
-            print(f"❌ {error_msg}")
-            import traceback
-            traceback.print_exc()
-            return Response(
-                {'error': error_msg}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

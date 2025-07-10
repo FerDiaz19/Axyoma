@@ -40,10 +40,12 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',  # Requerido para TokenAuthentication
+    'drf_yasg',  # Swagger documentation
     'apps',
     'apps.surveys',
     'apps.subscriptions',
     'apps.users',
+    'apps.evaluaciones',
 ]
 
 

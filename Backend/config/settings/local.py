@@ -12,7 +12,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'axyomadb',
         'USER': 'postgres',
-        'PASSWORD': '123456789',
+        'PASSWORD': '12345678',
         'HOST': 'localhost',
         'PORT': '5432',
         'CONN_MAX_AGE': 600,
