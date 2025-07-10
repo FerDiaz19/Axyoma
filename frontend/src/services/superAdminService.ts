@@ -248,6 +248,30 @@ export const editarUsuario = async (id: number, data: Partial<SuperAdminUsuario>
   }
 };
 
+// Función para crear usuarios SuperAdmin
+export const crearUsuario = async (data: {
+  username: string;
+  email: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno?: string;
+  password?: string;
+  is_active?: boolean;
+}) => {
+  try {
+    console.log('🔧 SuperAdmin: Creando nuevo usuario SuperAdmin...', data);
+    const response = await api.post(`${API_BASE}/crear_usuario/`, {
+      ...data,
+      nivel_usuario: 'superadmin' // Solo permitir crear SuperAdmin
+    });
+    console.log('✅ SuperAdmin: Usuario SuperAdmin creado exitosamente');
+    return response.data;
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error creando usuario:', error);
+    throw error;
+  }
+};
+
 // Servicios para plantas
 export const getPlantas = async (params?: {
   buscar?: string;

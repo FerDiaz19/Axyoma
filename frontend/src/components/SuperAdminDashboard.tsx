@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { logout } from '../services/authService';
-import GestionEvaluaciones from './GestionEvaluaciones';
 import {
   getEstadisticasSistema,
   getEmpresas,
@@ -63,7 +62,7 @@ interface SuperAdminDashboardProps {
 }
 
 const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos' | 'evaluaciones'>('estadisticas');
+  const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos'>('estadisticas');
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true); // Estado para controlar el sidebar
   
@@ -1742,13 +1741,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               <span className="nav-icon">💰</span>
               <span className="nav-text">Pagos ({pagos.length})</span>
             </button>
-            <button 
-              className={activeSection === 'evaluaciones' ? 'active' : ''}
-              onClick={() => setActiveSection('evaluaciones')}
-            >
-              <span className="nav-icon">📝</span>
-              <span className="nav-text">Evaluaciones</span>
-            </button>
         </nav>
       </aside>
 
@@ -1788,20 +1780,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           {activeSection === 'planes' && renderPlanes()}
           {activeSection === 'suscripciones' && renderSuscripciones()}
           {activeSection === 'pagos' && renderPagos()}
-          {activeSection === 'evaluaciones' && (
-            <GestionEvaluaciones 
-              usuario={{
-                is_superuser: true,
-                perfil_usuario: {
-                  tipo_usuario: 'SuperAdmin',
-                  empresa: {
-                    id: 0,
-                    nombre: 'Sistema'
-                  }
-                }
-              }}
-            />
-          )}
 
       {modalEditar.isOpen && (
         <EditModal

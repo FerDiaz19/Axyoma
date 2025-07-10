@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 interface FormField {
   name: string;
   label: string;
-  type: 'text' | 'email' | 'textarea' | 'select' | 'checkbox' | 'number';
+  type: 'text' | 'email' | 'password' | 'textarea' | 'select' | 'checkbox' | 'number';
   required?: boolean;
   options?: { value: string | number; label: string }[];
   disabled?: boolean;
@@ -17,6 +17,8 @@ interface EditModalProps {
   fields: FormField[];
   onSave: (data: Record<string, any>) => Promise<void>;
   loading?: boolean;
+  infoMessage?: string;
+  infoType?: 'info' | 'warning' | 'success';
 }
 
 const EditModal: React.FC<EditModalProps> = ({
@@ -26,7 +28,9 @@ const EditModal: React.FC<EditModalProps> = ({
   initialData,
   fields,
   onSave,
-  loading = false
+  loading = false,
+  infoMessage,
+  infoType = 'info'
 }) => {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -111,10 +115,20 @@ const EditModal: React.FC<EditModalProps> = ({
 
         {loading ? (
           <div className="modal-loading">
+            <div className="loading-spinner"></div>
             <div>Cargando datos...</div>
           </div>
         ) : (
           <>
+            {infoMessage && (
+              <div className={`modal-info ${infoType}`}>
+                <span className="modal-info-icon">
+                  {infoType === 'warning' ? '⚠️' : infoType === 'success' ? '✅' : 'ℹ️'}
+                </span>
+                <span>{infoMessage}</span>
+              </div>
+            )}
+            
             <form className="modal-form" onSubmit={(e) => e.preventDefault()}>
               {fields.map((field) => (
                 <div key={field.name} className="form-group">
@@ -174,7 +188,9 @@ const EditModal: React.FC<EditModalProps> = ({
                   )}
                   
                   {errors[field.name] && (
-                    <div className="form-error">{errors[field.name]}</div>
+                    <div className="error-message">
+                      ⚠️ {errors[field.name]}
+                    </div>
                   )}
                 </div>
               ))}
@@ -182,18 +198,27 @@ const EditModal: React.FC<EditModalProps> = ({
 
             <div className="modal-actions">
               <button 
-                className="btn-modal cancel" 
+                className="modal-btn modal-btn-cancel" 
                 onClick={onClose}
                 disabled={saving}
               >
-                Cancelar
+                ✕ Cancelar
               </button>
               <button 
-                className="btn-modal save" 
+                className="modal-btn modal-btn-save" 
                 onClick={handleSave}
                 disabled={saving}
               >
-                {saving ? 'Guardando...' : 'Guardar'}
+                {saving ? (
+                  <>
+                    <div className="loading-spinner" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white' }}></div>
+                    Guardando...
+                  </>
+                ) : (
+                  <>
+                    💾 Guardar
+                  </>
+                )}
               </button>
             </div>
           </>

@@ -1,9 +1,6 @@
 from django.db import models
-from django.contrib.auth.models import User
-from apps.users.models import Empresa, Planta, Empleado
-from datetime import datetime, timedelta
-from django.utils import timezone
 
+<<<<<<< HEAD
 class Evaluacion(models.Model):
     """
     Modelo para evaluaciones que pueden ser de dos tipos:
@@ -247,3 +244,7 @@ class RespuestaEvaluacion(models.Model):
         
     def __str__(self):
         return f"{self.empleado} - {self.pregunta.evaluacion.titulo}"
+=======
+# Modelos para surveys - no implementados por ahora
+# Este archivo se mantiene vacío para evitar errores de importación
+>>>>>>> parent of 2766511 (si)

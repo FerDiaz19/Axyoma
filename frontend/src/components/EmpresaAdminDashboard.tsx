@@ -2,7 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import EmpleadosCRUD from './EmpleadosCRUD';
 import GestionEstructura from './GestionEstructura';
 import GestionPlantas from './GestionPlantas';
+<<<<<<< HEAD
 import GestionEvaluaciones from './GestionEvaluaciones';
+=======
+import GestionDepartamentos from './GestionDepartamentos';
+import GestionPuestos from './GestionPuestos';
+>>>>>>> parent of 2766511 (si)
 import { logout } from '../services/authService';
 import '../css/ModernDashboard.css';
 import '../css/Dashboard.css'; // Mantener estilos originales como fallback
@@ -179,6 +184,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
           ))}
         </nav>
 
+<<<<<<< HEAD
         <div className="sidebar-footer">
           <div className="subscription-status">
             {subscriptionInfo?.tiene_suscripcion ? (
@@ -189,6 +195,110 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
                   <span className="status-detail">
                     {subscriptionInfo.plan_nombre} - {subscriptionInfo.dias_restantes || 0} días
                   </span>
+=======
+        {/* Content area */}
+        <main className="dashboard-content">
+          {/* Información de suscripción activa */}
+          {subscriptionInfo?.tiene_suscripcion && subscriptionInfo?.estado === 'activa' && (
+            <div className="subscription-alert">
+              <div className="warning-content">
+                <h3>✅ Suscripción Activa</h3>
+                <div style={{ display: 'flex', gap: '20px', color: '#155724' }}>
+                  <span>Plan: {subscriptionInfo.suscripcion?.plan_nombre}</span>
+                  <span>Días restantes: {subscriptionInfo.dias_restantes}</span>
+                  <span>Vence: {subscriptionInfo.fecha_vencimiento}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Mensaje de advertencia para empresa suspendida */}
+          {isEmpresaSuspendida && (
+            <div className="subscription-warning">
+              <div className="warning-content">
+                <h3>⚠️ {getSuspensionMessage()}</h3>
+                <p>
+                  {subscriptionInfo?.estado === 'sin_suscripcion' && 
+                    'Para acceder a todas las funcionalidades, debe activar una suscripción.'}
+                  {subscriptionInfo?.estado === 'pendiente_pago' && 
+                    'Complete el pago para activar su suscripción y acceder a todas las funcionalidades.'}
+                  {subscriptionInfo?.estado === 'vencida' && 
+                    'Su suscripción ha vencido. Renueve su plan para continuar usando el sistema.'}
+                  {!subscriptionInfo?.estado && 
+                    'Las funcionalidades están limitadas. Contacte con soporte para reactivar su suscripción.'}
+                </p>
+                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                  <button 
+                    className="renewal-button" 
+                    onClick={() => window.location.href = '/plan-selection'}
+                  >
+                    🔄 Activar Suscripción
+                  </button>
+                  <button 
+                    onClick={loadSubscriptionInfo}
+                    className="action-button"
+                    style={{ backgroundColor: '#6c757d' }}
+                  >
+                    🔃 Verificar Estado
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        {activeSection === 'plantas' && (
+          <GestionPlantas empresaId={userData?.empresa_id} />
+        )}
+        {activeSection === 'departamentos' && <GestionDepartamentos />}
+        {activeSection === 'puestos' && <GestionPuestos />}
+        {activeSection === 'estructura' && <GestionEstructura />}
+        {activeSection === 'empleados' && <EmpleadosCRUD userData={userData} />}
+        {activeSection === 'evaluaciones' && (
+          <div className="coming-soon">
+            <h2>Evaluaciones</h2>
+            <p>Módulo de evaluaciones en desarrollo...</p>
+            <div className="stats-grid">
+              <div className="stat-card">
+                <h3>Evaluaciones Activas</h3>
+                <p className="stat-number">5</p>
+              </div>
+              <div className="stat-card">
+                <h3>Evaluaciones Completadas</h3>
+                <p className="stat-number">12</p>
+              </div>
+              <div className="stat-card">
+                <h3>Empleados Evaluados</h3>
+                <p className="stat-number">45</p>
+              </div>
+            </div>
+          </div>
+        )}
+        {activeSection === 'reportes' && (
+          <div className="coming-soon">
+            {isEmpresaSuspendida ? (
+              <div className="subscription-expired">
+                <h2>❌ {getSuspensionMessage()}</h2>
+                <p>
+                  {subscriptionInfo?.estado === 'sin_suscripcion' && 
+                    'Para acceder a reportes y estadísticas, debe activar una suscripción.'}
+                  {subscriptionInfo?.estado === 'pendiente_pago' && 
+                    'Complete el pago de su suscripción para acceder a reportes y estadísticas.'}
+                  {subscriptionInfo?.estado === 'vencida' && 
+                    'Su suscripción ha vencido. Renueve su plan para acceder a reportes y estadísticas.'}
+                  {!subscriptionInfo?.estado && 
+                    'Su suscripción ha expirado. Para acceder a estadísticas y reportes, debe renovar su plan.'}
+                </p>
+                <div className="expired-message">
+                  <h3>🚫 Funciones No Disponibles:</h3>
+                  <ul>
+                    <li>• Reportes detallados</li>
+                    <li>• Estadísticas avanzadas</li>
+                    <li>• Análisis de rendimiento</li>
+                    <li>• Exportación de datos</li>
+                  </ul>
+                  <button className="renewal-button" onClick={() => window.location.href = '/plan-selection'}>
+                    � Activar Suscripción
+                  </button>
+>>>>>>> parent of 2766511 (si)
                 </div>
               </div>
             ) : (

@@ -1813,6 +1813,165 @@ class SuperAdminViewSet(viewsets.ViewSet):
             return Response({'error': f'Error eliminando empleado: {str(e)}'}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    # ======== ENDPOINTS PARA EDICIÓN ========
+    @action(detail=False, methods=['put'])
+    def editar_empresa(self, request):
+        """Editar datos de una empresa"""
+        self._verify_superadmin(request.user)
+        
+        empresa_id = request.data.get('empresa_id')
+        
+        if not empresa_id:
+            return Response({'error': 'Falta parámetro empresa_id'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            empresa = Empresa.objects.get(empresa_id=empresa_id)
+            
+            # Actualizar campos permitidos
+            if 'nombre' in request.data:
+                empresa.nombre = request.data['nombre']
+            if 'rfc' in request.data:
+                empresa.rfc = request.data['rfc']
+            if 'telefono' in request.data:
+                empresa.telefono_contacto = request.data.get('telefono', '')
+            if 'correo' in request.data:
+                empresa.email_contacto = request.data.get('correo', '')
+            if 'direccion' in request.data:
+                empresa.direccion = request.data.get('direccion', '')
+            if 'status' in request.data:
+                empresa.status = request.data['status']
+            
+            empresa.save()
+            
+            return Response({
+                'message': f'Empresa "{empresa.nombre}" actualizada exitosamente',
+                'empresa_id': empresa_id
+            })
+            
+        except Empresa.DoesNotExist:
+            return Response({'error': 'Empresa no encontrada'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error actualizando empresa: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['put'])
+    def editar_usuario(self, request):
+        """Editar datos de un usuario"""
+        self._verify_superadmin(request.user)
+        
+        user_id = request.data.get('user_id')
+        
+        if not user_id:
+            return Response({'error': 'Falta parámetro user_id'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            from django.contrib.auth.models import User
+            user = User.objects.get(id=user_id)
+            perfil = PerfilUsuario.objects.get(user=user)
+            
+            # Actualizar campos del usuario
+            if 'username' in request.data:
+                user.username = request.data['username']
+            if 'email' in request.data:
+                user.email = request.data['email']
+                perfil.correo = request.data['email']  # Actualizar también en perfil
+            if 'nombre' in request.data:
+                perfil.nombre = request.data['nombre']
+            if 'apellido_paterno' in request.data:
+                perfil.apellido_paterno = request.data['apellido_paterno']
+            if 'apellido_materno' in request.data:
+                perfil.apellido_materno = request.data.get('apellido_materno', '')
+            if 'nivel_usuario' in request.data:
+                perfil.nivel_usuario = request.data['nivel_usuario']
+            if 'is_active' in request.data:
+                user.is_active = request.data['is_active']
+            
+            user.save()
+            perfil.save()
+            
+            return Response({
+                'message': f'Usuario "{user.username}" actualizado exitosamente',
+                'user_id': user_id
+            })
+            
+        except User.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except PerfilUsuario.DoesNotExist:
+            return Response({'error': 'Perfil de usuario no encontrado'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error actualizando usuario: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['post'])
+    def crear_usuario(self, request):
+        """Crear un nuevo usuario (solo SuperAdmin)"""
+        self._verify_superadmin(request.user)
+        
+        # Datos requeridos
+        username = request.data.get('username')
+        email = request.data.get('email')
+        nombre = request.data.get('nombre')
+        apellido_paterno = request.data.get('apellido_paterno')
+        apellido_materno = request.data.get('apellido_materno', '')
+        nivel_usuario = request.data.get('nivel_usuario', 'superadmin')
+        password = request.data.get('password', '1234')  # Password por defecto
+        
+        if not all([username, email, nombre, apellido_paterno]):
+            return Response({'error': 'Faltan campos requeridos: username, email, nombre, apellido_paterno'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        # Solo permitir crear usuarios superadmin desde SuperAdmin
+        if nivel_usuario != 'superadmin':
+            return Response({'error': 'Solo se pueden crear usuarios SuperAdmin desde esta interfaz'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            from django.contrib.auth.models import User
+            from django.db import transaction
+            
+            with transaction.atomic():
+                # Verificar que no exista el username o email
+                if User.objects.filter(username=username).exists():
+                    return Response({'error': 'El nombre de usuario ya existe'}, 
+                                  status=status.HTTP_400_BAD_REQUEST)
+                
+                if User.objects.filter(email=email).exists():
+                    return Response({'error': 'El email ya está registrado'}, 
+                                  status=status.HTTP_400_BAD_REQUEST)
+                
+                # Crear usuario
+                user = User.objects.create_user(
+                    username=username,
+                    email=email,
+                    password=password,
+                    is_active=request.data.get('is_active', True)
+                )
+                
+                # Crear perfil
+                perfil = PerfilUsuario.objects.create(
+                    user=user,
+                    nombre=nombre,
+                    apellido_paterno=apellido_paterno,
+                    apellido_materno=apellido_materno,
+                    correo=email,
+                    nivel_usuario=nivel_usuario
+                )
+                
+                return Response({
+                    'message': f'Usuario SuperAdmin "{username}" creado exitosamente',
+                    'user_id': user.id,
+                    'password_temporal': password
+                })
+                
+        except Exception as e:
+            return Response({'error': f'Error creando usuario: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 # ============================================================================
 # VISTAS PARA SUSCRIPCIONES - RF-001, RF-003
@@ -1847,6 +2006,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
             from apps.subscriptions.models import PlanSuscripcion
             from django.db import transaction
             
+
             data = request.data
             nombre = data.get('nombre')
             descripcion = data.get('descripcion', '')

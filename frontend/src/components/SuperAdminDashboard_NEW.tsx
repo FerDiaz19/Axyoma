@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { logout } from '../services/authService';
 import EditModal from './EditModal';
+import GestionEvaluaciones from './GestionEvaluaciones';
 import {
   getEstadisticasSistema,
   getEmpresas,
@@ -13,6 +14,9 @@ import {
   suspenderUsuario,
   eliminarEmpresa,
   eliminarUsuario,
+  editarEmpresa,
+  editarUsuario,
+  crearUsuario,
   type SuperAdminEmpresa,
   type SuperAdminUsuario,
   type SuperAdminPlanta,
@@ -29,7 +33,7 @@ interface SuperAdminDashboardProps {
 }
 
 const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados'>('estadisticas');
+  const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'evaluaciones'>('estadisticas');
   const [loading, setLoading] = useState(false);
   
   // Estados para datos
@@ -48,7 +52,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const [filtroEmpresa, setFiltroEmpresa] = useState('');
 
   // Estados para modal de edición
-  const [modalEditar, setModalEditar] = useState({
+  const [modalEditar, setModalEditar] = useState<{
+    isOpen: boolean;
+    type: string;
+    data: any;
+    title: string;
+  }>({
     isOpen: false,
     type: '',
     data: {},
@@ -177,6 +186,14 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           setUsuarios(prev => prev.map(item => 
             item.user_id === id ? { ...item, is_active: !currentStatus } : item
           ));
+        } else if (type === 'departamento') {
+          setDepartamentos(prev => prev.map(item => 
+            item.departamento_id === id ? { ...item, activo: !currentStatus } : item
+          ));
+        } else if (type === 'empleado') {
+          setEmpleados(prev => prev.map(item => 
+            item.empleado_id === id ? { ...item, activo: !currentStatus } : item
+          ));
         }
         
         alert(`${nombre} ${action === 'suspender' ? 'suspendido' : 'activado'} exitosamente`);
@@ -201,6 +218,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
         } else if (type === 'usuario') {
           await eliminarUsuario(id);
           setUsuarios(prev => prev.filter(item => item.user_id !== id));
+        } else if (type === 'departamento') {
+          setDepartamentos(prev => prev.filter(item => item.departamento_id !== id));
+        } else if (type === 'empleado') {
+          setEmpleados(prev => prev.filter(item => item.empleado_id !== id));
         }
         
         alert(`${nombre} eliminado exitosamente`);
@@ -209,6 +230,154 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
         console.error('Error al eliminar:', error);
         alert(error.message || 'Error al eliminar');
       }
+    }
+  };
+
+  // Función para abrir modal de edición
+  const handleOpenEdit = (type: string, data: any, title: string) => {
+    setModalEditar({
+      isOpen: true,
+      type,
+      data,
+      title
+    });
+  };
+
+  // Función para cerrar modal de edición
+  const handleCloseEdit = () => {
+    setModalEditar({
+      isOpen: false,
+      type: '',
+      data: {},
+      title: ''
+    });
+  };
+
+  // Función para guardar cambios en modal de edición
+  const handleSaveEdit = async (updatedData: any) => {
+    try {
+      // Verificar si es edición o creación
+      const isCreating = Object.keys(modalEditar.data).length === 0;
+      
+      if (isCreating) {
+        // Crear nuevo elemento
+        await handleSaveCreate(updatedData);
+      } else {
+        // Editar elemento existente
+        switch (modalEditar.type) {
+          case 'empresa':
+            if (!modalEditar.data.empresa_id) {
+              throw new Error('ID de empresa no encontrado');
+            }
+            await editarEmpresa(modalEditar.data.empresa_id, updatedData);
+            break;
+          case 'usuario':
+            if (!modalEditar.data.user_id) {
+              throw new Error('ID de usuario no encontrado');
+            }
+            await editarUsuario(modalEditar.data.user_id, updatedData);
+            break;
+          default:
+            throw new Error(`Edición de tipo "${modalEditar.type}" no implementada`);
+        }
+        console.log('✅ Elemento editado exitosamente:', modalEditar.type);
+      }
+      
+      handleCloseEdit();
+      // Recargar datos de la sección activa
+      await cargarDatosPorSeccion();
+    } catch (error: any) {
+      console.error('Error al guardar cambios:', error);
+      throw error; // Re-lanzar para que EditModal pueda manejarlo
+    }
+  };
+
+  // Función para abrir modal de creación
+  const handleOpenCreate = (type: string, title: string) => {
+    setModalEditar({
+      isOpen: true,
+      type,
+      data: {}, // Datos vacíos para crear
+      title
+    });
+  };
+
+  // Función para crear nuevo elemento
+  const handleSaveCreate = async (newData: any) => {
+    try {
+      switch (modalEditar.type) {
+        case 'usuario':
+          // Solo permitir crear usuarios SuperAdmin
+          await crearUsuario({
+            username: newData.username,
+            email: newData.email,
+            nombre: newData.nombre,
+            apellido_paterno: newData.apellido_paterno,
+            apellido_materno: newData.apellido_materno || '',
+            password: newData.password || '1234',
+            is_active: newData.is_active !== false
+          });
+          break;
+        
+        // TODO: Implementar otros tipos de creación cuando sea necesario
+        default:
+          throw new Error(`Creación de tipo "${modalEditar.type}" no implementada`);
+      }
+      
+      console.log('✅ Elemento creado exitosamente:', modalEditar.type);
+      handleCloseEdit();
+      // Recargar datos de la sección activa
+      await cargarDatosPorSeccion();
+    } catch (error: any) {
+      console.error('Error al crear:', error);
+      throw error; // Re-lanzar para que EditModal pueda manejarlo
+    }
+  };
+
+  // Función para obtener los campos del modal según el tipo
+  const getModalFields = () => {
+    switch (modalEditar.type) {
+      case 'empresa':
+        return [
+          { name: 'nombre', label: 'Nombre de la Empresa', type: 'text' as const, required: true },
+          { name: 'rfc', label: 'RFC', type: 'text' as const, required: true },
+          { name: 'telefono', label: 'Teléfono', type: 'text' as const, required: false },
+          { name: 'correo', label: 'Correo Electrónico', type: 'email' as const, required: false },
+          { name: 'direccion', label: 'Dirección', type: 'textarea' as const, required: false },
+          { name: 'status', label: 'Activa', type: 'checkbox' as const, required: false }
+        ];
+      case 'usuario':
+        return [
+          { name: 'username', label: 'Nombre de Usuario', type: 'text' as const, required: true },
+          { name: 'email', label: 'Correo Electrónico', type: 'email' as const, required: true },
+          { name: 'nombre', label: 'Nombre', type: 'text' as const, required: true },
+          { name: 'apellido_paterno', label: 'Apellido Paterno', type: 'text' as const, required: true },
+          { name: 'apellido_materno', label: 'Apellido Materno', type: 'text' as const, required: false },
+          { name: 'nivel_usuario', label: 'Rol', type: 'select' as const, required: true, options: [
+            { value: 'superadmin', label: 'Super Administrador' }
+          ], disabled: modalEditar.data && Object.keys(modalEditar.data).length > 0 }, // Solo edición, no creación
+          { name: 'password', label: 'Contraseña', type: 'password' as const, required: modalEditar.data && Object.keys(modalEditar.data).length === 0 }, // Solo para creación
+          { name: 'is_active', label: 'Usuario Activo', type: 'checkbox' as const, required: false }
+        ];
+      case 'departamento':
+        return [
+          { name: 'nombre', label: 'Nombre del Departamento', type: 'text' as const, required: true },
+          { name: 'descripcion', label: 'Descripción', type: 'textarea' as const, required: false },
+          { name: 'status', label: 'Activo', type: 'checkbox' as const, required: false }
+        ];
+      case 'empleado':
+        return [
+          { name: 'nombre', label: 'Nombre', type: 'text' as const, required: true },
+          { name: 'apellido_paterno', label: 'Apellido Paterno', type: 'text' as const, required: true },
+          { name: 'apellido_materno', label: 'Apellido Materno', type: 'text' as const, required: false },
+          { name: 'correo', label: 'Correo Electrónico', type: 'email' as const, required: false },
+          { name: 'telefono', label: 'Teléfono', type: 'text' as const, required: false },
+          { name: 'numero_empleado', label: 'Número de Empleado', type: 'text' as const, required: true },
+          { name: 'salario', label: 'Salario', type: 'number' as const, required: false },
+          { name: 'status', label: 'Activo', type: 'checkbox' as const, required: false }
+        ];
+      default:
+        return [];
     }
   };
 
@@ -237,6 +406,28 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                           (usuario.empresa && usuario.empresa.nombre.toLowerCase().includes(filtroEmpresa.toLowerCase())) ||
                           (usuario.planta && usuario.planta.empresa_nombre.toLowerCase().includes(filtroEmpresa.toLowerCase()));
       return matchTexto && matchStatus && matchNivel && matchEmpresa;
+    });
+  };
+
+  const filtrarDepartamentos = () => {
+    return departamentos.filter(departamento => {
+      const matchTexto = departamento.nombre.toLowerCase().includes(filtroTexto.toLowerCase());
+      const matchStatus = filtroStatus === 'all' || 
+                         (filtroStatus === 'active' && departamento.status) ||
+                         (filtroStatus === 'inactive' && !departamento.status);
+      return matchTexto && matchStatus;
+    });
+  };
+
+  const filtrarEmpleados = () => {
+    return empleados.filter(empleado => {
+      const matchTexto = empleado.nombre_completo.toLowerCase().includes(filtroTexto.toLowerCase()) ||
+                        (empleado.correo && empleado.correo.toLowerCase().includes(filtroTexto.toLowerCase()));
+      const matchStatus = filtroStatus === 'all' || 
+                         (filtroStatus === 'active' && empleado.status) ||
+                         (filtroStatus === 'inactive' && !empleado.status);
+      const matchEmpresa = !filtroEmpresa || empleado.empresa.nombre.toLowerCase().includes(filtroEmpresa.toLowerCase());
+      return matchTexto && matchStatus && matchEmpresa;
     });
   };
 
@@ -367,8 +558,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     >
                       🗑️ Eliminar
                     </button>
-                    <button onClick={() => handleOpenEdit('empresa', empresa, `Editar Empresa: ${empresa.nombre}`)}>
-                      Editar
+                    <button 
+                      onClick={() => handleOpenEdit('empresa', empresa, `Editar Empresa: ${empresa.nombre}`)}
+                      className="btn-action edit"
+                      title="Editar empresa"
+                    >
+                      ✏️ Editar
                     </button>
                   </div>
                 </td>
@@ -385,6 +580,17 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
     <div className="section-content">
       <div className="section-header">
         <h3>👥 Gestión de Usuarios</h3>
+        <div className="section-actions">
+          {/* Solo mostrar botón de crear usuario para SuperAdmin */}
+          {userData?.nivel_usuario === 'superadmin' && (
+            <button 
+              onClick={() => handleOpenCreate('usuario', 'Crear Nuevo Usuario SuperAdmin')}
+              className="superadmin-create-btn"
+            >
+              ➕ Crear Usuario SuperAdmin
+            </button>
+          )}
+        </div>
         <div className="stats-mini">
           <span>Total: {usuarios.length}</span>
           <span>Activos: {usuarios.filter(u => u.is_active).length}</span>
@@ -456,8 +662,175 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     >
                       🗑️ Eliminar
                     </button>
-                    <button onClick={() => handleOpenEdit('usuario', usuario, `Editar Usuario: ${usuario.nombre_completo}`)}>
-                      Editar
+                    <button 
+                      onClick={() => handleOpenEdit('usuario', usuario, `Editar Usuario: ${usuario.nombre_completo}`)}
+                      className="btn-action edit"
+                      title="Editar usuario"
+                    >
+                      ✏️ Editar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  // Render de tabla de departamentos
+  const renderDepartamentos = () => (
+    <div className="section-content">
+      <div className="section-header">
+        <h3>🏢 Gestión de Departamentos Base</h3>
+        <div className="section-actions">
+          <button 
+            onClick={() => handleOpenCreate('departamento', 'Crear Nuevo Departamento')}
+            className="btn-create"
+          >
+            ➕ Crear Departamento
+          </button>
+        </div>
+        <div className="stats-mini">
+          <span>Total: {departamentos.length}</span>
+          <span>Activos: {departamentos.filter(d => d.status).length}</span>
+        </div>
+      </div>
+      
+      {renderFiltros()}
+
+      <div className="table-container">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th>Estado</th>
+              <th>Empresas Usando</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtrarDepartamentos().map((departamento) => (
+              <tr key={departamento.departamento_id}>
+                <td>{departamento.departamento_id}</td>
+                <td>
+                  <div>
+                    <strong>{departamento.nombre}</strong>
+                  </div>
+                </td>
+                <td>{departamento.descripcion || 'Sin descripción'}</td>
+                <td>
+                  <span className={`status ${departamento.status ? 'active' : 'inactive'}`}>
+                    {departamento.status ? '🟢 Activo' : '🔴 Inactivo'}
+                  </span>
+                </td>
+                <td>{departamento.empleados_count || 0}</td>
+                <td>
+                  <div className="actions">
+                    <button 
+                      onClick={() => handleToggleStatus('departamento', departamento.departamento_id, departamento.status, departamento.nombre)}
+                      className={`btn-action ${departamento.status ? 'warning' : 'success'}`}
+                    >
+                      {departamento.status ? '⏸️ Desactivar' : '▶️ Activar'}
+                    </button>
+                    <button 
+                      onClick={() => handleDelete('departamento', departamento.departamento_id, departamento.nombre)}
+                      className="btn-action danger"
+                    >
+                      🗑️ Eliminar
+                    </button>
+                    <button 
+                      onClick={() => handleOpenEdit('departamento', departamento, `Editar Departamento: ${departamento.nombre}`)}
+                      className="btn-action edit"
+                      title="Editar departamento"
+                    >
+                      ✏️ Editar
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
+  // Render de tabla de empleados
+  const renderEmpleados = () => (
+    <div className="section-content">
+      <div className="section-header">
+        <h3>👤 Gestión de Empleados</h3>
+        <div className="section-actions">
+          <button 
+            onClick={() => handleOpenCreate('empleado', 'Crear Nuevo Empleado')}
+            className="btn-create"
+          >
+            ➕ Crear Empleado
+          </button>
+        </div>
+        <div className="stats-mini">
+          <span>Total: {empleados.length}</span>
+          <span>Activos: {empleados.filter(e => e.status).length}</span>
+        </div>
+      </div>
+      
+      {renderFiltros()}
+
+      <div className="table-container">
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Empleado</th>
+              <th>Empresa</th>
+              <th>Departamento</th>
+              <th>Puesto</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtrarEmpleados().map((empleado) => (
+              <tr key={empleado.empleado_id}>
+                <td>{empleado.empleado_id}</td>
+                <td>
+                  <div>
+                    <strong>{empleado.nombre_completo}</strong>
+                    <small>{empleado.correo}</small>
+                  </div>
+                </td>
+                <td>{empleado.empresa.nombre}</td>
+                <td>{empleado.departamento.nombre}</td>
+                <td>{empleado.puesto.nombre}</td>
+                <td>
+                  <span className={`status ${empleado.status ? 'active' : 'inactive'}`}>
+                    {empleado.status ? '🟢 Activo' : '🔴 Inactivo'}
+                  </span>
+                </td>
+                <td>
+                  <div className="actions">
+                    <button 
+                      onClick={() => handleToggleStatus('empleado', empleado.empleado_id, empleado.status, empleado.nombre_completo)}
+                      className={`btn-action ${empleado.status ? 'warning' : 'success'}`}
+                    >
+                      {empleado.status ? '⏸️ Desactivar' : '▶️ Activar'}
+                    </button>
+                    <button 
+                      onClick={() => handleDelete('empleado', empleado.empleado_id, empleado.nombre_completo)}
+                      className="btn-action danger"
+                    >
+                      🗑️ Eliminar
+                    </button>
+                    <button 
+                      onClick={() => handleOpenEdit('empleado', empleado, `Editar Empleado: ${empleado.nombre_completo}`)}
+                      className="btn-action edit"
+                      title="Editar empleado"
+                    >
+                      ✏️ Editar
                     </button>
                   </div>
                 </td>
@@ -619,6 +992,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
         >
           👤 Empleados ({empleados.length})
         </button>
+        <button 
+          className={activeSection === 'evaluaciones' ? 'active' : ''}
+          onClick={() => setActiveSection('evaluaciones')}
+        >
+          📝 Evaluaciones
+        </button>
       </nav>
 
       <main className="dashboard-content">
@@ -631,23 +1010,18 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             Próximamente: Ver todas las plantas del sistema con filtros por empresa
           </div>
         )}
-        {activeSection === 'departamentos' && (
-          <div className="coming-soon">
-            🏢 <strong>Gestión de Departamentos</strong><br/>
-            Próximamente: Ver todos los departamentos del sistema con filtros por empresa/planta
-          </div>
-        )}
+        {activeSection === 'departamentos' && renderDepartamentos()}
         {activeSection === 'puestos' && (
           <div className="coming-soon">
             💼 <strong>Gestión de Puestos</strong><br/>
             Próximamente: Ver todos los puestos del sistema con filtros por empresa/departamento
           </div>
         )}
-        {activeSection === 'empleados' && (
-          <div className="coming-soon">
-            👤 <strong>Gestión de Empleados</strong><br/>
-            Próximamente: Ver todos los empleados del sistema con filtros avanzados
-          </div>
+        {activeSection === 'empleados' && renderEmpleados()}
+        {activeSection === 'evaluaciones' && (
+          <GestionEvaluaciones 
+            usuario={userData}
+          />
         )}
       </main>
 
@@ -658,7 +1032,13 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           title={modalEditar.title}
           initialData={modalEditar.data}
           onSave={handleSaveEdit}
-          fields={[]} // Debes definir los campos según el tipo
+          fields={getModalFields()} // Obtener campos según el tipo
+          infoMessage={
+            modalEditar.type === 'usuario' && Object.keys(modalEditar.data).length === 0
+              ? 'Se creará un nuevo usuario con privilegios de Super Administrador. La contraseña por defecto será "1234".'
+              : undefined
+          }
+          infoType="info"
         />
       )}
     </div>

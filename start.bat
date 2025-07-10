@@ -41,11 +41,11 @@ cd Backend
 call env\Scripts\activate.bat
 
 echo Ejecutando migraciones...
-py manage.py makemigrations
-py manage.py migrate
+python manage.py makemigrations
+python manage.py migrate
 
 echo Configurando sistema inicial...
-py setup_inicial.py
+python inicializar_sistema.py
 
 echo [✓] Backend configurado
 
@@ -55,7 +55,7 @@ echo.
 
 REM Iniciar Backend en segundo plano
 echo [1/2] Iniciando Backend Django en puerto 8000...
-start cmd /c "cd /d %~dp0Backend && call env\Scripts\activate.bat && py manage.py runserver 8000"
+start cmd /c "cd /d %~dp0Backend && call env\Scripts\activate.bat && python manage.py runserver 8000"
 
 REM Esperar un poco para que el backend inicie
 timeout /t 3 /nobreak >nul

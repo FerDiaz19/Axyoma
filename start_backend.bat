@@ -3,6 +3,9 @@ echo Iniciando Backend de Axyoma...
 
 cd Backend
 
+echo Activando entorno virtual...
+call env\Scripts\activate.bat
+
 echo Ejecutando inicializacion del sistema...
 python inicializar_sistema.py
 

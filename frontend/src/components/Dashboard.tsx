@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Login from './Login';
 import RegistroEmpresa from './RegistroEmpresa';
-import SuperAdminDashboard from './SuperAdminDashboard';
+import SuperAdminDashboard from './SuperAdminDashboard_NEW';
 import EmpresaAdminDashboard from './EmpresaAdminDashboard';
 import PlantaAdminDashboard from './PlantaAdminDashboard';
 import SubscriptionAlert from './SubscriptionAlert';

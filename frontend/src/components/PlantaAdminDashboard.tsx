@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import EmpleadosCRUD from './EmpleadosCRUD';
-import GestionEvaluaciones from './GestionEvaluaciones';
 import {
   obtenerDepartamentos, crearDepartamento, actualizarDepartamento, eliminarDepartamento,
   obtenerPuestos, crearPuesto, actualizarPuesto, eliminarPuesto,
@@ -15,7 +14,7 @@ interface PlantaAdminDashboardProps {
 }
 
 const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'departamentos' | 'puestos' | 'empleados' | 'evaluaciones'>('departamentos');
+  const [activeSection, setActiveSection] = useState<'departamentos' | 'puestos' | 'empleados'>('departamentos');
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [puestos, setPuestos] = useState<Puesto[]>([]);
   const [loading, setLoading] = useState(false);
@@ -249,13 +248,6 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
             <span className="nav-icon">👥</span>
             <span className="nav-text">Empleados</span>
           </button>
-          <button 
-            className={activeSection === 'evaluaciones' ? 'active' : ''}
-            onClick={() => setActiveSection('evaluaciones')}
-          >
-            <span className="nav-icon">📝</span>
-            <span className="nav-text">Evaluaciones</span>
-          </button>
         </nav>
       </aside>
 
@@ -355,6 +347,7 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
             <EmpleadosCRUD userData={userData} />
           )}
 
+<<<<<<< HEAD
           {activeSection === 'evaluaciones' && (
             <GestionEvaluaciones 
               usuario={{
@@ -369,6 +362,99 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
               }} 
             />
           )}
+=======
+            {/* Formulario */}
+            <form onSubmit={handleCrearPuesto} className="create-form">
+              <h3>{editingPuesto ? 'Editar Puesto' : 'Crear Nuevo Puesto'}</h3>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nombre del Puesto:</label>
+                  <input
+                    type="text"
+                    value={nuevoPuesto.nombre}
+                    onChange={(e) => setNuevoPuesto({ ...nuevoPuesto, nombre: e.target.value })}
+                    placeholder="Ej: Técnico en Mantenimiento"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Departamento:</label>
+                  <select
+                    value={nuevoPuesto.departamento_id}
+                    onChange={(e) => setNuevoPuesto({ ...nuevoPuesto, departamento_id: parseInt(e.target.value) })}
+                    required
+                  >
+                    <option value={0}>Seleccionar departamento</option>
+                    {departamentos.map((dept) => (
+                      <option key={dept.departamento_id} value={dept.departamento_id}>
+                        {dept.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Descripción:</label>
+                <textarea
+                  value={nuevoPuesto.descripcion}
+                  onChange={(e) => setNuevoPuesto({ ...nuevoPuesto, descripcion: e.target.value })}
+                  placeholder="Descripción del puesto"
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary">
+                  {editingPuesto ? 'Actualizar' : 'Crear'} Puesto
+                </button>
+                {editingPuesto && (
+                  <button type="button" onClick={cancelarEdicion} className="btn btn-secondary">
+                    Cancelar
+                  </button>
+                )}
+              </div>
+            </form>
+
+            {/* Lista de puestos */}
+            <div className="items-grid">
+              {puestosFiltrados.map((puesto) => (
+                <div key={puesto.puesto_id} className="item-card">
+                  <h4>{puesto.nombre}</h4>
+                  <p className="description">{puesto.descripcion}</p>
+                  <p className="meta">Departamento: {puesto.departamento_nombre}</p>
+                  
+                  <div className="actions">
+                    <button 
+                      className="btn btn-secondary"
+                      onClick={() => handleEditarPuesto(puesto)}
+                    >
+                      Editar
+                    </button>
+                    <button 
+                      className="btn btn-danger"
+                      onClick={() => handleEliminarPuesto(puesto)}
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {puestosFiltrados.length === 0 && (
+              <div className="empty-state">
+                <p>No hay puestos que coincidan con la búsqueda</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Sección de Empleados */}
+        {activeSection === 'empleados' && <EmpleadosCRUD userData={userData} />}
+      </div>
+>>>>>>> parent of 2766511 (si)
         </main>
       </div>
     </div>
