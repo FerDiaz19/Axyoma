@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { logout } from '../services/authService';
+import EditModal from './EditModal';
 import {
   getEstadisticasSistema,
   getEmpresas,
@@ -45,6 +46,14 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const [filtroStatus, setFiltroStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [filtroNivelUsuario, setFiltroNivelUsuario] = useState('');
   const [filtroEmpresa, setFiltroEmpresa] = useState('');
+
+  // Estados para modal de edición
+  const [modalEditar, setModalEditar] = useState({
+    isOpen: false,
+    type: '',
+    data: {},
+    title: ''
+  });
 
   const cargarEstadisticas = async () => {
     setLoading(true);
@@ -358,6 +367,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     >
                       🗑️ Eliminar
                     </button>
+                    <button onClick={() => handleOpenEdit('empresa', empresa, `Editar Empresa: ${empresa.nombre}`)}>
+                      Editar
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -443,6 +455,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       title={usuario.nivel_usuario === 'superadmin' ? 'No se puede eliminar SuperAdmin' : ''}
                     >
                       🗑️ Eliminar
+                    </button>
+                    <button onClick={() => handleOpenEdit('usuario', usuario, `Editar Usuario: ${usuario.nombre_completo}`)}>
+                      Editar
                     </button>
                   </div>
                 </td>
@@ -635,6 +650,17 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           </div>
         )}
       </main>
+
+      {modalEditar.isOpen && (
+        <EditModal
+          isOpen={modalEditar.isOpen}
+          onClose={() => setModalEditar(prev => ({ ...prev, isOpen: false }))}
+          title={modalEditar.title}
+          initialData={modalEditar.data}
+          onSave={handleSaveEdit}
+          fields={[]} // Debes definir los campos según el tipo
+        />
+      )}
     </div>
   );
 };
