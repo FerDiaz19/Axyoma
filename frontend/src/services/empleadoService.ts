@@ -96,16 +96,22 @@ export const getPuestosPorDepartamento = async (departamentoId: number): Promise
 
 // Funciones auxiliares para obtener todos los datos
 export const getPlantas = async (): Promise<Planta[]> => {
-  const response = await api.get<Planta[]>('plantas/');
+  console.log('🔍 Cargando plantas desde:', 'empleados/plantas_disponibles/');
+  const response = await api.get<Planta[]>('empleados/plantas_disponibles/');
+  console.log('✅ Plantas cargadas:', response.data.length, 'plantas');
   return response.data;
 };
 
 export const getDepartamentos = async (): Promise<Departamento[]> => {
-  const response = await api.get<Departamento[]>('departamentos/');
+  console.log('🔍 Cargando departamentos desde:', 'empleados/departamentos_disponibles/');
+  const response = await api.get<Departamento[]>('empleados/departamentos_disponibles/');
+  console.log('✅ Departamentos cargados:', response.data.length, 'departamentos');
   return response.data;
 };
 
 export const getPuestos = async (): Promise<Puesto[]> => {
-  const response = await api.get<Puesto[]>('puestos/');
+  console.log('🔍 Cargando puestos desde:', 'empleados/puestos_disponibles/');
+  const response = await api.get<Puesto[]>('empleados/puestos_disponibles/');
+  console.log('✅ Puestos cargados:', response.data.length, 'puestos');
   return response.data;
 };

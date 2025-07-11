@@ -63,6 +63,11 @@ const Dashboard: React.FC = () => {
     setUserData(null);
     setShowSubscriptionAlert(false);
     localStorage.removeItem('userData');
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_data');
+    // Redirigir a localhost:3000
+    window.location.href = 'http://localhost:3000';
   };
 
   const handleRegistroSuccess = () => {

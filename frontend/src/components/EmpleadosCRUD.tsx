@@ -69,17 +69,27 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
 
   const loadData = useCallback(async () => {
+    setLoadingData(true);
     try {
+      console.log('🔍 EmpleadosCRUD: Iniciando carga de datos...');
       const [empleadosData, plantasData, departamentosData, puestosData] = await Promise.all([
         getEmpleados(),
         getPlantas(),
         getDepartamentos(),
         getPuestos()
       ]);
+      
+      console.log('✅ Datos cargados:', {
+        empleados: empleadosData.length,
+        plantas: plantasData.length,
+        departamentos: departamentosData.length,
+        puestos: puestosData.length
+      });
       
       // Si es Admin Planta, filtrar solo datos de su planta asignada
       if (userData?.tipo_dashboard === 'admin-planta' && userData?.planta_id) {
@@ -104,8 +114,10 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
         setPuestos(puestosData);
       }
     } catch (err: any) {
-      console.error('Error cargando datos:', err);
-      setError('Error al cargar datos');
+      console.error('❌ Error cargando datos:', err);
+      setError('Error al cargar datos: ' + (err.message || 'Error desconocido'));
+    } finally {
+      setLoadingData(false);
     }
   }, [userData]);
 
@@ -140,9 +152,29 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
     setEmpleadosFiltrados(filtrados);
   }, [empleados, filtroNombre, filtroDepartamento, filtroPuesto]);
 
-  const filteredDepartamentos = departamentos.filter(dept => dept.planta_id === formData.planta);
+  const filteredDepartamentos = departamentos.filter(dept => {
+    // Si no hay planta seleccionada, no mostrar departamentos
+    if (!formData.planta) return false;
+    // Filtrar por planta seleccionada - asegurar que ambos sean números
+    return dept.planta_id === Number(formData.planta);
+  });
   
-  const filteredPuestos = puestos.filter(puesto => puesto.departamento_id === formData.departamento);
+  const filteredPuestos = puestos.filter(puesto => {
+    // Si no hay departamento seleccionado, no mostrar puestos
+    if (!formData.departamento) return false;
+    // Filtrar por departamento seleccionado - asegurar que ambos sean números
+    return puesto.departamento_id === Number(formData.departamento);
+  });
+
+  // Debug logging
+  console.log('Debug Empleados CRUD:', {
+    'formData.planta': formData.planta,
+    'formData.planta type': typeof formData.planta,
+    'departamentos total': departamentos.length,
+    'filteredDepartamentos': filteredDepartamentos.length,
+    'departamentos sample': departamentos.slice(0, 2).map(d => ({ id: d.departamento_id, nombre: d.nombre, planta_id: d.planta_id })),
+    'filteredDepartamentos sample': filteredDepartamentos.slice(0, 2).map(d => ({ id: d.departamento_id, nombre: d.nombre, planta_id: d.planta_id }))
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -238,6 +270,12 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
       <h2>Gestión de Empleados</h2>
       
       {error && <div className="error-message">{error}</div>}
+      
+      {loadingData && (
+        <div className="loading-message">
+          <p>Cargando datos de empleados...</p>
+        </div>
+      )}
       
       {/* Filtros */}
       <div className="filtros">

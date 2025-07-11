@@ -57,6 +57,19 @@ const evaluacionesAPI = {
   // Tipos de evaluación
   getTipos: () => api.get<TipoEvaluacion[]>('/evaluaciones/tipos/'),
   
+  createTipo: (data: {
+    nombre: string;
+    descripcion: string;
+    normativa_oficial: boolean;
+    activo: boolean;
+  }) => api.post<TipoEvaluacion>('/evaluaciones/tipos/', data),
+  
+  updateTipo: (id: number, data: Partial<TipoEvaluacion>) => 
+    api.put<TipoEvaluacion>(`/evaluaciones/tipos/${id}/`, data),
+  
+  deleteTipo: (id: number) => 
+    api.delete(`/evaluaciones/tipos/${id}/`),
+  
   // Preguntas
   getPreguntas: (params?: any) => api.get<Pregunta[]>('/evaluaciones/preguntas/', { params }),
   
