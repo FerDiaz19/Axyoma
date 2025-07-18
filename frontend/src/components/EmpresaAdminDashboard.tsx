@@ -65,20 +65,9 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
   const handleLogout = async () => {
     try {
       await logout();
-      // Limpiar datos del localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_data');
-      
-      // Redirigir a localhost:3000
-      window.location.href = 'http://localhost:3000';
+      window.location.href = '/login';
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
-      // Aún así limpiar y redirigir
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_data');
-      window.location.href = 'http://localhost:3000';
     }
   };
 
@@ -95,7 +84,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
       case 'empleados':
         return <EmpleadosCRUD userData={userData} />;
       case 'evaluaciones':
-        return <EvaluacionesGestion userData={{ nivel_usuario: 'admin-empresa' }} />;
+        return <EvaluacionesGestion userData={{ nivel_usuario: 'admin_empresa' }} />;
       case 'reportes':
         return (
           <div className="coming-soon">
@@ -149,9 +138,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
 
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+            <span>🚪</span>
             Cerrar Sesión
           </button>
         </div>
