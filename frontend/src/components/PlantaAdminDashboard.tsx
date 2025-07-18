@@ -49,6 +49,7 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
   const cargarDatos = useCallback(async () => {
     setLoading(true);
     try {
+<<<<<<< HEAD
       const [departamentosData, puestosData] = await Promise.all([
         obtenerDepartamentos(), 
         obtenerPuestos()
@@ -130,6 +131,27 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
         console.error('Error eliminando departamento:', error);
         alert(error.message || 'Error al eliminar departamento');
       }
+=======
+      await logout();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
+  const renderActiveSection = () => {
+    switch (activeSection) {
+      case 'departamentos':
+        return <GestionDepartamentos />;
+      case 'puestos':
+        return <GestionPuestos />;
+      case 'empleados':
+        return <EmpleadosCRUD userData={userData} />;
+      case 'evaluaciones':
+        return <EvaluacionesGestion userData={{ nivel_usuario: 'admin_planta' }} />;
+      default:
+        return <div>Sección no encontrada</div>;
+>>>>>>> parent of 68f3cd1 (xd)
     }
   };
 
@@ -222,12 +244,32 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData, o
           </div>
         </div>
         <nav className="sidebar-nav">
+<<<<<<< HEAD
           <button 
             className={activeSection === 'departamentos' ? 'active' : ''}
             onClick={() => setActiveSection('departamentos')}
           >
             <span className="nav-icon">🏢</span>
             <span className="nav-text">Gestión de Departamentos</span>
+=======
+          {menuItems.map((item) => (
+            <button 
+              key={item.id}
+              className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
+              onClick={() => setActiveSection(item.id)}
+              title={item.description}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-text">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="sidebar-footer">
+          <button className="logout-btn" onClick={handleLogout}>
+            <span>🚪</span>
+            Cerrar Sesión
+>>>>>>> parent of 68f3cd1 (xd)
           </button>
           <button 
             className={activeSection === 'puestos' ? 'active' : ''}

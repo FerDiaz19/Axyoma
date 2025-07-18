@@ -35,6 +35,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
 
   const loadSubscriptionInfo = useCallback(async () => {
     try {
+<<<<<<< HEAD
       const empresaId = userData?.empresa_id;
       if (empresaId) {
         const { obtenerInfoSuscripcionEmpresa } = await import('../services/suscripcionService');
@@ -52,6 +53,12 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
       });
     } finally {
       setLoading(false);
+=======
+      await logout();
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+>>>>>>> parent of 68f3cd1 (xd)
     }
   }, [userData?.empresa_id]);
 
@@ -131,6 +138,11 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
       case 'estructura':
         return <GestionEstructura />;
       case 'evaluaciones':
+<<<<<<< HEAD
+=======
+        return <EvaluacionesGestion userData={{ nivel_usuario: 'admin_empresa' }} />;
+      case 'reportes':
+>>>>>>> parent of 68f3cd1 (xd)
         return (
           <GestionEvaluaciones 
             usuario={userData}
@@ -211,6 +223,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
 
 <<<<<<< HEAD
         <div className="sidebar-footer">
+<<<<<<< HEAD
           <div className="subscription-status">
             {subscriptionInfo?.tiene_suscripcion ? (
               <div className="status-card success">
@@ -234,6 +247,12 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData,
                   <span>Vence: {subscriptionInfo.fecha_vencimiento}</span>
                 </div>
 =======
+=======
+          <button className="logout-btn" onClick={handleLogout}>
+            <span>🚪</span>
+            Cerrar Sesión
+          </button>
+>>>>>>> parent of 68f3cd1 (xd)
         </div>
         <nav className="sidebar-nav">
           <button 

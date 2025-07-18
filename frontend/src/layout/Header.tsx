@@ -77,7 +77,18 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
+<<<<<<< HEAD
       //await logout();
+=======
+      // Limpiar localStorage y sessionStorage
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      
+      // Recargar la página para volver al login
+      window.location.reload();
+>>>>>>> parent of 68f3cd1 (xd)
     } catch (e) {
       console.error("Error cerrando sesión", e);
     }
