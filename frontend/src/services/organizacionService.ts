@@ -176,32 +176,8 @@ export const crearPuesto = async (puesto: Puesto): Promise<Puesto> => {
 };
 
 export const actualizarPuesto = async (id: number, puesto: Puesto): Promise<Puesto> => {
-  try {
-    // Convertir datos para el backend igual que en crear
-    const puestoData = {
-      nombre: puesto.nombre,
-      descripcion: puesto.descripcion || '',
-      departamento_id: puesto.departamento_id
-    };
-    console.log('🔍 Actualizando puesto con datos:', puestoData);
-    const response = await api.put(`/puestos/${id}/`, puestoData);
-    return response.data;
-  } catch (error: any) {
-    console.error('Error actualizando puesto:', error);
-    
-    if (error.response?.data?.nombre) {
-      throw new Error(error.response.data.nombre[0]);
-    } else if (error.response?.data?.departamento_id) {
-      throw new Error(error.response.data.departamento_id[0]);
-    } else if (error.response?.data?.non_field_errors) {
-      throw new Error(error.response.data.non_field_errors[0]);
-    } else if (error.response?.data?.message) {
-      throw new Error(error.response.data.message);
-    } else if (error.response?.status === 400) {
-      throw new Error('Error al actualizar el puesto. Verifique que el nombre no esté duplicado en el departamento.');
-    }
-    throw new Error('Error al actualizar el puesto');
-  }
+  const response = await api.put(`/puestos/${id}/`, puesto);
+  return response.data;
 };
 
 export const eliminarPuesto = async (id: number): Promise<void> => {

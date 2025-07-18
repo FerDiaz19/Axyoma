@@ -197,7 +197,10 @@ export const eliminarEmpresa = async (empresaId: number): Promise<void> => {
 export const editarEmpresa = async (id: number, data: Partial<SuperAdminEmpresa>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando empresa ${id}...`, data);
-    const response = await api.put(`/empresas/${id}/`, data);
+    const response = await api.put(`${API_BASE}/editar_empresa/`, {
+      empresa_id: id,
+      ...data
+    });
     console.log('✅ SuperAdmin: Empresa editada exitosamente');
     return response.data;
   } catch (error) {
@@ -233,7 +236,10 @@ export const eliminarUsuario = async (userId: number): Promise<void> => {
 export const editarUsuario = async (id: number, data: Partial<SuperAdminUsuario>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando usuario ${id}...`, data);
-    const response = await api.put(`/empleados/${id}/`, data);
+    const response = await api.put(`${API_BASE}/editar_usuario/`, {
+      user_id: id,
+      ...data
+    });
     console.log('✅ SuperAdmin: Usuario editado exitosamente');
     return response.data;
   } catch (error) {
@@ -293,7 +299,10 @@ export const eliminarPlanta = async (plantaId: number): Promise<void> => {
 export const editarPlanta = async (id: number, data: Partial<SuperAdminPlanta>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando planta ${id}...`, data);
-    const response = await api.put(`/plantas/${id}/`, data);
+    const response = await api.put(`${API_BASE}/editar_planta/`, {
+      planta_id: id,
+      ...data
+    });
     console.log('✅ SuperAdmin: Planta editada exitosamente');
     return response.data;
   } catch (error) {
@@ -330,7 +339,10 @@ export const eliminarDepartamento = async (departamentoId: number): Promise<void
 export const editarDepartamento = async (id: number, data: Partial<SuperAdminDepartamento>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando departamento ${id}...`, data);
-    const response = await api.put(`/departamentos/${id}/`, data);
+    const response = await api.put(`${API_BASE}/editar_departamento/`, {
+      departamento_id: id,
+      ...data
+    });
     console.log('✅ SuperAdmin: Departamento editado exitosamente');
     return response.data;
   } catch (error) {
@@ -368,7 +380,10 @@ export const eliminarPuesto = async (puestoId: number): Promise<void> => {
 export const editarPuesto = async (id: number, data: Partial<SuperAdminPuesto>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando puesto ${id}...`, data);
-    const response = await api.put(`/puestos/${id}/`, data);
+    const response = await api.put(`${API_BASE}/editar_puesto/`, {
+      puesto_id: id,
+      ...data
+    });
     console.log('✅ SuperAdmin: Puesto editado exitosamente');
     return response.data;
   } catch (error) {
@@ -407,7 +422,10 @@ export const eliminarEmpleado = async (empleadoId: number): Promise<void> => {
 export const editarEmpleado = async (id: number, data: Partial<SuperAdminEmpleado>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando empleado ${id}...`, data);
-    const response = await api.put(`/empleados/${id}/`, data);
+    const response = await api.put(`${API_BASE}/editar_empleado/`, {
+      empleado_id: id,
+      ...data
+    });
     console.log('✅ SuperAdmin: Empleado editado exitosamente');
     return response.data;
   } catch (error) {

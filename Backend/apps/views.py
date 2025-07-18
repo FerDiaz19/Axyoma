@@ -693,50 +693,6 @@ class PuestoViewSet(viewsets.ModelViewSet):
         # Usar el serializer de lectura para la respuesta
         response_serializer = PuestoSerializer(puesto)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-    
-    def perform_update(self, serializer):
-        # Validar que el usuario tenga acceso al departamento especificado para la actualización
-        user = self.request.user
-        departamento_id = serializer.validated_data.get('departamento_id')
-        
-        if departamento_id:
-            try:
-                departamento = Departamento.objects.get(departamento_id=departamento_id)
-            except Departamento.DoesNotExist:
-                raise ValidationError("Departamento no encontrado")
-            
-            # Verificar que el usuario tenga acceso a este departamento
-            if hasattr(user, 'perfil'):
-                if user.perfil.nivel_usuario == 'admin-empresa':
-                    try:
-                        empresa = Empresa.objects.get(administrador=user.perfil)
-                        if departamento.planta.empresa != empresa:
-                            raise ValidationError("No tiene acceso a este departamento")
-                    except Empresa.DoesNotExist:
-                        raise ValidationError("Usuario sin empresa asignada")
-                elif user.perfil.nivel_usuario == 'admin-planta':
-                    admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta=departamento.planta)
-                    if not admin_plantas.exists():
-                        raise ValidationError("No tiene acceso a este departamento")
-        
-        # Actualizar el puesto
-        puesto = serializer.save()
-        return puesto
-    
-    def update(self, request, *args, **kwargs):
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
-        serializer.is_valid(raise_exception=True)
-        puesto = self.perform_update(serializer)
-        
-        # Usar el serializer de lectura para la respuesta
-        response_serializer = PuestoSerializer(puesto)
-        return Response(response_serializer.data)
-    
-    def partial_update(self, request, *args, **kwargs):
-        kwargs['partial'] = True
-        return self.update(request, *args, **kwargs)
 
 @method_decorator(csrf_exempt, name='dispatch')  
 class EstructuraViewSet(viewsets.ViewSet):

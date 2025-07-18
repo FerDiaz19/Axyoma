@@ -27,7 +27,6 @@ import {
   editarDepartamento,
   editarPuesto,
   editarEmpleado,
-  crearUsuario,
   type SuperAdminEmpresa,
   type SuperAdminUsuario,
   type SuperAdminPlanta,
@@ -98,7 +97,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   // Estados para modales de creación
   const [modalCrearPlan, setModalCrearPlan] = useState(false);
   const [modalCrearSuscripcion, setModalCrearSuscripcion] = useState(false);
-  const [modalCrearUsuario, setModalCrearUsuario] = useState(false);
 
   const cargarEstadisticas = async () => {
     setLoading(true);
@@ -225,23 +223,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   }, [activeSection, cargarDatosPorSeccion]);
 
   const handleLogout = async () => {
-    try {
-      await logout();
-      // Limpiar datos del localStorage
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_data');
-      
-      // Redirigir a localhost:3000
-      window.location.href = 'http://localhost:3000';
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      // Aún así limpiar y redirigir
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('user_data');
-      window.location.href = 'http://localhost:3000';
-    }
+    await logout();
+    onLogout();
   };
 
   // Función para suspender/activar
@@ -928,18 +911,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
     <div className="section-content">
       <div className="section-header">
         <h3>👥 Gestión de Usuarios</h3>
-        <div className="header-actions">
-          <button 
-            className="btn-success"
-            onClick={() => setModalCrearUsuario(true)}
-          >
-            + Crear Usuario SuperAdmin
-          </button>
-          <div className="stats-mini">
-            <span>Total: {usuarios.length}</span>
-            <span>Activos: {usuarios.filter(u => u.is_active).length}</span>
-            <span>Suspendidos: {usuarios.filter(u => !u.is_active).length}</span>
-          </div>
+        <div className="stats-mini">
+          <span>Total: {usuarios.length}</span>
+          <span>Activos: {usuarios.filter(u => u.is_active).length}</span>
+          <span>Suspendidos: {usuarios.filter(u => !u.is_active).length}</span>
         </div>
       </div>
       
@@ -1682,31 +1657,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
     </div>
   );
 
-  // Función para crear nuevo usuario SuperAdmin
-  const handleCrearUsuario = async (formData: any) => {
-    try {
-      const result = await crearUsuario({
-        username: formData.username,
-        email: formData.email,
-        nombre: formData.nombre,
-        apellido_paterno: formData.apellido_paterno,
-        apellido_materno: formData.apellido_materno || '',
-        password: formData.password,
-        is_active: true
-      });
-      
-      // Recargar la lista de usuarios
-      const usuariosData = await getUsuarios({});
-      setUsuarios(usuariosData.usuarios);
-      
-      alert('Usuario SuperAdmin creado exitosamente');
-    } catch (error: any) {
-      console.error('Error creando usuario:', error);
-      alert(error.message || 'Error al crear el usuario');
-      throw error;
-    }
-  };
-
   if (loading) {
     return <div className="loading">🔄 Cargando datos del sistema...</div>;
   }
@@ -1821,9 +1771,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               </div>
             </div>
             <button onClick={handleLogout} className="logout-btn">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <span className="logout-icon">🚪</span>
               Cerrar Sesión
             </button>
           </div>
@@ -1903,32 +1851,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 label: `${plan.nombre} - ${formatearPrecio(plan.precio)}`
               }))
             }
-          ]}
-        />
-      )}
-
-      {/* Modal para crear nuevo usuario SuperAdmin */}
-      {modalCrearUsuario && (
-        <EditModal
-          isOpen={modalCrearUsuario}
-          onClose={() => setModalCrearUsuario(false)}
-          title="👑 Crear Usuario SuperAdmin"
-          initialData={{
-            username: '',
-            email: '',
-            nombre: '',
-            apellido_paterno: '',
-            apellido_materno: '',
-            password: ''
-          }}
-          onSave={handleCrearUsuario}
-          fields={[
-            { name: 'username', label: 'Nombre de Usuario', type: 'text' as const, required: true },
-            { name: 'email', label: 'Email', type: 'email' as const, required: true },
-            { name: 'nombre', label: 'Nombre', type: 'text' as const, required: true },
-            { name: 'apellido_paterno', label: 'Apellido Paterno', type: 'text' as const, required: true },
-            { name: 'apellido_materno', label: 'Apellido Materno', type: 'text' as const },
-            { name: 'password', label: 'Contraseña', type: 'password' as const, required: true }
           ]}
         />
       )}
