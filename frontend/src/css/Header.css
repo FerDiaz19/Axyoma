@@ -1,0 +1,117 @@
+/* Header.css - Estilos para el Header principal */
+
+/* Animaciones para dropdowns */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Clases de animación para el dropdown */
+.animate-in {
+  animation: fadeIn 0.2s ease-out, zoomIn 0.2s ease-out;
+}
+
+.fade-in-0 {
+  animation-fill-mode: forwards;
+}
+
+.zoom-in-95 {
+  animation-fill-mode: forwards;
+}
+
+/* Estilos para el user dropdown */
+.user-dropdown-button {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.user-dropdown-button:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.user-dropdown-menu {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.user-dropdown-menu::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 16px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid rgba(255, 255, 255, 0.95);
+}
+
+/* Estilos para el avatar gradiente */
+.avatar-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.avatar-gradient-alt {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 2px 8px rgba(240, 147, 251, 0.3);
+}
+
+/* Iconos SVG */
+.svg-icon {
+  transition: transform 0.2s ease;
+}
+
+.svg-icon:hover {
+  transform: scale(1.1);
+}
+
+/* Hover effects para botones del header */
+.header-button {
+  transition: all 0.2s ease;
+}
+
+.header-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Mejoras para el input de búsqueda */
+.search-input {
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .user-dropdown-menu {
+    right: -10px;
+    left: auto;
+    min-width: 200px;
+  }
+  
+  .search-input {
+    display: none;
+  }
+}
