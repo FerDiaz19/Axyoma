@@ -7,7 +7,7 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin }) => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,7 +18,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
 
     try {
-      const userData = await login({ username, password });
+      const userData = await login({ username: email, password });
       onLogin(userData);
     } catch (error: any) {
       setError(error.message || 'Error al iniciar sesión');
@@ -69,16 +69,16 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
           <form onSubmit={handleSubmit} className="login-form">
             <div className="form-group">
-              <label htmlFor="username">
-                <span className="icon">�</span>
-                Usuario
+              <label htmlFor="email">
+                <span className="icon">📧</span>
+                Correo Electrónico
               </label>
               <input
-                type="text"
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="superadmin"
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu-email@empresa.com"
                 required
                 className="form-input"
               />
@@ -130,23 +130,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <div className="divider">
               <span>o</span>
             </div>
-
-            {/* Credenciales de prueba */}
-            <div className="test-credentials">
-              <h4>🧪 Usuarios de Prueba</h4>
-              <div className="credentials-list">
-                <div className="credential-item">
-                  <strong>SuperAdmin:</strong> superadmin / 1234
-                </div>
-                <div className="credential-item">
-                  <strong>Admin Empresa:</strong> admin_empresa / 1234
-                </div>
-                <div className="credential-item">
-                  <strong>Admin Planta:</strong> admin_planta / 1234
-                </div>
-              </div>
-            </div>
-
             <p className="register-link">
               ¿No tienes cuenta? 
               <a href="/registro" className="link-button">

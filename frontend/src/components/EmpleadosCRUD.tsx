@@ -485,22 +485,18 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
                 <td>{departamentos.find(d => d.departamento_id === empleado.departamento)?.nombre || 'N/A'}</td>
                 <td>{puestos.find(p => p.puesto_id === empleado.puesto)?.nombre || 'N/A'}</td>
                 <td>
-                  <div className="action-buttons">
-                    <button 
-                      onClick={() => handleEdit(empleado)}
-                      className="btn-edit"
-                      title="Editar empleado"
-                    >
-                      ✏️ Editar
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(empleado.empleado_id!)}
-                      className="btn-delete"
-                      title="Eliminar empleado"
-                    >
-                      🗑️ Eliminar
-                    </button>
-                  </div>
+                  <button 
+                    onClick={() => handleEdit(empleado)}
+                    className="btn-edit"
+                  >
+                    Editar
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(empleado.empleado_id!)}
+                    className="btn-delete"
+                  >
+                    Eliminar
+                  </button>
                 </td>
               </tr>
             ))}

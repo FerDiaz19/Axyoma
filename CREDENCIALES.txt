@@ -1,0 +1,38 @@
+═══════════════════════════════════════════════════════════════
+🎉 ¡SISTEMA AXYOMA LISTO PARA USAR! 🎉
+═══════════════════════════════════════════════════════════════
+
+📧 CREDENCIALES DE ACCESO (usar EMAIL como usuario):
+
+👑 SUPERADMIN (acceso completo)
+   Usuario: superadmin@axyoma.com
+   Contraseña: admin123
+
+🏢 ADMIN EMPRESA (gestión empresarial)
+   Usuario: admin@empresa.com  
+   Contraseña: admin123
+
+🏭 ADMIN PLANTA (gestión de planta)
+   Usuario: planta@empresa.com
+   Contraseña: admin123
+
+═══════════════════════════════════════════════════════════════
+
+🌐 URLs DEL SISTEMA:
+   Frontend: http://localhost:3001
+   Backend:  http://localhost:8000/api
+
+💡 NOTA IMPORTANTE:
+   El login requiere EMAIL como usuario, no username!
+
+✨ FUNCIONALIDAD ESPECIAL:
+   - Solo el SuperAdmin verá el botón "👑 Crear Usuario SuperAdmin"
+   - El botón tiene diseño especial con gradiente púrpura
+   - Permite crear nuevos usuarios con permisos de SuperAdmin
+
+🚀 PARA INICIAR:
+   1. Ve a http://localhost:3001
+   2. Usa: superadmin@axyoma.com / admin123
+   3. ¡Disfruta del sistema!
+
+═══════════════════════════════════════════════════════════════

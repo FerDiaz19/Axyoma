@@ -304,45 +304,6 @@
 }
 
 /* ============================================================================
-   CREDENCIALES DE PRUEBA
-   ============================================================================ */
-
-.test-credentials {
-  background: #f8f9fa;
-  border: 1px solid #e9ecef;
-  border-radius: 8px;
-  padding: 1rem;
-  margin: 1rem 0;
-  text-align: center;
-}
-
-.test-credentials h4 {
-  margin: 0 0 0.5rem 0;
-  color: #495057;
-  font-size: 0.9rem;
-  font-weight: 600;
-}
-
-.credentials-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.credential-item {
-  font-size: 0.8rem;
-  color: #6c757d;
-  background: white;
-  padding: 0.3rem 0.5rem;
-  border-radius: 4px;
-  border: 1px solid #dee2e6;
-}
-
-.credential-item strong {
-  color: #495057;
-}
-
-/* ============================================================================
    RESPONSIVE
    ============================================================================ */
 
@@ -371,7 +332,3 @@
     margin: 1rem;
   }
 }
-
-/* ============================================================================
-   RESPONSIVE - MOBILE DEVICES
-   ============================================================================ */

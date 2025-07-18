@@ -77,14 +77,7 @@ const Header = () => {
 
   const handleLogout = async () => {
     try {
-      // Limpiar localStorage y sessionStorage
-      localStorage.removeItem('user');
-      localStorage.removeItem('token');
-      sessionStorage.removeItem('user');
-      sessionStorage.removeItem('token');
-      
-      // Recargar la página para volver al login
-      window.location.reload();
+      //await logout();
     } catch (e) {
       console.error("Error cerrando sesión", e);
     }

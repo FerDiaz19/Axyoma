@@ -17,5 +17,4 @@ router.register(r'subscriptions', SubscriptionViewSet, basename='subscriptions')
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('evaluaciones/', include('apps.evaluaciones.urls')),
 ]

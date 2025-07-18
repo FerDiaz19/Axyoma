@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Login from './Login';
 import RegistroEmpresa from './RegistroEmpresa';
-import SuperAdminDashboard from './SuperAdminDashboard';
+import SuperAdminDashboard from './SuperAdminDashboard_NEW';
 import EmpresaAdminDashboard from './EmpresaAdminDashboard';
 import PlantaAdminDashboard from './PlantaAdminDashboard';
 import SubscriptionAlert from './SubscriptionAlert';
@@ -135,10 +135,10 @@ const Dashboard: React.FC = () => {
         return <SuperAdminDashboard userData={userData} onLogout={handleLogout} />;
       
       case 'admin-empresa':
-        return <EmpresaAdminDashboard userData={userData} />;
+        return <EmpresaAdminDashboard userData={userData} onLogout={handleLogout} />;
       
       case 'admin-planta':
-        return <PlantaAdminDashboard userData={userData} />;
+        return <PlantaAdminDashboard userData={userData} onLogout={handleLogout} />;
       
       default:
         return <div>Error: Tipo de dashboard no reconocido</div>;
