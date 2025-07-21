@@ -13,6 +13,53 @@ from django.db import models
 
 
 # Serializers simples para los endpoints
+class UserSerializer(serializers.ModelSerializer):
+    """Serializer para usuarios con información básica"""
+    perfil = serializers.SerializerMethodField()
+    empresa = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 
+                 'is_staff', 'is_superuser', 'date_joined', 'last_login', 
+                 'is_active', 'perfil', 'empresa']
+    
+    def get_perfil(self, obj):
+        try:
+            perfil = PerfilUsuario.objects.get(correo=obj.email)
+            return {
+                'id': perfil.id,
+                'nombre': perfil.nombre,
+                'apellido_paterno': perfil.apellido_paterno,
+                'apellido_materno': perfil.apellido_materno,
+                'nivel_usuario': perfil.nivel_usuario,
+                'status': perfil.status
+            }
+        except PerfilUsuario.DoesNotExist:
+            return None
+    
+    def get_empresa(self, obj):
+        try:
+            perfil = PerfilUsuario.objects.get(correo=obj.email)
+            if perfil.nivel_usuario == 'admin_empresa':
+                empresa = Empresa.objects.get(administrador=perfil)
+                return {
+                    'id': empresa.empresa_id,
+                    'nombre': empresa.nombre,
+                    'rfc': empresa.rfc
+                }
+            elif perfil.nivel_usuario == 'admin_planta':
+                admin_planta = AdminPlanta.objects.get(usuario=perfil, status=True)
+                return {
+                    'id': admin_planta.planta.empresa.empresa_id,
+                    'nombre': admin_planta.planta.empresa.nombre,
+                    'rfc': admin_planta.planta.empresa.rfc
+                }
+        except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist, AdminPlanta.DoesNotExist):
+            pass
+        return None
+
+
 class EmpresaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Empresa
@@ -172,7 +219,17 @@ class AuthViewSet(viewsets.ViewSet):
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
+    serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        """Solo superadmin puede ver todos los usuarios"""
+        user = self.request.user
+        if user.is_superuser:
+            return User.objects.all()
+        else:
+            # Usuario normal solo se puede ver a sí mismo
+            return User.objects.filter(id=user.id)
 
     @action(detail=False, methods=['get'])
     def me(self, request):
@@ -297,6 +354,47 @@ class EmpresaViewSet(viewsets.ModelViewSet):
                 'status': empleado.status
             })
         return Response(data)
+
+    @action(detail=False, methods=['get'])
+    def estadisticas(self, request):
+        """Obtener estadísticas generales del sistema (Solo SuperAdmin)"""
+        try:
+            if not request.user.is_superuser:
+                return Response(
+                    {'error': 'Acceso denegado'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion
+            from apps.evaluaciones.models import EvaluacionCompleta
+            
+            # Estadísticas básicas
+            estadisticas = {
+                'total_empresas': Empresa.objects.count(),
+                'empresas_activas': Empresa.objects.filter(status=True).count(),
+                'total_usuarios': User.objects.count(),
+                'usuarios_activos': User.objects.filter(is_active=True).count(),
+                'total_empleados': Empleado.objects.count(),
+                'empleados_activos': Empleado.objects.filter(status=True).count(),
+                'total_plantas': Planta.objects.count(),
+                'plantas_activas': Planta.objects.filter(status=True).count(),
+                'total_departamentos': Departamento.objects.count(),
+                'departamentos_activos': Departamento.objects.filter(status=True).count(),
+                'total_puestos': Puesto.objects.count(),
+                'puestos_activos': Puesto.objects.filter(status=True).count(),
+                'total_evaluaciones': EvaluacionCompleta.objects.count(),
+                'total_suscripciones': SuscripcionEmpresa.objects.count(),
+                'suscripciones_activas': SuscripcionEmpresa.objects.filter(status=True, estado='ACTIVA').count(),
+                'planes_disponibles': PlanSuscripcion.objects.filter(status=True).count()
+            }
+            
+            return Response(estadisticas)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error obteniendo estadísticas: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class EmpleadoViewSet(viewsets.ModelViewSet):

@@ -19,6 +19,7 @@ router = DefaultRouter()
 # Register viewsets
 router.register(r'auth', AuthViewSet, basename='auth')
 router.register(r'users', UserViewSet, basename='user')
+router.register(r'usuarios', UserViewSet, basename='usuarios')  # Agregamos ambos endpoints
 router.register(r'empresas', EmpresaViewSet, basename='empresa')
 router.register(r'empleados', EmpleadoViewSet, basename='empleado')
 router.register(r'plantas', PlantaViewSet, basename='planta')
@@ -29,6 +30,7 @@ router.register(r'asignaciones', AsignacionEvaluacionViewSet, basename='asignaci
 router.register(r'respuestas', RespuestaEvaluacionViewSet, basename='respuesta')
 router.register(r'tokens', TokenEvaluacionViewSet, basename='token')
 router.register(r'subscriptions', SubscriptionViewSet, basename='subscription')
+router.register(r'suscripciones', SubscriptionViewSet, basename='suscripciones')  # Agregamos ambos endpoints
 
 urlpatterns = [
     path('', include(router.urls)),

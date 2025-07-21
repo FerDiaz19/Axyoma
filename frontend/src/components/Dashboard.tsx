@@ -14,15 +14,21 @@ const Dashboard: React.FC = () => {
   const [showRegistro, setShowRegistro] = useState(false);
   const [userData, setUserData] = useState<any>(null);
   const [showSubscriptionAlert, setShowSubscriptionAlert] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLogout = () => {
     logout();
     setIsLoggedIn(false);
     setUserData(null);
     setShowSubscriptionAlert(false);
+    setIsLoading(false);
+    setError(null);
   };
 
   const fetchUserData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     try {
       const response = await api.get('/users/me/');
       const userData = response.data;
@@ -35,10 +41,15 @@ const Dashboard: React.FC = () => {
       
       // Verificar si necesita mostrar alerta de suscripción
       checkSubscriptionAlert(userData);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error obteniendo datos del usuario:', error);
-      // Si hay error, limpiar sesión
-      handleLogout();
+      setError(`Error cargando datos del usuario: ${error?.response?.status || error?.message || 'Error desconocido'}`);
+      // Si hay error, limpiar sesión solo si es error de autenticación
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        handleLogout();
+      }
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
@@ -49,6 +60,8 @@ const Dashboard: React.FC = () => {
     if (token) {
       // Si hay token, obtener datos completos del usuario desde el backend
       fetchUserData();
+    } else {
+      setIsLoading(false);
     }
   }, [fetchUserData]);
 
@@ -162,6 +175,49 @@ const Dashboard: React.FC = () => {
       return <EmpresaAdminDashboard userData={userData} />;
     }
   };
+
+  // Mostrar loading mientras se cargan los datos
+  if (isLoading) {
+    return (
+      <div className="loading-container" style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        flexDirection: 'column'
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>🔄</div>
+        <div>Cargando datos del usuario...</div>
+      </div>
+    );
+  }
+
+  // Mostrar error si hay problemas
+  if (error) {
+    return (
+      <div className="error-container" style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        flexDirection: 'column',
+        padding: '2rem'
+      }}>
+        <div style={{ fontSize: '2rem', marginBottom: '1rem', color: 'red' }}>❌</div>
+        <div style={{ marginBottom: '1rem', color: 'red', textAlign: 'center' }}>{error}</div>
+        <button onClick={handleLogout} style={{
+          padding: '10px 20px',
+          backgroundColor: '#dc3545',
+          color: 'white',
+          border: 'none',
+          borderRadius: '5px',
+          cursor: 'pointer'
+        }}>
+          Cerrar Sesión y Reintentar
+        </button>
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return (

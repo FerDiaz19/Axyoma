@@ -15,6 +15,45 @@ class SubscriptionViewSet(viewsets.ViewSet):
     """
     permission_classes = [IsAuthenticated]
     
+    def list(self, request):
+        """Obtener todas las suscripciones (Solo para SuperAdmin)"""
+        try:
+            if not request.user.is_superuser:
+                return Response(
+                    {'error': 'Acceso denegado'}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            
+            suscripciones = SuscripcionEmpresa.objects.select_related(
+                'empresa', 'plan_suscripcion'
+            ).all()
+            
+            data = []
+            for suscripcion in suscripciones:
+                data.append({
+                    'id': suscripcion.suscripcion_id,
+                    'empresa_id': suscripcion.empresa.empresa_id,
+                    'empresa_nombre': suscripcion.empresa.nombre,
+                    'plan_id': suscripcion.plan_suscripcion.plan_id,
+                    'plan_nombre': suscripcion.plan_suscripcion.nombre,
+                    'precio': float(suscripcion.plan_suscripcion.precio),
+                    'estado': suscripcion.estado,
+                    'fecha_inicio': suscripcion.fecha_inicio.isoformat(),
+                    'fecha_fin': suscripcion.fecha_fin.isoformat() if suscripcion.fecha_fin else None,
+                    'dias_restantes': suscripcion.dias_restantes,
+                    'esta_activa': suscripcion.esta_activa,
+                    'esta_por_vencer': suscripcion.esta_por_vencer,
+                    'status': suscripcion.status
+                })
+            
+            return Response(data)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error obteniendo suscripciones: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
     def get_subscription_info(self, empresa):
         """Obtiene información de suscripción de PostgreSQL"""
         try:

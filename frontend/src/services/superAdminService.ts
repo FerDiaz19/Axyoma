@@ -146,28 +146,27 @@ export interface SuperAdminEmpleado {
 export interface SuperAdminEstadisticas {
   total_empresas: number;
   empresas_activas: number;
+  total_usuarios: number;
+  usuarios_activos: number;
+  total_empleados: number;
+  empleados_activos: number;
   total_plantas: number;
   plantas_activas: number;
   total_departamentos: number;
   departamentos_activos: number;
   total_puestos: number;
   puestos_activos: number;
-  total_empleados: number;
-  empleados_activos: number;
-  total_usuarios: number;
-  usuarios_por_nivel: {
-    superadmin: number;
-    'admin-empresa': number;
-    'admin-planta': number;
-    empleado: number;
-  };
+  total_evaluaciones: number;
+  total_suscripciones: number;
+  suscripciones_activas: number;
+  planes_disponibles: number;
 }
 
 const API_BASE = 'superadmin';
 
 // Obtener estadísticas del sistema
 export const getEstadisticasSistema = async (): Promise<SuperAdminEstadisticas> => {
-  const response = await api.get(`${API_BASE}/estadisticas_sistema/`);
+  const response = await api.get('/empresas/estadisticas/');
   return response.data;
 };
 
@@ -176,7 +175,7 @@ export const getEmpresas = async (params?: {
   buscar?: string;
   status?: string;
 }): Promise<{ empresas: SuperAdminEmpresa[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_empresas/`, { params });
+  const response = await api.get('/empresas/', { params });
   return response.data;
 };
 
@@ -215,7 +214,7 @@ export const getUsuarios = async (params?: {
   nivel_usuario?: string;
   activo?: string;
 }): Promise<{ usuarios: SuperAdminUsuario[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_usuarios/`, { params });
+  const response = await api.get('/users/', { params });
   return response.data;
 };
 
@@ -278,7 +277,7 @@ export const getPlantas = async (params?: {
   empresa_id?: string;
   status?: string;
 }): Promise<{ plantas: SuperAdminPlanta[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_todas_plantas/`, { params });
+  const response = await api.get('/plantas/', { params });
   return response.data;
 };
 
@@ -318,7 +317,7 @@ export const getDepartamentos = async (params?: {
   empresa_id?: string;
   status?: string;
 }): Promise<{ departamentos: SuperAdminDepartamento[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_todos_departamentos/`, { params });
+  const response = await api.get('/departamentos/', { params });
   return response.data;
 };
 
@@ -359,7 +358,7 @@ export const getPuestos = async (params?: {
   empresa_id?: string;
   status?: string;
 }): Promise<{ puestos: SuperAdminPuesto[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_todos_puestos/`, { params });
+  const response = await api.get('/puestos/', { params });
   return response.data;
 };
 
@@ -401,7 +400,7 @@ export const getEmpleados = async (params?: {
   puesto_id?: string;
   status?: string;
 }): Promise<{ empleados: SuperAdminEmpleado[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_todos_empleados/`, { params });
+  const response = await api.get('/empleados/', { params });
   return response.data;
 };
 

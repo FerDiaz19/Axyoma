@@ -6,8 +6,8 @@ from django.contrib.auth.models import User
 class PerfilUsuario(models.Model):
     NIVEL_CHOICES = [
         ('superadmin', 'Super Administrador'),
-        ('admin-empresa', 'Administrador de Empresa'),
-        ('admin-planta', 'Administrador de Planta'),
+        ('admin_empresa', 'Administrador de Empresa'),
+        ('admin_planta', 'Administrador de Planta'),
     ]
     
     # Campos según USUARIOS table

@@ -55,7 +55,7 @@ export interface RespuestaEvaluacion {
 // Servicios
 const evaluacionesAPI = {
   // Tipos de evaluación
-  getTipos: () => api.get<TipoEvaluacion[]>('/evaluaciones/tipos/'),
+  getTipos: () => api.get<TipoEvaluacion[]>('/evaluaciones/'),
   
   // Preguntas
   getPreguntas: (params?: any) => api.get<Pregunta[]>('/evaluaciones/preguntas/', { params }),
@@ -73,12 +73,10 @@ const evaluacionesAPI = {
     api.post<{ message: string; preguntas_creadas: number }>('/evaluaciones/preguntas/crear_oficiales/'),
   
   // Evaluaciones
-  getEvaluaciones: () => api.get<EvaluacionCompleta[]>('/evaluaciones/evaluaciones/'),
+  getEvaluaciones: () => api.get<EvaluacionCompleta[]>('/evaluaciones/'),
   
-  getEvaluacion: (id: number) => 
-    api.get<EvaluacionCompleta>(`/evaluaciones/evaluaciones/${id}/`),
-  
-  createEvaluacion: (data: {
+  getEvaluacion: (id: number) =>
+    api.get<EvaluacionCompleta>(`/evaluaciones/${id}/`),  createEvaluacion: (data: {
     titulo: string;
     descripcion: string;
     tipo_evaluacion: number;
@@ -93,16 +91,16 @@ const evaluacionesAPI = {
       orden: number;
       es_obligatoria: boolean;
     }>;
-  }) => api.post<EvaluacionCompleta>('/evaluaciones/evaluaciones/', data),
+  }) => api.post<EvaluacionCompleta>('/evaluaciones/', data),
   
   updateEvaluacion: (id: number, data: Partial<EvaluacionCompleta>) => 
-    api.put<EvaluacionCompleta>(`/evaluaciones/evaluaciones/${id}/`, data),
+    api.put<EvaluacionCompleta>(`/evaluaciones/${id}/`, data),
   
   activarEvaluacion: (id: number) => 
-    api.post<{ message: string }>(`/evaluaciones/evaluaciones/${id}/activar/`),
+    api.post<{ message: string }>(`/evaluaciones/${id}/activar/`),
   
   getResultados: (id: number) => 
-    api.get(`/evaluaciones/evaluaciones/${id}/resultados/`),
+    api.get(`/evaluaciones/${id}/resultados/`),
   
   // Respuestas
   getMisEvaluaciones: () => 

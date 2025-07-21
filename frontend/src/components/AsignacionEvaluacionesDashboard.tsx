@@ -68,7 +68,7 @@ const AsignacionEvaluacionesDashboard: React.FC<AsignacionEvaluacionesDashboardP
     try {
       console.log('🚀 Iniciando carga de evaluaciones...');
       setLoadingEvaluaciones(true);
-      const response = await api.get('/evaluaciones/evaluaciones/');
+      const response = await api.get('/evaluaciones/');
       console.log('🔍 API Response:', response);
       console.log('🔍 Response data:', response.data);
       console.log('🔍 Auth token:', localStorage.getItem('authToken'));
