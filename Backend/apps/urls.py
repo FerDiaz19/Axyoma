@@ -1,21 +1,32 @@
+# -*- coding: utf-8 -*-
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import AuthViewSet, EmpresaViewSet, EmpleadoViewSet, PlantaViewSet, DepartamentoViewSet, PuestoViewSet, EstructuraViewSet, SuperAdminViewSet, SuscripcionViewSet
-from .subscriptions.views import SubscriptionViewSet
 
+# Import viewsets que realmente existen
+from apps.users.views import (
+    UserViewSet, EmpresaViewSet, EmpleadoViewSet
+)
+from apps.evaluaciones.views import (
+    EvaluacionViewSet, AsignacionEvaluacionViewSet, 
+    RespuestaEvaluacionViewSet, TokenEvaluacionViewSet
+)
+from apps.subscriptions.views import SubscriptionViewSet
+
+# Create router
 router = DefaultRouter()
-router.register(r'auth', AuthViewSet, basename='auth')
-router.register(r'empresas', EmpresaViewSet, basename='empresas')
-router.register(r'empleados', EmpleadoViewSet)
-router.register(r'plantas', PlantaViewSet)
-router.register(r'departamentos', DepartamentoViewSet)
-router.register(r'puestos', PuestoViewSet)
-router.register(r'estructura', EstructuraViewSet, basename='estructura')
-router.register(r'superadmin', SuperAdminViewSet, basename='superadmin')
-router.register(r'suscripciones', SuscripcionViewSet, basename='suscripciones')
-router.register(r'subscriptions', SubscriptionViewSet, basename='subscriptions')
+
+# Register viewsets
+router.register(r'users', UserViewSet, basename='user')
+router.register(r'empresas', EmpresaViewSet, basename='empresa')
+router.register(r'empleados', EmpleadoViewSet, basename='empleado')
+router.register(r'evaluaciones', EvaluacionViewSet, basename='evaluacion')
+router.register(r'asignaciones', AsignacionEvaluacionViewSet, basename='asignacion')
+router.register(r'respuestas', RespuestaEvaluacionViewSet, basename='respuesta')
+router.register(r'tokens', TokenEvaluacionViewSet, basename='token')
+router.register(r'subscriptions', SubscriptionViewSet, basename='subscription')
 
 urlpatterns = [
     path('', include(router.urls)),
+    # Include evaluaciones app URLs
     path('evaluaciones/', include('apps.evaluaciones.urls')),
 ]

@@ -65,7 +65,6 @@ interface SuperAdminDashboardProps {
 const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onLogout }) => {
   const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos' | 'evaluaciones'>('estadisticas');
   const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Estado para controlar el sidebar
   
   // Estados para datos
   const [estadisticas, setEstadisticas] = useState<SuperAdminEstadisticas | null>(null);
@@ -97,6 +96,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   // Estados para modales de creación
   const [modalCrearPlan, setModalCrearPlan] = useState(false);
   const [modalCrearSuscripcion, setModalCrearSuscripcion] = useState(false);
+  const [modalCrearUsuario, setModalCrearUsuario] = useState(false);
 
   const cargarEstadisticas = async () => {
     setLoading(true);
@@ -510,6 +510,32 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
     }
   };
 
+  // Función para crear nuevo usuario SuperAdmin
+  const handleCrearUsuario = async (formData: any) => {
+    try {
+      const { crearUsuario } = await import('../services/superAdminService');
+      await crearUsuario({
+        username: formData.username,
+        email: formData.email,
+        nombre: formData.nombre,
+        apellido_paterno: formData.apellido_paterno,
+        apellido_materno: formData.apellido_materno || '',
+        password: formData.password || '1234',
+        is_active: formData.is_active !== false
+      });
+      
+      // Recargar la lista de usuarios
+      const usuariosData = await getUsuarios({});
+      setUsuarios(usuariosData.usuarios);
+      
+      alert(`Usuario SuperAdmin creado exitosamente.\nUsuario: ${formData.username}\nContraseña temporal: ${formData.password || '1234'}`);
+    } catch (error: any) {
+      console.error('Error creando usuario:', error);
+      alert(error.message || 'Error al crear el usuario');
+      throw error;
+    }
+  };
+
   // Función para renovar suscripción
   const handleRenovarSuscripcion = async (suscripcionId: number) => {
     if (window.confirm('¿Renovar la suscripción?')) {
@@ -601,6 +627,16 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             ]
           },
           { name: 'is_active', label: 'Usuario Activo', type: 'checkbox' as const }
+        ];
+      case 'crear-usuario':
+        return [
+          { name: 'username', label: 'Nombre de Usuario', type: 'text' as const, required: true },
+          { name: 'email', label: 'Email', type: 'email' as const, required: true },
+          { name: 'nombre', label: 'Nombre', type: 'text' as const, required: true },
+          { name: 'apellido_paterno', label: 'Apellido Paterno', type: 'text' as const, required: true },
+          { name: 'apellido_materno', label: 'Apellido Materno', type: 'text' as const },
+          { name: 'password', label: 'Contraseña Temporal', type: 'password' as const, placeholder: '1234 (por defecto)' },
+          { name: 'is_active', label: 'Usuario Activo', type: 'checkbox' as const, defaultValue: true }
         ];
       case 'planta':
         return [
@@ -915,6 +951,14 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           <span>Total: {usuarios.length}</span>
           <span>Activos: {usuarios.filter(u => u.is_active).length}</span>
           <span>Suspendidos: {usuarios.filter(u => !u.is_active).length}</span>
+        </div>
+        <div className="section-actions">
+          <button 
+            onClick={() => setModalCrearUsuario(true)}
+            className="btn-primary"
+          >
+            ➕ Crear Usuario SuperAdmin
+          </button>
         </div>
       </div>
       
@@ -1852,6 +1896,26 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               }))
             }
           ]}
+        />
+      )}
+
+      {/* Modal para crear nuevo usuario SuperAdmin */}
+      {modalCrearUsuario && (
+        <EditModal
+          isOpen={modalCrearUsuario}
+          onClose={() => setModalCrearUsuario(false)}
+          title="👑 Crear Nuevo Usuario SuperAdmin"
+          initialData={{
+            username: '',
+            email: '',
+            nombre: '',
+            apellido_paterno: '',
+            apellido_materno: '',
+            password: '1234',
+            is_active: true
+          }}
+          onSave={handleCrearUsuario}
+          fields={getFormFields('crear-usuario')}
         />
       )}
         </main>

@@ -12,7 +12,6 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
   const [preguntas, setPreguntas] = useState<Pregunta[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'evaluaciones'>('evaluaciones');
   
   // Estados para crear evaluación
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -580,6 +579,14 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
                 <div className="evaluacion-empresa-actions">
                   <button className="btn-info btn-sm">👁️ Ver</button>
                   <button className="btn-warning btn-sm">✏️ Editar</button>
+                  {evaluacion.estado === 'borrador' && (
+                    <button 
+                      className="btn-success btn-sm"
+                      onClick={() => handleActivarEvaluacion(evaluacion.id)}
+                    >
+                      🚀 Activar
+                    </button>
+                  )}
                 </div>
               </div>
             ))}

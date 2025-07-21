@@ -1,7 +1,10 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from apps.surveys.models import Evaluacion, PreguntaEvaluacion
+from apps.evaluaciones.models import EvaluacionCompleta, Pregunta, TipoEvaluacion, EvaluacionPregunta
+from apps.users.models import Empresa
 from django.db import transaction
+from datetime import datetime, timedelta
+from django.utils import timezone
 
 class Command(BaseCommand):
     help = 'Inicializa las evaluaciones oficiales base (NOM-035, NOM-030, 360)'

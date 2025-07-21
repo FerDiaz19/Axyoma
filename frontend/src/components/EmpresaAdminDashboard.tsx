@@ -4,7 +4,7 @@ import GestionEstructura from './GestionEstructura';
 import GestionPlantas from './GestionPlantas';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
-import EvaluacionesGestion from './EvaluacionesGestion';
+import AsignacionEvaluacionesDashboard from './AsignacionEvaluacionesDashboard';
 import { logout } from '../services/authService';
 import '../css/Dashboard.css';
 import '../css/GestionPlantas.css';
@@ -50,9 +50,9 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
     },
     {
       id: 'evaluaciones',
-      label: 'Evaluaciones',
+      label: 'Gestión de Evaluaciones',
       icon: '📊',
-      description: 'Gestionar evaluaciones'
+      description: 'Gestionar y asignar evaluaciones'
     },
     {
       id: 'reportes',
@@ -65,7 +65,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
   const handleLogout = async () => {
     try {
       await logout();
-      window.location.href = '/login';
+      window.location.href = '/';
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
@@ -84,7 +84,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
       case 'empleados':
         return <EmpleadosCRUD userData={userData} />;
       case 'evaluaciones':
-        return <EvaluacionesGestion userData={{ nivel_usuario: 'admin_empresa' }} />;
+        return <AsignacionEvaluacionesDashboard empresaId={userData?.empresa_id} />;
       case 'reportes':
         return (
           <div className="coming-soon">

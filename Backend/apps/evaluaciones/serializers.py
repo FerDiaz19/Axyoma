@@ -2,7 +2,8 @@
 from rest_framework import serializers
 from .models import (
     TipoEvaluacion, Pregunta, EvaluacionCompleta, EvaluacionPregunta,
-    RespuestaEvaluacion, DetalleRespuesta, ResultadoEvaluacion
+    RespuestaEvaluacion, DetalleRespuesta, ResultadoEvaluacion,
+    AsignacionEvaluacion, TokenEvaluacion
 )
 from apps.users.models import Empresa, Empleado, Departamento, Planta
 
@@ -56,6 +57,11 @@ class EvaluacionSerializer(serializers.ModelSerializer):
     preguntas_evaluacion = EvaluacionPreguntaSerializer(source='evaluacionpregunta_set', many=True, read_only=True)
     total_preguntas = serializers.SerializerMethodField()
     total_respuestas = serializers.SerializerMethodField()
+    es_normativa = serializers.SerializerMethodField()
+    empleados_asignados = serializers.SerializerMethodField()
+    total_empleados_asignados = serializers.SerializerMethodField()
+    asignaciones_por_estado = serializers.SerializerMethodField()
+    identificador_unico = serializers.SerializerMethodField()
     
     class Meta:
         model = EvaluacionCompleta
@@ -66,6 +72,42 @@ class EvaluacionSerializer(serializers.ModelSerializer):
         
     def get_total_respuestas(self, obj):
         return obj.respuestaevaluacion_set.count()
+        
+    def get_es_normativa(self, obj):
+        """Determina si es una evaluación normativa (sin empresa)"""
+        return obj.empresa is None
+    
+    def get_empleados_asignados(self, obj):
+        """Obtiene lista de empleados asignados a esta evaluación"""
+        asignaciones = obj.asignaciones.all()
+        empleados = []
+        for asignacion in asignaciones:
+            empleados.append({
+                'id': asignacion.empleado.empleado_id,
+                'nombre': asignacion.empleado.nombre,
+                'email': asignacion.empleado.email,
+                'departamento': asignacion.empleado.departamento.nombre if asignacion.empleado.departamento else None,
+                'estado_asignacion': asignacion.estado,
+                'fecha_asignacion': asignacion.fecha_asignacion,
+                'fecha_inicio': asignacion.fecha_inicio,
+                'fecha_fin': asignacion.fecha_fin,
+                'fecha_completado': asignacion.fecha_completado,
+            })
+        return empleados
+    
+    def get_total_empleados_asignados(self, obj):
+        """Total de empleados asignados"""
+        return obj.asignaciones.count()
+    
+    def get_asignaciones_por_estado(self, obj):
+        """Resumen de asignaciones por estado"""
+        from django.db.models import Count
+        resumen = obj.asignaciones.values('estado').annotate(count=Count('estado'))
+        return {item['estado']: item['count'] for item in resumen}
+    
+    def get_identificador_unico(self, obj):
+        """Genera un identificador único más descriptivo"""
+        return f"{obj.tipo_evaluacion.nombre}-{obj.id}-{obj.fecha_creacion.strftime('%Y%m%d')}"
 
 class EvaluacionCreateSerializer(serializers.ModelSerializer):
     """Serializer para crear evaluaciones"""
@@ -169,3 +211,101 @@ class ResultadoEvaluacionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResultadoEvaluacion
         fields = '__all__'
+
+class AsignacionEvaluacionSerializer(serializers.ModelSerializer):
+    empleado_nombre = serializers.CharField(source='empleado.nombre', read_only=True)
+    empleado_apellido = serializers.CharField(source='empleado.apellido', read_only=True)
+    empleado_numero_empleado = serializers.CharField(source='empleado.numero_empleado', read_only=True)
+    empleado_departamento = serializers.CharField(source='empleado.departamento.nombre', read_only=True)
+    evaluacion_titulo = serializers.CharField(source='evaluacion.titulo', read_only=True)
+    asignado_por_nombre = serializers.CharField(source='asignado_por.get_full_name', read_only=True)
+    token_generado = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = AsignacionEvaluacion
+        fields = '__all__'
+        
+    def get_token_generado(self, obj):
+        """Obtener el token si existe"""
+        try:
+            return obj.token.token
+        except:
+            return None
+
+class TokenEvaluacionSerializer(serializers.ModelSerializer):
+    empleado_nombre = serializers.CharField(source='asignacion.empleado.nombre', read_only=True)
+    empleado_apellido = serializers.CharField(source='asignacion.empleado.apellido', read_only=True)
+    empleado_email = serializers.CharField(source='asignacion.empleado.email', read_only=True)
+    empleado_numero_empleado = serializers.CharField(source='asignacion.empleado.numero_empleado', read_only=True)
+    empleado_puesto = serializers.CharField(source='asignacion.empleado.puesto', read_only=True)
+    empleado_departamento = serializers.CharField(source='asignacion.empleado.departamento.nombre', read_only=True)
+    empleado_planta = serializers.CharField(source='asignacion.empleado.planta.nombre', read_only=True)
+    evaluacion_titulo = serializers.CharField(source='asignacion.evaluacion.titulo', read_only=True)
+    evaluacion_tipo = serializers.CharField(source='asignacion.evaluacion.tipo_evaluacion.nombre', read_only=True)
+    evaluacion_id = serializers.IntegerField(source='asignacion.evaluacion.id', read_only=True)
+    estado_asignacion = serializers.CharField(source='asignacion.estado', read_only=True)
+    fecha_inicio_evaluacion = serializers.DateTimeField(source='asignacion.fecha_inicio', read_only=True)
+    fecha_fin_evaluacion = serializers.DateTimeField(source='asignacion.fecha_fin', read_only=True)
+    duracion_dias = serializers.IntegerField(source='asignacion.duracion_dias', read_only=True)
+    duracion_horas = serializers.IntegerField(source='asignacion.duracion_horas', read_only=True)
+    dias_restantes = serializers.SerializerMethodField()
+    tiempo_restante_texto = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = TokenEvaluacion
+        fields = '__all__'
+    
+    def get_dias_restantes(self, obj):
+        """Calcular días restantes"""
+        return obj.asignacion.dias_restantes
+    
+    def get_tiempo_restante_texto(self, obj):
+        """Texto descriptivo del tiempo restante"""
+        dias = obj.asignacion.dias_restantes
+        if dias <= 0:
+            return "Expirado"
+        elif dias == 1:
+            return "1 día restante"
+        else:
+            return f"{dias} días restantes"
+
+class AsignacionMasivaSerializer(serializers.Serializer):
+    """Serializer para asignación masiva de evaluaciones"""
+    evaluacion_id = serializers.IntegerField()
+    empleados_ids = serializers.ListField(child=serializers.IntegerField())
+    fecha_inicio = serializers.DateTimeField()
+    fecha_fin = serializers.DateTimeField()
+    duracion_dias = serializers.IntegerField(required=False, help_text="Duración en días para completar la evaluación")
+    duracion_horas = serializers.IntegerField(required=False, help_text="Duración estimada en horas para responder")
+    instrucciones_especiales = serializers.CharField(required=False, max_length=500, help_text="Instrucciones adicionales para los empleados")
+    
+    def validate(self, data):
+        """Validar que la fecha de fin sea posterior a la de inicio"""
+        if data['fecha_fin'] <= data['fecha_inicio']:
+            raise serializers.ValidationError("La fecha de fin debe ser posterior a la fecha de inicio")
+        
+        # Si se proporciona duración en días, validar que sea coherente
+        if 'duracion_dias' in data:
+            duracion = data['fecha_fin'] - data['fecha_inicio']
+            if duracion.days > data['duracion_dias']:
+                raise serializers.ValidationError(
+                    f"La duración especificada ({data['duracion_dias']} días) es menor que el período de evaluación ({duracion.days} días)"
+                )
+        
+        return data
+
+class FiltroEmpleadosSerializer(serializers.Serializer):
+    """Serializer para filtrar empleados para asignación"""
+    planta_id = serializers.IntegerField(required=False)
+    departamento_id = serializers.IntegerField(required=False)
+    empleados_ids = serializers.ListField(child=serializers.IntegerField(), required=False)
+    
+class EmpleadoEvaluacionSerializer(serializers.ModelSerializer):
+    """Serializer simplificado para empleados en evaluaciones"""
+    departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
+    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
+    
+    class Meta:
+        model = Empleado
+        fields = ['id', 'nombre', 'apellido', 'numero_empleado', 'email', 'puesto', 
+                 'departamento_nombre', 'planta_nombre']

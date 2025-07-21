@@ -64,7 +64,7 @@ class EvaluacionCompleta(models.Model):
     titulo = models.CharField(max_length=200)
     descripcion = models.TextField()
     tipo_evaluacion = models.ForeignKey(TipoEvaluacion, on_delete=models.CASCADE)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='evaluaciones_nuevas')
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='evaluaciones_nuevas', null=True, blank=True)
     preguntas = models.ManyToManyField(Pregunta, through='EvaluacionPregunta')
     
     # Configuración de alcance
@@ -146,3 +146,72 @@ class ResultadoEvaluacion(models.Model):
         
     def __str__(self):
         return f"Resultados - {self.evaluacion.titulo}"
+
+class AsignacionEvaluacion(models.Model):
+    """Asignación de evaluaciones a empleados específicos"""
+    ESTADOS = [
+        ('pendiente', 'Pendiente'),
+        ('en_progreso', 'En Progreso'),
+        ('completada', 'Completada'),
+        ('expirada', 'Expirada'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    evaluacion = models.ForeignKey(EvaluacionCompleta, on_delete=models.CASCADE, related_name='asignaciones')
+    empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, related_name='evaluaciones_asignadas')
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+    fecha_inicio = models.DateTimeField()
+    fecha_fin = models.DateTimeField()
+    estado = models.CharField(max_length=20, choices=ESTADOS, default='pendiente')
+    asignado_por = models.ForeignKey(User, on_delete=models.CASCADE)
+    fecha_completado = models.DateTimeField(null=True, blank=True)
+    
+    # Nuevos campos para duración y seguimiento
+    duracion_dias = models.IntegerField(null=True, blank=True, help_text="Duración máxima en días para completar")
+    duracion_horas = models.IntegerField(null=True, blank=True, help_text="Tiempo estimado en horas para responder")
+    instrucciones_especiales = models.TextField(null=True, blank=True, help_text="Instrucciones adicionales")
+    fecha_ultimo_acceso = models.DateTimeField(null=True, blank=True, help_text="Último acceso del empleado")
+    intentos_acceso = models.IntegerField(default=0, help_text="Número de veces que ha accedido")
+    
+    class Meta:
+        unique_together = ['evaluacion', 'empleado']
+        verbose_name = "Asignación de Evaluación"
+        verbose_name_plural = "Asignaciones de Evaluaciones"
+        
+    def __str__(self):
+        return f"{self.evaluacion.titulo} - {self.empleado.nombre}"
+    
+    @property
+    def dias_restantes(self):
+        """Calcular días restantes para completar"""
+        from django.utils import timezone
+        if self.estado in ['completada', 'expirada', 'cancelada']:
+            return 0
+        dias = (self.fecha_fin - timezone.now()).days
+        return max(0, dias)
+    
+    @property
+    def porcentaje_tiempo_usado(self):
+        """Porcentaje del tiempo total que ya ha pasado"""
+        from django.utils import timezone
+        total_tiempo = (self.fecha_fin - self.fecha_inicio).total_seconds()
+        tiempo_usado = (timezone.now() - self.fecha_inicio).total_seconds()
+        return min(100, max(0, (tiempo_usado / total_tiempo) * 100))
+
+class TokenEvaluacion(models.Model):
+    """Tokens únicos para acceso de empleados a evaluaciones"""
+    asignacion = models.OneToOneField(AsignacionEvaluacion, on_delete=models.CASCADE, related_name='token')
+    token = models.CharField(max_length=255, unique=True)
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_expiracion = models.DateTimeField()
+    activo = models.BooleanField(default=True)
+    usado = models.BooleanField(default=False)
+    fecha_uso = models.DateTimeField(null=True, blank=True)
+    ip_acceso = models.GenericIPAddressField(null=True, blank=True)
+    
+    class Meta:
+        verbose_name = "Token de Evaluación"
+        verbose_name_plural = "Tokens de Evaluaciones"
+        
+    def __str__(self):
+        return f"Token - {self.asignacion.empleado.nombre} - {self.token[:10]}..."

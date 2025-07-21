@@ -7,6 +7,9 @@ interface FormField {
   required?: boolean;
   options?: { value: string | number; label: string }[];
   disabled?: boolean;
+  placeholder?: string;
+  defaultValue?: any;
+  step?: number;
 }
 
 interface EditModalProps {
@@ -183,7 +186,8 @@ const EditModal: React.FC<EditModalProps> = ({
                       value={formData[field.name] || ''}
                       onChange={(e) => handleInputChange(field.name, field.type === 'number' ? Number(e.target.value) : e.target.value)}
                       disabled={field.disabled || saving}
-                      placeholder={`Ingrese ${field.label.toLowerCase()}`}
+                      placeholder={field.placeholder || `Ingrese ${field.label.toLowerCase()}`}
+                      step={field.step}
                     />
                   )}
                   

@@ -6,9 +6,12 @@ const api = axios.create({
         'Content-Type': 'application/json; charset=utf-8',
         'Accept': 'application/json',
     },
-    transformRequest: [function (data) {
-        // Asegurar que los datos se envíen correctamente codificados
-        return JSON.stringify(data);
+    transformRequest: [function (data, headers) {
+        // Solo transformar si hay data (no aplica a GET requests)
+        if (data) {
+            return JSON.stringify(data);
+        }
+        return data;
     }],
 });
 
