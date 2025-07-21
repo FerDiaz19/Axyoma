@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import api from '../api';
 import Login from './Login';
 import RegistroEmpresa from './RegistroEmpresa';
 import SuperAdminDashboard from './SuperAdminDashboard';
@@ -14,34 +15,56 @@ const Dashboard: React.FC = () => {
   const [userData, setUserData] = useState<any>(null);
   const [showSubscriptionAlert, setShowSubscriptionAlert] = useState(false);
 
-  useEffect(() => {
-    // Verificar si hay una sesión activa
-    const token = localStorage.getItem('authToken');
-    const userDataStored = localStorage.getItem('userData');
-    
-    if (token && userDataStored) {
+  const handleLogout = () => {
+    logout();
+    setIsLoggedIn(false);
+    setUserData(null);
+    setShowSubscriptionAlert(false);
+  };
+
+  const fetchUserData = useCallback(async () => {
+    try {
+      const response = await api.get('/users/me/');
+      const userData = response.data;
+      
+      console.log('📡 Datos obtenidos del servidor (/users/me/):', userData);
+      
       setIsLoggedIn(true);
-      setUserData(JSON.parse(userDataStored));
+      setUserData(userData);
+      localStorage.setItem('userData', JSON.stringify(userData));
+      
+      // Verificar si necesita mostrar alerta de suscripción
+      checkSubscriptionAlert(userData);
+    } catch (error) {
+      console.error('Error obteniendo datos del usuario:', error);
+      // Si hay error, limpiar sesión
+      handleLogout();
     }
   }, []);
 
-  const handleLoginSuccess = (data: any) => {
-    setIsLoggedIn(true);
-    setUserData(data);
-    localStorage.setItem('userData', JSON.stringify(data));
+  useEffect(() => {
+    // Verificar si hay una sesión activa
+    const token = localStorage.getItem('authToken');
     
-    // Asegurar que el token esté guardado (ya debe estar desde authService.login)
-    if (data.token && !localStorage.getItem('authToken')) {
+    if (token) {
+      // Si hay token, obtener datos completos del usuario desde el backend
+      fetchUserData();
+    }
+  }, [fetchUserData]);
+
+  const handleLoginSuccess = (data: any) => {
+    // Guardar el token
+    if (data.token) {
       localStorage.setItem('authToken', data.token);
     }
     
-    // Verificar si necesita mostrar alerta de suscripción
-    checkSubscriptionAlert(data);
+    // Obtener datos completos del usuario desde el servidor
+    fetchUserData();
   };
 
   const checkSubscriptionAlert = (data: any) => {
-    // Solo para admins de empresa y planta
-    if (data.tipo_dashboard === 'admin-empresa' || data.tipo_dashboard === 'admin-planta') {
+    // Solo para admins de empresa (no superusers)
+    if (!data.is_superuser && data.empresa) {
       const suscripcion = data.suscripcion;
       const advertencia = data.advertencia;
       
@@ -55,14 +78,6 @@ const Dashboard: React.FC = () => {
         setShowSubscriptionAlert(true);
       }
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    setIsLoggedIn(false);
-    setUserData(null);
-    setShowSubscriptionAlert(false);
-    localStorage.removeItem('userData');
   };
 
   const handleRegistroSuccess = () => {
@@ -109,10 +124,6 @@ const Dashboard: React.FC = () => {
 
   // Renderizar el dashboard según el tipo de usuario
   const renderDashboard = () => {
-    if (!userData?.tipo_dashboard) {
-      return <div>Error: Tipo de usuario no válido</div>;
-    }
-
     // Si hay alerta de suscripción, mostrarla primero
     if (showSubscriptionAlert) {
       const alertInfo = getSubscriptionAlertInfo();
@@ -130,18 +141,25 @@ const Dashboard: React.FC = () => {
       }
     }
 
-    switch (userData.tipo_dashboard) {
-      case 'superadmin':
-        return <SuperAdminDashboard userData={userData} onLogout={handleLogout} />;
-      
-      case 'admin-empresa':
-        return <EmpresaAdminDashboard userData={userData} />;
-      
-      case 'admin-planta':
-        return <PlantaAdminDashboard userData={userData} />;
-      
-      default:
-        return <div>Error: Tipo de dashboard no reconocido</div>;
+    // Determinar el tipo de dashboard basado en los datos disponibles
+    console.log('🔍 Dashboard - userData completo:', userData);
+    console.log('🔍 Dashboard - nivel_usuario:', userData?.perfil?.nivel_usuario);
+    console.log('🔍 Dashboard - is_superuser:', userData?.is_superuser);
+    console.log('🔍 Dashboard - empresa:', userData?.empresa);
+    
+    if (userData?.is_superuser) {
+      console.log('✅ Dirigiendo a SuperAdminDashboard');
+      return <SuperAdminDashboard userData={userData} onLogout={handleLogout} />;
+    } else if (userData?.perfil?.nivel_usuario === 'admin_planta') {
+      console.log('✅ Dirigiendo a PlantaAdminDashboard');
+      return <PlantaAdminDashboard userData={userData} />;
+    } else if (userData?.empresa) {
+      console.log('✅ Dirigiendo a EmpresaAdminDashboard');
+      return <EmpresaAdminDashboard userData={userData} />;
+    } else {
+      // Dashboard por defecto para usuarios normales
+      console.log('✅ Dirigiendo a EmpresaAdminDashboard (default)');
+      return <EmpresaAdminDashboard userData={userData} />;
     }
   };
 

@@ -1810,8 +1810,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 <span className="avatar-icon">👤</span>
               </div>
               <div className="user-details">
-                <span className="user-name">{userData?.nombre_completo || userData?.usuario}</span>
-                <span className="user-role">{userData?.nivel_usuario}</span>
+                <span className="user-name">{userData?.first_name && userData?.last_name ? `${userData.first_name} ${userData.last_name}` : userData?.username}</span>
+                <span className="user-role">Super Administrador</span>
               </div>
             </div>
             <button onClick={handleLogout} className="logout-btn">

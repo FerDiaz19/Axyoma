@@ -114,8 +114,8 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData })
                 <span className="avatar-icon">🏭</span>
               </div>
               <div className="planta-details">
-                <span className="planta-name">{userData?.nombre_planta || 'Mi Planta'}</span>
-                <span className="planta-user">({userData?.usuario})</span>
+                <span className="planta-name">{userData?.planta?.nombre || 'Mi Planta'}</span>
+                <span className="planta-user">({userData?.username || userData?.email})</span>
               </div>
             </div>
           </div>

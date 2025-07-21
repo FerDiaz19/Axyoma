@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import EmpleadosCRUD from './EmpleadosCRUD';
-import GestionEstructura from './GestionEstructura';
 import GestionPlantas from './GestionPlantas';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
+import UsuariosPlanta from './UsuariosPlanta';
 import AsignacionEvaluacionesDashboard from './AsignacionEvaluacionesDashboard';
 import { logout } from '../services/authService';
 import '../css/Dashboard.css';
@@ -37,10 +37,10 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
       description: 'Administrar puestos de trabajo'
     },
     {
-      id: 'estructura',
-      label: 'Estructura Organizacional',
-      icon: '🏗️',
-      description: 'Ver estructura completa'
+      id: 'usuarios-planta',
+      label: 'Usuarios de Planta',
+      icon: '👤',
+      description: 'Ver usuarios asignados a plantas'
     },
     {
       id: 'empleados',
@@ -74,17 +74,17 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
   const renderActiveSection = () => {
     switch (activeSection) {
       case 'plantas':
-        return <GestionPlantas empresaId={userData?.empresa_id} />;
+        return <GestionPlantas empresaId={userData?.empresa?.id} />;
       case 'departamentos':
         return <GestionDepartamentos />;
       case 'puestos':
         return <GestionPuestos />;
-      case 'estructura':
-        return <GestionEstructura />;
+      case 'usuarios-planta':
+        return <UsuariosPlanta />;
       case 'empleados':
         return <EmpleadosCRUD userData={userData} />;
       case 'evaluaciones':
-        return <AsignacionEvaluacionesDashboard empresaId={userData?.empresa_id} />;
+        return <AsignacionEvaluacionesDashboard empresaId={userData?.empresa?.id} />;
       case 'reportes':
         return (
           <div className="coming-soon">
@@ -158,8 +158,8 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                 <span className="avatar-icon">🏢</span>
               </div>
               <div className="empresa-details">
-                <span className="empresa-name">{userData?.nombre_empresa || 'Empresa'}</span>
-                <span className="empresa-user">({userData?.usuario})</span>
+                <span className="empresa-name">{userData?.empresa?.nombre || 'Empresa'}</span>
+                <span className="empresa-user">({userData?.username})</span>
               </div>
             </div>
           </div>
