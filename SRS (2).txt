@@ -1,0 +1,321 @@
+
+
+
+
+Contreras Ríos, Yael Alejandro
+Díaz Cervantes, Amieva Ángel
+Díaz Rios, Fernanda
+García Valenzuela, Ernesto
+Rubio Zuñiga, Edgar Misael
+
+– Especificación de Requerimientos de Software: IEEE 830 –Sistema de Cumplimiento Normativo y Bienestar Laboral (Axyoma)
+
+Julio de 2025
+
+CONTENIDO
+
+1	INTRODUCCIÓN	4
+1.1	Propósito	4
+1.2	Alcance	4
+1.3	Definiciones	5
+1.4	Referencias	5
+1.5	Resumen	6
+2	DESCRIPCIÓN GENERAL	6
+2.1	Perspectiva del producto	6
+2.2	Funcionalidad del producto	6
+2.3	Características de los usuarios	8
+2.4	Restricciones	9
+2.4.1	Conectividad	9
+2.4.2	Evaluaciones	9
+2.4.3	Seguridad	9
+2.4.4	Limitaciones	9
+2.5	Suposiciones y dependencias	10
+2.6	Evolución previsible del sistema	10
+2.7	Modelo relacional de la BD	11
+3	REQUERIMIENTOS ESPECÍFICOS	12
+3.1	Requerimientos comunes de las interfaces	12
+3.1.1	Interfaces de usuario	12
+3.1.2	Interfaces de software	13
+3.1.3	Interfaces de comunicación	13
+3.2	Requerimientos funcionales	13
+3.2.1	RF-001: Gestión de suscripciones	13
+3.2.2	RF-002: Registro y gestión de empresas	14
+3.2.3	RF-003: Gestión de plan de suscripción	14
+3.2.4	RF-004: Gestión de plantas	15
+3.2.5	RF-005: Gestión de usuarios	15
+3.2.6	RF-006: Gestión de estructura organizacional	16
+3.2.7	RF-007: Gestión de evaluaciones	16
+3.2.8	RF-008: Creación de evaluaciones internas	17
+3.2.9	RF-009: Asignación y distribución de encuestas	17
+3.2.10	RF-010: Generación de tokens para acceso a encuestas	18
+3.2.11	RF-011: Acceso a evaluaciones	18
+3.2.12	RF-012: Registro de respuestas	19
+3.2.13	RF-013: Visualización y análisis de resultados	19
+3.2.14	RF-014: Respaldo y restauración de datos	20
+3.3	Requerimientos no funcionales	20
+3.3.1	RNF-001: Rendimiento	20
+3.3.2	RNF-002: Seguridad	21
+3.3.3	RNF-003: Fiabilidad	21
+3.3.4	RNF-004: Disponibilidad	22
+3.3.5	RNF-005: Mantenibilidad	22
+3.3.6	RNF-006: Portabilidad	23
+3.3.7	RNF-007: Usabilidad	23
+4	APÉNDICES	24
+4.1	Filosofía organizacional	24
+4.1.1	Misión	24
+4.1.2	Visión	24
+4.1.3	Valores	24
+4.1.4	Objetivos estratégicos	25
+4.2	Normativas	25
+4.2.1	NOM-035-STPS-2018	25
+5	REVISIONES	27
+5.1	Versionado del documento	27
+5.2	Acuerdo de conformidad	28
+
+
+
+1 INTRODUCCIÓN
+
+1.1 Propósito
+   El presente documento tiene como principal propósito especificar de manera detallada los requisitos para el desarrollo del Sistema de Cumplimiento Normativo y Bienestar Laboral. Dicha especificación ha sido estructurada basándose en las directrices dadas por el estándar IEEE Práctica Recomendada para Especificaciones de Requisitos de Software: IEEE 830, 1998.
+   Este SRS servirá como una guía fundamental para el diseño, desarrollo, pruebas e implementación del sistema, asegurando que el producto final satisfaga las necesidades y expectativas de las empresas clientes, así como los objetivos definidos para dicho sistema. Define las funcionalidades, el rendimiento, las interfaces y las restricciones que el software debe cumplir.
+
+1.2 Alcance
+   El sistema, el cual será conocido como Axyoma, proveerá una plataforma web que permitirá a las empresas realizar y gestionar distintas evaluaciones a sus empleados. El alcance del sistema comprende:
+   Gestión de Evaluaciones:
+* Suministro y aplicación de evaluaciones normativas predefinidas (como la NOM-035).
+* Creación y aplicación de evaluaciones internas personalizadas por parte de las empresas cliente.
+* Suministro y aplicación de evaluaciones 360 predefinidas.
+   Gestión de Usuarios y Organizaciones:
+* Registro y administración de empresas cliente, incluyendo la configuración de plantas, departamentos y puestos.
+* Gestión de diferentes niveles de usuario, con roles y permisos específicos para cada uno.
+   Generación de Certificados:
+* Emisión automática de certificados para los empleados al completar una evaluación.
+   Modelo de Suscripción:
+* Implementación de un sistema de suscripción única para que las empresas clientes tengan acceso al uso completo de la plataforma.
+   El sistema se enfocará en la eficiencia en la administración de evaluaciones, la seguridad de los datos de los usuarios y las empresas, y el cumplimiento de las normativas aplicables. Queda fuera del alcance de este documento la definición de hardware específico o la infraestructura de red del cliente.
+
+1.3 Definiciones
+* SRS: Software Requirements Specification (Especificación de Requisitos de Software).
+* Axyoma: Nombre de la plataforma software que constituye el Sistema de Cumplimiento Normativo y Bienestar Laboral.
+* NOM-035: Norma Oficial Mexicana 035, que establece los elementos para identificar, analizar y prevenir los factores de riesgo psicosocial en los centros de trabajo.
+* Dashboard: Interfaz gráfica de usuario que presenta de forma consolidada y visual, métricas e información clave para el monitoreo y la toma de decisiones.
+* SaaS: Software as a Service (Software como Servicio).
+* SuperAdmin: Usuario responsable de la gestión y actualización de las normativas de la plataforma, así como de la gestión de esta misma.
+* AdminEmpresa: Nivel de usuario de la empresa cliente con privilegios para registrar y gestionar datos relacionados a su empresa.
+* AdminPlanta: Nivel de usuario de la empresa cliente con privilegios para administrar una planta específica, aplicar evaluaciones y gestionar los datos de la planta que administra.
+* Empleado: Nivel de usuario cuya función principal es contestar las evaluaciones asignadas.
+* BD: Conjunto organizado de información que se guarda y gestiona en un sistema para facilitar su acceso y uso (base de datos).
+* Framework: Conjunto de herramientas y componentes reutilizables que proveen una estructura base para el desarrollo de software.
+* RRHH: Área encargado de la gestión del personal dentro de una organización, incluyendo administración de empleados (Recursos Humanos).
+
+1.4 Referencias
+* IEEE Std 830-1998, IEEE Recommended Practice for Software Requirements Specifications.
+* Secretaría del Trabajo y Previsión Social (STPS), “Guía de Referencia II de la NOM-035-STPS-2018”, México, 2019. Disponible en: https://asinom.stps.gob.mx/upload/nom/48.pdf/
+
+1.5 Resumen
+   Este documento se estructura en tres secciones clave. La primera sección presenta una introducción al proyecto y ofrece una visión general de la especificación de requisitos para el Sistema de Cumplimiento Normativo y Bienestar Laboral. La segunda sección describe el sistema a un nivel general, delineando sus funciones principales, los datos involucrados, y los factores, restricciones, supuestos y dependencias que influirán en su desarrollo, sin entrar en detalles exhaustivos. Finalmente, la tercera sección define de manera detallada todos los requisitos que el sistema debe satisfacer para su correcta implementación.
+
+2 DESCRIPCIÓN GENERAL
+
+2.1 Perspectiva del producto
+   El Sistema de Cumplimiento Normativo y Bienestar Laboral (Axyoma), es un producto independiente que operará como una solución de SaaS (Software como Servicio). Dicho sistema no forma parte de una familia de productos más grande ni es un componente de un sistema mayor preexistente. Su objetivo principal es centralizar y simplificar la gestión de evaluaciones para el cumplimiento normativo y el bienestar laboral dentro de las empresas. El sistema será accesible a través de navegadores web estándar, eliminando la necesidad de instalación de software en el lado del cliente.
+
+2.2 Funcionalidad del producto
+   Axyoma ofrece un conjunto de funcionalidades organizadas para guiar a las empresas desde el registro hasta la toma de decisiones estratégicas basadas en los resultados de las evaluaciones, todo esto basado en un sistema de roles de usuarios que separa una de las funcionalidades.
+SUPERADMIN* Gestionar los modelos de suscripción, incluyendo tanto los detalles como los precios.
+* Gestionar el estado de cada suscripción de las empresas cliente.
+* Gestionar completamente las evaluaciones normativas, incluyendo la creación, edición, activación/desactivación de estas mismas. Dicha gestión contempla la lógica de la evaluación, es decir, preguntas y respuestas. (Téngase en cuenta que las evaluaciones normativas serán ofrecidas a cada una de las empresas cliente.)ADMINEMPRESA* Registrar la organización en la plataforma, creando una cuenta de AdminEmpresa.
+* Editar la información de perfil de la empresa registrada.
+* Suscribirse a un plan estándar para obtener acceso completo a las funcionalidades.
+* Registrar, modificar o eliminar diferentes plantas o sucursales de la empresa.
+* Crear, editar y eliminar usuarios con rol AdminPlanta.
+* Asignar una o múltiples plantas específicas a los AdminPlanta.
+* Crear evaluaciones internas personalizadas, accesibles solo para su empresa.
+* Visualizar y analizar resultados de evaluaciones en dashboards interactivos.
+* Acceder a dashboards de resultados y gestión organizacional.ADMINPLANTA* Gestionar datos como departamentos, puestos y empleados pertenecientes a su planta específica.
+* Crear evaluaciones internas personalizadas, accesibles solo para su empresa.
+* Asignar evaluaciones a empleados individuales o a grupos de empleados definidos por planta, departamento o puesto; esto manteniendo el rango de planta o plantas que este administra.
+* Gestionar los tokens de acceso a las evaluaciones generados por cada asignación.
+* Consultar los certificados de finalización de evaluaciones de los empleados para su seguimiento.
+* Visualizar y analizar resultados de evaluaciones en dashboards interactivos para la identificación de tendencias y áreas de oportunidad.
+* Acceder a funcionalidades específicas de la planta que administra.EMPLEADO* Acceder a evaluaciones asignadas por un AdminPlanta, por medio del token proporcionado.
+* Completar las evaluaciones asignadas, siendo sus respuestas registradas por el sistema.
+* Descargar certificados de finalización de una evaluación tras completar una de estas.
+
+
+2.3 Características de los usuarios
+   El sistema está diseñado para ser utilizado por cuatro tipos principales de usuarios, cada uno con características y necesidades distintas:
+SuperAdminPerfilPersonal técnico o de gestión de la plataforma Axyoma.HabilidadesConocimientos técnicos avanzados y comprensión completa de normativas oficiales.NecesidadesGestión de evaluaciones normativas y gestión del sistema.
+AdminEmpresaPerfilGerentes de RRHH, directores o personal administrativo clave de las empresas clientes.HabilidadesCompetencia en el uso de aplicaciones web, familiaridad con la estructura organizacional de su empresa y con los procesos de gestión de personal.NecesidadesHerramientas completas para configurar su organización, gestionar empleados, crear evaluaciones personalizadas y obtener una visión estratégica de los resultados a nivel de empresa.
+AdminPlantaPerfilSupervisores, jefes de departamento o personal de RRHH a nivel de planta o sucursal.HabilidadesUso básico/intermedio de aplicaciones web, conocimiento de los empleados y la estructura de su planta.NecesidadesFuncionalidades para administrar su ámbito específico (una o varias plantas), asignar evaluaciones y revisar resultados relevantes.
+EmpleadoPerfilCualquier empleado de las empresas clientes que deba completar una evaluación.HabilidadesHabilidades básicas de navegación web.NecesidadesInterfaz simple y clara para acceder, completar y enviar evaluaciones de manera eficiente, además de descargar sus certificados al completar dichas evaluaciones.
+
+2.4 Restricciones
+
+2.4.1 Conectividad
+* El sistema depende críticamente de una conexión a internet estable y continua para que las empresas y sus empleados puedan acceder a la plataforma, completar evaluaciones y ver resultados. La falta de conectividad puede impedir el acceso a funcionalidades clave.
+* La API que facilita la comunicación entre la BD y las interfaces de usuario debe ser capaz de manejar volúmenes de tráfico de datos esperados sin degradación en el rendimiento, asegurando una experiencia de usuario fluida y la disponibilidad de los datos.
+2.4.2 Evaluaciones
+* Las evaluaciones normativas deben adherirse estrictamente a las especificaciones y requisitos de las normas oficiales.
+* Las evaluaciones normativas deben ser gestionadas únicamente por los administradores de la plataforma (SuperAdmin), teniendo completa seguridad de los conocimientos de este tipo de usuarios, definidos en Características de los Usuarios.
+* Las evaluaciones internas serán accesibles únicamente para las empresas que las hayan creado. La gestión de estas mismas serán responsabilidad de las empresas cliente.
+2.4.3 Seguridad
+* Autenticación segura para todos los niveles de usuario, así como autorización estricta basada en roles para controlar el acceso a las funcionalidades y datos.
+2.4.4 Limitaciones
+* El sistema no realizará una verificación presencial o auditoría a las empresas para verificar las respuestas de los empleados más allá de las validaciones internas de consistencia y completitud. La veracidad de la información es responsabilidad de la empresa usuaria y los empleados encuestados.
+* El sistema no ofrecerá asesoría psicológica o legal individualizada basada en los resultados de las encuestas. Su función es proporcionar datos agregados y análisis para la toma de decisiones estratégicas por parte de la empresa.
+* No se ofrece un sistema de gestión de RRHH, solamente una plataforma para la correcta aplicación de evaluaciones dentro de una empresa. 
+
+2.5 Suposiciones y dependencias
+* Infraestructura: El backend del sistema, incluyendo el almacenamiento y procesamiento de datos, depende de una buena infraestructura. Cualquier interrupción o problema con los servidores puede afectar la disponibilidad y el rendimiento de Axyoma.
+* Confiabilidad de los datos de entrada: Se asume que las empresas proporcionarán información de registro y de plantas precisa y veraz. De igual manera, se asume que los empleados responderán a las encuestas con honestidad y objetividad. La calidad de los reportes y análisis depende directamente de la calidad de los datos de entrada.
+* Conocimiento del usuario: Se asume que los administradores de empresa tendrán un conocimiento básico sobre sus estructuras organizacionales y comprenderán la importancia del bienestar laboral para utilizar eficazmente las herramientas de Axyoma.
+* Conectividad a Internet: Tanto el acceso de los usuarios a la plataforma como la operación de los servicios dependen de una conexión a internet estable.
+
+2.6 Evolución previsible del sistema
+* Integración con sistemas de RRHH: Explorar la integración con sistemas de gestión de recursos humanos o plataformas de nómina existentes para automatizar la gestión de usuarios y la asignación de evaluaciones.
+* Módulos de capacitación y recursos: Incorporar módulos que ofrezcan acceso a recursos, webinars o material de capacitación relacionado con las áreas de mejora identificadas en las evaluaciones.
+* Ampliación de evaluaciones normativas: Expandir el catálogo de evaluaciones normativas brindadas a las empresas cliente para cubrir un espectro más amplio de aspectos del bienestar laboral, así como adaptarse a nuevas regulaciones o estándares internacionales.
+
+2.7 Modelo relacional de la BD
+
+
+
+
+3 REQUERIMIENTOS ESPECÍFICOS
+
+3.1 Requerimientos comunes de las interfaces
+   El sistema Axyoma contará con interfaces de usuario diferenciadas según el rol del usuario.
+3.1.1 Interfaces de usuario
+Interfaz de SuperAdmin: Panel de administración para la gestión de normativas y la administración general de la plataforma.
+* Tras iniciar sesión, se le mostrará un panel de control con opciones para crear, modificar y eliminar modelos de suscripción, visualizar y gestionar el estado de suscripción de las empresas cliente, y gestionar evaluaciones normativas.
+Interfaz de AdminEmpresa: Panel de administración para la gestión de empresa, así como la gestión de evaluaciones internas y el acceso a dashboards de resultados y gestión organizacional.
+* Tras iniciar sesión, se le presentará un dashboard con una visión estratégica de los resultados de las evaluaciones obtenidos en cada una de sus plantas, además de opciones para configurar su organización, gestionar empleados, crear evaluaciones personalizadas, registrar, modificar o eliminar plantas y sucursales, y crear, editar y eliminar AdminPlanta.
+Interfaz de AdminPlanta: Panel de administración con acceso a funcionalidades específicas de la planta que administra, como la asignación de evaluaciones, gestión de empleados y acceso a dashboards relevantes.
+* Tras iniciar sesión, se le mostrará un dashboard con resultados relevantes para cada una de las plantas que este administre; así como un apartado para gestionar los datos de dichas plantas, pudiendo registrar, modificar y eliminar departamentos, puestos y perfiles de empleados dentro de su ámbito de planta, asignar evaluaciones a empleados, y visualizar los tokens de acceso generados y certificados de evaluaciones completadas.
+Interfaz de Empleado: Portal simplificado para acceder y contestar las evaluaciones asignadas, así como para descargar los certificados generados.
+* Se presentará una interfaz simple y clara para acceder, completar y enviar evaluaciones de manera eficiente mediante el token de acceso único, y una opción para descargar sus certificados de cumplimiento o participación una vez finalizada una evaluación.
+3.1.2 Interfaces de software
+* Comunicación (BD y API): El sistema estará conectado con un sistema de gestión de base de datos para el almacenamiento y recuperación de toda la información, todo esto a través de una API robusta y segura para la comunicación entre los diferentes módulos del sistema.
+* Frameworks y Librerías de Desarrollo: El sistema será desarrollado utilizando el framework Django (basado en Python), que proporcionará tanto el backend como el manejo del frontend.
+
+3.1.3 Interfaces de comunicación
+   Las comunicaciones dentro del sistema Axyoma deben:
+* Utilizar protocolos de comunicación seguros y eficientes, como HTTP/HTTPS, para todas las interacciones entre los usuarios (empresas y empleados) y los servidores de la plataforma, garantizando la integridad de los datos.
+* Incluir mecanismos de autenticación y autorización robustos para asegurar que únicamente los usuarios y administradores autorizados puedan acceder a la plataforma y a la información relevante según sus roles y permisos asignados.
+
+3.2 Requerimientos funcionales
+
+3.2.1 RF-001: Gestión de suscripciones
+ID001Complejidad2DescripciónEl sistema debe permitir a los usuarios con rol SuperAdmin crear, modificar y eliminar los diferentes modelos de suscripción ofrecidos a las empresas clientes, incluyendo detalles del plan y precios. Además, debe permitir visualizar y gestionar el estado de la suscripción de cada empresa cliente.TipoFuncionalPrioridadMediaEstadoPendienteFecha de creación12/06/2025
+3.2.2 RF-002: Registro y gestión de empresas
+ID002Complejidad3DescripciónEl sistema debe permitir a las nuevas empresas cliente registrar su organización en la plataforma, creando una cuenta de nivel AdminEmpresa, proporcionando la información básica requerida. Además, ha de permitir editar la información de perfil de la empresa registrada.TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+3.2.3 RF-003: Gestión de plan de suscripción
+ID003Complejidad2DescripciónLa plataforma debe permitir que las empresas se suscriban a un único plan estándar, el cual otorga acceso completo a las funcionalidades del sistema (registro de plantas, asignación de evaluaciones, visualización de resultados, etc.). Solo las empresas con suscripción activa podrán utilizar la plataforma.TipoFuncionalPrioridadMediaEstadoPendienteFecha de creación03/06/2025
+
+
+3.2.4 RF-004: Gestión de plantas
+ID004Complejidad1DescripciónEl sistema debe permitir al AdminEmpresa crear nuevas plantas o sucursales para su empresa, modificar los datos de las plantas existentes, y eliminar plantas, asegurando la integridad de los datos asociados (empleados, evaluaciones).TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+3.2.5 RF-005: Gestión de usuarios
+ID005Complejidad1DescripciónEl sistema debe permitir al AdminEmpresa crear, editar y eliminar usuarios con rol AdminPlanta, y asignarles una o múltiples plantas específicas para su administración, controlando su acceso a nivel de planta.TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+
+
+3.2.6 RF-006: Gestión de estructura organizacional 
+ID006Complejidad2DescripciónEl sistema debe permitir a los AdminPlanta registrar, modificar y eliminar departamentos, puestos y perfiles de empleados, pero solo dentro del ámbito de las plantas que tienen asignadas.TipoFuncionalPrioridadMediaEstadoPendienteFecha de creación03/06/2025
+3.2.7 RF-007: Gestión de evaluaciones
+ID007Complejidad1DescripciónEl sistema debe proveer una interfaz para que el SuperAdmin pueda crear, editar, activar y desactivar evaluaciones normativas y evaluaciones 360 predefinidas, incluyendo la gestión de preguntas, tipos de respuesta y lógica de calificación. Estas evaluaciones normativas no serán modificables por las empresas clientes.TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación18/06/2025
+
+
+3.2.8 RF-008: Creación de evaluaciones internas
+ID008Complejidad1DescripciónEl sistema debe permitir a los AdminEmpresa y AdminPlanta diseñar y crear evaluaciones internas personalizadas. Dichas evaluaciones internas serán accesibles únicamente para las empresas que las hayan creado.TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación18/06/2025
+3.2.9 RF-009: Asignación y distribución de encuestas
+ID009Complejidad2DescripciónEl sistema debe permitir a los AdminPlanta asignar cualquier tipo de evaluación (normativa, interna, 360) a empleados de forma individual o a grupos de empleados definidos por planta, departamento o puesto.TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+
+
+3.2.10 RF-010: Generación de tokens para acceso a encuestas
+ID010Complejidad2DescripciónPor cada asignación de evaluación a un empleado, el sistema debe generar un token de acceso único y seguro, el cual servirá como credencial para que el empleado acceda a la evaluación sin necesidad de un inicio de sesión tradicional. El AdminPlanta podrá visualizar y, si es necesario, cancelar estos tokens.TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+3.2.11 RF-011: Acceso a evaluaciones
+ID011Complejidad2DescripciónEl sistema debe permitir al Empleado acceder a una evaluación directamente a través del token de acceso único proporcionado, presentando una interfaz de usuario clara e intuitiva para que el Empleado conteste las evaluaciones.TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+
+
+3.2.12 RF-012: Registro de respuestas
+ID012Complejidad2DescripciónEl sistema debe registrar todas las respuestas una vez que un Empleado ha completado una evaluación. Tras ello, el sistema debe generar automáticamente un certificado de cumplimiento o participación, personalizado con los datos del Empleado y de la evaluación.TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+3.2.13 RF-013: Visualización y análisis de resultados
+ID013Complejidad2DescripciónEl sistema debe presentar a los AdminEmpresa y AdminPlanta dashboards interactivos con visualizaciones consolidadas de los resultados de las evaluaciones, facilitando la identificación de tendencias y áreas de oportunidad.TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+
+
+3.2.14 RF-014: Respaldo y restauración de datos
+ID014Complejidad1DescripciónEl sistema debe permitir a usuarios de nivel AdminEmpresa y AdminPlanta realizar respaldos y restauración de datos en su ámbito.TipoFuncionalPrioridadAltaEstadoPendienteFecha de creación24/06/2025
+
+3.3 Requerimientos no funcionales
+
+3.3.1 RNF-001: Rendimiento
+ID001Complejidad2DescripciónTodas las páginas y dashboards principales del sistema deben cargarse completamente de manera rápida, incluso con usuarios que cuentan con una conexión a internet estándar.TipoNo funcionalPrioridadMediaEstadoPendienteFecha de creación03/06/2025
+
+
+3.3.2 RNF-002: Seguridad
+ID002Complejidad1DescripciónEl sistema debe implementar un sistema de autenticación robusto en su API como un control de autorización basado en “llaves” para asegurar que solo los usuarios autorizados accedan a las funcionalidades y datos pertinentes.TipoNo funcionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+3.3.3 RNF-003: Fiabilidad
+ID003Complejidad1DescripciónEl sistema debe implementar un manejo de errores y registrar los eventos del sistema en un archivo centralizado para facilitar la depuración y el monitoreo.TipoNo funcionalPrioridadMediaEstadoPendienteFecha de creación03/06/2025
+
+
+3.3.4 RNF-004: Disponibilidad
+ID004Complejidad2DescripciónEl sistema debe estar disponible siempre, además de ser capaz de recuperarse de fallos y continuar operando sin pérdida de datos. Añadiendo además un sistema de respaldo de datos para cualquier inconveniente.TipoNo funcionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+3.3.5 RNF-005: Mantenibilidad
+ID005Complejidad2DescripciónEl código fuente del sistema debe estar estructurado de forma modular, con componentes bien definidos y acoplamiento bajo, para facilitar el mantenimiento, la adición de nuevas funcionalidades y la corrección de errores.TipoNo funcionalPrioridadMediaEstadoPendienteFecha de creación03/06/2025
+
+
+3.3.6 RNF-006: Portabilidad
+ID006Complejidad4DescripciónLa aplicación web debe ser funcional y visualmente consistente en las últimas versiones de los principales navegadores más estables.TipoNo funcionalPrioridadMediaEstadoPendienteFecha de creación03/06/2025
+3.3.7 RNF-007: Usabilidad
+ID007Complejidad2DescripciónLa interfaz de usuario debe ser intuitiva, permitiendo a los usuarios (tanto administradores de empresa como empleados) completar sus tareas principales con una mínima necesidad de entrenamiento o consulta de documentación.TipoNo funcionalPrioridadAltaEstadoPendienteFecha de creación03/06/2025
+
+
+4 APÉNDICES
+
+4.1 Filosofía organizacional
+
+4.1.1 Misión
+   Brindar a las empresas una herramienta confiable y basada en datos reales que les permita
+evaluar y mejorar su entorno laboral desde la perspectiva de sus empleados, fomentando el
+cumplimiento normativo, la transparencia y el bienestar organizacional.
+
+4.1.2 Visión
+   Consolidarnos como una solución confiable para pequeñas y medianas empresas que
+buscan mejorar su clima laboral y transparencia interna, ofreciendo herramientas simples,
+útiles y centradas en la experiencia de los trabajadores.
+
+4.1.3 Valores
+* Compromiso con el bienestar laboral: Nuestro enfoque se centra en mejorar las condiciones laborales mediante la escucha activa y el análisis de la voz de los trabajadores.
+* Confidencialidad: Protegemos los datos de empresas y empleados, garantizando un entorno seguro para la retroalimentación honesta.
+* Innovación social: Apostamos por soluciones tecnológicas que generan un impacto positivo en la cultura organizacional y la sociedad en general.
+* Empoderamiento empresarial: Ayudamos a las empresas a tomar decisiones informadas y a construir entornos más saludables, productivos y humanos.
+* Mejora continua: Actualizamos constantemente nuestras herramientas de evaluación, alineándolas con los estándares vigentes para asegurar resultados confiables y de alta calidad.
+
+4.1.4 Objetivos estratégicos
+* Desarrollar una herramienta digital confiable que permita a las pequeñas, medianas empresas evaluar normas laborales y aspectos del entorno organizacional desde la perspectiva de sus trabajadores.
+* Contribuir al cumplimiento normativo y al bienestar laboral en las PYMEs mediante la digitalización de evaluaciones oficiales (como NOM-035, NOM-030 y evaluacion 360).
+* Validar el funcionamiento de la plataforma mediante pruebas controladas y retroalimentación directa de los usuarios, para asegurar su utilidad práctica en la recolección de datos.
+* Establecer las bases para la evolución y sostenibilidad futura de Axyoma, incorporando retroalimentación, actualizaciones normativas y posibles integraciones con nuevas funciones.
+
+4.2 Normativas
+   A continuación, se presentan las principales normativas oficiales mexicanas investigadas para el desarrollo de las funcionalidades del Sistema de Cumplimiento Normativo y Bienestar Laboral.
+
+4.2.1 NOM-035-STPS-2018
+Las cualidades de evaluación de esta norma, así como toda la información relacionada a esta misma fue consultada en el sitio oficial de Normas Oficiales Mexicanas de Seguridad y Salud en el Trabajo.
+
+
+
+5 REVISIONES
+
+5.1 Versionado del documento
+VERSIÓNFECHACOMENTARIOS1.003 de Junio de 2025Propuesta inicial de requerimientos.1.112 de Junio de 2025Modificación de funcionalidades, anexando el primer modelo de la base de datos.1.216 de Junio de 2025Reenfoque del sistema entorno a normativas oficiales.1.323 de Junio de 2025Cambio completo al modelo de la base de datos.1.424 de Junio de 2025Estructuración final de requerimientos y funcionalidades.1.526 de Junio de 2025Reestructuración de secciones del documento1.5.127 de Junio de 2025Aprobación de uno de los clientes.1.5.230 de Junio de 2025Aprobación de dos de los clientes.
+
+
+5.2 Acuerdo de conformidad
+
+EQUIPO DE DESARROLLOContreras Ríos, Yael AlejandroDíaz Cervantes, Amieva ÁngelDiaz Rios, FernandaGarcía Valenzuela, ErnestoRubio Zuñiga, Edgar MisaelCLIENTESM.C.A. Laura Trejo MedinaDr. Ray Brunett Parra GalavizM.C. Resffa Elizabeth Fierro GarcíaM.T.I. Juan Carlos Rico Reséndiz
+
+
+
