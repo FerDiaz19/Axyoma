@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   getEmpleados, 
   createEmpleado, 
@@ -6,216 +6,141 @@ import {
   deleteEmpleado,
   getPlantas,
   getDepartamentos,
-  getPuestos 
+  getPuestos,
+  Empleado, 
+  EmpleadoCreate,
+  Planta,
+  Departamento,
+  Puesto
 } from '../services/empleadoService';
-import '../css/EmpleadosCRUD.css';
-
-interface Empleado {
-  empleado_id?: number;
-  nombre: string;
-  apellido_paterno: string;
-  apellido_materno?: string;
-  genero: 'Masculino' | 'Femenino';
-  antiguedad?: number;
-  status?: boolean;
-  puesto: number;
-  departamento: number;
-  planta: number;
-}
-
-interface Planta {
-  planta_id: number;
-  nombre: string;
-}
-
-interface Departamento {
-  departamento_id: number;
-  nombre: string;
-  planta_id: number; // El backend devuelve planta_id, no planta
-  planta_nombre?: string;
-}
-
-interface Puesto {
-  puesto_id: number;
-  nombre: string;
-  departamento_id: number; // Cambiado para coincidir con el backend
-}
 
 interface EmpleadosCRUDProps {
-  userData?: any; // Para filtrar por planta cuando es Admin Planta
+  userLevel?: string;
+  empresaId?: number;
+  plantaId?: number;
+  userData?: any; // Agregamos userData para mantener compatibilidad con otros componentes
 }
 
-const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
+const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userLevel, empresaId, plantaId, userData }) => {
+  // Estados principales
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  
+  // Estados para formularios
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [selectedEmpleado, setSelectedEmpleado] = useState<Empleado | null>(null);
+  
+  // Estados para estructura organizacional
   const [plantas, setPlantas] = useState<Planta[]>([]);
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [puestos, setPuestos] = useState<Puesto[]>([]);
   
-  // Estados para filtros
-  const [filtroNombre, setFiltroNombre] = useState('');
-  const [filtroDepartamento, setFiltroDepartamento] = useState('');
-  const [filtroPuesto, setFiltroPuesto] = useState('');
-  const [empleadosFiltrados, setEmpleadosFiltrados] = useState<Empleado[]>([]);
+  // Estados para filtros en formularios
+  const [selectedPlantaFilter, setSelectedPlantaFilter] = useState<number | ''>('');
+  const [selectedDepartamentoFilter, setSelectedDepartamentoFilter] = useState<number | ''>('');
   
-  const [formData, setFormData] = useState<Empleado>({
+  // Estados para el formulario
+  const [formData, setFormData] = useState<EmpleadoCreate>({
     nombre: '',
     apellido_paterno: '',
     apellido_materno: '',
-    genero: 'Masculino',
-    antiguedad: 0,
-    puesto: 0,
-    departamento: 0,
-    planta: 0
+    email: '',
+    telefono: '',
+    fecha_ingreso: '',
+    puesto: 0
   });
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
 
-  const loadData = useCallback(async () => {
-    try {
-      const [empleadosData, plantasData, departamentosData, puestosData] = await Promise.all([
-        getEmpleados(),
-        getPlantas(),
-        getDepartamentos(),
-        getPuestos()
-      ]);
-      
-      // Si es Admin Planta, filtrar solo datos de su planta asignada
-      if (userData?.tipo_dashboard === 'admin-planta' && userData?.planta_id) {
-        const empleadosDePlanta = empleadosData.filter(emp => emp.planta === userData.planta_id);
-        const departamentosDePlanta = departamentosData.filter(dept => dept.planta_id === userData.planta_id);
-        const puestosDePlanta = puestosData.filter(puesto => 
-          departamentosDePlanta.some(dept => dept.departamento_id === puesto.departamento_id)
-        );
-        
-        setEmpleados(empleadosDePlanta);
-        setPlantas([{ planta_id: userData.planta_id, nombre: userData.nombre_planta }]);
-        setDepartamentos(departamentosDePlanta);
-        setPuestos(puestosDePlanta);
-        
-        // Pre-seleccionar la planta para nuevos empleados
-        setFormData(prev => ({ ...prev, planta: userData.planta_id }));
-      } else {
-        // Admin Empresa puede ver todos los datos de su empresa
-        setEmpleados(empleadosData);
-        setPlantas(plantasData);
-        setDepartamentos(departamentosData);
-        setPuestos(puestosData);
-      }
-    } catch (err: any) {
-      console.error('Error cargando datos:', err);
-      setError('Error al cargar datos');
-    }
-  }, [userData]);
-
+  // Cargar datos iniciales
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    loadEmpleados();
+    loadPlantas();
+  }, []);
 
-  useEffect(() => {
-    // Filtrar empleados cuando cambian los filtros o empleados
-    let filtrados = empleados;
-    
-    if (filtroNombre.trim()) {
-      filtrados = filtrados.filter(empleado =>
-        empleado.nombre.toLowerCase().includes(filtroNombre.toLowerCase()) ||
-        empleado.apellido_paterno.toLowerCase().includes(filtroNombre.toLowerCase()) ||
-        (empleado.apellido_materno && empleado.apellido_materno.toLowerCase().includes(filtroNombre.toLowerCase()))
-      );
-    }
-    
-    if (filtroDepartamento) {
-      filtrados = filtrados.filter(empleado => 
-        empleado.departamento === parseInt(filtroDepartamento)
-      );
-    }
-    
-    if (filtroPuesto) {
-      filtrados = filtrados.filter(empleado => 
-        empleado.puesto === parseInt(filtroPuesto)
-      );
-    }
-    
-    setEmpleadosFiltrados(filtrados);
-  }, [empleados, filtroNombre, filtroDepartamento, filtroPuesto]);
-
-  const filteredDepartamentos = departamentos.filter(dept => dept.planta_id === formData.planta);
-  
-  const filteredPuestos = puestos.filter(puesto => puesto.departamento_id === formData.departamento);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    
-    // Reset dependent fields when parent changes
-    if (name === 'planta') {
-      setFormData({
-        ...formData,
-        planta: parseInt(value) || 0,
-        departamento: 0, // Reset departamento when planta changes
-        puesto: 0 // Reset puesto when planta changes
-      });
-    } else if (name === 'departamento') {
-      setFormData({
-        ...formData,
-        departamento: parseInt(value) || 0,
-        puesto: 0 // Reset puesto when departamento changes
-      });
-    } else if (name === 'puesto' || name === 'antiguedad') {
-      setFormData({
-        ...formData,
-        [name]: parseInt(value) || 0
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value
-      });
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
+  const loadEmpleados = async () => {
     try {
-      if (editingId) {
-        await updateEmpleado(editingId, formData);
-      } else {
-        await createEmpleado(formData);
-      }
-      await loadData();
-      resetForm();
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al guardar empleado');
+      setLoading(true);
+      setError(null);
+      const data = await getEmpleados();
+      setEmpleados(data);
+    } catch (error: any) {
+      console.error('Error loading empleados:', error);
+      setError('Error al cargar empleados: ' + (error.message || 'Error desconocido'));
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (empleado: Empleado) => {
-    setFormData(empleado);
-    setEditingId(empleado.empleado_id || null);
-    setShowForm(true);
+  const loadPlantas = async () => {
+    try {
+      const data = await getPlantas();
+      setPlantas(data);
+    } catch (error: any) {
+      console.error('Error loading plantas:', error);
+      setError('Error al cargar plantas: ' + (error.message || 'Error desconocido'));
+    }
   };
 
-  const handleDelete = async (id: number) => {
-    const empleado = empleados.find(emp => emp.empleado_id === id);
-    const nombreCompleto = empleado ? `${empleado.nombre} ${empleado.apellido_paterno} ${empleado.apellido_materno || ''}`.trim() : 'este empleado';
-    
-    const confirmMessage = `¿Está seguro de eliminar al empleado "${nombreCompleto}"?\n\nEsta acción NO se puede deshacer.`;
-    
-    if (window.confirm(confirmMessage)) {
-      try {
-        await deleteEmpleado(id);
-        await loadData();
-        alert('Empleado eliminado exitosamente');
-      } catch (err: any) {
-        setError('Error al eliminar empleado');
-        alert('Error al eliminar el empleado');
-      }
+  const loadDepartamentos = async (plantaId: number) => {
+    try {
+      const data = await getDepartamentos();
+      // Filtrar departamentos por planta
+      const departamentosFiltrados = data.filter((dept: Departamento) => dept.planta === plantaId);
+      setDepartamentos(departamentosFiltrados);
+      
+      // Reset departamento y puesto seleccionados
+      setSelectedDepartamentoFilter('');
+      setPuestos([]);
+      setFormData(prev => ({ ...prev, puesto: 0 }));
+    } catch (error: any) {
+      console.error('Error loading departamentos:', error);
+      setError('Error al cargar departamentos: ' + (error.message || 'Error desconocido'));
     }
+  };
+
+  const loadPuestos = async (departamentoId: number) => {
+    try {
+      const data = await getPuestos();
+      // Filtrar puestos por departamento
+      const puestosFiltrados = data.filter((puesto: Puesto) => puesto.departamento === departamentoId);
+      setPuestos(puestosFiltrados);
+      
+      // Reset puesto seleccionado
+      setFormData(prev => ({ ...prev, puesto: 0 }));
+    } catch (error: any) {
+      console.error('Error loading puestos:', error);
+      setError('Error al cargar puestos: ' + (error.message || 'Error desconocido'));
+    }
+  };
+
+  const handlePlantaChange = (plantaId: number) => {
+    setSelectedPlantaFilter(plantaId);
+    if (plantaId) {
+      loadDepartamentos(plantaId);
+    } else {
+      setDepartamentos([]);
+      setPuestos([]);
+      setSelectedDepartamentoFilter('');
+    }
+  };
+
+  const handleDepartamentoChange = (departamentoId: number) => {
+    setSelectedDepartamentoFilter(departamentoId);
+    if (departamentoId) {
+      loadPuestos(departamentoId);
+    } else {
+      setPuestos([]);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: name === 'puesto' ? parseInt(value) || 0 : value
+    }));
   };
 
   const resetForm = () => {
@@ -223,289 +148,528 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
       nombre: '',
       apellido_paterno: '',
       apellido_materno: '',
-      genero: 'Masculino',
-      antiguedad: 0,
-      puesto: 0,
-      departamento: 0,
-      planta: 0
+      email: '',
+      telefono: '',
+      fecha_ingreso: '',
+      puesto: 0
     });
-    setEditingId(null);
-    setShowForm(false);
+    setSelectedPlantaFilter('');
+    setSelectedDepartamentoFilter('');
+    setDepartamentos([]);
+    setPuestos([]);
+    setError(null);
+    setSuccessMessage(null);
+  };
+
+  const handleCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.nombre.trim() || !formData.apellido_paterno.trim() || !formData.puesto) {
+      setError('Nombre, apellido paterno y puesto son campos obligatorios');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await createEmpleado(formData);
+      setSuccessMessage('Empleado creado exitosamente');
+      setShowCreateForm(false);
+      resetForm();
+      loadEmpleados();
+    } catch (error: any) {
+      console.error('Error creating empleado:', error);
+      setError('Error al crear empleado: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (empleado: Empleado) => {
+    setSelectedEmpleado(empleado);
+    setFormData({
+      nombre: empleado.nombre,
+      apellido_paterno: empleado.apellido_paterno,
+      apellido_materno: empleado.apellido_materno || '',
+      email: empleado.email || '',
+      telefono: empleado.telefono || '',
+      fecha_ingreso: '', // No disponible en la interfaz actual
+      puesto: empleado.puesto || 0
+    });
+    
+    // Para edición, no podemos cargar la estructura jerárquica automáticamente
+    // El usuario tendrá que seleccionar planta y departamento manualmente
+    setShowEditForm(true);
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!selectedEmpleado || !formData.nombre.trim() || !formData.apellido_paterno.trim() || !formData.puesto) {
+      setError('Nombre, apellido paterno y puesto son campos obligatorios');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await updateEmpleado(selectedEmpleado.empleado_id, formData);
+      setSuccessMessage('Empleado actualizado exitosamente');
+      setShowEditForm(false);
+      setSelectedEmpleado(null);
+      resetForm();
+      loadEmpleados();
+    } catch (error: any) {
+      console.error('Error updating empleado:', error);
+      setError('Error al actualizar empleado: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('¿Está seguro de que desea eliminar este empleado?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await deleteEmpleado(id);
+      setSuccessMessage('Empleado eliminado exitosamente');
+      loadEmpleados();
+    } catch (error: any) {
+      console.error('Error deleting empleado:', error);
+      setError('Error al eliminar empleado: ' + (error.message || 'Error desconocido'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearMessages = () => {
+    setError(null);
+    setSuccessMessage(null);
   };
 
   return (
     <div className="empleados-crud">
-      <h2>Gestión de Empleados</h2>
-      
-      {error && <div className="error-message">{error}</div>}
-      
-      {/* Filtros */}
-      <div className="filtros">
-        <div className="filtros-row">
-          <div className="filtro-group">
-            <label>Buscar por nombre:</label>
-            <input
-              type="text"
-              placeholder="Nombre o apellidos..."
-              value={filtroNombre}
-              onChange={(e) => setFiltroNombre(e.target.value)}
-              className="filtro-input"
-            />
-          </div>
-          
-          <div className="filtro-group">
-            <label>Departamento:</label>
-            <select
-              value={filtroDepartamento}
-              onChange={(e) => setFiltroDepartamento(e.target.value)}
-              className="filtro-select"
-            >
-              <option value="">Todos los departamentos</option>
-              {departamentos.map((dept) => (
-                <option key={dept.departamento_id} value={dept.departamento_id}>
-                  {dept.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="filtro-group">
-            <label>Puesto:</label>
-            <select
-              value={filtroPuesto}
-              onChange={(e) => setFiltroPuesto(e.target.value)}
-              className="filtro-select"
-            >
-              <option value="">Todos los puestos</option>
-              {puestos.map((puesto) => (
-                <option key={puesto.puesto_id} value={puesto.puesto_id}>
-                  {puesto.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-        
-        {(filtroNombre || filtroDepartamento || filtroPuesto) && (
-          <div className="filtros-info">
-            Mostrando {empleadosFiltrados.length} de {empleados.length} empleados
-            <button 
-              onClick={() => {
-                setFiltroNombre('');
-                setFiltroDepartamento('');
-                setFiltroPuesto('');
-              }}
-              className="btn-clear-filters"
-            >
-              Limpiar filtros
-            </button>
-          </div>
-        )}
-      </div>
-      
-      <div className="crud-actions">
+      <div className="header-section">
+        <h2>Gestión de Empleados</h2>
         <button 
-          onClick={() => setShowForm(!showForm)}
-          className="btn-primary"
+          onClick={() => {
+            setShowCreateForm(true);
+            clearMessages();
+          }}
+          className="btn btn-primary"
         >
-          {showForm ? 'Cancelar' : 'Agregar Empleado'}
+          Nuevo Empleado
         </button>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} className="empleado-form">
-          <h3>{editingId ? 'Editar Empleado' : 'Agregar Empleado'}</h3>
-          
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="nombre">Nombre:</label>
-              <input
-                type="text"
-                id="nombre"
-                name="nombre"
-                value={formData.nombre}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="apellido_paterno">Apellido Paterno:</label>
-              <input
-                type="text"
-                id="apellido_paterno"
-                name="apellido_paterno"
-                value={formData.apellido_paterno}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="apellido_materno">Apellido Materno:</label>
-              <input
-                type="text"
-                id="apellido_materno"
-                name="apellido_materno"
-                value={formData.apellido_materno || ''}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="genero">Género:</label>
-              <select
-                id="genero"
-                name="genero"
-                value={formData.genero}
-                onChange={handleChange}
-                required
-              >
-                <option value="Masculino">Masculino</option>
-                <option value="Femenino">Femenino</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="antiguedad">Antigüedad (años):</label>
-              <input
-                type="number"
-                id="antiguedad"
-                name="antiguedad"
-                value={formData.antiguedad || ''}
-                onChange={handleChange}
-                min="0"
-              />
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label htmlFor="planta">Planta:</label>
-              {userData?.tipo_dashboard === 'admin-planta' ? (
-                <input
-                  type="text"
-                  value={userData?.nombre_planta || 'Planta no asignada'}
-                  disabled
-                  className="readonly-input"
-                  title="Como Admin de Planta, solo puedes gestionar empleados de tu planta asignada"
-                />
-              ) : (
-                <select
-                  id="planta"
-                  name="planta"
-                  value={formData.planta || ''}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccionar planta</option>
-                  {plantas.map(planta => (
-                    <option key={planta.planta_id} value={planta.planta_id}>
-                      {planta.nombre}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="departamento">Departamento:</label>
-              <select
-                id="departamento"
-                name="departamento"
-                value={formData.departamento || ''}
-                onChange={handleChange}
-                required
-                disabled={!formData.planta}
-              >
-                <option value="">Seleccionar departamento</option>
-                {filteredDepartamentos.map(dept => (
-                  <option key={dept.departamento_id} value={dept.departamento_id}>
-                    {dept.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="puesto">Puesto:</label>
-              <select
-                id="puesto"
-                name="puesto"
-                value={formData.puesto || ''}
-                onChange={handleChange}
-                required
-                disabled={!formData.departamento}
-              >
-                <option value="">Seleccionar puesto</option>
-                {filteredPuestos.map(puesto => (
-                  <option key={puesto.puesto_id} value={puesto.puesto_id}>
-                    {puesto.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="form-actions">
-            <button type="submit" disabled={loading}>
-              {loading ? 'Guardando...' : editingId ? 'Actualizar' : 'Crear'}
-            </button>
-            <button type="button" onClick={resetForm}>
-              Cancelar
-            </button>
-          </div>
-        </form>
+      {/* Mensajes */}
+      {error && (
+        <div className="alert alert-error">
+          {error}
+          <button onClick={clearMessages} className="close-btn">×</button>
+        </div>
+      )}
+      
+      {successMessage && (
+        <div className="alert alert-success">
+          {successMessage}
+          <button onClick={clearMessages} className="close-btn">×</button>
+        </div>
       )}
 
-      <div className="empleados-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Apellidos</th>
-              <th>Género</th>
-              <th>Antigüedad</th>
-              <th>Planta</th>
-              <th>Departamento</th>
-              <th>Puesto</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {empleadosFiltrados.map(empleado => (
-              <tr key={empleado.empleado_id}>
-                <td>{empleado.nombre}</td>
-                <td>{`${empleado.apellido_paterno} ${empleado.apellido_materno || ''}`}</td>
-                <td>{empleado.genero}</td>
-                <td>{empleado.antiguedad || 0} años</td>
-                <td>{plantas.find(p => p.planta_id === empleado.planta)?.nombre || 'N/A'}</td>
-                <td>{departamentos.find(d => d.departamento_id === empleado.departamento)?.nombre || 'N/A'}</td>
-                <td>{puestos.find(p => p.puesto_id === empleado.puesto)?.nombre || 'N/A'}</td>
-                <td>
-                  <div className="action-buttons">
-                    <button 
-                      onClick={() => handleEdit(empleado)}
-                      className="btn-edit"
-                      title="Editar empleado"
+      {/* Formulario de Creación */}
+      {showCreateForm && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Crear Nuevo Empleado</h3>
+              <button 
+                onClick={() => {
+                  setShowCreateForm(false);
+                  resetForm();
+                }}
+                className="close-btn"
+              >×</button>
+            </div>
+            
+            <form onSubmit={handleCreate} className="empleado-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nombre *</label>
+                  <input
+                    type="text"
+                    name="nombre"
+                    value={formData.nombre}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Apellido Paterno *</label>
+                  <input
+                    type="text"
+                    name="apellido_paterno"
+                    value={formData.apellido_paterno}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Apellido Materno</label>
+                  <input
+                    type="text"
+                    name="apellido_materno"
+                    value={formData.apellido_materno}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Teléfono</label>
+                  <input
+                    type="tel"
+                    name="telefono"
+                    value={formData.telefono}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Fecha de Ingreso</label>
+                  <input
+                    type="date"
+                    name="fecha_ingreso"
+                    value={formData.fecha_ingreso}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+
+              {/* Selección jerárquica */}
+              <div className="form-section">
+                <h4>Asignación Organizacional</h4>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Planta *</label>
+                    <select
+                      value={selectedPlantaFilter}
+                      onChange={(e) => handlePlantaChange(parseInt(e.target.value) || 0)}
+                      required
                     >
-                      ✏️ Editar
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(empleado.empleado_id!)}
-                      className="btn-delete"
-                      title="Eliminar empleado"
-                    >
-                      🗑️ Eliminar
-                    </button>
+                      <option value="">Seleccionar Planta</option>
+                      {plantas.map(planta => (
+                        <option key={planta.planta_id} value={planta.planta_id}>
+                          {planta.nombre}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  
+                  <div className="form-group">
+                    <label>Departamento *</label>
+                    <select
+                      value={selectedDepartamentoFilter}
+                      onChange={(e) => handleDepartamentoChange(parseInt(e.target.value) || 0)}
+                      disabled={!selectedPlantaFilter}
+                      required
+                    >
+                      <option value="">Seleccionar Departamento</option>
+                      {departamentos.map(dept => (
+                        <option key={dept.departamento_id} value={dept.departamento_id}>
+                          {dept.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Puesto *</label>
+                  <select
+                    name="puesto"
+                    value={formData.puesto}
+                    onChange={handleInputChange}
+                    disabled={!selectedDepartamentoFilter}
+                    required
+                  >
+                    <option value={0}>Seleccionar Puesto</option>
+                    {puestos.map(puesto => (
+                      <option key={puesto.puesto_id} value={puesto.puesto_id}>
+                        {puesto.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" disabled={loading} className="btn btn-primary">
+                  {loading ? 'Creando...' : 'Crear Empleado'}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowCreateForm(false);
+                    resetForm();
+                  }}
+                  className="btn btn-secondary"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Formulario de Edición */}
+      {showEditForm && selectedEmpleado && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>Editar Empleado</h3>
+              <button 
+                onClick={() => {
+                  setShowEditForm(false);
+                  setSelectedEmpleado(null);
+                  resetForm();
+                }}
+                className="close-btn"
+              >×</button>
+            </div>
+            
+            <form onSubmit={handleUpdate} className="empleado-form">
+              {/* Mismos campos que el formulario de creación */}
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nombre *</label>
+                  <input
+                    type="text"
+                    name="nombre"
+                    value={formData.nombre}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Apellido Paterno *</label>
+                  <input
+                    type="text"
+                    name="apellido_paterno"
+                    value={formData.apellido_paterno}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Apellido Materno</label>
+                  <input
+                    type="text"
+                    name="apellido_materno"
+                    value={formData.apellido_materno}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Email</label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Teléfono</label>
+                  <input
+                    type="tel"
+                    name="telefono"
+                    value={formData.telefono}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Fecha de Ingreso</label>
+                  <input
+                    type="date"
+                    name="fecha_ingreso"
+                    value={formData.fecha_ingreso}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+
+              {/* Selección jerárquica para edición */}
+              <div className="form-section">
+                <h4>Reasignación Organizacional</h4>
+                
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Planta *</label>
+                    <select
+                      value={selectedPlantaFilter}
+                      onChange={(e) => handlePlantaChange(parseInt(e.target.value) || 0)}
+                      required
+                    >
+                      <option value="">Seleccionar Planta</option>
+                      {plantas.map(planta => (
+                        <option key={planta.planta_id} value={planta.planta_id}>
+                          {planta.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="form-group">
+                    <label>Departamento *</label>
+                    <select
+                      value={selectedDepartamentoFilter}
+                      onChange={(e) => handleDepartamentoChange(parseInt(e.target.value) || 0)}
+                      disabled={!selectedPlantaFilter}
+                      required
+                    >
+                      <option value="">Seleccionar Departamento</option>
+                      {departamentos.map(dept => (
+                        <option key={dept.departamento_id} value={dept.departamento_id}>
+                          {dept.nombre}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Puesto *</label>
+                  <select
+                    name="puesto"
+                    value={formData.puesto}
+                    onChange={handleInputChange}
+                    disabled={!selectedDepartamentoFilter}
+                    required
+                  >
+                    <option value={0}>Seleccionar Puesto</option>
+                    {puestos.map(puesto => (
+                      <option key={puesto.puesto_id} value={puesto.puesto_id}>
+                        {puesto.nombre}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" disabled={loading} className="btn btn-primary">
+                  {loading ? 'Actualizando...' : 'Actualizar Empleado'}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setShowEditForm(false);
+                    setSelectedEmpleado(null);
+                    resetForm();
+                  }}
+                  className="btn btn-secondary"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Lista de Empleados */}
+      <div className="empleados-list">
+        {loading && <div className="loading">Cargando empleados...</div>}
+        
+        {!loading && empleados.length === 0 && (
+          <div className="empty-state">
+            <p>No hay empleados registrados</p>
+          </div>
+        )}
+        
+        {!loading && empleados.length > 0 && (
+          <div className="table-container">
+            <table className="empleados-table">
+              <thead>
+                <tr>
+                  <th>Nombre Completo</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Puesto</th>
+                  <th>Departamento</th>
+                  <th>Planta</th>
+                  <th>Fecha Ingreso</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {empleados.map(empleado => (
+                  <tr key={empleado.empleado_id}>
+                    <td>
+                      {empleado.nombre} {empleado.apellido_paterno} {empleado.apellido_materno || ''}
+                    </td>
+                    <td>{empleado.email || '-'}</td>
+                    <td>{empleado.telefono || '-'}</td>
+                    <td>{empleado.puesto_nombre || '-'}</td>
+                    <td>{empleado.departamento_nombre || '-'}</td>
+                    <td>{empleado.planta_nombre || '-'}</td>
+                    <td>-</td> {/* fecha_ingreso no está disponible en la interfaz actual */}
+                    <td className="actions-cell">
+                      <button 
+                        onClick={() => handleEdit(empleado)}
+                        className="btn btn-sm btn-primary"
+                        title="Editar empleado"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(empleado.empleado_id)}
+                        className="btn btn-sm btn-danger"
+                        title="Eliminar empleado"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

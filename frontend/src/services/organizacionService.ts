@@ -15,7 +15,7 @@ export interface Departamento {
   descripcion?: string;
   fecha_registro?: string;
   status?: boolean;
-  planta_id: number; // Cambiado de planta a planta_id para coincidir con el backend
+  planta_id?: number; // Hacerlo opcional para evitar errores
   planta_nombre?: string;
 }
 
@@ -25,7 +25,7 @@ export interface Puesto {
   descripcion?: string;
   fecha_registro?: string;
   status?: boolean;
-  departamento_id: number; // Cambiado de departamento a departamento_id para coincidir con el backend
+  departamento_id?: number; // Hacerlo opcional para evitar errores
   departamento_nombre?: string;
 }
 
@@ -98,7 +98,7 @@ export const crearDepartamento = async (departamento: Departamento): Promise<Dep
     const departamentoData = {
       nombre: departamento.nombre.trim(),
       descripcion: departamento.descripcion?.trim() || '',
-      planta_id: departamento.planta_id
+      planta: departamento.planta_id  // Cambiar planta_id por planta
     };
     
     console.log('🔍 Creando departamento con datos:', departamentoData);
@@ -114,8 +114,8 @@ export const crearDepartamento = async (departamento: Departamento): Promise<Dep
     
     if (error.response?.data?.nombre) {
       throw new Error(error.response.data.nombre[0]);
-    } else if (error.response?.data?.planta_id) {
-      throw new Error(error.response.data.planta_id[0]);
+    } else if (error.response?.data?.planta) {
+      throw new Error(error.response.data.planta[0]);
     } else if (error.response?.data?.non_field_errors) {
       throw new Error(error.response.data.non_field_errors[0]);
     } else if (error.response?.data?.message) {
@@ -153,7 +153,7 @@ export const crearPuesto = async (puesto: Puesto): Promise<Puesto> => {
     const puestoData = {
       nombre: puesto.nombre,
       descripcion: puesto.descripcion || '',
-      departamento_id: puesto.departamento_id
+      departamento: puesto.departamento_id  // Cambiar departamento_id por departamento
     };
     const response = await api.post('/puestos/', puestoData);
     return response.data;
@@ -162,8 +162,8 @@ export const crearPuesto = async (puesto: Puesto): Promise<Puesto> => {
     
     if (error.response?.data?.nombre) {
       throw new Error(error.response.data.nombre[0]);
-    } else if (error.response?.data?.departamento_id) {
-      throw new Error(error.response.data.departamento_id[0]);
+    } else if (error.response?.data?.departamento) {  // Cambiar departamento_id por departamento
+      throw new Error(error.response.data.departamento[0]);
     } else if (error.response?.data?.non_field_errors) {
       throw new Error(error.response.data.non_field_errors[0]);
     } else if (error.response?.data?.message) {

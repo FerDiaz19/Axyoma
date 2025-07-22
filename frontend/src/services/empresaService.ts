@@ -15,7 +15,14 @@ export interface EmpresaRegistro {
 export interface EmpresaResponse {
   message: string;
   empresa_id: number;
-  nombre: string;
+  empresa: {
+    empresa_id: number;
+    nombre: string;
+    rfc: string;
+    direccion?: string;
+    status: boolean;
+    fecha_registro: string;
+  };
 }
 
 const context = "empresas/";

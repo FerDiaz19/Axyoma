@@ -7,6 +7,7 @@ from apps.users.views import (
     AuthViewSet, UserViewSet, EmpresaViewSet, EmpleadoViewSet,
     PlantaViewSet, DepartamentoViewSet, PuestoViewSet
 )
+from apps.users.superadmin_views import SuperAdminViewSet
 from apps.evaluaciones.views import (
     EvaluacionViewSet, AsignacionEvaluacionViewSet, 
     RespuestaEvaluacionViewSet, TokenEvaluacionViewSet
@@ -19,6 +20,7 @@ router = DefaultRouter()
 # Register viewsets
 router.register(r'auth', AuthViewSet, basename='auth')
 router.register(r'users', UserViewSet, basename='user')
+router.register(r'superadmin', SuperAdminViewSet, basename='superadmin')
 router.register(r'empresas', EmpresaViewSet, basename='empresa')
 router.register(r'empleados', EmpleadoViewSet, basename='empleado')
 router.register(r'plantas', PlantaViewSet, basename='planta')

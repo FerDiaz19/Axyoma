@@ -6,23 +6,23 @@ export interface Empleado {
   nombre: string;
   apellido_paterno: string;
   apellido_materno?: string;
-  genero: 'Masculino' | 'Femenino';
-  antiguedad?: number;
+  email?: string;
+  telefono?: string;
   status: boolean;
   puesto: number;
-  departamento: number;
-  planta: number;
+  departamento_nombre?: string;
+  puesto_nombre?: string;
+  planta_nombre?: string;
 }
 
 export interface EmpleadoCreate {
   nombre: string;
   apellido_paterno: string;
   apellido_materno?: string;
-  genero: 'Masculino' | 'Femenino';
-  antiguedad?: number;
+  email?: string;
+  telefono?: string;
+  fecha_ingreso?: string;
   puesto: number;
-  departamento: number;
-  planta: number;
 }
 
 export interface Planta {
@@ -40,7 +40,7 @@ export interface Departamento {
   descripcion?: string;
   fecha_registro: string;
   status: boolean;
-  planta_id: number; // Cambiado de planta a planta_id
+  planta: number; // El backend usa 'planta' no 'planta_id'
   planta_nombre?: string;
 }
 
@@ -49,7 +49,7 @@ export interface Puesto {
   nombre: string;
   descripcion?: string;
   status: boolean;
-  departamento_id: number; // Cambiado de departamento a departamento_id
+  departamento: number; // El backend usa 'departamento' no 'departamento_id'
   departamento_nombre?: string;
 }
 

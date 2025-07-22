@@ -10,53 +10,15 @@ from .models import Empresa, Empleado, PerfilUsuario, Planta, Departamento, Pues
 from apps.evaluaciones.models import EvaluacionCompleta
 from apps.evaluaciones.serializers import EvaluacionSerializer
 from django.db import models
+from .serializers import (
+    EmpresaSerializer, EmpleadoSerializer, PlantaSerializer, 
+    DepartamentoSerializer, PuestoSerializer, PerfilUsuarioSerializer,
+    EmpresaCreateSerializer, PlantaCreateSerializer, DepartamentoCreateSerializer, PuestoCreateSerializer,
+    EmpleadoCreateSerializer
+)
 
 
-# Serializers simples para los endpoints
-class EmpresaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Empresa
-        fields = ['empresa_id', 'nombre', 'rfc', 'direccion', 'status', 'fecha_registro']
-
-
-class EmpleadoSerializer(serializers.ModelSerializer):
-    departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
-    puesto_nombre = serializers.CharField(source='puesto.nombre', read_only=True)
-    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
-    
-    class Meta:
-        model = Empleado
-        fields = ['empleado_id', 'nombre', 'apellido_paterno', 'apellido_materno', 
-                 'genero', 'antiguedad', 'status', 'departamento_nombre', 
-                 'puesto_nombre', 'planta_nombre']
-
-
-class PlantaSerializer(serializers.ModelSerializer):
-    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
-    empresa = serializers.PrimaryKeyRelatedField(read_only=True)  # Hacer read_only para que no sea requerido
-    
-    class Meta:
-        model = Planta
-        fields = ['planta_id', 'nombre', 'direccion', 'fecha_registro', 'status', 'empresa', 'empresa_nombre']
-
-
-class DepartamentoSerializer(serializers.ModelSerializer):
-    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
-    empresa_nombre = serializers.CharField(source='planta.empresa.nombre', read_only=True)
-    
-    class Meta:
-        model = Departamento
-        fields = ['departamento_id', 'nombre', 'descripcion', 'fecha_registro', 'status', 'planta', 'planta_nombre', 'empresa_nombre']
-
-
-class PuestoSerializer(serializers.ModelSerializer):
-    departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
-    planta_nombre = serializers.CharField(source='departamento.planta.nombre', read_only=True)
-    empresa_nombre = serializers.CharField(source='departamento.planta.empresa.nombre', read_only=True)
-    
-    class Meta:
-        model = Puesto
-        fields = ['puesto_id', 'nombre', 'descripcion', 'status', 'departamento', 'departamento_nombre', 'planta_nombre', 'empresa_nombre']
+# ====================== AUTHENTICATION VIEWSET ======================
 
 
 class AuthViewSet(viewsets.ViewSet):
@@ -265,6 +227,18 @@ class EmpresaViewSet(viewsets.ModelViewSet):
     queryset = Empresa.objects.all()
     serializer_class = EmpresaSerializer
     permission_classes = [IsAuthenticated]
+    
+    def get_serializer_class(self):
+        """Usar diferentes serializers para create vs otras acciones"""
+        if self.action in ['create', 'registro']:
+            return EmpresaCreateSerializer
+        return EmpresaSerializer
+    
+    def get_permissions(self):
+        """Permitir acceso público solo al endpoint de registro"""
+        if self.action == 'registro':
+            return [AllowAny()]
+        return super().get_permissions()
 
     def get_queryset(self):
         """Filtrar empresas según el usuario"""
@@ -278,6 +252,147 @@ class EmpresaViewSet(viewsets.ModelViewSet):
                 return Empresa.objects.filter(administrador=perfil)
             except PerfilUsuario.DoesNotExist:
                 return Empresa.objects.none()
+    
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def registro(self, request):
+        """Registro público de empresa con usuario administrador"""
+        try:
+            # Datos requeridos
+            required_fields = ['nombre', 'rfc', 'usuario', 'password', 'nombre_completo']
+            missing_fields = []
+            
+            for field in required_fields:
+                if not request.data.get(field):
+                    missing_fields.append(field)
+            
+            if missing_fields:
+                return Response({
+                    'error': f'Campos requeridos faltantes: {", ".join(missing_fields)}'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Datos de la empresa
+            nombre_empresa = request.data.get('nombre').strip()
+            rfc = request.data.get('rfc').strip()
+            direccion = request.data.get('direccion', '').strip()
+            email_contacto = request.data.get('email_contacto', '').strip()
+            telefono_contacto = request.data.get('telefono_contacto', '').strip()
+            
+            # Datos del usuario administrador
+            username = request.data.get('usuario').strip()
+            password = request.data.get('password')
+            nombre_completo = request.data.get('nombre_completo').strip()
+            
+            # Verificar que no existan duplicados
+            if User.objects.filter(username=username).exists():
+                return Response({
+                    'error': 'El nombre de usuario ya está registrado'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            if Empresa.objects.filter(rfc=rfc).exists():
+                return Response({
+                    'error': 'El RFC ya está registrado para otra empresa'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Crear usuario administrador
+            nombres = nombre_completo.split(' ')
+            first_name = nombres[0] if nombres else ''
+            last_name = ' '.join(nombres[1:]) if len(nombres) > 1 else ''
+            
+            user = User.objects.create_user(
+                username=username,
+                password=password,
+                email=email_contacto or f"{username}@empresa.com",
+                first_name=first_name,
+                last_name=last_name
+            )
+            
+            # Crear perfil del usuario
+            perfil = PerfilUsuario.objects.create(
+                nombre=first_name,
+                apellido_paterno=last_name.split(' ')[0] if last_name else '',
+                apellido_materno=' '.join(last_name.split(' ')[1:]) if len(last_name.split(' ')) > 1 else '',
+                correo=user.email,
+                nivel_usuario='admin-empresa',
+                status=True,
+                user=user
+            )
+            
+            # Crear empresa
+            empresa = Empresa.objects.create(
+                nombre=nombre_empresa,
+                rfc=rfc,
+                direccion=direccion,
+                email_contacto=email_contacto,
+                telefono_contacto=telefono_contacto,
+                administrador=perfil,
+                status=True
+            )
+            
+            # Crear automáticamente la Planta General para la empresa
+            from .models import Planta
+            planta_general = Planta.objects.create(
+                nombre=f"{nombre_empresa} - Sede Principal",
+                direccion=direccion or "Dirección de la sede principal",
+                empresa=empresa,
+                status=True
+            )
+            
+            return Response({
+                'message': 'Empresa registrada exitosamente',
+                'empresa_id': empresa.empresa_id,
+                'empresa': {
+                    'empresa_id': empresa.empresa_id,
+                    'nombre': empresa.nombre,
+                    'rfc': empresa.rfc,
+                    'direccion': empresa.direccion,
+                    'status': empresa.status,
+                    'fecha_registro': empresa.fecha_registro
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({
+                'error': f'Error interno del servidor: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def create(self, request, *args, **kwargs):
+        """Crear empresa asignando automáticamente el administrador"""
+        try:
+            # Obtener o crear perfil del usuario autenticado
+            user = request.user
+            
+            # Buscar perfil por email
+            try:
+                perfil = PerfilUsuario.objects.get(correo=user.email)
+            except PerfilUsuario.DoesNotExist:
+                # Si no existe perfil, crear uno
+                perfil = PerfilUsuario.objects.create(
+                    nombre=user.first_name or user.username,
+                    apellido_paterno=user.last_name or '',
+                    correo=user.email,
+                    nivel_usuario='admin-empresa',
+                    status=True,
+                    user=user
+                )
+            
+            # Crear empresa con el administrador asignado
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            
+            # Asignar administrador antes de guardar
+            empresa = serializer.save(administrador=perfil)
+            
+            headers = self.get_success_headers(serializer.data)
+            return Response({
+                'message': 'Empresa registrada exitosamente',
+                'empresa_id': empresa.empresa_id,
+                'empresa': serializer.data
+            }, status=status.HTTP_201_CREATED, headers=headers)
+            
+        except Exception as e:
+            return Response({
+                'error': f'Error al registrar empresa: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['get'])
     def empleados(self, request, pk=None):
@@ -303,6 +418,24 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
     queryset = Empleado.objects.all()
     serializer_class = EmpleadoSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        """Usar diferentes serializers para create vs otras acciones"""
+        if self.action == 'create':
+            return EmpleadoCreateSerializer
+        return EmpleadoSerializer
+
+    def create(self, request, *args, **kwargs):
+        """Override create para incluir empleado_id en la respuesta"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        headers = self.get_success_headers(serializer.data)
+        response_data = serializer.data.copy()
+        response_data['empleado_id'] = serializer.instance.empleado_id
+        
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset(self):
         """Filtrar empleados según el usuario"""
@@ -335,6 +468,12 @@ class PlantaViewSet(viewsets.ModelViewSet):
     serializer_class = PlantaSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_class(self):
+        """Usar diferentes serializers para create vs otras acciones"""
+        if self.action == 'create':
+            return PlantaCreateSerializer
+        return PlantaSerializer
+
     def get_queryset(self):
         """Filtrar plantas según el usuario"""
         user = self.request.user
@@ -357,7 +496,8 @@ class PlantaViewSet(viewsets.ModelViewSet):
         
         user = self.request.user
         if user.is_superuser:
-            # Si es superuser, puede especificar la empresa o crearla sin empresa
+            # Si es superuser, debe especificar la empresa en el payload
+            # El serializer ya valida que la empresa existe
             planta = serializer.save()
         else:
             try:
@@ -369,8 +509,100 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 raise ValidationError("No se puede determinar la empresa del usuario")
         
         # Crear automáticamente un usuario de planta
+        self._crear_usuario_planta(planta)
+        
+        # Crear estructura base (departamentos y puestos)
+        self._crear_estructura_base_planta(planta)
+    
+    def _crear_estructura_base_planta(self, planta):
+        """Crear departamentos y puestos base para una nueva planta"""
         try:
-            # Generar correo y contraseña automáticos
+            print(f"🏗️  Creando estructura base para planta: {planta.nombre}")
+            
+            # Departamentos base
+            DEPARTAMENTOS_BASE = [
+                {'nombre': 'Recursos Humanos', 'descripcion': 'Departamento encargado de la gestión del personal y desarrollo organizacional'},
+                {'nombre': 'Administración', 'descripcion': 'Departamento de administración general y control interno'},
+                {'nombre': 'Operaciones', 'descripcion': 'Departamento de operaciones y procesos productivos'},
+                {'nombre': 'Finanzas', 'descripcion': 'Departamento de contabilidad y gestión financiera'},
+                {'nombre': 'Ventas', 'descripcion': 'Departamento de ventas y atención al cliente'}
+            ]
+            
+            # Puestos base por departamento
+            PUESTOS_POR_DEPARTAMENTO = {
+                'Recursos Humanos': [
+                    {'nombre': 'Gerente de RRHH', 'descripcion': 'Responsable de la gestión integral de recursos humanos'},
+                    {'nombre': 'Especialista en Reclutamiento', 'descripcion': 'Encargado del proceso de selección de personal'},
+                    {'nombre': 'Analista de Nómina', 'descripcion': 'Responsable del cálculo y procesamiento de nóminas'},
+                    {'nombre': 'Coordinador de Capacitación', 'descripcion': 'Encargado del desarrollo y capacitación del personal'},
+                    {'nombre': 'Asistente de RRHH', 'descripcion': 'Apoyo administrativo en actividades de recursos humanos'}
+                ],
+                'Administración': [
+                    {'nombre': 'Gerente Administrativo', 'descripcion': 'Responsable de la administración general de la empresa'},
+                    {'nombre': 'Coordinador de Servicios Generales', 'descripcion': 'Encargado del mantenimiento y servicios generales'},
+                    {'nombre': 'Analista Administrativo', 'descripcion': 'Apoyo en procesos administrativos y documentación'},
+                    {'nombre': 'Asistente Ejecutivo', 'descripcion': 'Asistente de dirección y coordinación ejecutiva'},
+                    {'nombre': 'Recepcionista', 'descripcion': 'Atención de recepción y servicios de comunicación'}
+                ],
+                'Operaciones': [
+                    {'nombre': 'Gerente de Operaciones', 'descripcion': 'Responsable de la coordinación de operaciones productivas'},
+                    {'nombre': 'Supervisor de Producción', 'descripcion': 'Supervisión directa de procesos productivos'},
+                    {'nombre': 'Operario Especializado', 'descripcion': 'Operario con especialización en procesos específicos'},
+                    {'nombre': 'Técnico de Calidad', 'descripcion': 'Control y aseguramiento de la calidad de productos'},
+                    {'nombre': 'Auxiliar de Operaciones', 'descripcion': 'Apoyo en actividades operativas generales'}
+                ],
+                'Finanzas': [
+                    {'nombre': 'Gerente Financiero', 'descripcion': 'Responsable de la gestión financiera y contable'},
+                    {'nombre': 'Contador General', 'descripcion': 'Encargado de la contabilidad general de la empresa'},
+                    {'nombre': 'Analista Financiero', 'descripcion': 'Análisis de estados financieros e indicadores'},
+                    {'nombre': 'Auxiliar Contable', 'descripcion': 'Apoyo en actividades contables y registros'},
+                    {'nombre': 'Tesorero', 'descripcion': 'Manejo de flujo de efectivo y operaciones bancarias'}
+                ],
+                'Ventas': [
+                    {'nombre': 'Gerente de Ventas', 'descripcion': 'Responsable de estrategias de ventas y objetivos comerciales'},
+                    {'nombre': 'Ejecutivo de Cuentas', 'descripcion': 'Gestión y desarrollo de cuentas clave'},
+                    {'nombre': 'Representante de Ventas', 'descripcion': 'Venta directa y atención a clientes'},
+                    {'nombre': 'Coordinador de Marketing', 'descripcion': 'Desarrollo de estrategias de marketing y promoción'},
+                    {'nombre': 'Asistente Comercial', 'descripcion': 'Apoyo en actividades comerciales y ventas'}
+                ]
+            }
+            
+            departamentos_creados = 0
+            puestos_creados = 0
+            
+            for dept_data in DEPARTAMENTOS_BASE:
+                # Crear departamento
+                departamento = Departamento.objects.create(
+                    nombre=dept_data['nombre'],
+                    descripcion=dept_data['descripcion'],
+                    planta=planta,
+                    status=True
+                )
+                departamentos_creados += 1
+                
+                # Crear puestos para este departamento
+                puestos_dept = PUESTOS_POR_DEPARTAMENTO.get(dept_data['nombre'], [])
+                for puesto_data in puestos_dept:
+                    Puesto.objects.create(
+                        nombre=puesto_data['nombre'],
+                        descripcion=puesto_data['descripcion'],
+                        departamento=departamento,
+                        status=True
+                    )
+                    puestos_creados += 1
+            
+            print(f"✅ Estructura creada: {departamentos_creados} departamentos y {puestos_creados} puestos")
+            
+        except Exception as e:
+            print(f"❌ Error creando estructura base: {e}")
+            # No fallar la creación de la planta si hay error con la estructura
+    
+    def _crear_usuario_planta(self, planta):
+        """Crear automáticamente un usuario administrador para la planta"""
+        try:
+            import secrets
+            import string
+            
             planta_nombre_clean = ''.join(c.lower() for c in planta.nombre if c.isalnum())
             correo_planta = f"planta_{planta_nombre_clean}_{planta.planta_id}@{planta.empresa.nombre.lower().replace(' ', '')}.com"
             
@@ -395,7 +627,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 apellido_paterno="Planta",
                 apellido_materno="",
                 correo=correo_planta,
-                nivel_usuario="admin_planta",
+                nivel_usuario="admin-planta",  # ← Corregido: usar guión, no guión bajo
                 status=True,
                 user=user_django  # Relación con User de Django
             )
@@ -433,7 +665,10 @@ class PlantaViewSet(viewsets.ModelViewSet):
         
         # Obtener la respuesta normal
         headers = self.get_success_headers(serializer.data)
-        response_data = serializer.data
+        response_data = serializer.data.copy()
+        
+        # Asegurar que incluya el planta_id
+        response_data['planta_id'] = serializer.instance.planta_id
         
         # Agregar credenciales si existen
         if hasattr(serializer.instance, '_credenciales_usuario'):
@@ -547,6 +782,24 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
     serializer_class = DepartamentoSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_class(self):
+        """Usar diferentes serializers para create vs otras acciones"""
+        if self.action == 'create':
+            return DepartamentoCreateSerializer
+        return DepartamentoSerializer
+
+    def create(self, request, *args, **kwargs):
+        """Override create para incluir departamento_id en la respuesta"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        headers = self.get_success_headers(serializer.data)
+        response_data = serializer.data.copy()
+        response_data['departamento_id'] = serializer.instance.departamento_id
+        
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
+
     def get_queryset(self):
         """Filtrar departamentos según el usuario"""
         user = self.request.user
@@ -554,25 +807,48 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
             return Departamento.objects.all()
         else:
             try:
-                # Filtrar departamentos de plantas de la empresa del usuario
                 perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                return Departamento.objects.filter(planta__empresa=empresa)
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
+                
+                # Si es admin_empresa, mostrar todos los departamentos de su empresa
+                if perfil.nivel_usuario == 'admin-empresa':
+                    empresa = Empresa.objects.get(administrador=perfil)
+                    return Departamento.objects.filter(planta__empresa=empresa)
+                
+                # Si es admin_planta, mostrar solo los departamentos de su planta
+                elif perfil.nivel_usuario == 'admin-planta':
+                    admin_planta = AdminPlanta.objects.get(usuario=perfil, status=True)
+                    return Departamento.objects.filter(planta=admin_planta.planta)
+                
+                else:
+                    return Departamento.objects.none()
+                    
+            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist, AdminPlanta.DoesNotExist):
                 return Departamento.objects.none()
 
     def perform_create(self, serializer):
-        """Validar que la planta pertenezca a la empresa del usuario"""
+        """Validar que la planta pertenezca al contexto del usuario"""
         user = self.request.user
         if not user.is_superuser:
             try:
                 perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                # Verificar que la planta especificada pertenezca a la empresa del usuario
                 planta_id = serializer.validated_data.get('planta')
-                if planta_id and planta_id.empresa != empresa:
-                    raise ValidationError("La planta especificada no pertenece a su empresa")
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
+                
+                # Si es admin_empresa, verificar que la planta pertenezca a su empresa
+                if perfil.nivel_usuario == 'admin-empresa':
+                    empresa = Empresa.objects.get(administrador=perfil)
+                    if planta_id and planta_id.empresa != empresa:
+                        raise ValidationError("La planta especificada no pertenece a su empresa")
+                
+                # Si es admin_planta, solo puede crear en su propia planta
+                elif perfil.nivel_usuario == 'admin-planta':
+                    admin_planta = AdminPlanta.objects.get(usuario=perfil, status=True)
+                    if planta_id and planta_id != admin_planta.planta:
+                        raise ValidationError("Solo puede crear departamentos en su propia planta")
+                
+                else:
+                    raise ValidationError("No tiene permisos para crear departamentos")
+                    
+            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist, AdminPlanta.DoesNotExist):
                 raise ValidationError("No se puede determinar la empresa del usuario")
         serializer.save()
 
@@ -582,6 +858,24 @@ class PuestoViewSet(viewsets.ModelViewSet):
     serializer_class = PuestoSerializer
     permission_classes = [IsAuthenticated]
 
+    def get_serializer_class(self):
+        """Usar diferentes serializers para create vs otras acciones"""
+        if self.action == 'create':
+            return PuestoCreateSerializer
+        return PuestoSerializer
+
+    def create(self, request, *args, **kwargs):
+        """Override create para incluir puesto_id en la respuesta"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        headers = self.get_success_headers(serializer.data)
+        response_data = serializer.data.copy()
+        response_data['puesto_id'] = serializer.instance.puesto_id
+        
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
+
     def get_queryset(self):
         """Filtrar puestos según el usuario"""
         user = self.request.user
@@ -589,24 +883,47 @@ class PuestoViewSet(viewsets.ModelViewSet):
             return Puesto.objects.all()
         else:
             try:
-                # Filtrar puestos de departamentos de plantas de la empresa del usuario
                 perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                return Puesto.objects.filter(departamento__planta__empresa=empresa)
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
+                
+                # Si es admin_empresa, mostrar todos los puestos de su empresa
+                if perfil.nivel_usuario == 'admin-empresa':
+                    empresa = Empresa.objects.get(administrador=perfil)
+                    return Puesto.objects.filter(departamento__planta__empresa=empresa)
+                
+                # Si es admin_planta, mostrar solo los puestos de su planta
+                elif perfil.nivel_usuario == 'admin-planta':
+                    admin_planta = AdminPlanta.objects.get(usuario=perfil, status=True)
+                    return Puesto.objects.filter(departamento__planta=admin_planta.planta)
+                
+                else:
+                    return Puesto.objects.none()
+                    
+            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist, AdminPlanta.DoesNotExist):
                 return Puesto.objects.none()
 
     def perform_create(self, serializer):
-        """Validar que el departamento pertenezca a la empresa del usuario"""
+        """Validar que el departamento pertenezca al contexto del usuario"""
         user = self.request.user
         if not user.is_superuser:
             try:
                 perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                # Verificar que el departamento especificado pertenezca a la empresa del usuario
                 departamento = serializer.validated_data.get('departamento')
-                if departamento and departamento.planta.empresa != empresa:
-                    raise ValidationError("El departamento especificado no pertenece a su empresa")
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
+                
+                # Si es admin_empresa, verificar que el departamento pertenezca a su empresa
+                if perfil.nivel_usuario == 'admin-empresa':
+                    empresa = Empresa.objects.get(administrador=perfil)
+                    if departamento and departamento.planta.empresa != empresa:
+                        raise ValidationError("El departamento especificado no pertenece a su empresa")
+                
+                # Si es admin_planta, solo puede crear en departamentos de su planta
+                elif perfil.nivel_usuario == 'admin-planta':
+                    admin_planta = AdminPlanta.objects.get(usuario=perfil, status=True)
+                    if departamento and departamento.planta != admin_planta.planta:
+                        raise ValidationError("Solo puede crear puestos en departamentos de su propia planta")
+                
+                else:
+                    raise ValidationError("No tiene permisos para crear puestos")
+                    
+            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist, AdminPlanta.DoesNotExist):
                 raise ValidationError("No se puede determinar la empresa del usuario")
         serializer.save()

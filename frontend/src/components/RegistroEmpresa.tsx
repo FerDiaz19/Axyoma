@@ -57,16 +57,42 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
       // Si el registro fue exitoso, pasar a selección de plan
       setEmpresaRegistrada({
         id: response.empresa_id,
-        nombre: response.nombre
+        nombre: response.empresa.nombre
       });
       setPaso('seleccion_plan');
       
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 
-                          err.response?.data?.message || 
-                          err.response?.data?.error ||
-                          JSON.stringify(err.response?.data) ||
-                          'Error al registrar empresa';
+      console.error('Error completo:', err);
+      console.error('Response data:', err.response?.data);
+      
+      let errorMessage = 'Error al registrar empresa';
+      
+      if (err.response?.data) {
+        // Si hay un error específico del backend
+        if (err.response.data.error) {
+          errorMessage = err.response.data.error;
+        } else if (err.response.data.detail) {
+          errorMessage = err.response.data.detail;
+        } else if (err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else if (typeof err.response.data === 'string') {
+          errorMessage = err.response.data;
+        } else if (typeof err.response.data === 'object') {
+          // Si hay errores de validación específicos
+          const validationErrors = Object.entries(err.response.data)
+            .map(([field, errors]: [string, any]) => {
+              if (Array.isArray(errors)) {
+                return `${field}: ${errors.join(', ')}`;
+              }
+              return `${field}: ${errors}`;
+            })
+            .join('; ');
+          errorMessage = validationErrors || 'Error de validación';
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);

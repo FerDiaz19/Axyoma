@@ -35,6 +35,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
   const [formData, setFormData] = useState({
     nombre: '',
     direccion: '',
+    empresa: empresaId,
   });
 
   useEffect(() => {
@@ -108,6 +109,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
     setFormData({
       nombre: planta.nombre,
       direccion: planta.direccion,
+      empresa: empresaId,
     });
     setShowForm(true);
   };
@@ -131,7 +133,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
   };
 
   const resetForm = () => {
-    setFormData({ nombre: '', direccion: '' });
+    setFormData({ nombre: '', direccion: '', empresa: empresaId });
     setEditingPlanta(null);
     setShowForm(false);
   };

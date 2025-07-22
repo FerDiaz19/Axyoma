@@ -63,7 +63,7 @@ const GestionPuestos: React.FC = () => {
     setFormData({
       nombre: puesto.nombre,
       descripcion: puesto.descripcion || '',
-      departamento_id: puesto.departamento_id.toString()
+      departamento_id: puesto.departamento_id?.toString() || ''
     });
     setShowModal(true);
   };

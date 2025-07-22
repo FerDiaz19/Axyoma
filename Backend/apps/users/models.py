@@ -19,10 +19,10 @@ class PerfilUsuario(models.Model):
     fecha_registro = models.DateTimeField(auto_now_add=True)
     nivel_usuario = models.CharField(max_length=20, choices=NIVEL_CHOICES)
     status = models.BooleanField(default=True)
-    admin_empresa = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+    admin_empresa = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, db_column='admin_empresa')
     
     # Relación con Django User
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil', null=True, blank=True, db_column='user_id')
     
     class Meta:
         db_table = 'usuarios'
@@ -38,7 +38,7 @@ class Empresa(models.Model):
     telefono_contacto = models.CharField(max_length=15, blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
-    administrador = models.OneToOneField(PerfilUsuario, on_delete=models.CASCADE)
+    administrador = models.OneToOneField(PerfilUsuario, on_delete=models.CASCADE, db_column='administrador')
     
     class Meta:
         db_table = 'empresas'
@@ -92,7 +92,7 @@ class Planta(models.Model):
     direccion = models.TextField(blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, db_column='empresa_id')
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, db_column='empresa')
     
     class Meta:
         db_table = 'plantas'
@@ -116,7 +116,7 @@ class Departamento(models.Model):
     descripcion = models.TextField(blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
-    planta = models.ForeignKey(Planta, on_delete=models.CASCADE)
+    planta = models.ForeignKey(Planta, on_delete=models.CASCADE, db_column='planta')
     
     class Meta:
         db_table = 'departamentos'
@@ -137,12 +137,11 @@ class Puesto(models.Model):
     nombre = models.CharField(max_length=64)
     descripcion = models.TextField(blank=True, null=True)
     status = models.BooleanField(default=True)
-    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
+    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE, db_column='departamento')
     
     class Meta:
         db_table = 'puestos'
         unique_together = ['nombre', 'departamento']  # Nombre único solo dentro del mismo departamento
-        db_table = 'puestos'
 
 # EMPLEADOS - Según el esquema SQL original
 class Empleado(models.Model):
@@ -155,12 +154,23 @@ class Empleado(models.Model):
     nombre = models.CharField(max_length=128)
     apellido_paterno = models.CharField(max_length=64)
     apellido_materno = models.CharField(max_length=64, blank=True, null=True)
-    genero = models.CharField(max_length=10, choices=GENERO_CHOICES)
-    antiguedad = models.IntegerField(blank=True, null=True)
+    email = models.EmailField(blank=True, null=True)
+    telefono = models.CharField(max_length=15, blank=True, null=True)
+    fecha_ingreso = models.DateField(blank=True, null=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True, null=True)
     status = models.BooleanField(default=True)
-    puesto = models.ForeignKey(Puesto, on_delete=models.CASCADE)
-    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
-    planta = models.ForeignKey(Planta, on_delete=models.CASCADE)
+    puesto = models.ForeignKey(Puesto, on_delete=models.CASCADE, db_column='puesto')
+    # departamento y planta se obtienen a través de puesto.departamento y puesto.departamento.planta
     
     class Meta:
         db_table = 'empleados'
+    
+    @property
+    def departamento(self):
+        """Obtiene el departamento a través del puesto"""
+        return self.puesto.departamento if self.puesto else None
+    
+    @property 
+    def planta(self):
+        """Obtiene la planta a través del puesto -> departamento -> planta"""
+        return self.puesto.departamento.planta if self.puesto and self.puesto.departamento else None

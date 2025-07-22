@@ -63,7 +63,7 @@ const GestionDepartamentos: React.FC = () => {
     setFormData({
       nombre: departamento.nombre,
       descripcion: departamento.descripcion || '',
-      planta_id: departamento.planta_id.toString()
+      planta_id: departamento.planta_id?.toString() || ''
     });
     setShowModal(true);
   };
