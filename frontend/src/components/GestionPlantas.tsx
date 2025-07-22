@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import '../css/GestionPlantas.css';
 
 interface Planta {
   planta_id: number;
@@ -10,11 +9,6 @@ interface Planta {
   status: boolean;
   empresa_id: number;
   empresa_nombre: string;
-  credenciales_usuario_planta?: {
-    usuario: string;
-    password: string;
-    admin_planta_id: number;
-  };
 }
 
 interface GestionPlantasProps {
@@ -30,8 +24,6 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
   const [editingPlanta, setEditingPlanta] = useState<Planta | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [filtroNombre, setFiltroNombre] = useState('');
-  const [showCredentials, setShowCredentials] = useState(false);
-  const [credentialsData, setCredentialsData] = useState<any>(null);
   const [formData, setFormData] = useState({
     nombre: '',
     direccion: '',
@@ -74,22 +66,12 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
     setError(null);
     
     try {
-      let response;
       if (editingPlanta) {
         // Actualizar planta existente
-        response = await api.put(`/plantas/${editingPlanta.planta_id}/`, formData);
+        await api.put(`/plantas/${editingPlanta.planta_id}/`, formData);
       } else {
         // Crear nueva planta
-        response = await api.post('/plantas/', formData);
-        
-        // Si la respuesta contiene credenciales, mostrarlas
-        if (response.data.credenciales_usuario_planta) {
-          setCredentialsData({
-            plantaNombre: response.data.nombre,
-            ...response.data.credenciales_usuario_planta
-          });
-          setShowCredentials(true);
-        }
+        await api.post('/plantas/', formData);
       }
       
       // Recargar lista y resetear formulario
@@ -134,17 +116,6 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
     setFormData({ nombre: '', direccion: '' });
     setEditingPlanta(null);
     setShowForm(false);
-  };
-
-  const copyToClipboard = (text: string, type: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      alert(`${type} copiado al portapapeles`);
-    });
-  };
-
-  const closeCredentialsModal = () => {
-    setShowCredentials(false);
-    setCredentialsData(null);
   };
 
   if (loading) {
@@ -279,82 +250,10 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
               </div>
             </form>
           </div>
-          </div>
-        )}
+        </div>
+      )}
+    </div>
+  );
+};
 
-        {/* Modal de Credenciales */}
-        {showCredentials && credentialsData && (
-          <div className="modal-overlay">
-            <div className="modal credentials-modal">
-              <h3>🎉 ¡Planta Creada Exitosamente!</h3>
-              <div className="success-message">
-                <p>Se ha creado automáticamente una cuenta de administrador para la planta <strong>"{credentialsData.plantaNombre}"</strong></p>
-              </div>
-              
-              <div className="credentials-section">
-                <h4>Credenciales de Acceso al Panel de Planta:</h4>
-                
-                <div className="credential-item">
-                  <label>Usuario:</label>
-                  <div className="credential-value">
-                    <input 
-                      type="text" 
-                      value={credentialsData.usuario} 
-                      readOnly 
-                      className="credential-input"
-                    />
-                    <button 
-                      className="btn-copy"
-                      onClick={() => copyToClipboard(credentialsData.usuario, 'Usuario')}
-                      title="Copiar usuario"
-                    >
-                      📋
-                    </button>
-                  </div>
-                </div>
-
-                <div className="credential-item">
-                  <label>Contraseña Temporal:</label>
-                  <div className="credential-value">
-                    <input 
-                      type="text" 
-                      value={credentialsData.password} 
-                      readOnly 
-                      className="credential-input"
-                    />
-                    <button 
-                      className="btn-copy"
-                      onClick={() => copyToClipboard(credentialsData.password, 'Contraseña')}
-                      title="Copiar contraseña"
-                    >
-                      📋
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              <div className="warning-section">
-                <p><strong>⚠️ Importante:</strong></p>
-                <ul>
-                  <li>Guarde estas credenciales en un lugar seguro</li>
-                  <li>El administrador de planta debe cambiar la contraseña en el primer acceso</li>
-                  <li>Esta información solo se muestra una vez</li>
-                </ul>
-              </div>
-
-              <div className="form-actions">
-                <button 
-                  className="btn btn-primary"
-                  onClick={closeCredentialsModal}
-                >
-                  Entendido
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
-
-  export default GestionPlantas;
+export default GestionPlantas;

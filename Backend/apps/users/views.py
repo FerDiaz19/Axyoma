@@ -1,17 +1,17 @@
-from rest_framework import viewsets, status, serializers
+from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate
 from rest_framework.authtoken.models import Token
-from .models import Empresa, Empleado, PerfilUsuario, Planta, Departamento, Puesto, AdminPlanta
+from .models import Empresa, Empleado
 from apps.evaluaciones.models import EvaluacionCompleta
 from apps.evaluaciones.serializers import EvaluacionSerializer
 from django.db import models
 
 
+<<<<<<< HEAD
 # Serializers simples para los endpoints
 class UserSerializer(serializers.ModelSerializer):
     """Serializer para usuarios con información básica"""
@@ -212,6 +212,8 @@ class AuthViewSet(viewsets.ViewSet):
         }, status=status.HTTP_201_CREATED)
 
 
+=======
+>>>>>>> parent of f78dc52 (solucion de errores de login y usuarios de planta)
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -240,57 +242,30 @@ class UserViewSet(viewsets.ModelViewSet):
             'is_superuser': user.is_superuser
         }
         
-        # Obtener información del perfil de usuario
+        # Agregar información de empresa si existe
         try:
-            perfil = PerfilUsuario.objects.get(correo=user.email)
-            data['perfil'] = {
-                'id': perfil.id,
-                'nombre': perfil.nombre,
-                'apellido_paterno': perfil.apellido_paterno,
-                'apellido_materno': perfil.apellido_materno,
-                'nivel_usuario': perfil.nivel_usuario,
-                'status': perfil.status
+            empresa = Empresa.objects.get(usuario=user)
+            data['empresa'] = {
+                'id': empresa.id,
+                'nombre': empresa.nombre,
+                'tipo': empresa.tipo,
+                'activa': empresa.activa
             }
-            
-            # Si es admin_empresa, buscar su empresa
-            if perfil.nivel_usuario == 'admin_empresa':
-                try:
-                    empresa = Empresa.objects.get(administrador=perfil)
-                    data['empresa'] = {
-                        'id': empresa.empresa_id,
-                        'nombre': empresa.nombre,
-                        'rfc': empresa.rfc,
-                        'activa': empresa.status
-                    }
-                except Empresa.DoesNotExist:
-                    data['empresa'] = None
-            
-            # Si es admin_planta, buscar su planta asignada
-            elif perfil.nivel_usuario == 'admin_planta':
-                try:
-                    admin_planta = AdminPlanta.objects.get(usuario=perfil, status=True)
-                    data['planta'] = {
-                        'id': admin_planta.planta.planta_id,
-                        'nombre': admin_planta.planta.nombre,
-                        'direccion': admin_planta.planta.direccion,
-                        'empresa': {
-                            'id': admin_planta.planta.empresa.empresa_id,
-                            'nombre': admin_planta.planta.empresa.nombre
-                        }
-                    }
-                    data['empresa'] = data['planta']['empresa']  # Para compatibilidad
-                except AdminPlanta.DoesNotExist:
-                    data['planta'] = None
-                    data['empresa'] = None
-            else:
-                data['empresa'] = None
-                
-        except PerfilUsuario.DoesNotExist:
-            data['perfil'] = None
+        except Empresa.DoesNotExist:
             data['empresa'] = None
             
-        # El modelo Empleado actual no tiene relación con User
-        data['empleado'] = None
+        # Agregar información de empleado si existe
+        try:
+            empleado = Empleado.objects.get(usuario=user)
+            data['empleado'] = {
+                'id': empleado.id,
+                'nombre': empleado.nombre,
+                'email': empleado.email,
+                'puesto': empleado.puesto,
+                'empresa_id': empleado.empresa.id if empleado.empresa else None
+            }
+        except Empleado.DoesNotExist:
+            data['empleado'] = None
             
         return Response(data)
 
@@ -299,15 +274,25 @@ class UserViewSet(viewsets.ModelViewSet):
         """Obtener evaluaciones disponibles para el usuario"""
         user = request.user
         
-        # Verificar si el usuario tiene empresa a través de PerfilUsuario
+        # Primero verificar si es un empleado
         try:
-            perfil = PerfilUsuario.objects.get(correo=user.email)
-            empresa = Empresa.objects.get(administrador=perfil)
-            # Obtener todas las evaluaciones de la empresa
-            evaluaciones = EvaluacionCompleta.objects.filter(empresa=empresa)
-        except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
-            # Si no tiene empresa, mostrar evaluaciones públicas
-            evaluaciones = EvaluacionCompleta.objects.filter(empresa__isnull=True)
+            empleado = Empleado.objects.get(usuario=user)
+            # Obtener evaluaciones asignadas al empleado
+            from apps.evaluaciones.models import AsignacionEvaluacion
+            asignaciones = AsignacionEvaluacion.objects.filter(
+                empleado=empleado,
+                estado__in=['pendiente', 'en_progreso']
+            )
+            evaluaciones = [asig.evaluacion for asig in asignaciones]
+        except Empleado.DoesNotExist:
+            # Si no es empleado, verificar si tiene empresa
+            try:
+                empresa = Empresa.objects.get(usuario=user)
+                # Obtener todas las evaluaciones de la empresa
+                evaluaciones = EvaluacionCompleta.objects.filter(empresa=empresa)
+            except Empresa.DoesNotExist:
+                # Si no tiene empresa, mostrar evaluaciones públicas
+                evaluaciones = EvaluacionCompleta.objects.filter(empresa__isnull=True)
         
         serializer = EvaluacionSerializer(evaluaciones, many=True)
         return Response(serializer.data)
@@ -315,7 +300,6 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class EmpresaViewSet(viewsets.ModelViewSet):
     queryset = Empresa.objects.all()
-    serializer_class = EmpresaSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -324,29 +308,21 @@ class EmpresaViewSet(viewsets.ModelViewSet):
         if user.is_superuser:
             return Empresa.objects.all()
         else:
-            try:
-                # Filtrar por el perfil del usuario
-                perfil = PerfilUsuario.objects.get(correo=user.email)
-                return Empresa.objects.filter(administrador=perfil)
-            except PerfilUsuario.DoesNotExist:
-                return Empresa.objects.none()
+            return Empresa.objects.filter(usuario=user)
 
     @action(detail=True, methods=['get'])
     def empleados(self, request, pk=None):
         """Obtener empleados de una empresa"""
         empresa = self.get_object()
-        # El modelo Empleado tiene una relación con planta, no directamente con empresa
-        # Buscar empleados a través de las plantas de la empresa
-        empleados = Empleado.objects.filter(planta__empresa=empresa)
+        empleados = Empleado.objects.filter(empresa=empresa)
         data = []
         for empleado in empleados:
             data.append({
-                'id': empleado.empleado_id,
-                'nombre': f"{empleado.nombre} {empleado.apellido_paterno} {empleado.apellido_materno or ''}".strip(),
-                'departamento': empleado.departamento.nombre if empleado.departamento else None,
-                'puesto': empleado.puesto.nombre if empleado.puesto else None,
-                'planta': empleado.planta.nombre if empleado.planta else None,
-                'status': empleado.status
+                'id': empleado.id,
+                'nombre': empleado.nombre,
+                'email': empleado.email,
+                'puesto': empleado.puesto,
+                'usuario_id': empleado.usuario.id if empleado.usuario else None
             })
         return Response(data)
 
@@ -394,7 +370,6 @@ class EmpresaViewSet(viewsets.ModelViewSet):
 
 class EmpleadoViewSet(viewsets.ModelViewSet):
     queryset = Empleado.objects.all()
-    serializer_class = EmpleadoSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
@@ -404,302 +379,34 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
             return Empleado.objects.all()
         else:
             try:
-                # Filtrar empleados a través del perfil de usuario y empresa
-                perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                return Empleado.objects.filter(planta__empresa=empresa)
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
-                return Empleado.objects.none()
+                empresa = Empresa.objects.get(usuario=user)
+                return Empleado.objects.filter(empresa=empresa)
+            except Empresa.DoesNotExist:
+                return Empleado.objects.filter(usuario=user)
 
     @action(detail=False, methods=['get'])
     def mis_evaluaciones(self, request):
         """Obtener evaluaciones asignadas al empleado actual"""
         user = request.user
-        # Nota: El modelo Empleado actual no tiene relación directa con User
-        # Esta funcionalidad requeriría una estructura diferente
-        return Response({
-            'message': 'Funcionalidad no disponible - el modelo Empleado no tiene relación con User',
-            'evaluaciones': []
-        })
-
-
-class PlantaViewSet(viewsets.ModelViewSet):
-    queryset = Planta.objects.all()
-    serializer_class = PlantaSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """Filtrar plantas según el usuario"""
-        user = self.request.user
-        if user.is_superuser:
-            return Planta.objects.all()
-        else:
-            try:
-                # Filtrar plantas de la empresa del usuario
-                perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                return Planta.objects.filter(empresa=empresa)
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
-                return Planta.objects.none()
-
-    def perform_create(self, serializer):
-        """Asignar automáticamente la empresa del usuario actual y crear usuario de planta"""
-        import secrets
-        import string
-        from django.contrib.auth.hashers import make_password
-        
-        user = self.request.user
-        if user.is_superuser:
-            # Si es superuser, puede especificar la empresa o crearla sin empresa
-            planta = serializer.save()
-        else:
-            try:
-                # Asignar la empresa del usuario actual
-                perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                planta = serializer.save(empresa=empresa)
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
-                raise ValidationError("No se puede determinar la empresa del usuario")
-        
-        # Crear automáticamente un usuario de planta
         try:
-            # Generar correo y contraseña automáticos
-            planta_nombre_clean = ''.join(c.lower() for c in planta.nombre if c.isalnum())
-            correo_planta = f"planta_{planta_nombre_clean}_{planta.planta_id}@{planta.empresa.nombre.lower().replace(' ', '')}.com"
-            
-            # Generar contraseña temporal
-            password_temporal = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
-            
-            print(f"Creando usuario de planta: {correo_planta}")
-            
-            # Crear User de Django para el login
-            user_django = User.objects.create_user(
-                username=correo_planta,
-                email=correo_planta,
-                password=password_temporal,
-                first_name=f"Admin {planta.nombre}",
-                last_name="Planta"
-            )
-            print(f"User Django creado: ID {user_django.id}")
-            
-            # Crear PerfilUsuario para la planta (sin password_hash ya que va en User)
-            perfil_planta = PerfilUsuario.objects.create(
-                nombre=f"Admin {planta.nombre}",
-                apellido_paterno="Planta",
-                apellido_materno="",
-                correo=correo_planta,
-                nivel_usuario="admin_planta",
-                status=True,
-                user=user_django  # Relación con User de Django
-            )
-            print(f"PerfilUsuario creado: ID {perfil_planta.id}")
-            
-            # Crear AdminPlanta
-            admin_planta = AdminPlanta.objects.create(
-                usuario=perfil_planta,
-                planta=planta,
-                status=True,
-                password_temporal=password_temporal
-            )
-            print(f"AdminPlanta creado: ID {admin_planta.id}")
-            
-            # Guardar las credenciales en el objeto planta para incluirlas en la respuesta
-            planta._credenciales_usuario = {
-                'usuario': correo_planta,
-                'password': password_temporal,
-                'admin_planta_id': admin_planta.id
-            }
-            
-            print(f"✅ Usuario de planta creado exitosamente: {correo_planta} / {password_temporal}")
-            
-        except Exception as e:
-            print(f"❌ Error creando usuario de planta: {e}")
-            import traceback
-            traceback.print_exc()
-            # No fallar la creación de la planta si hay error con el usuario
-    
-    def create(self, request, *args, **kwargs):
-        """Override create para incluir credenciales en la respuesta"""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        
-        # Obtener la respuesta normal
-        headers = self.get_success_headers(serializer.data)
-        response_data = serializer.data
-        
-        # Agregar credenciales si existen
-        if hasattr(serializer.instance, '_credenciales_usuario'):
-            response_data['credenciales_usuario_planta'] = serializer.instance._credenciales_usuario
-        
-        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
-
-    @action(detail=False, methods=['get'])
-    def usuarios_planta(self, request):
-        """Obtener usuarios asignados a plantas"""
-        user = request.user
-        try:
-            if user.is_superuser:
-                # Superuser ve todos los usuarios de planta
-                admin_plantas = AdminPlanta.objects.filter(status=True).select_related('usuario', 'planta', 'planta__empresa')
-            else:
-                # Usuario normal ve solo los de su empresa
-                perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                admin_plantas = AdminPlanta.objects.filter(
-                    planta__empresa=empresa, 
-                    status=True
-                ).select_related('usuario', 'planta')
+            empleado = Empleado.objects.get(usuario=user)
+            from apps.evaluaciones.models import AsignacionEvaluacion
+            asignaciones = AsignacionEvaluacion.objects.filter(empleado=empleado)
             
             data = []
-            for admin_planta in admin_plantas:
+            for asignacion in asignaciones:
                 data.append({
-                    'id': admin_planta.id,
-                    'usuario': {
-                        'id': admin_planta.usuario.id,
-                        'nombre': admin_planta.usuario.nombre,
-                        'apellido_paterno': admin_planta.usuario.apellido_paterno,
-                        'apellido_materno': admin_planta.usuario.apellido_materno,
-                        'correo': admin_planta.usuario.correo,
-                        'nivel_usuario': admin_planta.usuario.nivel_usuario,
-                        'status': admin_planta.usuario.status
-                    },
-                    'planta': {
-                        'id': admin_planta.planta.planta_id,
-                        'nombre': admin_planta.planta.nombre,
-                        'direccion': admin_planta.planta.direccion
-                    },
-                    'fecha_asignacion': admin_planta.fecha_asignacion,
-                    'status': admin_planta.status,
-                    'tiene_password_temporal': bool(admin_planta.password_temporal),
-                    'credenciales': {
-                        'usuario': admin_planta.usuario.correo,
-                        'password': admin_planta.password_temporal
-                    } if admin_planta.password_temporal else None
+                    'id': asignacion.id,
+                    'evaluacion': EvaluacionSerializer(asignacion.evaluacion).data,
+                    'estado': asignacion.estado,
+                    'fecha_asignacion': asignacion.fecha_asignacion,
+                    'fecha_completada': asignacion.fecha_completada,
+                    'duracion_dias': asignacion.duracion_dias,
+                    'duracion_horas': asignacion.duracion_horas,
+                    'dias_restantes': asignacion.dias_restantes,
+                    'porcentaje_tiempo_usado': asignacion.porcentaje_tiempo_usado
                 })
             
             return Response(data)
-        except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
-            return Response([])
-
-    @action(detail=True, methods=['post'])
-    def regenerar_password(self, request, pk=None):
-        """Regenerar contraseña para un usuario de planta específico"""
-        import secrets
-        import string
-        
-        try:
-            planta = self.get_object()
-            user = request.user
-            
-            # Verificar permisos
-            if not user.is_superuser:
-                perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                if planta.empresa != empresa:
-                    return Response(
-                        {'error': 'No tiene permisos para regenerar contraseña de esta planta'}, 
-                        status=status.HTTP_403_FORBIDDEN
-                    )
-            
-            # Buscar el AdminPlanta
-            admin_planta = AdminPlanta.objects.get(planta=planta, status=True)
-            
-            # Generar nueva contraseña
-            nueva_password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(8))
-            
-            # Actualizar en Django User
-            django_user = admin_planta.usuario.user
-            django_user.set_password(nueva_password)
-            django_user.save()
-            
-            # Actualizar password temporal en AdminPlanta
-            admin_planta.password_temporal = nueva_password
-            admin_planta.save()
-            
-            return Response({
-                'message': 'Contraseña regenerada exitosamente',
-                'nuevas_credenciales': {
-                    'usuario': admin_planta.usuario.correo,
-                    'password': nueva_password
-                }
-            })
-            
-        except Planta.DoesNotExist:
-            return Response({'error': 'Planta no encontrada'}, status=status.HTTP_404_NOT_FOUND)
-        except AdminPlanta.DoesNotExist:
-            return Response({'error': 'Usuario de planta no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-        except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
-            return Response({'error': 'No se puede verificar permisos'}, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-class DepartamentoViewSet(viewsets.ModelViewSet):
-    queryset = Departamento.objects.all()
-    serializer_class = DepartamentoSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """Filtrar departamentos según el usuario"""
-        user = self.request.user
-        if user.is_superuser:
-            return Departamento.objects.all()
-        else:
-            try:
-                # Filtrar departamentos de plantas de la empresa del usuario
-                perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                return Departamento.objects.filter(planta__empresa=empresa)
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
-                return Departamento.objects.none()
-
-    def perform_create(self, serializer):
-        """Validar que la planta pertenezca a la empresa del usuario"""
-        user = self.request.user
-        if not user.is_superuser:
-            try:
-                perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                # Verificar que la planta especificada pertenezca a la empresa del usuario
-                planta_id = serializer.validated_data.get('planta')
-                if planta_id and planta_id.empresa != empresa:
-                    raise ValidationError("La planta especificada no pertenece a su empresa")
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
-                raise ValidationError("No se puede determinar la empresa del usuario")
-        serializer.save()
-
-
-class PuestoViewSet(viewsets.ModelViewSet):
-    queryset = Puesto.objects.all()
-    serializer_class = PuestoSerializer
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        """Filtrar puestos según el usuario"""
-        user = self.request.user
-        if user.is_superuser:
-            return Puesto.objects.all()
-        else:
-            try:
-                # Filtrar puestos de departamentos de plantas de la empresa del usuario
-                perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                return Puesto.objects.filter(departamento__planta__empresa=empresa)
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
-                return Puesto.objects.none()
-
-    def perform_create(self, serializer):
-        """Validar que el departamento pertenezca a la empresa del usuario"""
-        user = self.request.user
-        if not user.is_superuser:
-            try:
-                perfil = PerfilUsuario.objects.get(correo=user.email)
-                empresa = Empresa.objects.get(administrador=perfil)
-                # Verificar que el departamento especificado pertenezca a la empresa del usuario
-                departamento = serializer.validated_data.get('departamento')
-                if departamento and departamento.planta.empresa != empresa:
-                    raise ValidationError("El departamento especificado no pertenece a su empresa")
-            except (PerfilUsuario.DoesNotExist, Empresa.DoesNotExist):
-                raise ValidationError("No se puede determinar la empresa del usuario")
-        serializer.save()
+        except Empleado.DoesNotExist:
+            return Response({'error': 'Usuario no es un empleado'}, status=status.HTTP_400_BAD_REQUEST)

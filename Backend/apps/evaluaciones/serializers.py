@@ -84,9 +84,9 @@ class EvaluacionSerializer(serializers.ModelSerializer):
         for asignacion in asignaciones:
             empleados.append({
                 'id': asignacion.empleado.empleado_id,
-                'nombre': f"{asignacion.empleado.nombre} {asignacion.empleado.apellido_paterno} {asignacion.empleado.apellido_materno or ''}".strip(),
+                'nombre': asignacion.empleado.nombre,
+                'email': asignacion.empleado.email,
                 'departamento': asignacion.empleado.departamento.nombre if asignacion.empleado.departamento else None,
-                'puesto': asignacion.empleado.puesto.nombre if asignacion.empleado.puesto else None,
                 'estado_asignacion': asignacion.estado,
                 'fecha_asignacion': asignacion.fecha_asignacion,
                 'fecha_inicio': asignacion.fecha_inicio,
