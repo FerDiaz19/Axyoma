@@ -67,15 +67,10 @@ class EmpresaSerializer(serializers.ModelSerializer):
 
 
 class EmpleadoSerializer(serializers.ModelSerializer):
-    departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
-    puesto_nombre = serializers.CharField(source='puesto.nombre', read_only=True)
-    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
-    
     class Meta:
         model = Empleado
         fields = ['empleado_id', 'nombre', 'apellido_paterno', 'apellido_materno', 
-                 'genero', 'antiguedad', 'status', 'departamento_nombre', 
-                 'puesto_nombre', 'planta_nombre']
+                 'email', 'telefono', 'fecha_ingreso', 'fecha_registro', 'status', 'puesto']
 
 
 class PlantaSerializer(serializers.ModelSerializer):
@@ -384,7 +379,7 @@ class EmpresaViewSet(viewsets.ModelViewSet):
                 'puestos_activos': Puesto.objects.filter(status=True).count(),
                 'total_evaluaciones': EvaluacionCompleta.objects.count(),
                 'total_suscripciones': SuscripcionEmpresa.objects.count(),
-                'suscripciones_activas': SuscripcionEmpresa.objects.filter(status=True, estado='ACTIVA').count(),
+                'suscripciones_activas': SuscripcionEmpresa.objects.filter(estado='Activa').count(),
                 'planes_disponibles': PlanSuscripcion.objects.filter(status=True).count()
             }
             

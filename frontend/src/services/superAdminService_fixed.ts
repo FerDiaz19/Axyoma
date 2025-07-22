@@ -63,7 +63,6 @@ export interface SuperAdminPlanta {
 export interface SuperAdminDepartamento {
   departamento_id: number;
   nombre: string;
-  descripcion?: string;
   planta_id: number;
   planta_nombre: string;
   empresa_id: number;
@@ -94,9 +93,7 @@ export interface SuperAdminEmpleado {
   numero_empleado: string;
   nombre: string;
   apellido: string;
-  nombre_completo: string;
   email?: string;
-  correo?: string;
   telefono?: string;
   puesto_id: number;
   puesto_nombre: string;
@@ -292,12 +289,8 @@ export const crearUsuario = async (userData: {
   username: string;
   email: string;
   password: string;
-  nombre?: string;
-  apellido_paterno?: string;
-  apellido_materno?: string;
   first_name?: string;
   last_name?: string;
-  is_active?: boolean;
 }): Promise<any> => {
   console.log('⚠️ Función crearUsuario pendiente de implementación');
   throw new Error('Función no implementada');

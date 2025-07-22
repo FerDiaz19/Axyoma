@@ -24,11 +24,9 @@ class EvaluacionPreguntaInline(admin.TabularInline):
 
 @admin.register(EvaluacionCompleta)
 class EvaluacionAdmin(admin.ModelAdmin):
-    list_display = ['titulo', 'tipo_evaluacion', 'empresa', 'estado', 'fecha_inicio', 'fecha_fin']
-    list_filter = ['tipo_evaluacion', 'estado', 'empresa']
-    search_fields = ['titulo', 'descripcion']
-    inlines = [EvaluacionPreguntaInline]
-    filter_horizontal = ['plantas', 'departamentos', 'empleados_objetivo']
+    list_display = ['evaluacion_id', 'nombre', 'tipo_evaluacion', 'empresa', 'status', 'fecha_registro']
+    list_filter = ['tipo_evaluacion', 'status', 'empresa']
+    search_fields = ['nombre', 'descripcion']
 
 @admin.register(RespuestaEvaluacion)
 class RespuestaEvaluacionAdmin(admin.ModelAdmin):

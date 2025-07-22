@@ -20,13 +20,10 @@ class EmpresaSerializer(serializers.ModelSerializer):
 
 
 class EmpleadoSerializer(serializers.ModelSerializer):
-    usuario_username = serializers.CharField(source='usuario.username', read_only=True)
-    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
-    
     class Meta:
         model = Empleado
-        fields = ['id', 'nombre', 'email', 'puesto', 'empresa', 'empresa_nombre', 'usuario', 'usuario_username']
-        read_only_fields = ['id']
+        fields = ['empleado_id', 'nombre', 'apellido_paterno', 'apellido_materno', 'email', 'telefono', 'fecha_ingreso', 'fecha_registro', 'status', 'puesto']
+        read_only_fields = ['empleado_id', 'fecha_registro']
 
 
 class EmpleadoCreateSerializer(serializers.ModelSerializer):

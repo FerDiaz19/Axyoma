@@ -53,38 +53,23 @@ class Pregunta(models.Model):
         return f"{self.tipo_evaluacion.nombre} - {self.texto_pregunta[:50]}..."
 
 class EvaluacionCompleta(models.Model):
-    """Evaluaciones completas creadas por las empresas"""
-    ESTADOS = [
-        ('borrador', 'Borrador'),
-        ('activa', 'Activa'),
-        ('finalizada', 'Finalizada'),
-        ('cancelada', 'Cancelada'),
-    ]
-    
-    titulo = models.CharField(max_length=200)
-    descripcion = models.TextField()
-    tipo_evaluacion = models.ForeignKey(TipoEvaluacion, on_delete=models.CASCADE)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='evaluaciones_nuevas', null=True, blank=True)
-    preguntas = models.ManyToManyField(Pregunta, through='EvaluacionPregunta')
-    
-    # Configuración de alcance
-    plantas = models.ManyToManyField(Planta, blank=True)
-    departamentos = models.ManyToManyField(Departamento, blank=True)
-    empleados_objetivo = models.ManyToManyField(Empleado, blank=True)
-    
-    estado = models.CharField(max_length=20, choices=ESTADOS, default='borrador')
-    fecha_inicio = models.DateTimeField()
-    fecha_fin = models.DateTimeField()
-    es_anonima = models.BooleanField(default=True)
-    
-    # Metadatos
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
-    creada_por = models.ForeignKey(User, on_delete=models.CASCADE)
-    fecha_modificacion = models.DateTimeField(auto_now=True)
+    """Evaluaciones según estructura real de la base de datos"""
+    evaluacion_id = models.AutoField(primary_key=True)
+    nombre = models.CharField(max_length=200)
+    descripcion = models.TextField(blank=True, null=True)
+    instrucciones = models.TextField(blank=True, null=True)
+    tiempo_limite = models.IntegerField(blank=True, null=True)
+    status = models.BooleanField(default=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True)
+    tipo_evaluacion = models.IntegerField(blank=True, null=True)
+    empresa = models.IntegerField(blank=True, null=True)
+    creado_por = models.IntegerField(blank=True, null=True)
     
     class Meta:
         verbose_name = "Evaluación"
         verbose_name_plural = "Evaluaciones"
+        db_table = 'evaluaciones'
         
     def __str__(self):
         return f"{self.titulo} - {self.empresa.nombre}"

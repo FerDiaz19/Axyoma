@@ -43,7 +43,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
                     'dias_restantes': suscripcion.dias_restantes,
                     'esta_activa': suscripcion.esta_activa,
                     'esta_por_vencer': suscripcion.esta_por_vencer,
-                    'status': suscripcion.status
+                    'activa': suscripcion.estado == 'Activa'
                 })
             
             return Response(data)

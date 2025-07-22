@@ -26,7 +26,7 @@ class Evaluacion(models.Model):
     tiempo_limite = models.IntegerField(null=True, blank=True)
     
     class Meta:
-        db_table = 'evaluaciones'
+        db_table = 'evaluaciones_survey'
         verbose_name = "Evaluación"
         verbose_name_plural = "Evaluaciones"
         

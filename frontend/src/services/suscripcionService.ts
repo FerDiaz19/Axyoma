@@ -69,7 +69,7 @@ export const formatearFecha = (fecha: string): string => {
 export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
   try {
     console.log('🔄 Obteniendo planes de suscripción...');
-    const response = await api.get('/subscriptions/');
+    const response = await api.get('/suscripciones/planes/');
     console.log('✅ Planes obtenidos:', response.data);
     return response.data;
   } catch (error) {
@@ -81,7 +81,7 @@ export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
 export const obtenerSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
   try {
     console.log('🔄 Obteniendo suscripciones...');
-    const response = await api.get('/subscriptions/');
+    const response = await api.get('/suscripciones/suscripciones/');
     console.log('✅ Suscripciones obtenidas:', response.data);
     return response.data;
   } catch (error) {
@@ -93,7 +93,7 @@ export const obtenerSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
 export const obtenerPagos = async (): Promise<Pago[]> => {
   try {
     console.log('🔄 Obteniendo pagos...');
-    const response = await api.get('/subscriptions/');
+    const response = await api.get('/suscripciones/pagos/');
     console.log('✅ Pagos obtenidos:', response.data);
     return response.data;
   } catch (error) {

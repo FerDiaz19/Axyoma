@@ -1087,14 +1087,13 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 </td>
                 <td>
                   <div>
-                    <strong>{planta.empresa.nombre}</strong>
-                    <small>ID: {planta.empresa.id}</small>
+                    <strong>{planta.empresa_nombre}</strong>
+                    <small>ID: {planta.empresa_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{planta.administrador?.nombre_completo || 'Sin asignar'}</strong>
-                    {planta.administrador?.email && <small>{planta.administrador.email}</small>}
+                    <strong>{planta.username || 'Sin usuario'}</strong>
                   </div>
                 </td>
                 <td>{planta.departamentos_count}</td>
@@ -1174,14 +1173,14 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 </td>
                 <td>
                   <div>
-                    <strong>{departamento.planta.nombre}</strong>
-                    <small>ID: {departamento.planta.id}</small>
+                    <strong>{departamento.planta_nombre}</strong>
+                    <small>ID: {departamento.planta_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{departamento.empresa.nombre}</strong>
-                    <small>ID: {departamento.empresa.id}</small>
+                    <strong>{departamento.empresa_nombre}</strong>
+                    <small>ID: {departamento.empresa_id}</small>
                   </div>
                 </td>
                 <td>{departamento.puestos_count}</td>
@@ -1261,20 +1260,20 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 </td>
                 <td>
                   <div>
-                    <strong>{puesto.departamento.nombre}</strong>
-                    <small>ID: {puesto.departamento.id}</small>
+                    <strong>{puesto.departamento_nombre}</strong>
+                    <small>ID: {puesto.departamento_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{puesto.planta.nombre}</strong>
-                    <small>ID: {puesto.planta.id}</small>
+                    <strong>{puesto.planta_nombre}</strong>
+                    <small>ID: {puesto.planta_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{puesto.empresa.nombre}</strong>
-                    <small>ID: {puesto.empresa.id}</small>
+                    <strong>{puesto.empresa_nombre}</strong>
+                    <small>ID: {puesto.empresa_id}</small>
                   </div>
                 </td>
                 <td>{puesto.empleados_count}</td>
@@ -1319,9 +1318,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       <div className="section-header">
         <h3>👤 Gestión de Empleados</h3>
         <div className="stats-mini">
-          <span>Total: {empleados.length}</span>
-          <span>Activos: {empleados.filter(e => e.status).length}</span>
-          <span>Suspendidos: {empleados.filter(e => !e.status).length}</span>
+          <span>Total: {empleados?.length || 0}</span>
+          <span>Activos: {empleados?.filter(e => e.status)?.length || 0}</span>
+          <span>Suspendidos: {empleados?.filter(e => !e.status)?.length || 0}</span>
         </div>
       </div>
       
@@ -1355,26 +1354,26 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 <td>{empleado.numero_empleado}</td>
                 <td>
                   <div>
-                    <strong>{empleado.puesto.nombre}</strong>
-                    <small>ID: {empleado.puesto.id}</small>
+                    <strong>{empleado.puesto_nombre}</strong>
+                    <small>ID: {empleado.puesto_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{empleado.departamento.nombre}</strong>
-                    <small>ID: {empleado.departamento.id}</small>
+                    <strong>{empleado.departamento_nombre}</strong>
+                    <small>ID: {empleado.departamento_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{empleado.planta.nombre}</strong>
-                    <small>ID: {empleado.planta.id}</small>
+                    <strong>{empleado.planta_nombre}</strong>
+                    <small>ID: {empleado.planta_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{empleado.empresa.nombre}</strong>
-                    <small>ID: {empleado.empresa.id}</small>
+                    <strong>{empleado.empresa_nombre}</strong>
+                    <small>ID: {empleado.empresa_id}</small>
                   </div>
                 </td>
                 <td>
