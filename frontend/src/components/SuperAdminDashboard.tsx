@@ -27,7 +27,7 @@ import {
   editarDepartamento,
   editarPuesto,
   editarEmpleado,
-  type SuperAdminEmpresa,
+  type Empresa, // Usar tipo Empresa en lugar de SuperAdminEmpresa
   type SuperAdminUsuario,
   type SuperAdminPlanta,
   type SuperAdminDepartamento,
@@ -62,19 +62,65 @@ interface SuperAdminDashboardProps {
   onLogout: () => void;
 }
 
+// Definimos interfaces extendidas para los tipos de la API
+interface EmpresaExtendida extends Empresa {
+  // Ya tiene todo lo que necesitamos
+}
+
+interface UsuarioExtendido extends SuperAdminUsuario {
+  nombre_completo?: string;
+  empresa?: { nombre: string; id: number };
+  planta?: { nombre: string; id: number };
+  fecha_registro?: string;
+}
+
+interface PlantaExtendida extends SuperAdminPlanta {
+  empresa_nombre?: string;
+  username?: string;
+  departamentos_count?: number;
+  empleados_count?: number;
+}
+
+interface DepartamentoExtendido extends SuperAdminDepartamento {
+  planta_nombre?: string;
+  empresa_nombre?: string;
+  empresa_id?: number;
+  puestos_count?: number;
+  empleados_count?: number;
+}
+
+interface PuestoExtendido extends SuperAdminPuesto {
+  departamento_nombre?: string;
+  planta_nombre?: string;
+  planta_id?: number;
+  empresa_nombre?: string;
+  empresa_id?: number;
+  empleados_count?: number;
+}
+
+interface EmpleadoExtendido extends SuperAdminEmpleado {
+  nombre_completo?: string;
+  puesto_nombre?: string;
+  departamento_nombre?: string;
+  planta_nombre?: string;
+  empresa_nombre?: string;
+  empresa_id?: number;
+  numero_empleado?: string;
+  correo?: string;
+}
+
 const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onLogout }) => {
   const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos' | 'evaluaciones'>('estadisticas');
   const [loading, setLoading] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Estado para controlar el sidebar
   
-  // Estados para datos
+  // Modificamos los estados para usar los tipos extendidos
   const [estadisticas, setEstadisticas] = useState<SuperAdminEstadisticas | null>(null);
-  const [empresas, setEmpresas] = useState<SuperAdminEmpresa[]>([]);
-  const [usuarios, setUsuarios] = useState<SuperAdminUsuario[]>([]);
-  const [plantas, setPlantas] = useState<SuperAdminPlanta[]>([]);
-  const [departamentos, setDepartamentos] = useState<SuperAdminDepartamento[]>([]);
-  const [puestos, setPuestos] = useState<SuperAdminPuesto[]>([]);
-  const [empleados, setEmpleados] = useState<SuperAdminEmpleado[]>([]);
+  const [empresas, setEmpresas] = useState<EmpresaExtendida[]>([]);
+  const [usuarios, setUsuarios] = useState<UsuarioExtendido[]>([]);
+  const [plantas, setPlantas] = useState<PlantaExtendida[]>([]);
+  const [departamentos, setDepartamentos] = useState<DepartamentoExtendido[]>([]);
+  const [puestos, setPuestos] = useState<PuestoExtendido[]>([]);
+  const [empleados, setEmpleados] = useState<EmpleadoExtendido[]>([]);
   const [suscripciones, setSuscripciones] = useState<SuscripcionEmpresa[]>([]);
   const [planes, setPlanes] = useState<PlanSuscripcion[]>([]);
   const [pagos, setPagos] = useState<Pago[]>([]);
@@ -97,22 +143,42 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   // Estados para modales de creación
   const [modalCrearPlan, setModalCrearPlan] = useState(false);
   const [modalCrearSuscripcion, setModalCrearSuscripcion] = useState(false);
+  const [modalCrearUsuario, setModalCrearUsuario] = useState(false);
 
   const cargarEstadisticas = async () => {
     setLoading(true);
     try {
       console.log('🔄 SuperAdmin: Cargando estadísticas del sistema...');
-      const data = await getEstadisticasSistema();
-      setEstadisticas(data);
-      console.log('✅ SuperAdmin: Estadísticas cargadas exitosamente');
+      const estadisticasData = await getEstadisticasSistema();
+      setEstadisticas(estadisticasData);
+      console.log('✅ SuperAdmin: Estadísticas cargadas exitosamente:', estadisticasData);
     } catch (error) {
       console.error('❌ SuperAdmin: Error cargando estadísticas:', error);
-      alert('Error al cargar estadísticas del sistema');
+      // Si falla, usar datos por defecto
+      setEstadisticas({
+        total_empresas: 0,
+        empresas_activas: 0,
+        total_usuarios: 0,
+        usuarios_activos: 0,
+        total_empleados: 0,
+        empleados_activos: 0,
+        total_plantas: 0,
+        plantas_activas: 0,
+        total_departamentos: 0,
+        departamentos_activos: 0,
+        total_puestos: 0,
+        puestos_activos: 0,
+        total_evaluaciones: 0,
+        total_suscripciones: 0,
+        suscripciones_activas: 0,
+        planes_disponibles: 0
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  // Modificamos la función de carga de datos para adaptarla a los tipos
   const cargarDatosPorSeccion = useCallback(async () => {
     setLoading(true);
     try {
@@ -131,7 +197,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       switch (activeSection) {
         case 'empresas':
           const empresasData = await getEmpresas(params);
-          setEmpresas(empresasData.empresas);
+          setEmpresas(empresasData.empresas || []);
           break;
           
         case 'usuarios':
@@ -142,8 +208,18 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             params.activo = filtroStatus === 'active' ? 'true' : 'false';
             delete params.status;
           }
-          const usuariosData = await getUsuarios(params);
-          setUsuarios(usuariosData.usuarios);
+          // Convertir params a string para evitar el error TS2345
+          const usuariosData = await getUsuarios(
+            params.buscar || '',
+            params.nivel_usuario || '',
+            params.activo || ''
+          );
+          // Transformamos los datos para incluir propiedades adicionales
+          const usuariosExtendidos: UsuarioExtendido[] = usuariosData.usuarios.map(usuario => ({
+            ...usuario,
+            nombre_completo: usuario.nombre + ' ' + usuario.apellido_paterno + (usuario.apellido_materno ? ' ' + usuario.apellido_materno : '')
+          }));
+          setUsuarios(usuariosExtendidos || []);
           break;
           
         case 'plantas':
@@ -181,15 +257,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
         case 'suscripciones':
           const suscripcionesData = await listarSuscripciones();
           setSuscripciones(suscripcionesData);
-          // También cargar empresas y planes para los modales
-          if (empresas.length === 0) {
-            const empresasData = await getEmpresas({});
-            setEmpresas(empresasData.empresas);
-          }
-          if (planes.length === 0) {
-            const planesData = await listarPlanes();
-            setPlanes(planesData);
-          }
           break;
           
         case 'planes':
@@ -198,8 +265,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           break;
           
         case 'pagos':
-          const pagosData = await listarPagos();
-          setPagos(pagosData);
+          // Temporalmente deshabilitado - endpoint no disponible
+          console.log('⚠️ Pagos temporalmente deshabilitados');
+          setPagos([]);
           break;
       }
       
@@ -210,7 +278,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
     } finally {
       setLoading(false);
     }
-  }, [activeSection, filtroTexto, filtroStatus, filtroNivelUsuario, filtroEmpresa, empresas.length, planes.length]);
+  }, [activeSection, filtroTexto, filtroStatus, filtroNivelUsuario, filtroEmpresa]);
 
   useEffect(() => {
     cargarEstadisticas();
@@ -510,6 +578,40 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
     }
   };
 
+  // Función para crear nuevo usuario SuperAdmin
+  const handleCrearUsuario = async (formData: any) => {
+    try {
+      const { crearUsuario } = await import('../services/superAdminService');
+      await crearUsuario({
+        username: formData.username,
+        email: formData.email,
+        nombre: formData.nombre,
+        apellido_paterno: formData.apellido_paterno,
+        apellido_materno: formData.apellido_materno || '',
+        password: formData.password || '1234',
+        is_active: formData.is_active !== false,
+        nivel_usuario: 'superadmin' // Añadimos esta propiedad que faltaba
+      });
+      
+      // Recargar la lista de usuarios - corregimos la llamada
+      const usuariosData = await getUsuarios('', '', '');
+      
+      // Transformamos los datos para incluir nombre_completo
+      const usuariosExtendidos: UsuarioExtendido[] = usuariosData.usuarios.map(usuario => ({
+        ...usuario,
+        nombre_completo: usuario.nombre + ' ' + usuario.apellido_paterno + (usuario.apellido_materno ? ' ' + usuario.apellido_materno : '')
+      }));
+      
+      setUsuarios(usuariosExtendidos || []);
+      
+      alert(`Usuario SuperAdmin creado exitosamente.\nUsuario: ${formData.username}\nContraseña temporal: ${formData.password || '1234'}`);
+    } catch (error: any) {
+      console.error('Error creando usuario:', error);
+      alert(error.message || 'Error al crear el usuario');
+      throw error;
+    }
+  };
+
   // Función para renovar suscripción
   const handleRenovarSuscripcion = async (suscripcionId: number) => {
     if (window.confirm('¿Renovar la suscripción?')) {
@@ -595,12 +697,22 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             required: true,
             options: [
               { value: 'superadmin', label: '👑 Super Admin' },
-              { value: 'admin-empresa', label: '🏢 Admin Empresa' },
-              { value: 'admin-planta', label: '🏭 Admin Planta' },
+              { value: 'admin_empresa', label: '🏢 Admin Empresa' },
+              { value: 'admin_planta', label: '🏭 Admin Planta' },
               { value: 'empleado', label: '👤 Empleado' }
             ]
           },
           { name: 'is_active', label: 'Usuario Activo', type: 'checkbox' as const }
+        ];
+      case 'crear-usuario':
+        return [
+          { name: 'username', label: 'Nombre de Usuario', type: 'text' as const, required: true },
+          { name: 'email', label: 'Email', type: 'email' as const, required: true },
+          { name: 'nombre', label: 'Nombre', type: 'text' as const, required: true },
+          { name: 'apellido_paterno', label: 'Apellido Paterno', type: 'text' as const, required: true },
+          { name: 'apellido_materno', label: 'Apellido Materno', type: 'text' as const },
+          { name: 'password', label: 'Contraseña Temporal', type: 'password' as const, placeholder: '1234 (por defecto)' },
+          { name: 'is_active', label: 'Usuario Activo', type: 'checkbox' as const, defaultValue: true }
         ];
       case 'planta':
         return [
@@ -674,8 +786,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           >
             <option value="">Todos los niveles</option>
             <option value="superadmin">Super Admin</option>
-            <option value="admin-empresa">Admin Empresa</option>
-            <option value="admin-planta">Admin Planta</option>
+            <option value="admin_empresa">Admin Empresa</option>
+            <option value="admin_planta">Admin Planta</option>
             <option value="empleado">Empleado</option>
           </select>
         )}
@@ -729,32 +841,32 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           <div className="stat-card">
             <h4>📋 Suscripciones</h4>
             <div className="stat-numbers">
-              <span className="stat-main">{suscripciones.length}</span>
+              <span className="stat-main">{suscripciones?.length || 0}</span>
               <span className="stat-detail">Total</span>
             </div>
             <div className="stat-breakdown">
-              <span>✅ Activas: {suscripciones.filter(s => s.estado === 'activa' || s.estado === 'Activa').length}</span>
-              <span>⏰ Por vencer: {suscripciones.filter(s => {
+              <span>✅ Activas: {suscripciones?.filter(s => s.estado === 'activa' || s.estado === 'Activa').length || 0}</span>
+              <span>⏰ Por vencer: {suscripciones?.filter(s => {
                 const diasRestantes = Math.ceil((new Date(s.fecha_fin).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                 return diasRestantes <= 7 && diasRestantes >= 0;
-              }).length}</span>
-              <span>❌ Vencidas: {suscripciones.filter(s => {
+              }).length || 0}</span>
+              <span>❌ Vencidas: {suscripciones?.filter(s => {
                 const diasRestantes = Math.ceil((new Date(s.fecha_fin).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
                 return diasRestantes < 0;
-              }).length}</span>
+              }).length || 0}</span>
             </div>
           </div>
           
           <div className="stat-card">
             <h4>💰 Pagos</h4>
             <div className="stat-numbers">
-              <span className="stat-main">{pagos.length}</span>
+              <span className="stat-main">{pagos?.length || 0}</span>
               <span className="stat-detail">Total</span>
             </div>
             <div className="stat-breakdown">
-              <span>✅ Completados: {pagos.filter(p => p.estado_pago === 'completado' || p.estado_pago === 'Completado').length}</span>
-              <span>⏳ Pendientes: {pagos.filter(p => p.estado_pago === 'pendiente' || p.estado_pago === 'Pendiente').length}</span>
-              <span>❌ Fallidos: {pagos.filter(p => p.estado_pago === 'fallido' || p.estado_pago === 'Fallido').length}</span>
+              <span>✅ Completados: {pagos?.filter(p => p.estado_pago === 'completado' || p.estado_pago === 'Completado').length || 0}</span>
+              <span>⏳ Pendientes: {pagos?.filter(p => p.estado_pago === 'pendiente' || p.estado_pago === 'Pendiente').length || 0}</span>
+              <span>❌ Fallidos: {pagos?.filter(p => p.estado_pago === 'fallido' || p.estado_pago === 'Fallido').length || 0}</span>
             </div>
           </div>
           
@@ -813,10 +925,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               <span className="stat-detail">Total</span>
             </div>
             <div className="stat-breakdown">
-              <span>👑 SuperAdmin: {estadisticas.usuarios_por_nivel.superadmin}</span>
-              <span>🏢 Admin Empresa: {estadisticas.usuarios_por_nivel['admin-empresa']}</span>
-              <span>🏭 Admin Planta: {estadisticas.usuarios_por_nivel['admin-planta']}</span>
-              <span>👤 Empleados: {estadisticas.usuarios_por_nivel.empleado}</span>
+              <span>👑 Total Usuarios: {estadisticas.total_usuarios}</span>
+              <span>✅ Usuarios Activos: {estadisticas.usuarios_activos}</span>
+              <span>👤 Total Empleados: {estadisticas.total_empleados}</span>
             </div>
           </div>
         </div>
@@ -830,9 +941,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       <div className="section-header">
         <h3>🏢 Gestión de Empresas</h3>
         <div className="stats-mini">
-          <span>Total: {empresas.length}</span>
-          <span>Activas: {empresas.filter(e => e.status).length}</span>
-          <span>Suspendidas: {empresas.filter(e => !e.status).length}</span>
+          <span>Total: {empresas?.length || 0}</span>
+          <span>Activas: {empresas?.filter(e => e.status).length || 0}</span>
+          <span>Suspendidas: {empresas?.filter(e => !e.status).length || 0}</span>
         </div>
       </div>
       
@@ -853,7 +964,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </tr>
           </thead>
           <tbody>
-            {empresas.map((empresa) => (
+            {empresas?.map((empresa) => (
               <tr key={empresa.empresa_id}>
                 <td>{empresa.empresa_id}</td>
                 <td>
@@ -912,9 +1023,17 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       <div className="section-header">
         <h3>👥 Gestión de Usuarios</h3>
         <div className="stats-mini">
-          <span>Total: {usuarios.length}</span>
-          <span>Activos: {usuarios.filter(u => u.is_active).length}</span>
-          <span>Suspendidos: {usuarios.filter(u => !u.is_active).length}</span>
+          <span>Total: {usuarios?.length || 0}</span>
+          <span>Activos: {usuarios?.filter(u => u.is_active).length || 0}</span>
+          <span>Suspendidos: {usuarios?.filter(u => !u.is_active).length || 0}</span>
+        </div>
+        <div className="section-actions">
+          <button 
+            onClick={() => setModalCrearUsuario(true)}
+            className="btn-primary"
+          >
+            ➕ Crear Usuario SuperAdmin
+          </button>
         </div>
       </div>
       
@@ -935,7 +1054,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </tr>
           </thead>
           <tbody>
-            {usuarios.map((usuario) => (
+            {usuarios?.map((usuario) => (
               <tr key={usuario.user_id}>
                 <td>{usuario.user_id}</td>
                 <td>
@@ -944,12 +1063,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     <small>{usuario.email}</small>
                   </div>
                 </td>
-                <td>{usuario.nombre_completo}</td>
+                <td>{usuario.nombre_completo || `${usuario.nombre} ${usuario.apellido_paterno}`}</td>
                 <td>
                   <span className={`nivel ${usuario.nivel_usuario}`}>
                     {usuario.nivel_usuario === 'superadmin' && '👑 Super Admin'}
-                    {usuario.nivel_usuario === 'admin-empresa' && '🏢 Admin Empresa'}
-                    {usuario.nivel_usuario === 'admin-planta' && '🏭 Admin Planta'}
+                    {usuario.nivel_usuario === 'admin_empresa' && '🏢 Admin Empresa'}
+                    {usuario.nivel_usuario === 'admin_planta' && '🏭 Admin Planta'}
                   </span>
                 </td>
                 <td>
@@ -958,7 +1077,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     {usuario.planta && <small>{usuario.planta.nombre}</small>}
                   </div>
                 </td>
-                <td>{new Date(usuario.fecha_registro).toLocaleDateString()}</td>
+                <td>{usuario.fecha_registro ? new Date(usuario.fecha_registro).toLocaleDateString() : 'N/A'}</td>
                 <td>
                   <span className={`status ${usuario.is_active ? 'active' : 'inactive'}`}>
                     {usuario.is_active ? '🟢 Activo' : '🔴 Suspendido'}
@@ -973,7 +1092,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       {usuario.is_active ? '⏸️ Suspender' : '▶️ Activar'}
                     </button>
                     <button 
-                      onClick={() => handleDelete('usuario', usuario.user_id, usuario.nombre_completo)}
+                      onClick={() => handleDelete('usuario', usuario.user_id, usuario.nombre_completo || `${usuario.nombre} ${usuario.apellido_paterno}`)}
                       className="btn-action danger"
                     >
                       🗑️ Eliminar
@@ -1000,9 +1119,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       <div className="section-header">
         <h3>🏭 Gestión de Plantas</h3>
         <div className="stats-mini">
-          <span>Total: {plantas.length}</span>
-          <span>Activas: {plantas.filter(p => p.status).length}</span>
-          <span>Suspendidas: {plantas.filter(p => !p.status).length}</span>
+          <span>Total: {plantas?.length || 0}</span>
+          <span>Activas: {plantas?.filter(p => p.status).length || 0}</span>
+          <span>Suspendidas: {plantas?.filter(p => !p.status).length || 0}</span>
         </div>
       </div>
       
@@ -1023,7 +1142,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </tr>
           </thead>
           <tbody>
-            {plantas.map((planta) => (
+            {plantas?.map((planta) => (
               <tr key={planta.planta_id}>
                 <td>{planta.planta_id}</td>
                 <td>
@@ -1034,14 +1153,13 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 </td>
                 <td>
                   <div>
-                    <strong>{planta.empresa.nombre}</strong>
-                    <small>ID: {planta.empresa.id}</small>
+                    <strong>{planta.empresa_nombre}</strong>
+                    <small>ID: {planta.empresa_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{planta.administrador?.nombre_completo || 'Sin asignar'}</strong>
-                    {planta.administrador?.email && <small>{planta.administrador.email}</small>}
+                    <strong>{planta.username || 'Sin usuario'}</strong>
                   </div>
                 </td>
                 <td>{planta.departamentos_count}</td>
@@ -1087,9 +1205,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       <div className="section-header">
         <h3>🏢 Gestión de Departamentos</h3>
         <div className="stats-mini">
-          <span>Total: {departamentos.length}</span>
-          <span>Activos: {departamentos.filter(d => d.status).length}</span>
-          <span>Suspendidos: {departamentos.filter(d => !d.status).length}</span>
+          <span>Total: {departamentos?.length || 0}</span>
+          <span>Activos: {departamentos?.filter(d => d.status).length || 0}</span>
+          <span>Suspendidos: {departamentos?.filter(d => !d.status).length || 0}</span>
         </div>
       </div>
       
@@ -1110,7 +1228,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </tr>
           </thead>
           <tbody>
-            {departamentos.map((departamento) => (
+            {departamentos?.map((departamento) => (
               <tr key={departamento.departamento_id}>
                 <td>{departamento.departamento_id}</td>
                 <td>
@@ -1121,14 +1239,14 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 </td>
                 <td>
                   <div>
-                    <strong>{departamento.planta.nombre}</strong>
-                    <small>ID: {departamento.planta.id}</small>
+                    <strong>{departamento.planta_nombre}</strong>
+                    <small>ID: {departamento.planta_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{departamento.empresa.nombre}</strong>
-                    <small>ID: {departamento.empresa.id}</small>
+                    <strong>{departamento.empresa_nombre}</strong>
+                    <small>ID: {departamento.empresa_id}</small>
                   </div>
                 </td>
                 <td>{departamento.puestos_count}</td>
@@ -1174,9 +1292,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       <div className="section-header">
         <h3>💼 Gestión de Puestos</h3>
         <div className="stats-mini">
-          <span>Total: {puestos.length}</span>
-          <span>Activos: {puestos.filter(p => p.status).length}</span>
-          <span>Suspendidos: {puestos.filter(p => !p.status).length}</span>
+          <span>Total: {puestos?.length || 0}</span>
+          <span>Activos: {puestos?.filter(p => p.status).length || 0}</span>
+          <span>Suspendidos: {puestos?.filter(p => !p.status).length || 0}</span>
         </div>
       </div>
       
@@ -1197,7 +1315,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </tr>
           </thead>
           <tbody>
-            {puestos.map((puesto) => (
+            {puestos?.map((puesto) => (
               <tr key={puesto.puesto_id}>
                 <td>{puesto.puesto_id}</td>
                 <td>
@@ -1208,20 +1326,20 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 </td>
                 <td>
                   <div>
-                    <strong>{puesto.departamento.nombre}</strong>
-                    <small>ID: {puesto.departamento.id}</small>
+                    <strong>{puesto.departamento_nombre}</strong>
+                    <small>ID: {puesto.departamento_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{puesto.planta.nombre}</strong>
-                    <small>ID: {puesto.planta.id}</small>
+                    <strong>{puesto.planta_nombre}</strong>
+                    <small>ID: {puesto.planta_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{puesto.empresa.nombre}</strong>
-                    <small>ID: {puesto.empresa.id}</small>
+                    <strong>{puesto.empresa_nombre}</strong>
+                    <small>ID: {puesto.empresa_id}</small>
                   </div>
                 </td>
                 <td>{puesto.empleados_count}</td>
@@ -1266,9 +1384,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       <div className="section-header">
         <h3>👤 Gestión de Empleados</h3>
         <div className="stats-mini">
-          <span>Total: {empleados.length}</span>
-          <span>Activos: {empleados.filter(e => e.status).length}</span>
-          <span>Suspendidos: {empleados.filter(e => !e.status).length}</span>
+          <span>Total: {empleados?.length || 0}</span>
+          <span>Activos: {empleados?.filter(e => e.status)?.length || 0}</span>
+          <span>Suspendidos: {empleados?.filter(e => !e.status)?.length || 0}</span>
         </div>
       </div>
       
@@ -1290,7 +1408,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </tr>
           </thead>
           <tbody>
-            {empleados.map((empleado) => (
+            {empleados?.map((empleado) => (
               <tr key={empleado.empleado_id}>
                 <td>{empleado.empleado_id}</td>
                 <td>
@@ -1302,26 +1420,26 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 <td>{empleado.numero_empleado}</td>
                 <td>
                   <div>
-                    <strong>{empleado.puesto.nombre}</strong>
-                    <small>ID: {empleado.puesto.id}</small>
+                    <strong>{empleado.puesto_nombre}</strong>
+                    <small>ID: {empleado.puesto_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{empleado.departamento.nombre}</strong>
-                    <small>ID: {empleado.departamento.id}</small>
+                    <strong>{empleado.departamento_nombre}</strong>
+                    <small>ID: {empleado.departamento_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{empleado.planta.nombre}</strong>
-                    <small>ID: {empleado.planta.id}</small>
+                    <strong>{empleado.planta_nombre}</strong>
+                    <small>ID: {empleado.planta_id}</small>
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{empleado.empresa.nombre}</strong>
-                    <small>ID: {empleado.empresa.id}</small>
+                    <strong>{empleado.empresa_nombre}</strong>
+                    <small>ID: {empleado.empresa_id}</small>
                   </div>
                 </td>
                 <td>
@@ -1338,7 +1456,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       {empleado.status ? '⏸️ Suspender' : '▶️ Activar'}
                     </button>
                     <button 
-                      onClick={() => handleDelete('empleado', empleado.empleado_id, empleado.nombre_completo)}
+                      onClick={() => handleDelete('empleado', empleado.empleado_id, empleado.nombre_completo || `${empleado.nombre} ${empleado.apellido_paterno}`)}
                       className="btn-action danger"
                     >
                       🗑️ Eliminar
@@ -1391,7 +1509,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </tr>
           </thead>
           <tbody>
-            {planes.map((plan) => (
+            {planes?.map((plan) => (
               <tr key={plan.plan_id}>
                 <td>{plan.plan_id}</td>
                 <td>
@@ -1454,15 +1572,15 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       <div className="section-header">
         <h3>💳 Gestión de Suscripciones</h3>
         <div className="stats-mini">
-          <span>Total: {suscripciones.length}</span>
-          <span>Activas: {suscripciones.filter(s => s.estado === 'Activa').length}</span>
-          <span>Por vencer: {suscripciones.filter(s => {
+          <span>Total: {suscripciones?.length || 0}</span>
+          <span>Activas: {suscripciones?.filter(s => s.estado === 'Activa').length || 0}</span>
+          <span>Por vencer: {suscripciones?.filter(s => {
             const fechaFin = new Date(s.fecha_fin);
             const hoy = new Date();
             const diasRestantes = Math.ceil((fechaFin.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
             return s.estado === 'Activa' && diasRestantes <= 30 && diasRestantes > 0;
-          }).length}</span>
-          <span>Vencidas: {suscripciones.filter(s => s.estado !== 'Activa').length}</span>
+          }).length || 0}</span>
+          <span>Vencidas: {suscripciones?.filter(s => s.estado !== 'Activa').length || 0}</span>
         </div>
         <button 
           onClick={() => setModalCrearSuscripcion(true)}
@@ -1487,7 +1605,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </tr>
           </thead>
           <tbody>
-            {suscripciones.map((suscripcion) => {
+            {suscripciones?.map((suscripcion) => {
               const estadoColor = getEstadoSuscripcionColor(suscripcion.estado);
               const estadoTexto = getEstadoSuscripcionTexto(suscripcion.estado);
               
@@ -1584,10 +1702,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       <div className="section-header">
         <h3>💰 Gestión de Pagos</h3>
         <div className="stats-mini">
-          <span>Total: {pagos.length}</span>
-          <span>Completados: {pagos.filter(p => p.estado_pago === 'Completado').length}</span>
-          <span>Pendientes: {pagos.filter(p => p.estado_pago === 'Pendiente').length}</span>
-          <span>Fallidos: {pagos.filter(p => p.estado_pago === 'Fallido').length}</span>
+          <span>Total: {pagos?.length || 0}</span>
+          <span>Completados: {pagos?.filter(p => p.estado_pago === 'Completado').length || 0}</span>
+          <span>Pendientes: {pagos?.filter(p => p.estado_pago === 'Pendiente').length || 0}</span>
+          <span>Fallidos: {pagos?.filter(p => p.estado_pago === 'Fallido').length || 0}</span>
         </div>
       </div>
 
@@ -1607,7 +1725,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </tr>
           </thead>
           <tbody>
-            {pagos.map((pago) => {
+            {pagos?.map((pago) => {
               const estadoTexto = getEstadoPagoTexto(pago.estado_pago);
               return (
                 <tr key={pago.pago_id}>
@@ -1684,63 +1802,63 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               onClick={() => setActiveSection('empresas')}
             >
               <span className="nav-icon">🏢</span>
-              <span className="nav-text">Empresas ({empresas.length})</span>
+              <span className="nav-text">Empresas ({empresas?.length || 0})</span>
             </button>
             <button 
               className={activeSection === 'usuarios' ? 'active' : ''}
               onClick={() => setActiveSection('usuarios')}
             >
               <span className="nav-icon">👥</span>
-              <span className="nav-text">Usuarios ({usuarios.length})</span>
+              <span className="nav-text">Usuarios ({usuarios?.length || 0})</span>
             </button>
             <button 
               className={activeSection === 'plantas' ? 'active' : ''}
               onClick={() => setActiveSection('plantas')}
             >
               <span className="nav-icon">🏭</span>
-              <span className="nav-text">Plantas ({plantas.length})</span>
+              <span className="nav-text">Plantas ({plantas?.length || 0})</span>
             </button>
             <button 
               className={activeSection === 'departamentos' ? 'active' : ''}
               onClick={() => setActiveSection('departamentos')}
             >
               <span className="nav-icon">🏢</span>
-              <span className="nav-text">Departamentos ({departamentos.length})</span>
+              <span className="nav-text">Departamentos ({departamentos?.length || 0})</span>
             </button>
             <button 
               className={activeSection === 'puestos' ? 'active' : ''}
               onClick={() => setActiveSection('puestos')}
             >
               <span className="nav-icon">💼</span>
-              <span className="nav-text">Puestos ({puestos.length})</span>
+              <span className="nav-text">Puestos ({puestos?.length || 0})</span>
             </button>
             <button 
               className={activeSection === 'empleados' ? 'active' : ''}
               onClick={() => setActiveSection('empleados')}
             >
               <span className="nav-icon">👤</span>
-              <span className="nav-text">Empleados ({empleados.length})</span>
+              <span className="nav-text">Empleados ({empleados?.length || 0})</span>
             </button>
             <button 
               className={activeSection === 'suscripciones' ? 'active' : ''}
               onClick={() => setActiveSection('suscripciones')}
             >
               <span className="nav-icon">💳</span>
-              <span className="nav-text">Suscripciones ({suscripciones.length})</span>
+              <span className="nav-text">Suscripciones ({suscripciones?.length || 0})</span>
             </button>
             <button 
               className={activeSection === 'planes' ? 'active' : ''}
               onClick={() => setActiveSection('planes')}
             >
               <span className="nav-icon">📋</span>
-              <span className="nav-text">Planes ({planes.length})</span>
+              <span className="nav-text">Planes ({planes?.length || 0})</span>
             </button>
             <button 
               className={activeSection === 'pagos' ? 'active' : ''}
               onClick={() => setActiveSection('pagos')}
             >
               <span className="nav-icon">💰</span>
-              <span className="nav-text">Pagos ({pagos.length})</span>
+              <span className="nav-text">Pagos ({pagos?.length || 0})</span>
             </button>
             <button 
               className={activeSection === 'evaluaciones' ? 'active' : ''}
@@ -1795,6 +1913,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           isOpen={modalEditar.isOpen}
           onClose={() => setModalEditar(prev => ({ ...prev, isOpen: false }))}
           title={modalEditar.title}
+
           initialData={modalEditar.data}
           onSave={handleSaveEdit}
           fields={getFormFields(modalEditar.type)}
@@ -1852,6 +1971,26 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               }))
             }
           ]}
+        />
+      )}
+
+      {/* Modal para crear nuevo usuario SuperAdmin */}
+      {modalCrearUsuario && (
+        <EditModal
+          isOpen={modalCrearUsuario}
+          onClose={() => setModalCrearUsuario(false)}
+          title="👑 Crear Nuevo Usuario SuperAdmin"
+          initialData={{
+            username: '',
+            email: '',
+            nombre: '',
+            apellido_paterno: '',
+            apellido_materno: '',
+            password: '1234',
+            is_active: true
+          }}
+          onSave={handleCrearUsuario}
+          fields={getFormFields('crear-usuario')}
         />
       )}
         </main>

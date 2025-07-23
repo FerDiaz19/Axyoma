@@ -1,7 +1,7 @@
 import api from '../api';
 
-// Interfaces para SuperAdmin
-export interface SuperAdminEmpresa {
+// Interfaces para los tipos de datos
+export interface Empresa {
   empresa_id: number;
   nombre: string;
   rfc: string;
@@ -21,126 +21,61 @@ export interface SuperAdminEmpresa {
   empleados_count: number;
 }
 
+export interface SuperAdminEmpresa {
+  empresa_id: number;
+  nombre: string;
+  rfc: string;
+  telefono: string;
+  correo: string;
+  direccion: string;
+  status: boolean;
+}
+
 export interface SuperAdminUsuario {
   user_id: number;
-  profile_id: number;
   username: string;
   email: string;
-  nombre_completo: string;
-  correo: string;
+  nombre: string;
+  apellido_paterno: string;
+  apellido_materno?: string;
   nivel_usuario: string;
-  fecha_registro: string;
-  ultimo_login?: string;
   is_active: boolean;
-  empresa?: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
-  planta?: {
-    id: number;
-    nombre: string;
-    empresa_nombre: string;
-    status: boolean;
-  };
 }
 
 export interface SuperAdminPlanta {
   planta_id: number;
   nombre: string;
-  direccion?: string;
-  telefono?: string;
+  direccion: string;
   status: boolean;
-  empresa: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
-  administrador?: {
-    id: number;
-    username: string;
-    email: string;
-    nombre_completo: string;
-    activo: boolean;
-  };
-  departamentos_count: number;
-  empleados_count: number;
+  empresa_id: number;
 }
 
 export interface SuperAdminDepartamento {
   departamento_id: number;
   nombre: string;
-  descripcion?: string;
+  descripcion: string;
   status: boolean;
-  planta: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
-  empresa: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
-  puestos_count: number;
-  empleados_count: number;
+  planta_id: number;
 }
 
 export interface SuperAdminPuesto {
   puesto_id: number;
   nombre: string;
-  descripcion?: string;
+  descripcion: string;
   status: boolean;
-  departamento: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
-  planta: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
-  empresa: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
-  empleados_count: number;
+  departamento_id: number;
 }
 
 export interface SuperAdminEmpleado {
   empleado_id: number;
-  numero_empleado: string;
   nombre: string;
   apellido_paterno: string;
   apellido_materno?: string;
-  nombre_completo: string;
-  correo?: string;
-  telefono?: string;
-  fecha_ingreso?: string;
-  salario?: number;
+  genero: string;
+  puesto_id: number;
+  departamento_id: number;
+  planta_id: number;
   status: boolean;
-  empresa: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
-  planta: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
-  departamento: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
-  puesto: {
-    id: number;
-    nombre: string;
-    status: boolean;
-  };
 }
 
 export interface SuperAdminEstadisticas {
@@ -155,53 +90,79 @@ export interface SuperAdminEstadisticas {
   total_empleados: number;
   empleados_activos: number;
   total_usuarios: number;
-  usuarios_por_nivel: {
+  usuarios_activos: number; // Esta propiedad estaba faltando
+  usuarios_por_nivel?: {
     superadmin: number;
     'admin-empresa': number;
     'admin-planta': number;
     empleado: number;
   };
+  total_evaluaciones?: number;
+  total_suscripciones?: number;
+  suscripciones_activas?: number;
+  planes_disponibles?: number;
 }
 
-const API_BASE = 'superadmin';
+// URL base para endpoints de superadmin
+const BASE_URL = 'api/superadmin';
 
-// Obtener estadísticas del sistema
-export const getEstadisticasSistema = async (): Promise<SuperAdminEstadisticas> => {
-  const response = await api.get(`${API_BASE}/estadisticas_sistema/`);
-  return response.data;
+// Empresas
+export const getEmpresas = async (buscar = '', status = ''): Promise<{empresas: Empresa[]}> => {
+  try {
+    // Construir parámetros de consulta
+    let params = new URLSearchParams();
+    if (buscar) params.append('buscar', buscar);
+    if (status) params.append('status', status);
+    
+    console.log(`🔍 Buscando empresas: buscar=${buscar}, status=${status}`);
+    
+    const response = await api.get(`${BASE_URL}/listar_empresas/?${params.toString()}`);
+    console.log('📊 Respuesta empresas:', response.data);
+    
+    return response.data || { empresas: [] };
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando empresas:', error);
+    return { empresas: [] };
+  }
 };
 
-// Servicios para empresas
-export const getEmpresas = async (params?: {
-  buscar?: string;
-  status?: string;
-}): Promise<{ empresas: SuperAdminEmpresa[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_empresas/`, { params });
-  return response.data;
+// Funciones de suspensión/activación
+export const suspenderEmpresa = async (id: number, accion: 'suspender' | 'activar') => {
+  try {
+    console.log(`🔒 SuperAdmin: ${accion === 'suspender' ? 'Suspendiendo' : 'Activando'} empresa ${id}...`);
+    const response = await api.post(`${BASE_URL}/suspender_empresa/`, {
+      empresa_id: id,
+      accion: accion
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`❌ SuperAdmin: Error ${accion === 'suspender' ? 'suspendiendo' : 'activando'} empresa:`, error);
+    throw error;
+  }
 };
 
-export const suspenderEmpresa = async (empresaId: number, accion: 'suspender' | 'activar'): Promise<void> => {
-  await api.post(`${API_BASE}/suspender_empresa/`, {
-    empresa_id: empresaId,
-    accion
-  });
-};
-
-export const eliminarEmpresa = async (empresaId: number): Promise<void> => {
-  await api.delete(`${API_BASE}/eliminar_empresa/`, {
-    data: { empresa_id: empresaId }
-  });
+// Funciones de eliminación
+export const eliminarEmpresa = async (id: number) => {
+  try {
+    console.log(`🗑️ SuperAdmin: Eliminando empresa ${id}...`);
+    const response = await api.delete(`${BASE_URL}/eliminar_empresa/`, {
+      data: { empresa_id: id }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error eliminando empresa:', error);
+    throw error;
+  }
 };
 
 // Funciones de edición
 export const editarEmpresa = async (id: number, data: Partial<SuperAdminEmpresa>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando empresa ${id}...`, data);
-    const response = await api.put(`${API_BASE}/editar_empresa/`, {
+    const response = await api.put(`${BASE_URL}/editar_empresa/`, {
       empresa_id: id,
       ...data
     });
-    console.log('✅ SuperAdmin: Empresa editada exitosamente');
     return response.data;
   } catch (error) {
     console.error('❌ SuperAdmin: Error editando empresa:', error);
@@ -209,38 +170,59 @@ export const editarEmpresa = async (id: number, data: Partial<SuperAdminEmpresa>
   }
 };
 
-// Servicios para usuarios
-export const getUsuarios = async (params?: {
-  buscar?: string;
-  nivel_usuario?: string;
-  activo?: string;
-}): Promise<{ usuarios: SuperAdminUsuario[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_usuarios/`, { params });
-  return response.data;
+// Usuarios
+export const getUsuarios = async (buscar = '', nivel_usuario = '', activo = ''): Promise<{usuarios: any[]}> => {
+  try {
+    let params = new URLSearchParams();
+    if (buscar) params.append('buscar', buscar);
+    if (nivel_usuario) params.append('nivel_usuario', nivel_usuario);
+    if (activo) params.append('activo', activo);
+    
+    const response = await api.get(`${BASE_URL}/listar_usuarios/?${params.toString()}`);
+    return response.data || { usuarios: [] };
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando usuarios:', error);
+    return { usuarios: [] };
+  }
 };
 
-export const suspenderUsuario = async (userId: number, accion: 'suspender' | 'activar'): Promise<void> => {
-  await api.post(`${API_BASE}/suspender_usuario/`, {
-    user_id: userId,
-    accion
-  });
+// Funciones de suspensión/activación
+export const suspenderUsuario = async (id: number, accion: 'suspender' | 'activar') => {
+  try {
+    console.log(`🔒 SuperAdmin: ${accion === 'suspender' ? 'Suspendiendo' : 'Activando'} usuario ${id}...`);
+    const response = await api.post(`${BASE_URL}/suspender_usuario/`, {
+      user_id: id,
+      accion: accion
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`❌ SuperAdmin: Error ${accion === 'suspender' ? 'suspendiendo' : 'activando'} usuario:`, error);
+    throw error;
+  }
 };
 
-export const eliminarUsuario = async (userId: number): Promise<void> => {
-  await api.delete(`${API_BASE}/eliminar_usuario/`, {
-    data: { user_id: userId }
-  });
+// Funciones de eliminación
+export const eliminarUsuario = async (id: number) => {
+  try {
+    console.log(`🗑️ SuperAdmin: Eliminando usuario ${id}...`);
+    const response = await api.delete(`${BASE_URL}/eliminar_usuario/`, {
+      data: { user_id: id }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error eliminando usuario:', error);
+    throw error;
+  }
 };
 
 // Funciones de edición
 export const editarUsuario = async (id: number, data: Partial<SuperAdminUsuario>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando usuario ${id}...`, data);
-    const response = await api.put(`${API_BASE}/editar_usuario/`, {
+    const response = await api.put(`${BASE_URL}/editar_usuario/`, {
       user_id: id,
       ...data
     });
-    console.log('✅ SuperAdmin: Usuario editado exitosamente');
     return response.data;
   } catch (error) {
     console.error('❌ SuperAdmin: Error editando usuario:', error);
@@ -248,23 +230,11 @@ export const editarUsuario = async (id: number, data: Partial<SuperAdminUsuario>
   }
 };
 
-// Función para crear usuarios SuperAdmin
-export const crearUsuario = async (data: {
-  username: string;
-  email: string;
-  nombre: string;
-  apellido_paterno: string;
-  apellido_materno?: string;
-  password?: string;
-  is_active?: boolean;
-}) => {
+// Crear usuario (solo superadmin)
+export const crearUsuario = async (data: Omit<SuperAdminUsuario, 'user_id'> & { password: string }) => {
   try {
-    console.log('🔧 SuperAdmin: Creando nuevo usuario SuperAdmin...', data);
-    const response = await api.post(`${API_BASE}/crear_usuario/`, {
-      ...data,
-      nivel_usuario: 'superadmin' // Solo permitir crear SuperAdmin
-    });
-    console.log('✅ SuperAdmin: Usuario SuperAdmin creado exitosamente');
+    console.log('🔧 SuperAdmin: Creando nuevo usuario...', data);
+    const response = await api.post(`${BASE_URL}/crear_usuario/`, data);
     return response.data;
   } catch (error) {
     console.error('❌ SuperAdmin: Error creando usuario:', error);
@@ -272,38 +242,59 @@ export const crearUsuario = async (data: {
   }
 };
 
-// Servicios para plantas
-export const getPlantas = async (params?: {
-  buscar?: string;
-  empresa_id?: string;
-  status?: string;
-}): Promise<{ plantas: SuperAdminPlanta[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_todas_plantas/`, { params });
-  return response.data;
+// Plantas
+export const getPlantas = async (buscar = '', empresa_id = '', status = ''): Promise<{plantas: any[]}> => {
+  try {
+    let params = new URLSearchParams();
+    if (buscar) params.append('buscar', buscar);
+    if (empresa_id) params.append('empresa_id', empresa_id);
+    if (status) params.append('status', status);
+    
+    const response = await api.get(`${BASE_URL}/listar_todas_plantas/?${params.toString()}`);
+    return response.data || { plantas: [] };
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando plantas:', error);
+    return { plantas: [] };
+  }
 };
 
-export const suspenderPlanta = async (plantaId: number, accion: 'suspender' | 'activar'): Promise<void> => {
-  await api.post(`${API_BASE}/suspender_planta/`, {
-    planta_id: plantaId,
-    accion
-  });
+// Funciones de suspensión/activación
+export const suspenderPlanta = async (id: number, accion: 'suspender' | 'activar') => {
+  try {
+    console.log(`🔒 SuperAdmin: ${accion === 'suspender' ? 'Suspendiendo' : 'Activando'} planta ${id}...`);
+    const response = await api.post(`${BASE_URL}/suspender_planta/`, {
+      planta_id: id,
+      accion: accion
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`❌ SuperAdmin: Error ${accion === 'suspender' ? 'suspendiendo' : 'activando'} planta:`, error);
+    throw error;
+  }
 };
 
-export const eliminarPlanta = async (plantaId: number): Promise<void> => {
-  await api.delete(`${API_BASE}/eliminar_planta/`, {
-    data: { planta_id: plantaId }
-  });
+// Funciones de eliminación
+export const eliminarPlanta = async (id: number) => {
+  try {
+    console.log(`🗑️ SuperAdmin: Eliminando planta ${id}...`);
+    const response = await api.delete(`${BASE_URL}/eliminar_planta/`, {
+      data: { planta_id: id }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error eliminando planta:', error);
+    throw error;
+  }
 };
 
 // Funciones de edición
 export const editarPlanta = async (id: number, data: Partial<SuperAdminPlanta>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando planta ${id}...`, data);
-    const response = await api.put(`${API_BASE}/editar_planta/`, {
+    const response = await api.put(`${BASE_URL}/editar_planta/`, {
       planta_id: id,
       ...data
     });
-    console.log('✅ SuperAdmin: Planta editada exitosamente');
     return response.data;
   } catch (error) {
     console.error('❌ SuperAdmin: Error editando planta:', error);
@@ -311,39 +302,60 @@ export const editarPlanta = async (id: number, data: Partial<SuperAdminPlanta>) 
   }
 };
 
-// Servicios para departamentos
-export const getDepartamentos = async (params?: {
-  buscar?: string;
-  planta_id?: string;
-  empresa_id?: string;
-  status?: string;
-}): Promise<{ departamentos: SuperAdminDepartamento[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_todos_departamentos/`, { params });
-  return response.data;
+// Departamentos
+export const getDepartamentos = async (buscar = '', planta_id = '', empresa_id = '', status = ''): Promise<{departamentos: any[]}> => {
+  try {
+    let params = new URLSearchParams();
+    if (buscar) params.append('buscar', buscar);
+    if (planta_id) params.append('planta_id', planta_id);
+    if (empresa_id) params.append('empresa_id', empresa_id);
+    if (status) params.append('status', status);
+    
+    const response = await api.get(`${BASE_URL}/listar_todos_departamentos/?${params.toString()}`);
+    return response.data || { departamentos: [] };
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando departamentos:', error);
+    return { departamentos: [] };
+  }
 };
 
-export const suspenderDepartamento = async (departamentoId: number, accion: 'suspender' | 'activar'): Promise<void> => {
-  await api.post(`${API_BASE}/suspender_departamento/`, {
-    departamento_id: departamentoId,
-    accion
-  });
+// Funciones de suspensión/activación
+export const suspenderDepartamento = async (id: number, accion: 'suspender' | 'activar') => {
+  try {
+    console.log(`🔒 SuperAdmin: ${accion === 'suspender' ? 'Suspendiendo' : 'Activando'} departamento ${id}...`);
+    const response = await api.post(`${BASE_URL}/suspender_departamento/`, {
+      departamento_id: id,
+      accion: accion
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`❌ SuperAdmin: Error ${accion === 'suspender' ? 'suspendiendo' : 'activando'} departamento:`, error);
+    throw error;
+  }
 };
 
-export const eliminarDepartamento = async (departamentoId: number): Promise<void> => {
-  await api.delete(`${API_BASE}/eliminar_departamento/`, {
-    data: { departamento_id: departamentoId }
-  });
+// Funciones de eliminación
+export const eliminarDepartamento = async (id: number) => {
+  try {
+    console.log(`🗑️ SuperAdmin: Eliminando departamento ${id}...`);
+    const response = await api.delete(`${BASE_URL}/eliminar_departamento/`, {
+      data: { departamento_id: id }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error eliminando departamento:', error);
+    throw error;
+  }
 };
 
 // Funciones de edición
 export const editarDepartamento = async (id: number, data: Partial<SuperAdminDepartamento>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando departamento ${id}...`, data);
-    const response = await api.put(`${API_BASE}/editar_departamento/`, {
+    const response = await api.put(`${BASE_URL}/editar_departamento/`, {
       departamento_id: id,
       ...data
     });
-    console.log('✅ SuperAdmin: Departamento editado exitosamente');
     return response.data;
   } catch (error) {
     console.error('❌ SuperAdmin: Error editando departamento:', error);
@@ -351,40 +363,61 @@ export const editarDepartamento = async (id: number, data: Partial<SuperAdminDep
   }
 };
 
-// Servicios para puestos
-export const getPuestos = async (params?: {
-  buscar?: string;
-  departamento_id?: string;
-  planta_id?: string;
-  empresa_id?: string;
-  status?: string;
-}): Promise<{ puestos: SuperAdminPuesto[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_todos_puestos/`, { params });
-  return response.data;
+// Puestos
+export const getPuestos = async (buscar = '', departamento_id = '', planta_id = '', empresa_id = '', status = ''): Promise<{puestos: any[]}> => {
+  try {
+    let params = new URLSearchParams();
+    if (buscar) params.append('buscar', buscar);
+    if (departamento_id) params.append('departamento_id', departamento_id);
+    if (planta_id) params.append('planta_id', planta_id);
+    if (empresa_id) params.append('empresa_id', empresa_id);
+    if (status) params.append('status', status);
+    
+    const response = await api.get(`${BASE_URL}/listar_todos_puestos/?${params.toString()}`);
+    return response.data || { puestos: [] };
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando puestos:', error);
+    return { puestos: [] };
+  }
 };
 
-export const suspenderPuesto = async (puestoId: number, accion: 'suspender' | 'activar'): Promise<void> => {
-  await api.post(`${API_BASE}/suspender_puesto/`, {
-    puesto_id: puestoId,
-    accion
-  });
+// Funciones de suspensión/activación
+export const suspenderPuesto = async (id: number, accion: 'suspender' | 'activar') => {
+  try {
+    console.log(`🔒 SuperAdmin: ${accion === 'suspender' ? 'Suspendiendo' : 'Activando'} puesto ${id}...`);
+    const response = await api.post(`${BASE_URL}/suspender_puesto/`, {
+      puesto_id: id,
+      accion: accion
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`❌ SuperAdmin: Error ${accion === 'suspender' ? 'suspendiendo' : 'activando'} puesto:`, error);
+    throw error;
+  }
 };
 
-export const eliminarPuesto = async (puestoId: number): Promise<void> => {
-  await api.delete(`${API_BASE}/eliminar_puesto/`, {
-    data: { puesto_id: puestoId }
-  });
+// Funciones de eliminación
+export const eliminarPuesto = async (id: number) => {
+  try {
+    console.log(`🗑️ SuperAdmin: Eliminando puesto ${id}...`);
+    const response = await api.delete(`${BASE_URL}/eliminar_puesto/`, {
+      data: { puesto_id: id }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error eliminando puesto:', error);
+    throw error;
+  }
 };
 
 // Funciones de edición
 export const editarPuesto = async (id: number, data: Partial<SuperAdminPuesto>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando puesto ${id}...`, data);
-    const response = await api.put(`${API_BASE}/editar_puesto/`, {
+    const response = await api.put(`${BASE_URL}/editar_puesto/`, {
       puesto_id: id,
       ...data
     });
-    console.log('✅ SuperAdmin: Puesto editado exitosamente');
     return response.data;
   } catch (error) {
     console.error('❌ SuperAdmin: Error editando puesto:', error);
@@ -392,44 +425,71 @@ export const editarPuesto = async (id: number, data: Partial<SuperAdminPuesto>) 
   }
 };
 
-// Servicios para empleados
-export const getEmpleados = async (params?: {
-  buscar?: string;
-  empresa_id?: string;
-  planta_id?: string;
-  departamento_id?: string;
-  puesto_id?: string;
-  status?: string;
-}): Promise<{ empleados: SuperAdminEmpleado[]; total: number }> => {
-  const response = await api.get(`${API_BASE}/listar_todos_empleados/`, { params });
-  return response.data;
+// Empleados
+export const getEmpleados = async (buscar = '', empresa_id = '', planta_id = '', departamento_id = '', puesto_id = '', status = ''): Promise<{empleados: any[]}> => {
+  try {
+    let params = new URLSearchParams();
+    if (buscar) params.append('buscar', buscar);
+    if (empresa_id) params.append('empresa_id', empresa_id);
+    if (planta_id) params.append('planta_id', planta_id);
+    if (departamento_id) params.append('departamento_id', departamento_id);
+    if (puesto_id) params.append('puesto_id', puesto_id);
+    if (status) params.append('status', status);
+    
+    const response = await api.get(`${BASE_URL}/listar_todos_empleados/?${params.toString()}`);
+    return response.data || { empleados: [] };
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando empleados:', error);
+    return { empleados: [] };
+  }
 };
 
-export const suspenderEmpleado = async (empleadoId: number, accion: 'suspender' | 'activar'): Promise<void> => {
-  await api.post(`${API_BASE}/suspender_empleado/`, {
-    empleado_id: empleadoId,
-    accion
-  });
+// Funciones de suspensión/activación
+export const suspenderEmpleado = async (id: number, accion: 'suspender' | 'activar') => {
+  try {
+    console.log(`🔒 SuperAdmin: ${accion === 'suspender' ? 'Suspendiendo' : 'Activando'} empleado ${id}...`);
+    const response = await api.post(`${BASE_URL}/suspender_empleado/`, {
+      empleado_id: id,
+      accion: accion
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`❌ SuperAdmin: Error ${accion === 'suspender' ? 'suspendiendo' : 'activando'} empleado:`, error);
+    throw error;
+  }
 };
 
-export const eliminarEmpleado = async (empleadoId: number): Promise<void> => {
-  await api.delete(`${API_BASE}/eliminar_empleado/`, {
-    data: { empleado_id: empleadoId }
-  });
+// Funciones de eliminación
+export const eliminarEmpleado = async (id: number) => {
+  try {
+    console.log(`🗑️ SuperAdmin: Eliminando empleado ${id}...`);
+    const response = await api.delete(`${BASE_URL}/eliminar_empleado/`, {
+      data: { empleado_id: id }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error eliminando empleado:', error);
+    throw error;
+  }
 };
 
 // Funciones de edición
 export const editarEmpleado = async (id: number, data: Partial<SuperAdminEmpleado>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando empleado ${id}...`, data);
-    const response = await api.put(`${API_BASE}/editar_empleado/`, {
+    const response = await api.put(`${BASE_URL}/editar_empleado/`, {
       empleado_id: id,
       ...data
     });
-    console.log('✅ SuperAdmin: Empleado editado exitosamente');
     return response.data;
   } catch (error) {
     console.error('❌ SuperAdmin: Error editando empleado:', error);
     throw error;
   }
+};
+
+// Obtener estadísticas del sistema
+export const getEstadisticasSistema = async (): Promise<SuperAdminEstadisticas> => {
+  const response = await api.get(`${BASE_URL}/estadisticas_sistema/`);
+  return response.data;
 };

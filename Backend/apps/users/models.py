@@ -19,7 +19,15 @@ class PerfilUsuario(models.Model):
     fecha_registro = models.DateTimeField(auto_now_add=True)
     nivel_usuario = models.CharField(max_length=20, choices=NIVEL_CHOICES)
     status = models.BooleanField(default=True)
-    admin_empresa = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Cambiado para usar db_column y evitar el sufijo _id que Django añade automáticamente
+    admin_empresa = models.ForeignKey(
+        'self', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True, 
+        db_column='admin_empresa'  # Especificar exactamente el nombre de la columna en la BD
+    )
     
     # Relación con Django User
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='perfil')

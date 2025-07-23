@@ -5,7 +5,7 @@ import AppRoutes from './routes';
 const App: React.FC = () => {
   return (
     <BrowserRouter>
-        <AppRoutes />
+      <AppRoutes />
     </BrowserRouter>
   );
 };

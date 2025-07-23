@@ -596,7 +596,7 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
         except Planta.DoesNotExist:
             raise ValidationError("Planta no encontrada")
         
-        # Verificar que el usuario tenga acceso a esta planta
+        # Verificar que el usuario tenga acceso a este planta
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:

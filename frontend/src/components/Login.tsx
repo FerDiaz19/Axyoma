@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { login } from '../services/authService';
+import { findBackendServer } from '../utils/serverCheck';
 import '../css/Login.css';
 
 interface LoginProps {
@@ -11,6 +12,21 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [serverStatus, setServerStatus] = useState<string>('checking');
+  
+  useEffect(() => {
+    // Verificar estado del servidor al cargar el componente
+    const checkServer = async () => {
+      const port = await findBackendServer();
+      if (port) {
+        setServerStatus(`active-${port}`);
+      } else {
+        setServerStatus('inactive');
+      }
+    };
+    
+    checkServer();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,6 +41,42 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Renderizar mensaje de error de servidor
+  const renderServerStatus = () => {
+    if (serverStatus === 'checking') {
+      return (
+        <div className="server-status checking">
+          🔄 Verificando conexión con el servidor...
+        </div>
+      );
+    } else if (serverStatus === 'inactive') {
+      return (
+        <div className="server-status error">
+          ❌ No se pudo conectar al servidor backend. Por favor:
+          <ul>
+            <li>Verifica que el servidor Django esté ejecutándose</li>
+            <li>Comprueba que el puerto 8000 esté disponible</li>
+            <li>Verifica la consola de Django por posibles errores</li>
+          </ul>
+          <button 
+            onClick={() => window.location.reload()}
+            className="retry-button"
+          >
+            🔄 Reintentar conexión
+          </button>
+        </div>
+      );
+    } else if (serverStatus.startsWith('active-')) {
+      const port = serverStatus.split('-')[1];
+      return (
+        <div className="server-status success">
+          ✅ Conectado al servidor en puerto {port}
+        </div>
+      );
+    }
+    return null;
   };
 
   return (
@@ -157,6 +209,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
         </div>
       </div>
+
+      {/* Mostrar estado del servidor si hay problemas */}
+      {serverStatus !== 'checking' && serverStatus !== 'active-8000' && (
+        <div className="server-status-container">
+          {renderServerStatus()}
+        </div>
+      )}
     </div>
   );
 };

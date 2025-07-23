@@ -29,7 +29,14 @@ if %errorlevel% neq 0 (
     pause
     exit /b 1
 )
-echo ✓ Base de datos recreada
+
+echo Limpiando esquema público...
+%PGBIN%\psql -U postgres -d axyomadb -c "DROP SCHEMA public CASCADE;"
+%PGBIN%\psql -U postgres -d axyomadb -c "CREATE SCHEMA public;"
+%PGBIN%\psql -U postgres -d axyomadb -c "GRANT ALL ON SCHEMA public TO postgres;"
+%PGBIN%\psql -U postgres -d axyomadb -c "GRANT ALL ON SCHEMA public TO public;"
+
+echo ✓ Base de datos recreada y esquema limpio
 
 echo [2/4] Eliminando migraciones...
 cd Backend
@@ -52,6 +59,15 @@ if exist "apps\subscriptions\migrations\*.py" (
 echo Limpiando migraciones de surveys...
 if exist "apps\surveys\migrations\*.py" (
     for %%f in (apps\surveys\migrations\*.py) do (
+        if not "%%~nxf"=="__init__.py" (
+            del "%%f" 2>nul
+        )
+    )
+)
+
+echo Limpiando migraciones de evaluaciones...
+if exist "apps\evaluaciones\migrations\*.py" (
+    for %%f in (apps\evaluaciones\migrations\*.py) do (
         if not "%%~nxf"=="__init__.py" (
             del "%%f" 2>nul
         )
