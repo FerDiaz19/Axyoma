@@ -174,21 +174,14 @@ def consultar_usuarios():
             print(f"Nivel: {usuario.get('nivel_usuario', 'No disponible')}")
             print(f"Status: {'✅ Activo' if usuario.get('is_active') else '❌ Inactivo'}")
             
-if usuario.get("empresa"):
-    empresa = usuario["empresa"]
-    nombre_empresa = empresa.get("nombre")
-    if nombre_empresa:
-        print(f"Empresa: {nombre_empresa}")
-    else:
-        print(f"Empresa: ID: {empresa.get('id', 'N/A')}")
-
-if usuario.get("planta"):
-    planta = usuario["planta"]
-    nombre_planta = planta.get("nombre")
-    if nombre_planta:
-        print(f"Planta: {nombre_planta}")
-    else:
-        print(f"Planta: ID: {planta.get('id', 'N/A')}")
+            if usuario.get("empresa"):
+                empresa = usuario["empresa"]
+                print("Empresa:", empresa.get("nombre") or f"ID: {empresa.get('id', 'N/A')}")
+            
+            if usuario.get("planta"):
+                planta = usuario["planta"]
+                print("Planta:", planta.get("nombre") or f"ID: {planta.get('id', 'N/A')}")
+    
     return data
 
 def consultar_plantas():
@@ -207,8 +200,7 @@ def consultar_plantas():
             
             if planta.get("empresa"):
                 empresa = planta["empresa"]
-                print(f"Empresa: {empresa.get('nombre', f'ID: {empresa.get(\"id\", \"N/A\")}')}")
-            
+                print("Empresa:", empresa.get("nombre") or f"ID: {empresa.get('id', 'N/A')}")
             print(f"Departamentos: {planta.get('departamentos_count', 0)}")
             print(f"Empleados: {planta.get('empleados_count', 0)}")
     
@@ -236,22 +228,25 @@ def consultar_suscripciones():
     """Consulta las suscripciones"""
     mostrar_titulo("SUSCRIPCIONES")
     data = consultar_api("api/suscripciones/listar_suscripciones/")
-    
+
     if data:
         print(f"📊 Total de suscripciones: {len(data)}")
-        
+
         for i, suscripcion in enumerate(data, 1):
             print(f"\n--- Suscripción {i} ---")
             print(f"ID: {suscripcion.get('suscripcion_id')}")
-            print(f"Empresa: {suscripcion.get('empresa__nombre', f'ID: {suscripcion.get(\"empresa__empresa_id\", \"N/A\")}')}")
+            
+            empresa_nombre = suscripcion.get("empresa__nombre")
+            empresa_id = suscripcion.get("empresa__empresa_id", "N/A")
+            print(f"Empresa: {empresa_nombre if empresa_nombre else f'ID: {empresa_id}'}")
+            
             print(f"Plan: {suscripcion.get('plan_suscripcion__nombre', 'No disponible')}")
             print(f"Precio: ${suscripcion.get('plan_suscripcion__precio', '0')}")
             print(f"Fecha Inicio: {suscripcion.get('fecha_inicio', 'No disponible')}")
             print(f"Fecha Fin: {suscripcion.get('fecha_fin', 'No disponible')}")
             print(f"Estado: {suscripcion.get('estado', 'No disponible')}")
-    
-    return data
 
+    return data
 def menu_principal():
     """Muestra el menú principal y maneja las opciones"""
     while True:
