@@ -65,7 +65,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
   const handleLogout = async () => {
     try {
       await logout();
-      window.location.href = '/login';
+      window.location.href = 'localhost:3000'; // Redirigir al login después de cerrar sesión
     } catch (error) {
       console.error('Error al cerrar sesión:', error);
     }
