@@ -34,7 +34,25 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
 
     try {
-      const userData = await login({ username, password });
+      // Sanitizar username - eliminar espacios y convertir a minúsculas
+      const sanitizedUsername = username.trim().toLowerCase();
+      
+      // Normalizar nombres de usuario conocidos
+      let normalizedUsername = sanitizedUsername;
+      if (sanitizedUsername === 'admin planta' || sanitizedUsername === 'admin-planta') {
+        normalizedUsername = 'admin_planta';
+      } else if (sanitizedUsername === 'admin empresa' || sanitizedUsername === 'admin-empresa') {
+        normalizedUsername = 'admin_empresa';
+      } else if (sanitizedUsername === 'super admin' || sanitizedUsername === 'superadmin') {
+        normalizedUsername = 'superadmin';
+      }
+      
+      console.log(`🔑 Intentando login con usuario normalizado: ${normalizedUsername}`);
+      
+      const userData = await login({ 
+        username: normalizedUsername,
+        password 
+      });
       onLogin(userData);
     } catch (error: any) {
       setError(error.message || 'Error al iniciar sesión');
@@ -77,6 +95,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       );
     }
     return null;
+  };
+
+  // Función auxiliar para establecer credenciales (renombrada para evitar error de ESLint)
+  const applyTestCredential = (testUser: string, testPassword: string) => {
+    setUsername(testUser);
+    setPassword(testPassword);
+    // Opcionalmente, hacer submit automáticamente
+    // handleSubmit(new Event('submit') as any);
   };
 
   return (
@@ -183,18 +209,27 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <span>o</span>
             </div>
 
-            {/* Credenciales de prueba */}
+            {/* Credenciales de prueba - con nombre de función corregido */}
             <div className="test-credentials">
               <h4>🧪 Usuarios de Prueba</h4>
               <div className="credentials-list">
-                <div className="credential-item">
-                  <strong>SuperAdmin:</strong> superadmin / 1234
+                <div 
+                  className="credential-item clickable"
+                  onClick={() => applyTestCredential('testuser', 'testpass123')}
+                >
+                  <strong>SuperAdmin:</strong> testuser / testpass123
                 </div>
-                <div className="credential-item">
-                  <strong>Admin Empresa:</strong> admin_empresa / 1234
+                <div 
+                  className="credential-item clickable"
+                  onClick={() => applyTestCredential('admin_empresa', 'admin123')}
+                >
+                  <strong>Admin Empresa:</strong> admin_empresa / admin123
                 </div>
-                <div className="credential-item">
-                  <strong>Admin Planta:</strong> admin_planta / 1234
+                <div 
+                  className="credential-item clickable"
+                  onClick={() => applyTestCredential('admin_planta', 'admin123')}
+                >
+                  <strong>Admin Planta:</strong> admin_planta / admin123
                 </div>
               </div>
             </div>

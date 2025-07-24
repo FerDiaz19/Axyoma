@@ -46,7 +46,11 @@ class Empresa(models.Model):
     telefono_contacto = models.CharField(max_length=15, blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
-    administrador = models.OneToOneField(PerfilUsuario, on_delete=models.CASCADE)
+    administrador = models.OneToOneField(
+        PerfilUsuario, 
+        on_delete=models.CASCADE, 
+        db_column='administrador'  # Especificar nombre de columna
+    )
     
     class Meta:
         db_table = 'empresas'
@@ -100,15 +104,27 @@ class Planta(models.Model):
     direccion = models.TextField(blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, db_column='empresa_id')
+    empresa = models.ForeignKey(
+        Empresa, 
+        on_delete=models.CASCADE, 
+        db_column='empresa'  # Especificar nombre de columna
+    )
     
     class Meta:
         db_table = 'plantas'
 
 # ADMIN_PLANTAS - Tabla intermedia para admins de plantas
 class AdminPlanta(models.Model):
-    usuario = models.ForeignKey(PerfilUsuario, on_delete=models.CASCADE)
-    planta = models.ForeignKey(Planta, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(
+        PerfilUsuario, 
+        on_delete=models.CASCADE, 
+        db_column='usuario_id'  # Esta podría ser usuario_id en la BD
+    )
+    planta = models.ForeignKey(
+        Planta, 
+        on_delete=models.CASCADE, 
+        db_column='planta_id'  # Esta podría ser planta_id en la BD
+    )
     fecha_asignacion = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
     password_temporal = models.CharField(max_length=128, blank=True, null=True, help_text="Contraseña temporal generada automáticamente")
@@ -124,7 +140,11 @@ class Departamento(models.Model):
     descripcion = models.TextField(blank=True, null=True)
     fecha_registro = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
-    planta = models.ForeignKey(Planta, on_delete=models.CASCADE)
+    planta = models.ForeignKey(
+        Planta, 
+        on_delete=models.CASCADE, 
+        db_column='planta'  # Especificar nombre de columna
+    )
     
     class Meta:
         db_table = 'departamentos'
@@ -145,12 +165,15 @@ class Puesto(models.Model):
     nombre = models.CharField(max_length=64)
     descripcion = models.TextField(blank=True, null=True)
     status = models.BooleanField(default=True)
-    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
+    departamento = models.ForeignKey(
+        Departamento, 
+        on_delete=models.CASCADE, 
+        db_column='departamento'  # Especificar nombre de columna
+    )
     
     class Meta:
         db_table = 'puestos'
         unique_together = ['nombre', 'departamento']  # Nombre único solo dentro del mismo departamento
-        db_table = 'puestos'
 
 # EMPLEADOS - Según el esquema SQL original
 class Empleado(models.Model):
@@ -166,9 +189,21 @@ class Empleado(models.Model):
     genero = models.CharField(max_length=10, choices=GENERO_CHOICES)
     antiguedad = models.IntegerField(blank=True, null=True)
     status = models.BooleanField(default=True)
-    puesto = models.ForeignKey(Puesto, on_delete=models.CASCADE)
-    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
-    planta = models.ForeignKey(Planta, on_delete=models.CASCADE)
+    puesto = models.ForeignKey(
+        Puesto, 
+        on_delete=models.CASCADE, 
+        db_column='puesto'  # Especificar nombre de columna
+    )
+    departamento = models.ForeignKey(
+        Departamento, 
+        on_delete=models.CASCADE, 
+        db_column='departamento'  # Especificar nombre de columna
+    )
+    planta = models.ForeignKey(
+        Planta, 
+        on_delete=models.CASCADE, 
+        db_column='planta'  # Especificar nombre de columna
+    )
     
     class Meta:
         db_table = 'empleados'

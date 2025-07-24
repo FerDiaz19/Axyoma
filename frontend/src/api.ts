@@ -2,6 +2,7 @@ import axios from 'axios';
 
 // Forzar valor de puerto para evitar problemas de caché
 const API_PORT = 8000;
+// Cambiar API_URL para no incluir /api al final (será añadido en los servicios)
 const API_URL = `http://localhost:${API_PORT}/api`;
 
 // Log para confirmar la URL correcta
@@ -13,9 +14,12 @@ const api = axios.create({
         'Content-Type': 'application/json; charset=utf-8',
         'Accept': 'application/json',
     },
-    transformRequest: [function (data) {
-        // Asegurar que los datos se envíen correctamente codificados
-        return JSON.stringify(data);
+    transformRequest: [(data) => {
+        // Solo convertir a JSON si hay datos y no son ya un string
+        if (data && typeof data !== 'string') {
+            return JSON.stringify(data);
+        }
+        return data;
     }],
 });
 
@@ -39,7 +43,11 @@ api.interceptors.response.use(
         
         // Solo para depuración - ver detalles completos del error
         if (error.config) {
-            console.error(`📌 URL: ${error.config.baseURL}${error.config.url}`);
+            // Corregir la URL para mostrarla correctamente (agregando / entre api y el endpoint)
+            const url = error.config.url || '';
+            const baseURL = error.config.baseURL || '';
+            const fullURL = baseURL + (url.startsWith('/') ? url : `/${url}`);
+            console.error(`📌 URL: ${fullURL}`);
             console.error(`📌 Método: ${error.config.method?.toUpperCase()}`);
         }
 

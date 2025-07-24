@@ -17,6 +17,7 @@ export interface LoginResponse {
   nombre_empresa?: string;
 }
 
+// Quitar "api/" del contexto ya que api.ts ya lo incluye
 const context = "auth/";
 
 // Nuevo método para obtener usuarios de prueba
@@ -38,8 +39,35 @@ export const getTestUsers = async (): Promise<any> => {
 
 export const login = async (data: LoginData): Promise<LoginResponse> => {
   try {
-    console.log("🔄 Intentando inicio de sesión con:", data.username);
-    const response = await api.post<LoginResponse>(`${context}login/`, data);
+    // Corregir la entrada de usuario - esto es crítico
+    // El problema es que se está enviando "Admin Planta None" como nombre de usuario
+    // cuando debería ser solo "admin_planta"
+    
+    // Limpiar y sanitizar los datos de entrada
+    const cleanData = {
+      username: data.username.trim().toLowerCase(),
+      password: data.password
+    };
+    
+    // Si el usuario intenta usar "Admin Planta" o similar, corregirlo
+    if (cleanData.username.includes('admin planta')) {
+      cleanData.username = 'admin_planta';
+      console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
+    }
+    
+    // Lo mismo para otros usuarios comunes
+    if (cleanData.username.includes('admin empresa')) {
+      cleanData.username = 'admin_empresa';
+      console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
+    }
+    
+    if (cleanData.username.includes('super admin')) {
+      cleanData.username = 'superadmin';
+      console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
+    }
+    
+    console.log("🔄 Intentando inicio de sesión con:", cleanData.username);
+    const response = await api.post<LoginResponse>(`${context}login/`, cleanData);
     
     console.log("✅ Respuesta recibida:", response.data);
     

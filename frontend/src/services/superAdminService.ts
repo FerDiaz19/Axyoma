@@ -1,5 +1,9 @@
 import api from '../api';
 
+// Definir BASE_URL sin "api/" - Esto corrige el problema de duplicación
+// ya que axios ya incluye "api" en la baseURL
+const BASE_URL = 'superadmin';
+
 // Interfaces para los tipos de datos
 export interface Empresa {
   empresa_id: number;
@@ -8,7 +12,7 @@ export interface Empresa {
   telefono?: string;
   correo?: string;
   direccion?: string;
-  fecha_registro: string;
+  fecha_registro?: string;
   status: boolean;
   administrador?: {
     id: number;
@@ -17,8 +21,8 @@ export interface Empresa {
     nombre_completo: string;
     activo: boolean;
   };
-  plantas_count: number;
-  empleados_count: number;
+  plantas_count?: number;
+  empleados_count?: number;
 }
 
 export interface SuperAdminEmpresa {
@@ -103,8 +107,17 @@ export interface SuperAdminEstadisticas {
   planes_disponibles?: number;
 }
 
-// URL base para endpoints de superadmin
-const BASE_URL = 'api/superadmin';
+// Método que causa el problema - corregido
+export const getEstadisticasSistema = async (): Promise<SuperAdminEstadisticas> => {
+  try {
+    // Usar ruta SIN "api/" al inicio
+    const response = await api.get(`${BASE_URL}/estadisticas_sistema/`);
+    return response.data;
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando estadísticas:', error);
+    throw error;
+  }
+};
 
 // Empresas
 export const getEmpresas = async (buscar = '', status = ''): Promise<{empresas: Empresa[]}> => {
@@ -116,6 +129,7 @@ export const getEmpresas = async (buscar = '', status = ''): Promise<{empresas: 
     
     console.log(`🔍 Buscando empresas: buscar=${buscar}, status=${status}`);
     
+    // Usar ruta SIN "api/" al inicio
     const response = await api.get(`${BASE_URL}/listar_empresas/?${params.toString()}`);
     console.log('📊 Respuesta empresas:', response.data);
     
@@ -171,7 +185,7 @@ export const editarEmpresa = async (id: number, data: Partial<SuperAdminEmpresa>
 };
 
 // Usuarios
-export const getUsuarios = async (buscar = '', nivel_usuario = '', activo = ''): Promise<{usuarios: any[]}> => {
+export const getUsuarios = async (buscar = '', nivel_usuario = '', activo = ''): Promise<{usuarios: SuperAdminUsuario[]}> => {
   try {
     let params = new URLSearchParams();
     if (buscar) params.append('buscar', buscar);
@@ -486,10 +500,4 @@ export const editarEmpleado = async (id: number, data: Partial<SuperAdminEmplead
     console.error('❌ SuperAdmin: Error editando empleado:', error);
     throw error;
   }
-};
-
-// Obtener estadísticas del sistema
-export const getEstadisticasSistema = async (): Promise<SuperAdminEstadisticas> => {
-  const response = await api.get(`${BASE_URL}/estadisticas_sistema/`);
-  return response.data;
 };

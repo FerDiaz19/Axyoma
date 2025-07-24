@@ -56,6 +56,7 @@ import {
 } from '../services/suscripcionService';
 import EditModal from './EditModal';
 import '../css/SuperAdminDashboard.css';
+import useDebounce from '../hooks/useDebounce';
 
 interface SuperAdminDashboardProps {
   userData: any;
@@ -125,8 +126,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const [planes, setPlanes] = useState<PlanSuscripcion[]>([]);
   const [pagos, setPagos] = useState<Pago[]>([]);
   
-  // Estados para filtros
+  // Estado para filtros
   const [filtroTexto, setFiltroTexto] = useState('');
+  // Aplicar debounce al filtro de texto
+  const debouncedFiltroTexto = useDebounce(filtroTexto, 500);
   const [filtroStatus, setFiltroStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [filtroNivelUsuario, setFiltroNivelUsuario] = useState('');
   const [filtroEmpresa, setFiltroEmpresa] = useState('');
@@ -186,8 +189,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       
       const params: any = {};
       
-      if (filtroTexto) {
-        params.buscar = filtroTexto;
+      if (debouncedFiltroTexto) {  // Usar el valor con debounce aquí
+        params.buscar = debouncedFiltroTexto;
       }
       
       if (filtroStatus !== 'all') {
@@ -278,12 +281,25 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
     } finally {
       setLoading(false);
     }
-  }, [activeSection, filtroTexto, filtroStatus, filtroNivelUsuario, filtroEmpresa]);
+  }, [activeSection, debouncedFiltroTexto, filtroStatus, filtroNivelUsuario, filtroEmpresa]);
 
   useEffect(() => {
     cargarEstadisticas();
   }, []);
 
+  // Nuevo efecto para limpiar filtros cuando cambia la sección activa
+  useEffect(() => {
+    // Limpiar todos los filtros al cambiar de sección
+    setFiltroTexto('');
+    setFiltroStatus('all');
+    setFiltroNivelUsuario('');
+    setFiltroEmpresa('');
+    
+    // Log para verificar que se están limpiando los filtros
+    console.log(`🧹 Limpiando filtros al cambiar a sección: ${activeSection}`);
+  }, [activeSection]); // Este efecto solo se ejecutará cuando cambie activeSection
+  
+  // Dejamos el useEffect original que carga datos cuando cambia la sección
   useEffect(() => {
     if (activeSection !== 'estadisticas') {
       cargarDatosPorSeccion();
@@ -490,7 +506,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           break;
         case 'planta':
           await editarPlanta(id, formData);
-          setPlantas(prev => prev.map(item => 
+          setPlantas(prev => prev.map((item) => 
             item.planta_id === id ? { ...item, ...formData } : item
           ));
           break;
@@ -764,7 +780,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           type="text"
           placeholder="Buscar..."
           value={filtroTexto}
-          onChange={(e) => setFiltroTexto(e.target.value)}
+          onChange={(e) => {
+            e.preventDefault(); // Prevenir comportamiento predeterminado
+            setFiltroTexto(e.target.value);
+          }}
           className="filtro-input"
         />
         

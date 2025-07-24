@@ -1,7 +1,9 @@
 /**
- * Script para probar la conexión con el backend
- * Ejecutar con: node testConnection.js
+ * Script para probar la conexión con el backend (ESM Version)
+ * Ejecutar con: node testConnection.mjs
  */
+
+import fetch from 'node-fetch';
 
 async function testBackendConnection() {
   const ports = [8000, 8001, 8080];

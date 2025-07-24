@@ -9,11 +9,15 @@ class PlanSuscripcion(models.Model):
     Modelo para PLANES_SUSCRIPCION según el SQL original
     """
     plan_id = models.AutoField(primary_key=True)
-    nombre = models.CharField(max_length=64, verbose_name="Nombre del Plan")
+    nombre = models.CharField(max_length=50, unique=True, verbose_name="Nombre del Plan")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
-    duracion = models.IntegerField(verbose_name="Duración en días")
     precio = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio")
+    duracion = models.IntegerField(help_text="Duración en días", verbose_name="Duración")
+    limite_empleados = models.IntegerField(null=True, blank=True, help_text="NULL = sin límite", verbose_name="Límite de Empleados")
+    limite_plantas = models.IntegerField(null=True, blank=True, help_text="NULL = sin límite", verbose_name="Límite de Plantas")
+    caracteristicas = models.TextField(blank=True, null=True, verbose_name="Características")
     status = models.BooleanField(default=True, verbose_name="Activo")
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
 
     class Meta:
         db_table = 'planes_suscripcion'
@@ -30,22 +34,32 @@ class SuscripcionEmpresa(models.Model):
     """
     ESTADO_CHOICES = [
         ('Activa', 'Activa'),
-        ('Suspendida', 'Suspendida'), 
+        ('Vencida', 'Vencida'),
         ('Cancelada', 'Cancelada'),
+        ('Suspendida', 'Suspendida'),
     ]
     
     suscripcion_id = models.AutoField(primary_key=True)
+    empresa = models.ForeignKey(
+        Empresa, 
+        on_delete=models.CASCADE,
+        db_column='empresa_id',
+        verbose_name="Empresa"
+    )
+    plan_suscripcion = models.ForeignKey(
+        PlanSuscripcion, 
+        on_delete=models.PROTECT,
+        db_column='plan_id',
+        verbose_name="Plan"
+    )
     fecha_inicio = models.DateField(verbose_name="Fecha de Inicio")
-    fecha_fin = models.DateField(null=True, blank=True, verbose_name="Fecha de Fin")
+    fecha_fin = models.DateField(verbose_name="Fecha de Fin")
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Activa', verbose_name="Estado")
     status = models.BooleanField(default=True, verbose_name="Activa")
     fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
-    fecha_actualizacion = models.DateTimeField(auto_now=True, verbose_name="Fecha de Actualización")
-    plan_suscripcion = models.ForeignKey(PlanSuscripcion, on_delete=models.PROTECT, verbose_name="Plan")
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, verbose_name="Empresa")
 
     class Meta:
-        db_table = 'suscripcion_empresa'
+        db_table = 'suscripciones_empresa'
         verbose_name = "Suscripción de Empresa"
         verbose_name_plural = "Suscripciones de Empresas"
         ordering = ['-fecha_inicio']
@@ -91,20 +105,26 @@ class Pago(models.Model):
     Modelo para PAGOS según el SQL original
     """
     ESTADO_PAGO_CHOICES = [
-        ('Pendiente', 'Pendiente'),
         ('Completado', 'Completado'),
+        ('Pendiente', 'Pendiente'),
+        ('Cancelado', 'Cancelado'),
         ('Fallido', 'Fallido'),
     ]
     
     pago_id = models.AutoField(primary_key=True)
+    suscripcion = models.ForeignKey(
+        SuscripcionEmpresa, 
+        on_delete=models.CASCADE,
+        db_column='suscripcion_id',
+        verbose_name="Suscripción"
+    )
     costo = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Costo")
     monto_pago = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Monto Pagado")
+    estado_pago = models.CharField(max_length=20, choices=ESTADO_PAGO_CHOICES, default='Pendiente', verbose_name="Estado del Pago")
     fecha_pago = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Pago")
     fecha_vencimiento = models.DateField(null=True, blank=True, verbose_name="Fecha de Vencimiento")
-    transaccion_id = models.CharField(max_length=64, null=True, blank=True, verbose_name="ID de Transacción")
-    estado_pago = models.CharField(max_length=20, choices=ESTADO_PAGO_CHOICES, default='Pendiente', verbose_name="Estado del Pago")
-    suscripcion = models.ForeignKey(SuscripcionEmpresa, on_delete=models.CASCADE, verbose_name="Suscripción", related_name='pagos')
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Usuario que realizó el pago", null=True, blank=True)
+    transaccion_id = models.CharField(max_length=50, blank=True, null=True, verbose_name="ID de Transacción")
+    comprobante = models.CharField(max_length=255, blank=True, null=True, verbose_name="Comprobante de Pago")
 
     class Meta:
         db_table = 'pagos'

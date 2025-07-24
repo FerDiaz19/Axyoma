@@ -34,8 +34,8 @@ def main():
         from apps.models import PlanSuscripcion
         if not PlanSuscripcion.objects.exists():
             print("📋 Creando datos iniciales...")
-            from create_initial_data import create_initial_data
-            create_initial_data()
+            from crear_datos_iniciales import crear_datos_iniciales
+            crear_datos_iniciales()
             print("✅ Datos iniciales creados")
         else:
             print("✅ Datos iniciales ya existen")
