@@ -120,23 +120,29 @@ export const getEstadisticasSistema = async (): Promise<SuperAdminEstadisticas> 
 };
 
 // Empresas
-export const getEmpresas = async (buscar = '', status = ''): Promise<{empresas: Empresa[]}> => {
+export const getEmpresas = async (buscar = '', status = ''): Promise<Empresa[]> => {
+  console.log('🔍 SuperAdmin: Obteniendo empresas...');
   try {
-    // Construir parámetros de consulta
-    let params = new URLSearchParams();
+    // Build query parameters
+    const params = new URLSearchParams();
     if (buscar) params.append('buscar', buscar);
     if (status) params.append('status', status);
     
-    console.log(`🔍 Buscando empresas: buscar=${buscar}, status=${status}`);
+    // Make API call with detailed logging
+    console.log(`🔍 SuperAdmin: Llamando a API: /superadmin/listar_empresas/?${params.toString()}`);
+    const response = await api.get(`/superadmin/listar_empresas/?${params.toString()}`);
     
-    // Usar ruta SIN "api/" al inicio
-    const response = await api.get(`${BASE_URL}/listar_empresas/?${params.toString()}`);
-    console.log('📊 Respuesta empresas:', response.data);
-    
-    return response.data || { empresas: [] };
+    // Check if response has the expected structure
+    if (response.data && response.data.empresas) {
+      console.log(`✅ SuperAdmin: Obtenidas ${response.data.empresas.length} empresas`);
+      return response.data.empresas;
+    } else {
+      console.error('❌ SuperAdmin: Formato de respuesta inesperado:', response.data);
+      return [];
+    }
   } catch (error) {
-    console.error('❌ SuperAdmin: Error cargando empresas:', error);
-    return { empresas: [] };
+    console.error('❌ SuperAdmin: Error obteniendo empresas:', error);
+    return [];
   }
 };
 

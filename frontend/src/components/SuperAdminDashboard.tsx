@@ -199,8 +199,15 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       
       switch (activeSection) {
         case 'empresas':
-          const empresasData = await getEmpresas(params);
-          setEmpresas(empresasData.empresas || []);
+          console.log('🔄 SuperAdmin: Cargando empresas...');
+          const empresasData = await getEmpresas(params.buscar, params.status);
+          console.log('📊 SuperAdmin: Empresas cargadas:', empresasData?.length || 0);
+          if (Array.isArray(empresasData)) {
+            setEmpresas(empresasData);
+          } else {
+            console.error('❌ SuperAdmin: datos de empresas no es un array:', empresasData);
+            setEmpresas([]);
+          }
           break;
           
         case 'usuarios':
@@ -226,11 +233,34 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           break;
           
         case 'plantas':
+          console.log('🔄 SuperAdmin: Cargando plantas...');
           if (filtroEmpresa) {
             params.empresa_id = filtroEmpresa;
           }
-          const plantasData = await getPlantas(params);
-          setPlantas(plantasData.plantas);
+          
+          try {
+            // Usar getPlantas en lugar de getEmpresas
+            const plantasResponse = await getPlantas(params);
+            console.log('📊 SuperAdmin: Respuesta plantas:', plantasResponse);
+            
+            // Verificar y procesar correctamente la respuesta según su estructura
+            if (plantasResponse && plantasResponse.plantas) {
+              // Si la API devuelve un objeto con una propiedad 'plantas'
+              setPlantas(plantasResponse.plantas);
+              console.log(`✅ SuperAdmin: Cargadas ${plantasResponse.plantas.length} plantas`);
+            } else if (Array.isArray(plantasResponse)) {
+              // Si la API devuelve directamente un array de plantas
+              setPlantas(plantasResponse);
+              console.log(`✅ SuperAdmin: Cargadas ${plantasResponse.length} plantas`);
+            } else {
+              // Si la respuesta tiene un formato inesperado
+              console.error('❌ SuperAdmin: formato de respuesta de plantas incorrecto:', plantasResponse);
+              setPlantas([]);
+            }
+          } catch (error) {
+            console.error('❌ SuperAdmin: Error cargando plantas:', error);
+            setPlantas([]);
+          }
           break;
           
         case 'departamentos':
@@ -958,80 +988,59 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderEmpresas = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3>🏢 Gestión de Empresas</h3>
-        <div className="stats-mini">
-          <span>Total: {empresas?.length || 0}</span>
-          <span>Activas: {empresas?.filter(e => e.status).length || 0}</span>
-          <span>Suspendidas: {empresas?.filter(e => !e.status).length || 0}</span>
-        </div>
+        <h2>Gestión de Empresas</h2>
+        <button className="btn-primary" onClick={() => cargarDatosPorSeccion()}>
+          🔄 Recargar Datos
+        </button>
       </div>
       
       {renderFiltros()}
 
       <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Empresa</th>
-              <th>RFC</th>
-              <th>Administrador</th>
-              <th>Plantas</th>
-              <th>Empleados</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {empresas?.map((empresa) => (
-              <tr key={empresa.empresa_id}>
-                <td>{empresa.empresa_id}</td>
-                <td>
-                  <div>
-                    <strong>{empresa.nombre}</strong>
-                    <small>{empresa.correo}</small>
-                  </div>
-                </td>
-                <td>{empresa.rfc}</td>
-                <td>
-                  <div>
-                    <strong>{empresa.administrador?.nombre_completo || 'Sin asignar'}</strong>
-                    <small>{empresa.administrador?.email || ''}</small>
-                  </div>
-                </td>
-                <td>{empresa.plantas_count}</td>
-                <td>{empresa.empleados_count}</td>
-                <td>
-                  <span className={`status ${empresa.status ? 'active' : 'inactive'}`}>
-                    {empresa.status ? '🟢 Activa' : '🔴 Suspendida'}
-                  </span>
-                </td>
-                <td>
-                  <div className="actions">
-                    <button 
-                      onClick={() => handleToggleStatus('empresa', empresa.empresa_id, empresa.status, empresa.nombre)}
-                      className={`btn-action ${empresa.status ? 'warning' : 'success'}`}
-                    >
-                      {empresa.status ? '⏸️ Suspender' : '▶️ Activar'}
-                    </button>
-                    <button 
-                      onClick={() => handleDelete('empresa', empresa.empresa_id, empresa.nombre)}
-                      className="btn-action danger"
-                    >
-                      🗑️ Eliminar
-                    </button>
-                    <button 
-                      onClick={() => handleEdit('empresa', empresa)}
-                      className="btn-action primary"
-                    >
-                      ✏️ Editar
-                    </button>
-                  </div>
-                </td>
+        {loading ? (
+          <div className="loading">Cargando empresas...</div>
+        ) : empresas.length > 0 ? (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>RFC</th>
+                <th>Estado</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {empresas.map((empresa) => (
+                <tr key={empresa.empresa_id}>
+                  <td>{empresa.empresa_id}</td>
+                  <td>{empresa.nombre}</td>
+                  <td>{empresa.rfc}</td>
+                  <td>
+                    <span className={empresa.status ? "status active" : "status inactive"}>
+                      {empresa.status ? "Activa" : "Suspendida"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button onClick={() => handleEdit('empresa', empresa)}>
+                        ✏️ Editar
+                      </button>
+                      <button onClick={() => handleToggleStatus('empresa', empresa.empresa_id, empresa.status, empresa.nombre)}>
+                        {empresa.status ? "⏸️ Suspender" : "▶️ Activar"}
+                      </button>
+                      <button onClick={() => handleDelete('empresa', empresa.empresa_id, empresa.nombre)}>
+                        🗑️ Eliminar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="no-data">No se encontraron empresas. {debouncedFiltroTexto ? "Intente con otros filtros." : ""}</div>
+        )}
       </div>
     </div>
   );
@@ -1136,84 +1145,61 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderPlantas = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3>🏭 Gestión de Plantas</h3>
-        <div className="stats-mini">
-          <span>Total: {plantas?.length || 0}</span>
-          <span>Activas: {plantas?.filter(p => p.status).length || 0}</span>
-          <span>Suspendidas: {plantas?.filter(p => !p.status).length || 0}</span>
-        </div>
+        <h2>Gestión de Plantas</h2>
+        <button className="btn-primary" onClick={() => cargarDatosPorSeccion()}>
+          🔄 Recargar Datos
+        </button>
       </div>
       
       {renderFiltros()}
 
       <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Planta</th>
-              <th>Empresa</th>
-              <th>Administrador</th>
-              <th>Departamentos</th>
-              <th>Empleados</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {plantas?.map((planta) => (
-              <tr key={planta.planta_id}>
-                <td>{planta.planta_id}</td>
-                <td>
-                  <div>
-                    <strong>{planta.nombre}</strong>
-                    {planta.direccion && <small>{planta.direccion}</small>}
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <strong>{planta.empresa_nombre}</strong>
-                    <small>ID: {planta.empresa_id}</small>
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <strong>{planta.username || 'Sin usuario'}</strong>
-                  </div>
-                </td>
-                <td>{planta.departamentos_count}</td>
-                <td>{planta.empleados_count}</td>
-                <td>
-                  <span className={`status ${planta.status ? 'active' : 'inactive'}`}>
-                    {planta.status ? '🟢 Activa' : '🔴 Suspendida'}
-                  </span>
-                </td>
-                <td>
-                  <div className="actions">
-                    <button 
-                      onClick={() => handleToggleStatus('planta', planta.planta_id, planta.status, planta.nombre)}
-                      className={`btn-action ${planta.status ? 'warning' : 'success'}`}
-                    >
-                      {planta.status ? '⏸️ Suspender' : '▶️ Activar'}
-                    </button>
-                    <button 
-                      onClick={() => handleDelete('planta', planta.planta_id, planta.nombre)}
-                      className="btn-action danger"
-                    >
-                      🗑️ Eliminar
-                    </button>
-                    <button 
-                      onClick={() => handleEdit('planta', planta)}
-                      className="btn-action primary"
-                    >
-                      ✏️ Editar
-                    </button>
-                  </div>
-                </td>
+        {loading ? (
+          <div className="loading">Cargando plantas...</div>
+        ) : plantas.length > 0 ? (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Empresa</th>
+                <th>Dirección</th>
+                <th>Estado</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {plantas.map((planta) => (
+                <tr key={planta.planta_id}>
+                  <td>{planta.planta_id}</td>
+                  <td>{planta.nombre}</td>
+                  <td>{planta.empresa_nombre || (planta.empresa_nombre && planta.empresa_nombre) || "—"}</td>
+                  <td>{planta.direccion || "—"}</td>
+                  <td>
+                    <span className={planta.status ? "status active" : "status inactive"}>
+                      {planta.status ? "Activa" : "Suspendida"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="action-buttons">
+                      <button onClick={() => handleEdit('planta', planta)}>
+                        ✏️ Editar
+                      </button>
+                      <button onClick={() => handleToggleStatus('planta', planta.planta_id, planta.status, planta.nombre)}>
+                        {planta.status ? "⏸️ Suspender" : "▶️ Activar"}
+                      </button>
+                      <button onClick={() => handleDelete('planta', planta.planta_id, planta.nombre)}>
+                        🗑️ Eliminar
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="no-data">No se encontraron plantas. {debouncedFiltroTexto ? "Intente con otros filtros." : ""}</div>
+        )}
       </div>
     </div>
   );

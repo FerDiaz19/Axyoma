@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import EmpleadosCRUD from './EmpleadosCRUD';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
@@ -15,6 +16,7 @@ type ActiveSection = 'departamentos' | 'puestos' | 'empleados' | 'evaluaciones';
 
 const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData }) => {
   const [activeSection, setActiveSection] = useState<ActiveSection>('departamentos');
+  const navigate = useNavigate();
 
   const menuItems = [
     {
@@ -43,14 +45,26 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData })
     }
   ];
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      window.location.href = 'localhost:3000'; // Redirigir al login después de cerrar sesión
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-    }
-  };
+const handleLogout = () => {
+  try {
+    console.log("🚪 Iniciando cierre de sesión...");
+    
+    logout(); // Limpia el token
+    
+    console.log("✅ Sesión cerrada, redirigiendo a página principal...");
+
+    // Navegamos al inicio
+    navigate('/', { replace: true });
+
+    // Forzamos recarga para reiniciar el estado de la app
+    setTimeout(() => {
+      window.location.reload();
+    }, 50); // Pequeña pausa para asegurar que el navigate se complete
+  } catch (error) {
+    console.error("❌ Error durante el cierre de sesión:", error);
+    window.location.href = '/';
+  }
+};
 
   const renderActiveSection = () => {
     switch (activeSection) {
