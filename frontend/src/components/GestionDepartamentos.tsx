@@ -37,11 +37,15 @@ const GestionDepartamentos: React.FC = () => {
     e.preventDefault();
     try {
       if (editingDepartamento) {
-        await actualizarDepartamento(editingDepartamento.departamento_id!, {
-          nombre: formData.nombre,
-          descripcion: formData.descripcion,
-          planta_id: parseInt(formData.planta_id)
-        });
+  await actualizarDepartamento(
+  editingDepartamento.departamento_id!,
+  {
+    nombre: formData.nombre,
+    descripcion: formData.descripcion,
+    planta_id: parseInt(formData.planta_id)
+  },
+  editingDepartamento // ✅ este es el originalData
+  );
       } else {
         await crearDepartamento({
           nombre: formData.nombre,

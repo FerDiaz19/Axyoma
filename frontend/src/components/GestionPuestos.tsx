@@ -37,11 +37,15 @@ const GestionPuestos: React.FC = () => {
     e.preventDefault();
     try {
       if (editingPuesto) {
-        await actualizarPuesto(editingPuesto.puesto_id!, {
+      await actualizarPuesto(
+        editingPuesto.puesto_id!,
+        {
           nombre: formData.nombre,
           descripcion: formData.descripcion,
           departamento_id: parseInt(formData.departamento_id)
-        });
+        },
+        editingPuesto // ✅ Pasar el originalData para comparación
+      );
       } else {
         await crearPuesto({
           nombre: formData.nombre,

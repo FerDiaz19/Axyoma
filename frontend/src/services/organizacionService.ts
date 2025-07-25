@@ -127,9 +127,61 @@ export const crearDepartamento = async (departamento: Departamento): Promise<Dep
   }
 };
 
-export const actualizarDepartamento = async (id: number, departamento: Departamento): Promise<Departamento> => {
-  const response = await api.put(`/departamentos/${id}/`, departamento);
-  return response.data;
+export const actualizarDepartamento = async (id: number, departamento: Departamento, originalData?: Departamento): Promise<Departamento> => {
+  try {
+    // Check if we're only updating the description (not the name)
+    if (originalData && departamento.nombre.trim() === originalData.nombre.trim() && departamento.planta_id === originalData.planta_id) {
+      // Only updating description or other fields, use PATCH instead of PUT to avoid duplicate name error
+      console.log('📝 Solo actualizando descripción u otros campos, usando PATCH:', id);
+      const patchData = {
+        descripcion: departamento.descripcion?.trim() ?? '',
+        _timestamp: Date.now() // Force update
+      };
+      
+      const response = await api.patch(`/departamentos/${id}/`, patchData);
+      console.log('✅ Departamento actualizado exitosamente (PATCH):', response.data);
+      return response.data;
+    }
+    
+    // Otherwise, proceed with normal PUT update
+    const departamentoData = {
+      nombre: departamento.nombre.trim(),
+      descripcion: departamento.descripcion?.trim() ?? '',
+      planta_id: departamento.planta_id
+    };
+
+    console.log('🔍 Actualizando departamento con ID:', id, 'Datos:', departamentoData);
+    const response = await api.put(`/departamentos/${id}/`, departamentoData);//aca----------------------
+    console.log('✅ Departamento actualizado exitosamente:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error actualizando departamento:', error);//aca----------------------
+    
+    // Mejorar el logging para mostrar el detalle exacto del error
+    if (error.response?.data) {
+      console.error('❌ Detalles del error del servidor:', JSON.stringify(error.response.data, null, 2)); //aca----------------------
+    }
+    
+    // Detección específica del error de nombre duplicado
+    if (error.response?.data?.non_field_errors?.length > 0 && 
+        error.response.data.non_field_errors[0].includes('existe un departamento con este nombre')) {
+      throw new Error('Ya existe un departamento con este nombre en la planta seleccionada');
+    }
+    
+    // Otros casos de error
+    if (error.response?.data?.nombre) {
+      throw new Error(error.response.data.nombre[0]);
+    } else if (error.response?.data?.planta_id) {
+      throw new Error(error.response.data.planta_id[0]);
+    } else if (error.response?.data?.non_field_errors) {
+      throw new Error(error.response.data.non_field_errors[0]);
+    } else if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error.response?.status === 400) {
+      throw new Error('Error al actualizar el departamento. Verifique que el nombre no esté duplicado en la planta.');
+    }
+    throw new Error('Error al actualizar el departamento');
+  }
 };
 
 export const eliminarDepartamento = async (id: number): Promise<void> => {
@@ -151,14 +203,15 @@ export const crearPuesto = async (puesto: Puesto): Promise<Puesto> => {
   try {
     // Convertir departamento_id para el backend
     const puestoData = {
-      nombre: puesto.nombre,
-      descripcion: puesto.descripcion || '',
+      nombre: puesto.nombre.trim(),
+      descripcion: puesto.descripcion?.trim() || '',
       departamento_id: puesto.departamento_id
     };
     const response = await api.post('/puestos/', puestoData);
+    console.log('✅ Puesto creado exitosamente:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('Error creando puesto:', error);
+    console.error('❌ Error creando puesto:', error);
     
     if (error.response?.data?.nombre) {
       throw new Error(error.response.data.nombre[0]);
@@ -175,9 +228,66 @@ export const crearPuesto = async (puesto: Puesto): Promise<Puesto> => {
   }
 };
 
-export const actualizarPuesto = async (id: number, puesto: Puesto): Promise<Puesto> => {
-  const response = await api.put(`/puestos/${id}/`, puesto);
-  return response.data;
+export const actualizarPuesto = async (id: number, puesto: Puesto, originalData?: Puesto): Promise<Puesto> => {
+  try {
+    // Formatear datos para el backend - Agregar timestamp para forzar actualización
+    const puestoData = {
+      nombre: puesto.nombre.trim(),
+      descripcion: puesto.descripcion?.trim() ?? '', // Usar ?? para manejar null/undefined
+      departamento_id: puesto.departamento_id,
+      _forceUpdate: Date.now() // Agregar un valor único para forzar que el servidor detecte cambios
+    };
+    
+    console.log('🔧 Actualizando puesto con ID:', id, 'Datos:', puestoData);
+    
+    let response;
+    
+    if (originalData &&
+        puesto.nombre.trim() === originalData.nombre.trim() &&
+        puesto.departamento_id === originalData.departamento_id) {
+      // Solo se está actualizando la descripción
+      const patchData = {
+        descripcion: puesto.descripcion?.trim() ?? '',
+        _timestamp: Date.now()
+      };
+      console.log('📝 Solo actualizando descripción, usando PATCH:', patchData);
+      response = await api.patch(`/puestos/${id}/`, patchData);
+      console.log('✅ Puesto actualizado exitosamente (PATCH):', response.data);
+    } else {
+      // Actualización completa con PUT
+      response = await api.put(`/puestos/${id}/`, puestoData);
+      console.log('✅ Puesto actualizado exitosamente (PUT):', response.data);
+    }
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error actualizando puesto:', error);
+    
+    // Mejorar el logging para mostrar el detalle exacto del error
+    if (error.response?.data) {
+      console.error('❌ Detalles del error del servidor:', JSON.stringify(error.response.data, null, 2));
+    }
+    
+    // Detección específica del error de nombre duplicado
+    if (error.response?.data?.non_field_errors?.length > 0 && 
+        error.response.data.non_field_errors[0].includes('existe un puesto con este nombre')) {
+      throw new Error('Ya existe un puesto con este nombre en el departamento seleccionado');
+    }
+    
+    // Otros casos de error
+    if (error.response?.data?.nombre) {
+      throw new Error(error.response.data.nombre[0]);
+    } else if (error.response?.data?.departamento_id) {
+      throw new Error(error.response.data.departamento_id[0]);
+    } else if (error.response?.data?.non_field_errors) {
+      throw new Error(error.response.data.non_field_errors[0]);
+    } else if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error.response?.status === 400) {
+      throw new Error('Error al actualizar el puesto. Verifique que el nombre no esté duplicado en el departamento.');
+    }
+    throw new Error('Error al actualizar el puesto');
+  }
 };
 
 export const eliminarPuesto = async (id: number): Promise<void> => {
