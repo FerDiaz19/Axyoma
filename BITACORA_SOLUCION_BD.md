@@ -227,6 +227,94 @@ urlpatterns = [
 
 6. **Automatización de tareas**: Crear scripts `.bat` o `.sh` para automatizar tareas repetitivas.
 
+## 📝 PRÓXIMAS TAREAS: MÓDULO DE EVALUACIONES
+
+### 1️⃣ Tipos de Evaluaciones a Implementar
+
+- **Evaluaciones Normativas**:
+  - Evaluación 030 - Normativa oficial
+  - Evaluación 035 - Normativa oficial
+  - Estas evaluaciones son estándar y sus preguntas son fijas según normativa
+
+- **Evaluación 360**:
+  - Evaluación configurable por empresa o planta
+  - Las preguntas pueden ser personalizadas según las necesidades
+
+### 2️⃣ Matriz de Permisos por Rol
+
+#### SuperAdmin
+- ✅ Administración completa de evaluaciones normativas (030, 035)
+- ✅ Crear, editar, borrar y gestionar preguntas de evaluaciones normativas
+- ✅ Visualizar todas las evaluaciones en el sistema
+- ✅ Estadísticas generales del sistema
+
+#### AdminEmpresa
+- ✅ Ver evaluaciones normativas (sin poder modificarlas)
+- ✅ Asignar evaluaciones normativas a empleados
+- ✅ Administración completa de la evaluación 360 de su empresa
+- ✅ Crear, editar y borrar preguntas de la evaluación 360
+- ✅ Gestionar asignaciones de evaluaciones
+- ✅ Ver resultados de evaluaciones
+
+#### AdminPlanta
+- ✅ Ver evaluaciones normativas (sin poder modificarlas)
+- ✅ Asignar evaluaciones normativas a empleados de su planta
+- ✅ Administración completa de la evaluación 360 de su planta
+- ✅ Crear, editar y borrar preguntas de la evaluación 360
+- ✅ Gestionar asignaciones de evaluaciones para su planta
+- ✅ Ver resultados de evaluaciones de su planta
+
+### 3️⃣ Flujo de Trabajo para Asignación de Evaluaciones
+
+1. **Selección de Evaluación**:
+   - Administrador selecciona una evaluación (030, 035 o 360)
+   - Se muestra lista de empleados disponibles para asignación
+
+2. **Filtrado de Empleados**:
+   - Implementar filtros por departamento, puesto, etc.
+   - Permitir selección múltiple de empleados
+
+3. **Asignación**:
+   - Verificar que cada empleado solo tenga una evaluación asignada a la vez
+   - Generar un token único para cada asignación
+   - Establecer fechas de inicio y fin para la evaluación
+
+4. **Monitoreo de Evaluaciones Activas**:
+   - Crear sección "Evaluaciones Activas" 
+   - Mostrar información de duración, progreso, etc.
+   - Permitir ver empleados asignados a cada evaluación
+   - Visualización de tokens de acceso para empleados
+   - Opción para agregar empleados adicionales a evaluaciones en curso
+
+### 4️⃣ Interfaz para Empleados
+
+- Implementar pantalla de login mediante token
+- Interfaz clara para responder preguntas de evaluación
+- Indicador de progreso y tiempo restante
+- Confirmación al completar la evaluación
+
+### 5️⃣ Reportes y Análisis
+
+- Estadísticas por evaluación
+- Resultados agregados por departamento/puesto
+- Comparativa entre evaluaciones
+- Exportación de datos a formatos comunes (Excel, PDF)
+
+### 6️⃣ Consideraciones Técnicas
+
+- Diseñar modelo de datos para almacenar:
+  - Tipos de evaluaciones
+  - Preguntas y respuestas posibles
+  - Asignaciones a empleados
+  - Respuestas recopiladas
+  - Tokens de acceso
+
+- Implementar lógica para:
+  - Generación segura de tokens
+  - Control de acceso basado en roles
+  - Validación de respuestas
+  - Cálculo de resultados según tipo de evaluación
+
 ## 🔄 PROCEDIMIENTO PARA FUTUROS PROBLEMAS
 
 1. **Verificar conexión**: Usar `testConnection.mjs` para verificar si el backend está activo.
