@@ -148,14 +148,26 @@ export const crearPlan = async (planData: Omit<PlanSuscripcion, 'plan_id'>): Pro
 export const actualizarPlan = async (planId: number, planData: Partial<PlanSuscripcion>): Promise<PlanSuscripcion> => {
   try {
     console.log(`🔄 Actualizando plan ${planId}:`, planData);
-    const response = await api.put(`/suscripciones/actualizar_plan/`, {
+    
+    // Aseguramos que todos los datos estén en el formato correcto
+    const datosActualizados = {
       plan_id: planId,
-      ...planData
-    });
+      nombre: planData.nombre,
+      descripcion: planData.descripcion || "",
+      duracion: planData.duracion,
+      precio: planData.precio,
+      status: planData.status !== undefined ? planData.status : true
+    };
+    
+    // Intentamos con un endpoint alternativo "editar_plan"
+    const response = await api.put(`/suscripciones/editar_plan/`, datosActualizados);
     console.log('✅ Plan actualizado:', response.data);
     return response.data;
   } catch (error) {
     console.error(`❌ Error al actualizar plan ${planId}:`, error);
+    
+    // Si falla, registramos más información para depuración
+    console.error('Detalles completos del error:', error);
     throw error;
   }
 };

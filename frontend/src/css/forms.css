@@ -76,3 +76,22 @@ label {
   font-size: 0.875rem; /* text-sm */
   color: #4b4f56; /* gray-700 */
 }
+
+/* Estilos específicos para solucionar problemas de interacción con formularios */
+.form-input, .form-textarea, .form-select {
+  background-color: #fff !important; /* Fondo blanco para campos */
+  border: 1px solid #d1d5db !important; /* Borde visible */
+  pointer-events: auto !important; /* Forzar interacción */
+  cursor: text !important; /* Cursor de texto para indicar que se puede editar */
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  border-color: #667eea !important; /* Resaltar al hacer foco */
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1) !important;
+}
+
+.form-checkbox {
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}

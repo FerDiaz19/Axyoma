@@ -44,6 +44,9 @@ const EditModal: React.FC<EditModalProps> = ({
   }, [isOpen, initialData]);
 
   const handleInputChange = (name: string, value: any) => {
+    //console.log(`Campo "${name}" cambiado a:`, value); // Log para depuración
+    
+    // Actualizar el estado del formulario
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -181,9 +184,14 @@ const EditModal: React.FC<EditModalProps> = ({
                       type={field.type}
                       className={`form-input ${errors[field.name] ? 'error' : ''}`}
                       value={formData[field.name] || ''}
-                      onChange={(e) => handleInputChange(field.name, field.type === 'number' ? Number(e.target.value) : e.target.value)}
+                      onChange={(e) => {
+                        const newValue = field.type === 'number' ? Number(e.target.value) : e.target.value;
+                        console.log(`Actualizando ${field.name} a:`, newValue);
+                        handleInputChange(field.name, newValue);
+                      }}
                       disabled={field.disabled || saving}
                       placeholder={`Ingrese ${field.label.toLowerCase()}`}
+                      autoComplete="off" // Deshabilitar autocompletado para evitar problemas
                     />
                   )}
                   
