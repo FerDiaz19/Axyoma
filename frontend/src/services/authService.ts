@@ -39,42 +39,46 @@ export const getTestUsers = async (): Promise<any> => {
 
 export const login = async (data: LoginData): Promise<LoginResponse> => {
   try {
-    // Corregir la entrada de usuario - esto es crítico
-    // El problema es que se está enviando "Admin Planta None" como nombre de usuario
-    // cuando debería ser solo "admin_planta"
-    
     // Limpiar y sanitizar los datos de entrada
     const cleanData = {
       username: data.username.trim().toLowerCase(),
       password: data.password
     };
     
-    // Si el usuario intenta usar "Admin Planta" o similar, corregirlo
+    console.log("🔄 Intentando inicio de sesión con:", cleanData.username);
+    
+    // Corrección de tipos de usuario comunes
     if (cleanData.username.includes('admin planta')) {
       cleanData.username = 'admin_planta';
       console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
-    }
-    
-    // Lo mismo para otros usuarios comunes
-    if (cleanData.username.includes('admin empresa')) {
+    } else if (cleanData.username.includes('admin empresa')) {
       cleanData.username = 'admin_empresa';
       console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
-    }
-    
-    if (cleanData.username.includes('super admin')) {
+    } else if (cleanData.username.includes('super admin')) {
       cleanData.username = 'superadmin';
       console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
     }
     
-    console.log("🔄 Intentando inicio de sesión con:", cleanData.username);
     const response = await api.post<LoginResponse>(`${context}login/`, cleanData);
     
     console.log("✅ Respuesta recibida:", response.data);
+    
+    // Validar que la respuesta contiene un tipo de usuario válido
+    const tipoUsuario = response.data.nivel_usuario?.toLowerCase();
+    if (!tipoUsuario || 
+        !['superadmin', 'admin_empresa', 'admin-empresa', 'admin_planta', 'admin-planta', 'empleado']
+          .includes(tipoUsuario)) {
+      console.warn("⚠️ Tipo de usuario inválido recibido:", tipoUsuario);
+      throw new Error(`Tipo de usuario no válido: ${response.data.nivel_usuario}`);
+    }
     
     // Guardar el token en localStorage para futuras requests
     if (response.data.token) {
       localStorage.setItem('authToken', response.data.token);
       console.log("🔑 Token guardado en localStorage");
+      
+      // También guardar el tipo de usuario para diagnóstico
+      localStorage.setItem('userType', tipoUsuario);
     } else {
       console.warn("⚠️ No se recibió token en la respuesta");
     }

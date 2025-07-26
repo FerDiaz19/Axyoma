@@ -16,8 +16,10 @@ from .serializers import (
     PlantaSerializer, PlantaCreateSerializer,
     DepartamentoSerializer, DepartamentoCreateSerializer,
     PuestoSerializer, PuestoCreateSerializer,
-    EmpleadoSerializer, EmpleadoCreateSerializer
+    EmpleadoSerializer, EmpleadoCreateSerializer, PlanSuscripcionSerializer
 )
+from .models import PlanSuscripcion
+
 
 class SuscripcionViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -60,22 +62,18 @@ class SuscripcionViewSet(viewsets.ViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])
-    def planes(self, request):
-        """Listar planes disponibles"""
+    def planes(self, request):  # Cambiado de listar_planes a planes para coincidir con la URL
+        """Lista todos los planes de suscripción disponibles"""
         try:
             from apps.subscriptions.models import PlanSuscripcion
             planes = PlanSuscripcion.objects.filter(status=True)
-            return Response([{
-                "plan_id": plan.id,
-                "nombre": plan.nombre,
-                "descripcion": plan.descripcion,
-                "duracion": plan.duracion,
-                "precio": plan.precio
-            } for plan in planes])
+            serializer = PlanSuscripcionSerializer(planes, many=True)
+            return Response(serializer.data)
         except Exception as e:
-            return Response({
-                "error": str(e)
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': f'Error obteniendo planes: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AuthViewSet(viewsets.ViewSet):
@@ -146,6 +144,12 @@ class AuthViewSet(viewsets.ViewSet):
                 'acceso_reportes': False
             }
     
+    @action(detail=False, methods=['get'], url_path='planes')
+    def listar_planes(self, request):
+        planes = PlanSuscripcion.objects.all()
+        serializer = PlanSuscripcionSerializer(planes, many=True)
+        return Response(serializer.data)
+
     @action(detail=False, methods=['post'])
     def login(self, request):
         serializer = LoginSerializer(data=request.data)

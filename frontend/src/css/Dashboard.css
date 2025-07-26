@@ -294,6 +294,49 @@
   box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
 }
 
+.error-container {
+  padding: 2rem;
+  max-width: 600px;
+  margin: 4rem auto;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.error-container h2 {
+  color: #dc3545;
+  margin-bottom: 1rem;
+}
+
+.error-container p {
+  margin-bottom: 1rem;
+  color: #555;
+}
+
+.error-container strong {
+  background-color: #f8f9fa;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.error-logout-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 1rem;
+  font-size: 1rem;
+  transition: background-color 0.2s;
+}
+
+.error-logout-btn:hover {
+  background-color: #0056b3;
+}
+
 @media (max-width: 768px) {
   .dashboard-header {
     flex-direction: column;

@@ -4,6 +4,9 @@ import RegistroEmpresa from './RegistroEmpresa';
 import SuperAdminDashboard from './SuperAdminDashboard';
 import EmpresaAdminDashboard from './EmpresaAdminDashboard';
 import PlantaAdminDashboard from './PlantaAdminDashboard';
+// import EmpleadoDashboard from './EmpleadoDashboard'; // Importar el dashboard de empleado
+// ⬆️ Descomenta la línea de abajo si el archivo existe en otra ruta o crea el archivo si no existe
+import EmpleadoDashboard from './EmpleadoDashboard'; // Asegúrate de que este archivo exista en src/components/
 import SubscriptionAlert from './SubscriptionAlert';
 import { logout } from '../services/authService';
 import '../css/Dashboard.css';
@@ -109,39 +112,66 @@ const Dashboard: React.FC = () => {
 
   // Renderizar el dashboard según el tipo de usuario
   const renderDashboard = () => {
-    if (!userData?.tipo_dashboard) {
-      return <div>Error: Tipo de usuario no válido</div>;
+    // Añadir diagnóstico para ver qué está recibiendo el sistema
+    console.log('🧪 Dashboard: userData recibido:', userData);
+    console.log('🧪 Tipo de usuario detectado:', userData?.nivel_usuario);
+    console.log('🧪 Tipo de dashboard detectado:', userData?.tipo_dashboard);
+
+    if (!userData) {
+      return <div className="error-container">No hay información de usuario disponible</div>;
     }
 
-    // Si hay alerta de suscripción, mostrarla primero
-    if (showSubscriptionAlert) {
-      const alertInfo = getSubscriptionAlertInfo();
-      if (alertInfo) {
-        return (
-          <SubscriptionAlert
-            empresaId={alertInfo.empresaId}
-            empresaNombre={alertInfo.empresaNombre}
-            tipoAlerta={alertInfo.tipoAlerta}
-            diasRestantes={alertInfo.diasRestantes}
-            onSubscriptionUpdated={handleSubscriptionUpdated}
-            onContinueWithLimitations={handleContinueWithLimitations}
-          />
-        );
-      }
-    }
-
-    switch (userData.tipo_dashboard) {
-      case 'superadmin':
+    // Validación mejorada del nivel de usuario
+    const tipoUsuario = userData.nivel_usuario?.toLowerCase();
+    const tipoDashboard = userData.tipo_dashboard?.toLowerCase();
+    
+    try {
+      // Validar tipos conocidos
+      if (tipoUsuario === 'superadmin' || tipoUsuario === 'super_admin' || tipoUsuario === 'super-admin') {
         return <SuperAdminDashboard userData={userData} onLogout={handleLogout} />;
+      } 
       
-      case 'admin-empresa':
+      if (tipoUsuario === 'admin_empresa' || tipoUsuario === 'admin-empresa' || tipoDashboard === 'admin-empresa') {
         return <EmpresaAdminDashboard userData={userData} />;
+      } 
       
-      case 'admin-planta':
+      if (tipoUsuario === 'admin_planta' || tipoUsuario === 'admin-planta' || tipoDashboard === 'admin-planta') {
         return <PlantaAdminDashboard userData={userData} />;
+      } 
       
-      default:
-        return <div>Error: Tipo de dashboard no reconocido</div>;
+      if (tipoUsuario === 'empleado') {
+        return <EmpleadoDashboard userData={userData} />;
+      }
+      
+      // Si llegamos aquí, el tipo no es válido
+      console.error('❌ ERROR: Tipo de usuario no reconocido:', {
+        nivel_usuario: userData.nivel_usuario,
+        tipo_dashboard: userData.tipo_dashboard
+      });
+      
+      return (
+        <div className="error-container">
+          <h2>Error: Tipo de usuario no válido</h2>
+          <p>Nivel de usuario recibido: <strong>{userData.nivel_usuario || 'No definido'}</strong></p>
+          <p>Tipo dashboard recibido: <strong>{userData.tipo_dashboard || 'No definido'}</strong></p>
+          <p>Por favor contacte al administrador del sistema con esta información.</p>
+          <button onClick={handleLogout} className="error-logout-btn">
+            Cerrar sesión e intentar nuevamente
+          </button>
+        </div>
+      );
+    } catch (err) {
+      console.error('❌ Error renderizando dashboard:', err);
+      return (
+        <div className="error-container">
+          <h2>Error inesperado</h2>
+          <p>Ha ocurrido un error al cargar la interfaz. Por favor intente nuevamente.</p>
+          <p>Detalles: {(err as Error).message}</p>
+          <button onClick={handleLogout} className="error-logout-btn">
+            Cerrar sesión e intentar nuevamente
+          </button>
+        </div>
+      );
     }
   };
 

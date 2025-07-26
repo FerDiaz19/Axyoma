@@ -14,9 +14,11 @@ const GestionSuscripcion: React.FC<GestionSuscripcionProps> = ({ empresaId }) =>
   const [error, setError] = useState<string | null>(null);
   const [showPlanes, setShowPlanes] = useState(false);
 
-  useEffect(() => {
+useEffect(() => {
+  if (empresaId) {
     cargarDatos();
-  }, []);
+  }
+}, [empresaId]);
 
   const cargarDatos = async () => {
     console.log('Iniciando carga de datos...');

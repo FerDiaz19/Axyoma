@@ -71,7 +71,8 @@ export const formatearFecha = (fecha: string): string => {
 export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
   try {
     console.log('🔄 Obteniendo planes de suscripción...');
-    const response = await api.get('/api/suscripciones/planes/');
+    // Eliminar el '/api' redundante al inicio de la ruta
+    const response = await api.get('suscripciones/planes/');
     console.log('✅ Planes obtenidos:', response.data);
     return response.data;
   } catch (error) {
@@ -83,7 +84,8 @@ export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
 export const obtenerSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
   try {
     console.log('🔄 Obteniendo suscripciones...');
-    const response = await api.get('/api/suscripciones/listar/');
+    // Eliminar el '/api' redundante
+    const response = await api.get('/suscripciones/listar/');
     console.log('✅ Suscripciones obtenidas:', response.data);
     return response.data;
   } catch (error) {
@@ -95,7 +97,8 @@ export const obtenerSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
 export const obtenerPagos = async (): Promise<Pago[]> => {
   try {
     console.log('🔄 Obteniendo pagos...');
-    const response = await api.get('/api/suscripciones/pagos/');
+    // Eliminar el '/api' redundante
+    const response = await api.get('/suscripciones/pagos/');
     console.log('✅ Pagos obtenidos:', response.data);
     return response.data;
   } catch (error) {
@@ -107,22 +110,43 @@ export const obtenerPagos = async (): Promise<Pago[]> => {
 export const crearSuscripcion = async (empresaId: number, planId: number): Promise<any> => {
   try {
     console.log(`🔄 Creando suscripción para empresa ${empresaId} con plan ${planId}...`);
-    const response = await api.post('/api/suscripciones/crear/', {
-      empresa_id: empresaId,
-      plan_id: planId
-    });
-    console.log('✅ Suscripción creada:', response.data);
+    
+
+    
+    // Asegurar que los IDs sean números enteros válidos
+ const dataRequest = {
+      empresa_id: parseInt(String(empresaId)),
+      plan_id: parseInt(String(planId))
+    };
+    
+    console.log('📦 Datos a enviar:', JSON.stringify(dataRequest));
+    
+    // Realizar la solicitud con datos validados
+     const response = await api.post('/suscripciones/crear_suscripcion/', dataRequest);
+    
+    console.log('✅ Suscripción creada exitosamente:', response.data);
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error(`❌ Error al crear suscripción:`, error);
-    return null;
+    
+    // Información detallada del error
+    if (error.response) {
+      console.error('📝 Detalles del error:', {
+        status: error.response.status,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    }
+
+    throw error;
   }
 };
 
 export const procesarPago = async (suscripcionId: number, montoPago: number, transaccionId?: string): Promise<any> => {
   try {
     console.log(`🔄 Procesando pago para suscripción ${suscripcionId}...`);
-    const response = await api.post('/api/suscripciones/pagar/', {
+    // Eliminar el '/api' redundante
+    const response = await api.post('/suscripciones/pagar/', {
       suscripcion_id: suscripcionId,
       monto_pago: montoPago,
       transaccion_id: transaccionId
@@ -272,7 +296,8 @@ export const suscribirseAPlan = async (planId: number): Promise<any> => {
 export const obtenerSuscripcionActual = async (): Promise<any> => {
   try {
     console.log('🔄 Obteniendo suscripción actual de la empresa...');
-    const response = await api.get('/api/suscripciones/actual/');
+    // Eliminar el '/api' redundante
+    const response = await api.get('/suscripciones/actual/');
     console.log('✅ Información de suscripción:', response.data);
     return response.data;
   } catch (error) {

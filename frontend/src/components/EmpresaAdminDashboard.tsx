@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmpleadosCRUD from './EmpleadosCRUD';
 import GestionEstructura from './GestionEstructura';
@@ -19,8 +19,57 @@ interface EmpresaAdminDashboardProps {
 const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData }) => {
   console.log('Renderizando EmpresaAdminDashboard', { userData });
   const [activeSection, setActiveSection] = useState('suscripcion');
+  const [empresaId, setEmpresaId] = useState<number | null>(null);
   console.log('Sección activa inicial:', activeSection);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const getEmpresaId = async () => {
+      try {
+        // Intentar extraer empresa_id del userData
+        if (userData?.empresa_id) {
+          console.log('Empresa ID obtenido de userData:', userData.empresa_id);
+          setEmpresaId(userData.empresa_id);
+          return;
+        }
+        
+        // Si no está en userData, intentar obtener de profile_id
+        if (userData?.profile_id) {
+          console.log('Usando profile_id como empresa_id:', userData.profile_id);
+          setEmpresaId(userData.profile_id);
+          return;
+        }
+        
+        // Si todo falla, consultar a la API
+        console.log('Intentando obtener empresa_id desde API...');
+        // Importar dinámicamente para evitar dependencias circulares
+        const { obtenerPerfilUsuario } = await import('../services/userService');
+        const perfil = await obtenerPerfilUsuario(userData?.user_id);
+        if (perfil && perfil.empresa_id) {
+          console.log('Empresa ID obtenido desde API:', perfil.empresa_id);
+          setEmpresaId(perfil.empresa_id);
+          return;
+        }
+        
+        // Como último recurso, intentar obtenerlo desde localStorage
+        const storedEmpresaId = localStorage.getItem('empresaId');
+        if (storedEmpresaId) {
+          console.log('Empresa ID obtenido desde localStorage:', storedEmpresaId);
+          setEmpresaId(parseInt(storedEmpresaId));
+          return;
+        }
+        
+        console.warn('No se pudo determinar el empresa_id. Usando valor predeterminado 1 para pruebas.');
+        setEmpresaId(1); // Valor por defecto para pruebas
+      } catch (error) {
+        console.error('Error al obtener empresa_id:', error);
+        // Como fallback, usar ID 1 para pruebas
+        setEmpresaId(1);
+      }
+    };
+    
+    getEmpresaId();
+  }, [userData]);
 
   // Lista de elementos del menú
   const menuItems = [
@@ -75,32 +124,32 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
   ];
 
   const handleLogout = () => {
-  try {
-    console.log("🚪 Iniciando cierre de sesión...");
-    
-    logout(); // Limpia el token
-    
-    console.log("✅ Sesión cerrada, redirigiendo a página principal...");
+    try {
+      console.log("🚪 Iniciando cierre de sesión...");
+      
+      logout(); // Limpia el token
+      
+      console.log("✅ Sesión cerrada, redirigiendo a página principal...");
 
-    // Navegamos al inicio
-    navigate('/', { replace: true });
+      // Navegamos al inicio
+      navigate('/', { replace: true });
 
-    // Forzamos recarga para reiniciar el estado de la app
-    setTimeout(() => {
-      window.location.reload();
-    }, 50); // Pequeña pausa para asegurar que el navigate se complete
-  } catch (error) {
-    console.error("❌ Error durante el cierre de sesión:", error);
-    window.location.href = '/';
-  }
-};
+      // Forzamos recarga para reiniciar el estado de la app
+      setTimeout(() => {
+        window.location.reload();
+      }, 50); // Pequeña pausa para asegurar que el navigate se complete
+    } catch (error) {
+      console.error("❌ Error durante el cierre de sesión:", error);
+      window.location.href = '/';
+    }
+  };
 
   const renderActiveSection = () => {
     console.log('Sección activa:', activeSection);
     switch (activeSection) {
       case 'suscripcion':
-        console.log('Renderizando sección de suscripción');
-        return <GestionSuscripcion empresaId={userData?.empresa_id} />;
+        console.log('Renderizando sección de suscripción con empresaId:', empresaId);
+        return empresaId ? <GestionSuscripcion empresaId={empresaId} /> : <div className="loading">Cargando suscripción...</div>;
       case 'plantas':
         return <GestionPlantas empresaId={userData?.empresa_id} />;
       case 'departamentos':
@@ -201,5 +250,6 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
     </div>
   );
 };
+
 
 export default EmpresaAdminDashboard;

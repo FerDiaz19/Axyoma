@@ -3,7 +3,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     AuthViewSet, EmpresaViewSet, PlantaViewSet, 
     DepartamentoViewSet, PuestoViewSet, EmpleadoViewSet,
-    EstructuraViewSet, SuperAdminViewSet, SuscripcionViewSet
+    EstructuraViewSet, SuperAdminViewSet,
+    SuscripcionViewSet
 )
 
 # Crear router para las vistas
@@ -17,9 +18,7 @@ router.register(r'empleados', EmpleadoViewSet, basename='empleados')
 router.register(r'estructura', EstructuraViewSet, basename='estructura')
 router.register(r'suscripciones', SuscripcionViewSet, basename='suscripciones')
 
-urlpatterns = [
-    path('', include(router.urls)),
-]
+
 urlpatterns = [
     # Rutas de autenticación
     path('auth/login/', AuthViewSet.as_view({'post': 'login'})),
@@ -41,6 +40,9 @@ urlpatterns = [
     path('superadmin/listar_todos_puestos/', SuperAdminViewSet.as_view({'get': 'listar_todos_puestos'})),
     path('superadmin/listar_todos_empleados/', SuperAdminViewSet.as_view({'get': 'listar_todos_empleados'})),
     path('superadmin/estadisticas_sistema/', SuperAdminViewSet.as_view({'get': 'estadisticas_sistema'})),
+    
+    # Cambiar esto para usar SuscripcionViewSet en lugar de ListarPlanesView
+    path('suscripciones/planes/', SuscripcionViewSet.as_view({'get': 'planes'}), name='listar_planes'),
     
     # Incluir rutas automáticas del router
     path('', include(router.urls)),

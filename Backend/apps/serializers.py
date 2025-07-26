@@ -3,7 +3,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from apps.users.models import PerfilUsuario, Empresa, Planta, Departamento, Puesto, Empleado
-
+from .models import PlanSuscripcion
 # Serializers para LOGIN
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -155,7 +155,7 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
             
             # CREAR SUSCRIPCIÓN BÁSICA AUTOMÁTICA
             try:
-                from apps.subscriptions.models import PlanSuscripcion, SuscripcionEmpresa, Pago
+                from apps.subscriptions.models import PlanSuscripcion,SuscripcionEmpresa, Pago
                 from django.utils import timezone
                 from datetime import timedelta
                 
@@ -258,6 +258,11 @@ class PlantaCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Planta
         fields = ['nombre', 'direccion']  # NO incluir empresa, se asigna automáticamente
+
+class PlanSuscripcionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlanSuscripcion  # asegúrate que este modelo esté bien importado
+        fields = '__all__'
 
 class DepartamentoCreateSerializer(serializers.ModelSerializer):
     planta_id = serializers.IntegerField()
