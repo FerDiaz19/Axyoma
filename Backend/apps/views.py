@@ -19,6 +19,64 @@ from .serializers import (
     EmpleadoSerializer, EmpleadoCreateSerializer
 )
 
+class SuscripcionViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'])
+    def actual(self, request):
+        """Obtener la suscripción actual de la empresa"""
+        try:
+            # Obtener la empresa del usuario actual
+            perfil = request.user.perfil
+            empresa = perfil.empresa
+
+            # Buscar la suscripción activa más reciente
+            suscripcion = SuscripcionEmpresa.objects.filter(
+                empresa=empresa,
+                status=True
+            ).order_by('-fecha_inicio').first()
+
+            if not suscripcion:
+                return Response({
+                    "mensaje": "No hay suscripción activa"
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # Calcular días restantes
+            dias_restantes = (suscripcion.fecha_fin - timezone.now()).days
+            esta_por_vencer = dias_restantes <= 7
+
+            return Response({
+                "suscripcion_id": suscripcion.id,
+                "plan_nombre": suscripcion.plan.nombre,
+                "fecha_inicio": suscripcion.fecha_inicio,
+                "fecha_fin": suscripcion.fecha_fin,
+                "estado": suscripcion.estado,
+                "dias_restantes": dias_restantes,
+                "esta_por_vencer": esta_por_vencer
+            })
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def planes(self, request):
+        """Listar planes disponibles"""
+        try:
+            from apps.subscriptions.models import PlanSuscripcion
+            planes = PlanSuscripcion.objects.filter(status=True)
+            return Response([{
+                "plan_id": plan.id,
+                "nombre": plan.nombre,
+                "descripcion": plan.descripcion,
+                "duracion": plan.duracion,
+                "precio": plan.precio
+            } for plan in planes])
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 @method_decorator(csrf_exempt, name='dispatch')
 class AuthViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]

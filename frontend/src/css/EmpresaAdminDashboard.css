@@ -50,17 +50,16 @@
   color: white;
   padding: 1rem 1.5rem;
   text-align: left;
-  cursor: pointer;
   display: flex;
   align-items: center;
   gap: 1rem;
-  font-size: 1rem;
+  cursor: pointer;
   transition: all 0.3s ease;
   border-left: 3px solid transparent;
 }
 
 .sidebar-nav button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.1);
   border-left-color: rgba(255, 255, 255, 0.5);
 }
 

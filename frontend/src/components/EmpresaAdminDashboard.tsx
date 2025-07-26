@@ -6,6 +6,7 @@ import GestionPlantas from './GestionPlantas';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
 import EvaluacionesGestion from './EvaluacionesGestion';
+import GestionSuscripcion from './GestionSuscripcion';
 import { logout } from '../services/authService';
 import '../css/Dashboard.css';
 import '../css/GestionPlantas.css';
@@ -16,10 +17,19 @@ interface EmpresaAdminDashboardProps {
 }
 
 const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData }) => {
-  const [activeSection, setActiveSection] = useState('plantas');
+  console.log('Renderizando EmpresaAdminDashboard', { userData });
+  const [activeSection, setActiveSection] = useState('suscripcion');
+  console.log('Sección activa inicial:', activeSection);
   const navigate = useNavigate();
 
+  // Lista de elementos del menú
   const menuItems = [
+    {
+      id: 'suscripcion',
+      label: 'Plan de Suscripción',
+      icon: '💎',
+      description: 'Gestionar suscripción'
+    },
     {
       id: 'plantas',
       label: 'Gestión de Plantas',
@@ -63,7 +73,8 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
       description: 'Ver reportes y estadísticas'
     }
   ];
-const handleLogout = () => {
+
+  const handleLogout = () => {
   try {
     console.log("🚪 Iniciando cierre de sesión...");
     
@@ -85,7 +96,11 @@ const handleLogout = () => {
 };
 
   const renderActiveSection = () => {
+    console.log('Sección activa:', activeSection);
     switch (activeSection) {
+      case 'suscripcion':
+        console.log('Renderizando sección de suscripción');
+        return <GestionSuscripcion empresaId={userData?.empresa_id} />;
       case 'plantas':
         return <GestionPlantas empresaId={userData?.empresa_id} />;
       case 'departamentos':

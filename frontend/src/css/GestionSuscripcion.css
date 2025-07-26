@@ -1,0 +1,187 @@
+.gestion-suscripcion {
+  padding: 2rem;
+}
+
+.gestion-suscripcion .header-section {
+  margin-bottom: 2rem;
+}
+
+.gestion-suscripcion .header-section h2 {
+  font-size: 1.8rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.suscripcion-info {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+}
+
+.plan-actual {
+  background: white;
+  border-radius: 10px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.plan-header h3 {
+  font-size: 1.4rem;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.estado {
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.estado.activa {
+  background-color: #e3fcef;
+  color: #0a8554;
+}
+
+.estado.vencida {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+.estado.pendiente {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.plan-detalles {
+  display: grid;
+  gap: 1rem;
+}
+
+.detalle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+}
+
+.detalle .label {
+  color: #6b7280;
+}
+
+.detalle .valor {
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.alerta-vencimiento {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #fffbeb;
+  border: 1px solid #fbbf24;
+  border-radius: 6px;
+  color: #92400e;
+}
+
+.funcionalidades {
+  background: white;
+  border-radius: 10px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.funcionalidades h4 {
+  margin-top: 0;
+  color: #2c3e50;
+  margin-bottom: 1rem;
+}
+
+.funcionalidades ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.funcionalidades li {
+  padding: 0.5rem 0;
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sin-suscripcion {
+  background: white;
+  border-radius: 10px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+.mensaje-principal {
+  margin-bottom: 2rem;
+}
+
+.mensaje-principal h3 {
+  color: #dc2626;
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+}
+
+.funcionalidades-restringidas {
+  margin: 2rem 0;
+  text-align: left;
+}
+
+.funcionalidades-restringidas ul {
+  list-style: none;
+  padding: 0;
+}
+
+.funcionalidades-restringidas li {
+  padding: 0.5rem 0;
+  color: #4b5563;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.activar-plan-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.activar-plan-btn:hover {
+  background-color: #2563eb;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}

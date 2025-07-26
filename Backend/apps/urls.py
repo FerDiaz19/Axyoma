@@ -17,7 +17,9 @@ router.register(r'empleados', EmpleadoViewSet, basename='empleados')
 router.register(r'estructura', EstructuraViewSet, basename='estructura')
 router.register(r'suscripciones', SuscripcionViewSet, basename='suscripciones')
 
-# Definir las rutas
+urlpatterns = [
+    path('', include(router.urls)),
+]
 urlpatterns = [
     # Rutas de autenticación
     path('auth/login/', AuthViewSet.as_view({'post': 'login'})),

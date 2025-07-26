@@ -1,0 +1,142 @@
+.seleccion-plan {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.seleccion-plan h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.error-message {
+  background-color: #fff3f3;
+  color: #d32f2f;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.planes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.plan-card {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.plan-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.plan-card.selected {
+  border: 2px solid #1976d2;
+  background-color: #f5f9ff;
+}
+
+.plan-card h3 {
+  margin: 0 0 1rem;
+  color: #1976d2;
+}
+
+.plan-card .precio {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.plan-card .duracion {
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.plan-card .caracteristicas {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.plan-card .caracteristicas li {
+  margin-bottom: 0.5rem;
+  padding-left: 1.5rem;
+  position: relative;
+}
+
+.plan-card .caracteristicas li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #4caf50;
+}
+
+.metodos-pago {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.metodos-pago button {
+  margin: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #1976d2;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.metodos-pago button:hover {
+  background-color: #1565c0;
+}
+
+.metodos-pago button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.detalles-transferencia {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.datos-bancarios {
+  background-color: #f5f5f5;
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+.datos-bancarios p {
+  margin: 0.5rem 0;
+}
+
+.upload-comprobante {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.upload-comprobante input[type="file"] {
+  margin: 1rem 0;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+}

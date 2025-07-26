@@ -28,6 +28,8 @@ export interface SuscripcionEmpresa {
   plan_duracion?: number;
 }
 
+// ===== FUNCIONES =====
+
 export interface Pago {
   pago_id: number;
   costo: number;
@@ -69,43 +71,43 @@ export const formatearFecha = (fecha: string): string => {
 export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
   try {
     console.log('🔄 Obteniendo planes de suscripción...');
-    const response = await api.get('/suscripciones/listar_planes/');
+    const response = await api.get('/api/suscripciones/planes/');
     console.log('✅ Planes obtenidos:', response.data);
     return response.data;
   } catch (error) {
     console.error('❌ Error al obtener planes:', error);
-    throw error;
+    return [];
   }
 };
 
 export const obtenerSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
   try {
     console.log('🔄 Obteniendo suscripciones...');
-    const response = await api.get('/suscripciones/listar_suscripciones/');
+    const response = await api.get('/api/suscripciones/listar/');
     console.log('✅ Suscripciones obtenidas:', response.data);
     return response.data;
   } catch (error) {
     console.error('❌ Error al obtener suscripciones:', error);
-    throw error;
+    return [];
   }
 };
 
 export const obtenerPagos = async (): Promise<Pago[]> => {
   try {
     console.log('🔄 Obteniendo pagos...');
-    const response = await api.get('/suscripciones/listar_pagos/');
+    const response = await api.get('/api/suscripciones/pagos/');
     console.log('✅ Pagos obtenidos:', response.data);
     return response.data;
   } catch (error) {
     console.error('❌ Error al obtener pagos:', error);
-    throw error;
+    return [];
   }
 };
 
 export const crearSuscripcion = async (empresaId: number, planId: number): Promise<any> => {
   try {
     console.log(`🔄 Creando suscripción para empresa ${empresaId} con plan ${planId}...`);
-    const response = await api.post('/suscripciones/crear_suscripcion/', {
+    const response = await api.post('/api/suscripciones/crear/', {
       empresa_id: empresaId,
       plan_id: planId
     });
@@ -113,14 +115,14 @@ export const crearSuscripcion = async (empresaId: number, planId: number): Promi
     return response.data;
   } catch (error) {
     console.error(`❌ Error al crear suscripción:`, error);
-    throw error;
+    return null;
   }
 };
 
 export const procesarPago = async (suscripcionId: number, montoPago: number, transaccionId?: string): Promise<any> => {
   try {
     console.log(`🔄 Procesando pago para suscripción ${suscripcionId}...`);
-    const response = await api.post('/suscripciones/procesar_pago/', {
+    const response = await api.post('/api/suscripciones/pagar/', {
       suscripcion_id: suscripcionId,
       monto_pago: montoPago,
       transaccion_id: transaccionId
@@ -129,7 +131,7 @@ export const procesarPago = async (suscripcionId: number, montoPago: number, tra
     return response.data;
   } catch (error) {
     console.error(`❌ Error al procesar pago:`, error);
-    throw error;
+    return null;
   }
 };
 
@@ -270,22 +272,12 @@ export const suscribirseAPlan = async (planId: number): Promise<any> => {
 export const obtenerSuscripcionActual = async (): Promise<any> => {
   try {
     console.log('🔄 Obteniendo suscripción actual de la empresa...');
-    
-    // Obtener empresa ID desde localStorage o datos del usuario
-    let empresaId = localStorage.getItem('empresaId');
-    if (!empresaId) {
-      // Fallback a empresa ID simulado para testing
-      empresaId = '1';
-      console.log('⚠️ Usando empresa ID simulado para testing:', empresaId);
-    }
-    
-    const infoSuscripcion = await obtenerInfoSuscripcionEmpresa(parseInt(empresaId));
-    
-    console.log('✅ Información de suscripción:', infoSuscripcion);
-    return infoSuscripcion;
+    const response = await api.get('/api/suscripciones/actual/');
+    console.log('✅ Información de suscripción:', response.data);
+    return response.data;
   } catch (error) {
     console.error('❌ Error al obtener suscripción actual:', error);
-    throw error;
+    return null;
   }
 };
 
