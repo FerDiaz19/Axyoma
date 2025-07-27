@@ -18,7 +18,7 @@ from .serializers import (
     PuestoSerializer, PuestoCreateSerializer,
     EmpleadoSerializer, EmpleadoCreateSerializer, PlanSuscripcionSerializer
 )
-from .models import PlanSuscripcion
+from apps.subscriptions.models import PlanSuscripcion
 
 
 class SuscripcionViewSet(viewsets.ViewSet):

@@ -61,8 +61,9 @@ class SubscriptionViewSet(viewsets.ViewSet):
     def planes(self, request):
         """Obtener todos los planes disponibles"""
         try:
-            planes = PlanSuscripcion.objects.filter(status=True).values(
-                'plan_id', 'nombre', 'descripcion', 'precio', 'duracion'
+            # CAMBIO: Mostrar TODOS los planes para SuperAdmin
+            planes = PlanSuscripcion.objects.all().values(  # Removido filter(status=True)
+                'plan_id', 'nombre', 'descripcion', 'precio', 'duracion', 'status'
             )
             return Response(list(planes))
         except Exception as e:

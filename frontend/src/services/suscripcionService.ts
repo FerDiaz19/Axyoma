@@ -71,9 +71,11 @@ export const formatearFecha = (fecha: string): string => {
 export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
   try {
     console.log('🔄 Obteniendo planes de suscripción...');
-    // Eliminar el '/api' redundante al inicio de la ruta
-    const response = await api.get('suscripciones/planes/');
-    console.log('✅ Planes obtenidos:', response.data);
+    
+    // Usar directamente la URL correcta del SubscriptionViewSet
+   // const response = await api.get('/suscripciones/planes/');
+   const response = await api.get('/suscripciones/listar_planes/'); 
+   console.log('✅ Planes obtenidos:', response.data);
     return response.data;
   } catch (error) {
     console.error('❌ Error al obtener planes:', error);
