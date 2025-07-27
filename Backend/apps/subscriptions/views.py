@@ -166,7 +166,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'])
     def suscripciones(self, request):
-        """Obtener todas las suscripciones"""
+        """Obtener todas las suscripciones con datos completos"""
         try:
             suscripciones = SuscripcionEmpresa.objects.select_related(
                 'empresa', 'plan_suscripcion'
@@ -175,13 +175,31 @@ class SubscriptionViewSet(viewsets.ViewSet):
                 'empresa__nombre',
                 'empresa__empresa_id',
                 'plan_suscripcion__nombre',
+                'plan_suscripcion__precio',
+                'plan_suscripcion__duracion',
                 'fecha_inicio',
                 'fecha_fin',
                 'estado',
-                'plan_suscripcion__precio'
-            )
+                'status'
+            ).order_by('-fecha_inicio')
             
-            return Response(list(suscripciones))
+            # Procesar los datos para que coincidan con lo que espera el frontend
+            suscripciones_procesadas = []
+            for suscripcion in suscripciones:
+                suscripciones_procesadas.append({
+                    'suscripcion_id': suscripcion['suscripcion_id'],
+                    'empresa_nombre': suscripcion['empresa__nombre'],
+                    'empresa_id': suscripcion['empresa__empresa_id'],
+                    'plan_nombre': suscripcion['plan_suscripcion__nombre'],
+                    'plan_precio': suscripcion['plan_suscripcion__precio'],
+                    'plan_duracion': suscripcion['plan_suscripcion__duracion'],
+                    'fecha_inicio': suscripcion['fecha_inicio'],
+                    'fecha_fin': suscripcion['fecha_fin'],
+                    'estado': suscripcion['estado'],
+                    'status': suscripcion['status']
+                })
+            
+            return Response(suscripciones_procesadas)
         except Exception as e:
             return Response(
                 {'error': f'Error obteniendo suscripciones: {str(e)}'}, 
@@ -230,13 +248,14 @@ class SubscriptionViewSet(viewsets.ViewSet):
                     status=True
                 )
                 
-                # Crear pago pendiente
+                # Crear pago completado
                 pago = Pago.objects.create(
                     suscripcion=suscripcion,
                     costo=plan.precio,
                     monto_pago=plan.precio,
                     estado_pago='Completado',
-                    fecha_pago=timezone.now()
+                    fecha_pago=timezone.now(),
+                    transaccion_id=f"SUB-{empresa_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
                 )
             
             return Response({
@@ -281,12 +300,106 @@ class SubscriptionViewSet(viewsets.ViewSet):
                 'monto_pago',
                 'estado_pago',
                 'fecha_pago',
-                'fecha_vencimiento'
-            )
+                'fecha_vencimiento',
+                'transaccion_id',
+                'suscripcion__suscripcion_id'
+            ).order_by('-fecha_pago')
             
-            return Response(list(pagos))
+            # Procesar datos para el frontend
+            pagos_procesados = []
+            for pago in pagos:
+                pagos_procesados.append({
+                    'pago_id': pago['pago_id'],
+                    'empresa_nombre': pago['suscripcion__empresa__nombre'],
+                    'plan_nombre': pago['suscripcion__plan_suscripcion__nombre'],
+                    'costo': pago['costo'],
+                    'monto_pago': pago['monto_pago'],
+                    'estado_pago': pago['estado_pago'],
+                    'fecha_pago': pago['fecha_pago'],
+                    'fecha_vencimiento': pago['fecha_vencimiento'],
+                    'transaccion_id': pago['transaccion_id'],
+                    'suscripcion_id': pago['suscripcion__suscripcion_id']
+                })
+            
+            return Response(pagos_procesados)
         except Exception as e:
             return Response(
                 {'error': f'Error obteniendo pagos: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def pago_simple(self, request):
+        """Procesar pago simple para renovar/activar suscripción"""
+        try:
+            data = request.data
+            empresa_id = data.get('empresa_id')
+            plan_id = data.get('plan_id')
+            metodo_pago = data.get('metodo_pago', 'Transferencia')
+            referencia_pago = data.get('referencia_pago', '')
+            
+            if not empresa_id or not plan_id:
+                return Response(
+                    {'error': 'empresa_id y plan_id son requeridos'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            empresa = Empresa.objects.get(empresa_id=empresa_id)
+            plan = PlanSuscripcion.objects.get(plan_id=plan_id)
+            
+            with transaction.atomic():
+                # Verificar suscripción existente
+                suscripcion = SuscripcionEmpresa.objects.filter(
+                    empresa=empresa,
+                    status=True
+                ).first()
+                
+                if suscripcion:
+                    # Renovar suscripción existente
+                    suscripcion.renovar_suscripcion()
+                else:
+                    # Crear nueva suscripción
+                    fecha_inicio = timezone.now().date()
+                    fecha_fin = fecha_inicio + timedelta(days=plan.duracion)
+                    
+                    suscripcion = SuscripcionEmpresa.objects.create(
+                        empresa=empresa,
+                        plan_suscripcion=plan,
+                        fecha_inicio=fecha_inicio,
+                        fecha_fin=fecha_fin,
+                        estado='Activa',
+                        status=True
+                    )
+                
+                # Crear pago automáticamente completado
+                pago = Pago.objects.create(
+                    suscripcion=suscripcion,
+                    costo=plan.precio,
+                    monto_pago=plan.precio,
+                    estado_pago='Completado',
+                    fecha_pago=timezone.now(),
+                    transaccion_id=f"PAY-{empresa_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+                )
+            
+            return Response({
+                'message': 'Pago procesado exitosamente',
+                'suscripcion_activa': True,
+                'fecha_fin': suscripcion.fecha_fin.isoformat(),
+                'pago_id': pago.pago_id
+            })
+            
+        except Empresa.DoesNotExist:
+            return Response(
+                {'error': 'Empresa no encontrada'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except PlanSuscripcion.DoesNotExist:
+            return Response(
+                {'error': 'Plan no encontrado'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error procesando pago: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

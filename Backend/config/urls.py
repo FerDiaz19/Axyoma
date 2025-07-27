@@ -3,9 +3,8 @@ from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from django.http import JsonResponse  # 👈 IMPORTANTE
+from django.http import JsonResponse
 
-# 👇 Agrega esta función
 def health_check(request):
     return JsonResponse({"status": "ok"})
 
@@ -25,7 +24,8 @@ schema_view = get_schema_view(
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('apps.urls')),
-    path("api/health-check/", health_check),  # 👈 ya no dará error
+    path('api/subscriptions/', include('apps.subscriptions.urls')),
+    path("api/health-check/", health_check),
 
     # Swagger URLs
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),

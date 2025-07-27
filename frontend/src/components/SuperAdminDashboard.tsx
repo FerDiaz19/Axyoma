@@ -1807,63 +1807,63 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               onClick={() => setActiveSection('empresas')}
             >
               <span className="nav-icon">🏢</span>
-              <span className="nav-text">Empresas ({empresas?.length || 0})</span>
+              <span className="nav-text">Empresas</span>
             </button>
             <button 
               className={activeSection === 'usuarios' ? 'active' : ''}
               onClick={() => setActiveSection('usuarios')}
             >
               <span className="nav-icon">👥</span>
-              <span className="nav-text">Usuarios ({usuarios?.length || 0})</span>
+              <span className="nav-text">Usuarios</span>
             </button>
             <button 
               className={activeSection === 'plantas' ? 'active' : ''}
               onClick={() => setActiveSection('plantas')}
             >
               <span className="nav-icon">🏭</span>
-              <span className="nav-text">Plantas ({plantas?.length || 0})</span>
+              <span className="nav-text">Plantas</span>
             </button>
             <button 
               className={activeSection === 'departamentos' ? 'active' : ''}
               onClick={() => setActiveSection('departamentos')}
             >
               <span className="nav-icon">🏢</span>
-              <span className="nav-text">Departamentos ({departamentos?.length || 0})</span>
+              <span className="nav-text">Departamentos</span>
             </button>
             <button 
               className={activeSection === 'puestos' ? 'active' : ''}
               onClick={() => setActiveSection('puestos')}
             >
               <span className="nav-icon">💼</span>
-              <span className="nav-text">Puestos ({puestos?.length || 0})</span>
+              <span className="nav-text">Puestos</span>
             </button>
             <button 
               className={activeSection === 'empleados' ? 'active' : ''}
               onClick={() => setActiveSection('empleados')}
             >
               <span className="nav-icon">👤</span>
-              <span className="nav-text">Empleados ({empleados?.length || 0})</span>
+              <span className="nav-text">Empleados</span>
             </button>
             <button 
               className={activeSection === 'suscripciones' ? 'active' : ''}
               onClick={() => setActiveSection('suscripciones')}
             >
               <span className="nav-icon">💳</span>
-              <span className="nav-text">Suscripciones ({suscripciones?.length || 0})</span>
+              <span className="nav-text">Suscripciones</span>
             </button>
             <button 
               className={activeSection === 'planes' ? 'active' : ''}
               onClick={() => setActiveSection('planes')}
             >
               <span className="nav-icon">📋</span>
-              <span className="nav-text">Planes ({planes?.length || 0})</span>
+              <span className="nav-text">Planes</span>
             </button>
             <button 
               className={activeSection === 'pagos' ? 'active' : ''}
               onClick={() => setActiveSection('pagos')}
             >
               <span className="nav-icon">💰</span>
-              <span className="nav-text">Pagos ({pagos?.length || 0})</span>
+              <span className="nav-text">Pagos</span>
             </button>
             <button 
               className={activeSection === 'evaluaciones' ? 'active' : ''}
@@ -1888,7 +1888,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               <div className="user-avatar">
                 <span className="avatar-icon">👤</span>
               </div>
-              <div className="user-details">
+                           <div className="user-details">
                 <span className="user-name">{userData?.nombre_completo || userData?.usuario}</span>
                 <span className="user-role">{userData?.nivel_usuario}</span>
               </div>

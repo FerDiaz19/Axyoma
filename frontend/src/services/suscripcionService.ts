@@ -85,14 +85,12 @@ export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
 
 export const obtenerSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
   try {
-    console.log('🔄 Obteniendo suscripciones...');
-    // Eliminar el '/api' redundante
-    const response = await api.get('/suscripciones/listar/');
-    console.log('✅ Suscripciones obtenidas:', response.data);
+    // CAMBIAR de /suscripciones/listar/ a /subscriptions/suscripciones/
+    const response = await api.get('/subscriptions/suscripciones/');
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Error al obtener suscripciones:', error);
-    return [];
+    throw error;
   }
 };
 
@@ -311,7 +309,7 @@ export const obtenerSuscripcionActual = async (): Promise<any> => {
 export const obtenerInfoSuscripcionEmpresa = async (empresaId: number): Promise<any> => {
   try {
     console.log(`🔄 Obteniendo información de suscripción para empresa ${empresaId}...`);
-    const response = await api.get(`/suscripciones/info_suscripcion_empresa/?empresa_id=${empresaId}`);
+    const response = await api.get(`suscripciones/info_suscripcion_empresa/?empresa_id=${empresaId}`);
     console.log('✅ Información de suscripción obtenida:', response.data);
     return response.data;
   } catch (error) {
@@ -320,73 +318,205 @@ export const obtenerInfoSuscripcionEmpresa = async (empresaId: number): Promise<
   }
 };
 
-// ===== FUNCIONES ADICIONALES PARA SUPERADMIN =====
+// ===== NUEVAS FUNCIONES PARA PAGO SIMPLE =====
 
-export const listarSuscripciones = obtenerSuscripciones;
-export const listarPagos = obtenerPagos;
-
-export const editarPlan = async (planId: number, planData: Partial<PlanSuscripcion>): Promise<PlanSuscripcion> => {
-  return await actualizarPlan(planId, planData);
+export const procesarPagoSimple = async (pagoData: {
+  empresa_id: number;
+  plan_id: number;
+  metodo_pago: string;
+  referencia_pago?: string;
+}): Promise<any> => {
+  try {
+    const response = await api.post('/subscriptions/pago_simple/', pagoData);
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Error procesando pago simple');
+  }
 };
 
+export const verificarAccesoEvaluaciones = async (): Promise<any> => {
+  try {
+    const response = await api.get('/subscriptions/verificar_acceso_evaluaciones/');
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Error verificando acceso a evaluaciones');
+  }
+};
+
+// ========== FUNCIONES PARA SUPERADMIN ==========
+
+// Listar todas las suscripciones (SuperAdmin)
+export const listarSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
+  try {
+    console.log('🔄 Obteniendo todas las suscripciones para SuperAdmin...');
+    // CAMBIO: Usar el endpoint correcto de subscriptions en lugar de suscripciones
+    const response = await api.get('/subscriptions/suscripciones/');
+    console.log('✅ Suscripciones obtenidas:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error obteniendo suscripciones:', error);
+    throw error;
+  }
+};
+
+// Listar todos los pagos (SuperAdmin)
+export const listarPagos = async (): Promise<Pago[]> => {
+  try {
+    console.log('🔄 Obteniendo todos los pagos para SuperAdmin...');
+    // CAMBIO: Usar el endpoint correcto de subscriptions
+    const response = await api.get('/subscriptions/pagos/');
+    console.log('✅ Pagos obtenidos:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error obteniendo pagos:', error);
+    // Retornar array vacío si hay error
+    return [];
+  }
+};
+
+// Editar plan (SuperAdmin)
+export const editarPlan = async (planId: number, data: Partial<PlanSuscripcion>): Promise<any> => {
+  try {
+    console.log(`🔧 Editando plan ${planId}:`, data);
+    const response = await api.put('/subscriptions/editar_plan/', {
+      plan_id: planId,
+      ...data
+    });
+    console.log('✅ Plan editado exitosamente:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error editando plan:', error);
+    throw error;
+  }
+};
+
+// Renovar suscripción (SuperAdmin)
 export const renovarSuscripcion = async (empresaId: number, planId: number): Promise<any> => {
-  return await crearSuscripcion(empresaId, planId);
-};
-
-export const suspenderSuscripcion = async (suscripcionId: number): Promise<void> => {
   try {
-    console.log(`🔄 Suspendiendo suscripción ${suscripcionId}...`);
-    await api.put(`/suscripciones/suspender_suscripcion/`, {
-      suscripcion_id: suscripcionId
+    console.log(`🔄 Renovando suscripción para empresa ${empresaId} con plan ${planId}...`);
+    const response = await api.post('/subscriptions/crear_suscripcion/', {
+      empresa_id: empresaId,
+      plan_id: planId
     });
-    console.log('✅ Suscripción suspendida');
+    console.log('✅ Suscripción renovada exitosamente:', response.data);
+    return response.data;
   } catch (error) {
-    console.error(`❌ Error al suspender suscripción ${suscripcionId}:`, error);
+    console.error('❌ Error renovando suscripción:', error);
     throw error;
   }
 };
 
-export const reactivarSuscripcion = async (suscripcionId: number): Promise<void> => {
+// Suspender suscripción (SuperAdmin)
+export const suspenderSuscripcion = async (suscripcionId: number): Promise<any> => {
   try {
-    console.log(`🔄 Reactivando suscripción ${suscripcionId}...`);
-    await api.put(`/suscripciones/reactivar_suscripcion/`, {
+    console.log(`⏸️ Suspendiendo suscripción ${suscripcionId}...`);
+    const response = await api.post('/subscriptions/suspender_suscripcion/', {
       suscripcion_id: suscripcionId
     });
-    console.log('✅ Suscripción reactivada');
+    console.log('✅ Suscripción suspendida exitosamente:', response.data);
+    return response.data;
   } catch (error) {
-    console.error(`❌ Error al reactivar suscripción ${suscripcionId}:`, error);
+    console.error('❌ Error suspendiendo suscripción:', error);
     throw error;
   }
 };
 
+// Reactivar suscripción (SuperAdmin)
+export const reactivarSuscripcion = async (suscripcionId: number): Promise<any> => {
+  try {
+    console.log(`▶️ Reactivando suscripción ${suscripcionId}...`);
+    const response = await api.post('/subscriptions/reactivar_suscripcion/', {
+      suscripcion_id: suscripcionId
+    });
+    console.log('✅ Suscripción reactivada exitosamente:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error reactivando suscripción:', error);
+    throw error;
+  }
+};
+
+// ========== FUNCIONES DE FORMATEO Y UTILIDADES ==========
+
+// Obtener texto del estado de suscripción
 export const getEstadoSuscripcionTexto = (estado: string): string => {
-  switch (estado) {
-    case 'activa': return 'Activa';
-    case 'pendiente_pago': return 'Pendiente de Pago';
-    case 'vencida': return 'Vencida';
-    case 'cancelada': return 'Cancelada';
-    case 'suspendida': return 'Suspendida';
-    default: return 'Desconocido';
+  switch (estado?.toLowerCase()) {
+    case 'activa':
+      return '✅ Activa';
+    case 'vencida':
+      return '⏰ Vencida';
+    case 'suspendida':
+      return '⏸️ Suspendida';
+    case 'cancelada':
+      return '❌ Cancelada';
+    default:
+      return `❓ ${estado}`;
   }
 };
 
+// Obtener color del estado de suscripción
 export const getEstadoSuscripcionColor = (estado: string): string => {
-  switch (estado) {
-    case 'activa': return '#28a745';
-    case 'pendiente_pago': return '#ffc107';
-    case 'vencida': return '#dc3545';
-    case 'cancelada': return '#6c757d';
-    case 'suspendida': return '#fd7e14';
-    default: return '#6c757d';
+  switch (estado?.toLowerCase()) {
+    case 'activa':
+      return 'active';
+    case 'vencida':
+      return 'expired';
+    case 'suspendida':
+      return 'warning';
+    case 'cancelada':
+      return 'inactive';
+    default:
+      return 'inactive';
   }
 };
 
+// Obtener texto del estado de pago
 export const getEstadoPagoTexto = (estado: string): string => {
-  switch (estado) {
-    case 'completado': return 'Completado';
-    case 'pendiente': return 'Pendiente';
-    case 'fallido': return 'Fallido';
-    default: return 'Desconocido';
+  switch (estado?.toLowerCase()) {
+    case 'completado':
+      return '✅ Completado';
+    case 'pendiente':
+      return '⏳ Pendiente';
+    case 'cancelado':
+      return '❌ Cancelado';
+    case 'fallido':
+      return '🚫 Fallido';
+    default:
+      return `❓ ${estado}`;
+  }
+};
+
+// ========== FUNCIONES FALTANTES ==========
+
+// Formatear estado de suscripción
+export const formatearEstadoSuscripcion = (estado: string): string => {
+  switch (estado?.toLowerCase()) {
+    case 'activa':
+      return 'Activa';
+    case 'vencida':
+      return 'Vencida';
+    case 'suspendida':
+      return 'Suspendida';
+    case 'cancelada':
+      return 'Cancelada';
+    default:
+      return estado || 'Desconocido';
+  }
+};
+
+// Obtener tipo de evaluación disponible
+export const obtenerTipoEvaluacionDisponible = async (): Promise<any> => {
+  try {
+    console.log('🔄 Obteniendo tipos de evaluación disponibles...');
+    const response = await api.get('/evaluaciones/tipos-disponibles/');
+    console.log('✅ Tipos de evaluación obtenidos:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error obteniendo tipos de evaluación:', error);
+    return {
+      tipos: [],
+      mensaje: 'Error al obtener tipos de evaluación'
+    };
   }
 };
 
@@ -416,7 +546,11 @@ const suscripcionService = {
   reactivarSuscripcion,
   getEstadoSuscripcionTexto,
   getEstadoSuscripcionColor,
-  getEstadoPagoTexto
+  getEstadoPagoTexto,
+  procesarPagoSimple,
+  verificarAccesoEvaluaciones,
+  formatearEstadoSuscripcion,
+  obtenerTipoEvaluacionDisponible
 };
 
 export default suscripcionService;

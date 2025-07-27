@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { obtenerSuscripcionActual, listarPlanes, type PlanSuscripcion } from '../services/suscripcionService';
+import {
+  obtenerSuscripcionActual,
+  listarPlanes,
+  suscribirseAPlan,
+  formatearPrecio,
+  formatearDuracion,
+  formatearFecha,
+  type PlanSuscripcion
+} from '../services/suscripcionService';
 import '../css/GestionSuscripcion.css';
 
 interface GestionSuscripcionProps {
@@ -7,155 +15,217 @@ interface GestionSuscripcionProps {
 }
 
 const GestionSuscripcion: React.FC<GestionSuscripcionProps> = ({ empresaId }) => {
-  console.log('Renderizando GestionSuscripcion con empresaId:', empresaId);
-  const [suscripcion, setSuscripcion] = useState<any>(null);
-  const [planes, setPlanes] = useState<PlanSuscripcion[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showPlanes, setShowPlanes] = useState(false);
+  const [suscripcionInfo, setSuscripcionInfo] = useState<any>(null);
+  const [planes, setPlanes] = useState<PlanSuscripcion[]>([]);
+  const [mostrarPlanes, setMostrarPlanes] = useState(false);
+  const [procesandoPlan, setProcesandoPlan] = useState<number | null>(null);
 
-useEffect(() => {
-  if (empresaId) {
+  useEffect(() => {
     cargarDatos();
-  }
-}, [empresaId]);
+  }, [empresaId]);
 
   const cargarDatos = async () => {
-    console.log('Iniciando carga de datos...');
     try {
-      if (!empresaId) {
-        throw new Error('ID de empresa no válido');
-      }
-      const [suscripcionData, planesData] = await Promise.all([
-        obtenerSuscripcionActual(),
-        listarPlanes()
-      ]);
-      console.log('Datos recibidos:', { suscripcionData, planesData });
-      setSuscripcion(suscripcionData);
+      setLoading(true);
+      
+      const infoSuscripcion = await obtenerSuscripcionActual();
+      setSuscripcionInfo(infoSuscripcion);
+      
+      const planesData = await listarPlanes();
       setPlanes(planesData);
-    } catch (error: any) {
-      console.error('Error cargando datos de suscripción:', error);
-      setError(error.message || 'No se pudo cargar la información de suscripción');
+      
+    } catch (error) {
+      console.error('Error cargando datos:', error);
+      setSuscripcionInfo({
+        tiene_suscripcion: false,
+        estado: 'sin_suscripcion',
+        mensaje: 'Error al cargar información de suscripción'
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const handleSeleccionarPlan = async (planId: number) => {
+    try {
+      setProcesandoPlan(planId);
+      
+      const resultado = await suscribirseAPlan(planId);
+      
+      alert(`Suscripción exitosa`);
+      
+      await cargarDatos();
+      setMostrarPlanes(false);
+      
+    } catch (error: any) {
+      console.error('Error al suscribirse:', error);
+      alert(error.message || 'Error al procesar la suscripción');
+    } finally {
+      setProcesandoPlan(null);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="gestion-suscripcion">
-        <div className="loading">Cargando información de suscripción...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="gestion-suscripcion">
-        <div className="error-message">{error}</div>
-      </div>
-    );
-  }
-
-  // Función para renderizar la lista de planes disponibles
-  const renderPlanes = () => {
-    return (
-      <div className="planes-disponibles">
-        <h3>Planes Disponibles</h3>
-        <div className="planes-grid">
-          {planes.map(plan => (
-            <div key={plan.plan_id} className="plan-card">
-              <h4>{plan.nombre}</h4>
-              <p>{plan.descripcion}</p>
-              <div className="plan-precio">
-                Precio: ${plan.precio}
-              </div>
-              <div className="plan-duracion">
-                Duración: {plan.duracion} días
-              </div>
-              <button 
-                className="seleccionar-plan-btn"
-                onClick={() => setShowPlanes(false)}
-              >
-                Seleccionar Plan
-              </button>
-            </div>
-          ))}
+      <div className="gestion-suscripcion loading">
+        <div className="loading-content">
+          <h2>Cargando información de suscripción...</h2>
+          <div className="spinner"></div>
         </div>
       </div>
     );
-  };
+  }
 
   return (
     <div className="gestion-suscripcion">
-      <div className="header-section">
-        <h2>💎 Suscripción Actual</h2>
+      <div className="suscripcion-header">
+        <h2>Gestión de Suscripción</h2>
+        <p>Administra tu plan de suscripción</p>
       </div>
 
-      {showPlanes ? (
-        renderPlanes()
-      ) : suscripcion ? (
-        <div className="suscripcion-info">
-          <div className="plan-actual">
-            <div className="plan-header">
-              <h3>{suscripcion.plan_nombre}</h3>
-              <span className={`estado ${suscripcion.estado.toLowerCase()}`}>
-                {suscripcion.estado}
-              </span>
+      <div className="suscripcion-actual">
+        <h3>Estado Actual</h3>
+        
+        {suscripcionInfo?.tiene_suscripcion ? (
+          <div className="suscripcion-activa">
+            <div className="plan-info">
+              <h4>Suscripción Activa</h4>
+              <div className="plan-details">
+                <div className="detail-item">
+                  <strong>Plan:</strong> {suscripcionInfo.plan_nombre}
+                </div>
+                <div className="detail-item">
+                  <strong>Precio:</strong> {formatearPrecio(suscripcionInfo.precio)}
+                </div>
+                <div className="detail-item">
+                  <strong>Duración:</strong> {formatearDuracion(suscripcionInfo.duracion)}
+                </div>
+                <div className="detail-item">
+                  <strong>Fecha de inicio:</strong> {formatearFecha(suscripcionInfo.fecha_inicio)}
+                </div>
+                <div className="detail-item">
+                  <strong>Fecha de fin:</strong> {formatearFecha(suscripcionInfo.fecha_fin)}
+                </div>
+                <div className="detail-item">
+                  <strong>Días restantes:</strong> 
+                  <span className={`dias-restantes ${suscripcionInfo.esta_por_vencer ? 'warning' : 'active'}`}>
+                    {suscripcionInfo.dias_restantes} días
+                  </span>
+                </div>
+              </div>
             </div>
             
-            <div className="plan-detalles">
-              <div className="detalle">
-                <span className="label">Fecha de inicio:</span>
-                <span className="valor">{new Date(suscripcion.fecha_inicio).toLocaleDateString()}</span>
-              </div>
-              <div className="detalle">
-                <span className="label">Fecha de vencimiento:</span>
-                <span className="valor">{new Date(suscripcion.fecha_fin).toLocaleDateString()}</span>
-              </div>
-              <div className="detalle">
-                <span className="label">Días restantes:</span>
-                <span className="valor">{suscripcion.dias_restantes} días</span>
-              </div>
-            </div>
-
-            {suscripcion.esta_por_vencer && (
+            {suscripcionInfo.esta_por_vencer && (
               <div className="alerta-vencimiento">
-                ⚠️ Tu suscripción está por vencer. Renueva ahora para mantener todas las funcionalidades.
+                <h4>Suscripción próxima a vencer</h4>
+                <p>Tu suscripción vence en {suscripcionInfo.dias_restantes} días.</p>
+                <button 
+                  onClick={() => setMostrarPlanes(true)}
+                  className="btn-renovar"
+                >
+                  Renovar Suscripción
+                </button>
               </div>
             )}
           </div>
-
-          <div className="funcionalidades">
-            <h4>Funcionalidades Incluidas</h4>
-            <ul>
-              <li>✅ Gestión ilimitada de empleados</li>
-              <li>✅ Todas las herramientas de evaluación</li>
-              <li>✅ Reportes avanzados</li>
-              <li>✅ Soporte prioritario</li>
-            </ul>
+        ) : (
+          <div className="sin-suscripcion">
+            <h4>Sin Suscripción Activa</h4>
+            <p>{suscripcionInfo?.mensaje || 'No tienes una suscripción activa.'}</p>
+            <button 
+              onClick={() => setMostrarPlanes(true)}
+              className="btn-contratar"
+            >
+              Ver Planes Disponibles
+            </button>
           </div>
-        </div>
-      ) : (
-        <div className="sin-suscripcion">
-          <div className="mensaje-principal">
-            <h3>⚠️ No tienes un plan activo</h3>
-            <p>Algunas funcionalidades están restringidas. Activa un plan para acceder a todas las características.</p>
-          </div>
+        )}
+      </div>
 
-          <div className="funcionalidades-restringidas">
-            <h4>Funcionalidades Restringidas</h4>
-            <ul>
-              <li>❌ Límite de 5 empleados</li>
-              <li>❌ Evaluaciones básicas únicamente</li>
-              <li>❌ Sin acceso a reportes avanzados</li>
-              <li>❌ Soporte limitado</li>
-            </ul>
-          </div>
-
-          <button className="activar-plan-btn" onClick={() => setShowPlanes(true)}>
-            💎 Activar Plan Ahora
+      {!mostrarPlanes && suscripcionInfo?.tiene_suscripcion && (
+        <div className="acciones-suscripcion">
+          <button 
+            onClick={() => setMostrarPlanes(true)}
+            className="btn-secondary"
+          >
+            Ver Otros Planes
           </button>
+        </div>
+      )}
+
+      {mostrarPlanes && (
+        <div className="planes-disponibles">
+          <div className="planes-header">
+            <h3>Planes Disponibles</h3>
+            <button 
+              onClick={() => setMostrarPlanes(false)}
+              className="btn-close"
+            >
+              Cerrar
+            </button>
+          </div>
+          
+          <div className="planes-grid">
+            {planes.map((plan) => (
+              <div key={plan.plan_id} className={`plan-card ${!plan.status ? 'disabled' : ''}`}>
+                <div className="plan-header">
+                  <h4>{plan.nombre}</h4>
+                  <div className="plan-precio">
+                    {formatearPrecio(plan.precio)}
+                    <small>por {formatearDuracion(plan.duracion)}</small>
+                  </div>
+                </div>
+                
+                <div className="plan-body">
+                  {plan.descripcion && (
+                    <p className="plan-descripcion">{plan.descripcion}</p>
+                  )}
+                  
+                  <div className="plan-features">
+                    <div className="feature">
+                      <strong>Duración:</strong> {formatearDuracion(plan.duracion)}
+                    </div>
+                    <div className="feature">
+                      <strong>Precio:</strong> {formatearPrecio(plan.precio)}
+                    </div>
+                    <div className="feature">
+                      <strong>Estado:</strong> 
+                      <span className={plan.status ? 'active' : 'inactive'}>
+                        {plan.status ? 'Disponible' : 'No disponible'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="plan-footer">
+                  {plan.status ? (
+                    <button
+                      onClick={() => handleSeleccionarPlan(plan.plan_id)}
+                      disabled={procesandoPlan === plan.plan_id}
+                      className="btn-seleccionar"
+                    >
+                      {procesandoPlan === plan.plan_id ? (
+                        'Procesando...'
+                      ) : (
+                        'Seleccionar Plan'
+                      )}
+                    </button>
+                  ) : (
+                    <button disabled className="btn-disabled">
+                      No Disponible
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          {planes.length === 0 && (
+            <div className="no-planes">
+              <p>No hay planes disponibles en este momento.</p>
+            </div>
+          )}
         </div>
       )}
     </div>

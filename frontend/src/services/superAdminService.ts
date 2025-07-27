@@ -262,23 +262,7 @@ export const crearUsuario = async (data: Omit<SuperAdminUsuario, 'user_id'> & { 
   }
 };
 
-// Plantas
-export const getPlantas = async (buscar = '', empresa_id = '', status = ''): Promise<{plantas: any[]}> => {
-  try {
-    let params = new URLSearchParams();
-    if (buscar) params.append('buscar', buscar);
-    if (empresa_id) params.append('empresa_id', empresa_id);
-    if (status) params.append('status', status);
-    
-    const response = await api.get(`${BASE_URL}/listar_todas_plantas/?${params.toString()}`);
-    return response.data || { plantas: [] };
-  } catch (error) {
-    console.error('❌ SuperAdmin: Error cargando plantas:', error);
-    return { plantas: [] };
-  }
-};
-
-// Funciones de suspensión/activación
+// ========== FUNCIONES PARA PLANTAS ==========
 export const suspenderPlanta = async (id: number, accion: 'suspender' | 'activar') => {
   try {
     console.log(`🔒 SuperAdmin: ${accion === 'suspender' ? 'Suspendiendo' : 'Activando'} planta ${id}...`);
@@ -293,7 +277,6 @@ export const suspenderPlanta = async (id: number, accion: 'suspender' | 'activar
   }
 };
 
-// Funciones de eliminación
 export const eliminarPlanta = async (id: number) => {
   try {
     console.log(`🗑️ SuperAdmin: Eliminando planta ${id}...`);
@@ -307,7 +290,6 @@ export const eliminarPlanta = async (id: number) => {
   }
 };
 
-// Funciones de edición
 export const editarPlanta = async (id: number, data: Partial<SuperAdminPlanta>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando planta ${id}...`, data);
@@ -322,24 +304,7 @@ export const editarPlanta = async (id: number, data: Partial<SuperAdminPlanta>) 
   }
 };
 
-// Departamentos
-export const getDepartamentos = async (buscar = '', planta_id = '', empresa_id = '', status = ''): Promise<{departamentos: any[]}> => {
-  try {
-    let params = new URLSearchParams();
-    if (buscar) params.append('buscar', buscar);
-    if (planta_id) params.append('planta_id', planta_id);
-    if (empresa_id) params.append('empresa_id', empresa_id);
-    if (status) params.append('status', status);
-    
-    const response = await api.get(`${BASE_URL}/listar_todos_departamentos/?${params.toString()}`);
-    return response.data || { departamentos: [] };
-  } catch (error) {
-    console.error('❌ SuperAdmin: Error cargando departamentos:', error);
-    return { departamentos: [] };
-  }
-};
-
-// Funciones de suspensión/activación
+// ========== FUNCIONES PARA DEPARTAMENTOS ==========
 export const suspenderDepartamento = async (id: number, accion: 'suspender' | 'activar') => {
   try {
     console.log(`🔒 SuperAdmin: ${accion === 'suspender' ? 'Suspendiendo' : 'Activando'} departamento ${id}...`);
@@ -354,7 +319,6 @@ export const suspenderDepartamento = async (id: number, accion: 'suspender' | 'a
   }
 };
 
-// Funciones de eliminación
 export const eliminarDepartamento = async (id: number) => {
   try {
     console.log(`🗑️ SuperAdmin: Eliminando departamento ${id}...`);
@@ -368,7 +332,6 @@ export const eliminarDepartamento = async (id: number) => {
   }
 };
 
-// Funciones de edición
 export const editarDepartamento = async (id: number, data: Partial<SuperAdminDepartamento>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando departamento ${id}...`, data);
@@ -383,25 +346,7 @@ export const editarDepartamento = async (id: number, data: Partial<SuperAdminDep
   }
 };
 
-// Puestos
-export const getPuestos = async (buscar = '', departamento_id = '', planta_id = '', empresa_id = '', status = ''): Promise<{puestos: any[]}> => {
-  try {
-    let params = new URLSearchParams();
-    if (buscar) params.append('buscar', buscar);
-    if (departamento_id) params.append('departamento_id', departamento_id);
-    if (planta_id) params.append('planta_id', planta_id);
-    if (empresa_id) params.append('empresa_id', empresa_id);
-    if (status) params.append('status', status);
-    
-    const response = await api.get(`${BASE_URL}/listar_todos_puestos/?${params.toString()}`);
-    return response.data || { puestos: [] };
-  } catch (error) {
-    console.error('❌ SuperAdmin: Error cargando puestos:', error);
-    return { puestos: [] };
-  }
-};
-
-// Funciones de suspensión/activación
+// ========== FUNCIONES PARA PUESTOS ==========
 export const suspenderPuesto = async (id: number, accion: 'suspender' | 'activar') => {
   try {
     console.log(`🔒 SuperAdmin: ${accion === 'suspender' ? 'Suspendiendo' : 'Activando'} puesto ${id}...`);
@@ -416,7 +361,6 @@ export const suspenderPuesto = async (id: number, accion: 'suspender' | 'activar
   }
 };
 
-// Funciones de eliminación
 export const eliminarPuesto = async (id: number) => {
   try {
     console.log(`🗑️ SuperAdmin: Eliminando puesto ${id}...`);
@@ -430,7 +374,6 @@ export const eliminarPuesto = async (id: number) => {
   }
 };
 
-// Funciones de edición
 export const editarPuesto = async (id: number, data: Partial<SuperAdminPuesto>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando puesto ${id}...`, data);
@@ -445,26 +388,7 @@ export const editarPuesto = async (id: number, data: Partial<SuperAdminPuesto>) 
   }
 };
 
-// Empleados
-export const getEmpleados = async (buscar = '', empresa_id = '', planta_id = '', departamento_id = '', puesto_id = '', status = ''): Promise<{empleados: any[]}> => {
-  try {
-    let params = new URLSearchParams();
-    if (buscar) params.append('buscar', buscar);
-    if (empresa_id) params.append('empresa_id', empresa_id);
-    if (planta_id) params.append('planta_id', planta_id);
-    if (departamento_id) params.append('departamento_id', departamento_id);
-    if (puesto_id) params.append('puesto_id', puesto_id);
-    if (status) params.append('status', status);
-    
-    const response = await api.get(`${BASE_URL}/listar_todos_empleados/?${params.toString()}`);
-    return response.data || { empleados: [] };
-  } catch (error) {
-    console.error('❌ SuperAdmin: Error cargando empleados:', error);
-    return { empleados: [] };
-  }
-};
-
-// Funciones de suspensión/activación
+// ========== FUNCIONES PARA EMPLEADOS ==========
 export const suspenderEmpleado = async (id: number, accion: 'suspender' | 'activar') => {
   try {
     console.log(`🔒 SuperAdmin: ${accion === 'suspender' ? 'Suspendiendo' : 'Activando'} empleado ${id}...`);
@@ -479,7 +403,6 @@ export const suspenderEmpleado = async (id: number, accion: 'suspender' | 'activ
   }
 };
 
-// Funciones de eliminación
 export const eliminarEmpleado = async (id: number) => {
   try {
     console.log(`🗑️ SuperAdmin: Eliminando empleado ${id}...`);
@@ -493,7 +416,6 @@ export const eliminarEmpleado = async (id: number) => {
   }
 };
 
-// Funciones de edición
 export const editarEmpleado = async (id: number, data: Partial<SuperAdminEmpleado>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando empleado ${id}...`, data);
@@ -505,5 +427,86 @@ export const editarEmpleado = async (id: number, data: Partial<SuperAdminEmplead
   } catch (error) {
     console.error('❌ SuperAdmin: Error editando empleado:', error);
     throw error;
+  }
+};
+
+// CAMBIO: Usar endpoints existentes que sabemos que funcionan
+export const getPlantas = async (params: any = {}): Promise<{plantas: any[]}> => {
+  try {
+    console.log('🔄 SuperAdmin: Usando endpoint directo /plantas/');
+    
+    // Usar el endpoint directo en lugar del endpoint de SuperAdmin
+    const response = await api.get('/plantas/');
+    console.log('📊 SuperAdmin: Respuesta plantas directa:', response.data);
+    
+    // Si es un array directo, devolverlo en el formato esperado
+    if (Array.isArray(response.data)) {
+      console.log(`✅ SuperAdmin: Cargadas ${response.data.length} plantas desde endpoint directo`);
+      return { plantas: response.data };
+    } else {
+      console.error('❌ SuperAdmin: formato de respuesta de plantas incorrecto:', response.data);
+      return { plantas: [] };
+    }
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando plantas desde endpoint directo:', error);
+    return { plantas: [] };
+  }
+};
+
+export const getDepartamentos = async (params: any = {}): Promise<{departamentos: any[]}> => {
+  try {
+    console.log('🔄 SuperAdmin: Usando endpoint directo /departamentos/');
+    
+    // Usar el endpoint directo
+    const response = await api.get('/departamentos/');
+    console.log('📊 SuperAdmin: Respuesta departamentos directa:', response.data);
+    
+    if (Array.isArray(response.data)) {
+      console.log(`✅ SuperAdmin: Cargados ${response.data.length} departamentos desde endpoint directo`);
+      return { departamentos: response.data };
+    } else {
+      return { departamentos: [] };
+    }
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando departamentos desde endpoint directo:', error);
+    return { departamentos: [] };
+  }
+};
+
+export const getPuestos = async (params: any = {}): Promise<{puestos: any[]}> => {
+  try {
+    console.log('🔄 SuperAdmin: Usando endpoint directo /puestos/');
+    
+    const response = await api.get('/puestos/');
+    console.log('📊 SuperAdmin: Respuesta puestos directa:', response.data);
+    
+    if (Array.isArray(response.data)) {
+      console.log(`✅ SuperAdmin: Cargados ${response.data.length} puestos desde endpoint directo`);
+      return { puestos: response.data };
+    } else {
+      return { puestos: [] };
+    }
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando puestos desde endpoint directo:', error);
+    return { puestos: [] };
+  }
+};
+
+export const getEmpleados = async (params: any = {}): Promise<{empleados: any[]}> => {
+  try {
+    console.log('🔄 SuperAdmin: Usando endpoint directo /empleados/');
+    
+    const response = await api.get('/empleados/');
+    console.log('📊 SuperAdmin: Respuesta empleados directa:', response.data);
+    
+    if (Array.isArray(response.data)) {
+      console.log(`✅ SuperAdmin: Cargados ${response.data.length} empleados desde endpoint directo`);
+      return { empleados: response.data };
+    } else {
+      return { empleados: [] };
+    }
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando empleados desde endpoint directo:', error);
+    return { empleados: [] };
   }
 };

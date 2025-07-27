@@ -125,6 +125,13 @@ class Pago(models.Model):
     fecha_vencimiento = models.DateField(null=True, blank=True, verbose_name="Fecha de Vencimiento")
     transaccion_id = models.CharField(max_length=50, blank=True, null=True, verbose_name="ID de Transacción")
     comprobante = models.CharField(max_length=255, blank=True, null=True, verbose_name="Comprobante de Pago")
+    usuario = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Usuario que realizó el pago"
+    )
 
     class Meta:
         db_table = 'pagos'

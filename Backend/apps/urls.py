@@ -42,8 +42,9 @@ urlpatterns = [
     path('superadmin/estadisticas_sistema/', SuperAdminViewSet.as_view({'get': 'estadisticas_sistema'})),
     
     # Ruta específica para planes
-   # path('suscripciones/listar_planes/', SuscripcionViewSet.as_view({'get': 'listar_planes'}), name='listar_planes'),
     path('suscripciones/planes/', SuscripcionViewSet.as_view({'get': 'planes'})),
+    path('suscripciones/listar/', SuscripcionViewSet.as_view({'get': 'listar'})),
+    
     # Incluir rutas automáticas del router
     path('', include(router.urls)),
 ]
