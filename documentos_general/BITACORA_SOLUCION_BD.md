@@ -182,6 +182,31 @@ urlpatterns = [
      - Ejecuta migraciones desde cero
      - Crea datos iniciales de prueba
 
+4. **`load_initial_data.py`** (nuevo)
+   - **Función**: Carga datos iniciales en la base de datos
+   - **Uso**: `python manage.py load_initial_data`
+   - **Acciones**:
+     - Crea usuario SuperAdmin
+     - Crea planes de suscripción
+     - Crea empresa de ejemplo y usuario admin
+     - Crea plantas, departamentos y puestos automáticos
+     - Activa suscripción automáticamente
+
+5. **`setup_database.py`** (nuevo)
+   - **Función**: Script automático para configurar la base de datos
+   - **Uso**: `python setup_database.py`
+   - **Acciones**:
+     - Ejecuta migraciones
+     - Carga datos iniciales
+     - Verifica estado del sistema
+
+6. **`verificar_sistema.py`** (nuevo)
+   - **Función**: Verifica que todos los datos esenciales estén cargados
+   - **Uso**: `python verificar_sistema.py`
+   - **Acciones**:
+     - Cuenta registros en tablas clave
+     - Informa si falta algún dato crítico
+
 ## 🔄 ACTUALIZACIONES RECIENTES
 
 ### 1️⃣ Mejora de UX en SuperAdminDashboard
@@ -438,3 +463,316 @@ from .serializers import (
 **Última actualización**: Diciembre 2024
 **Desarrollador**: Sistema de gestión automatizado
 **Próxima revisión**: Tras implementar módulo de evaluaciones
+
+---
+
+# 📝 BITÁCORA DE SOLUCIÓN - BASE DE DATOS AXYOMA
+
+> **Para otro Copilot**: Este es un registro de todos los problemas que encontramos con la base de datos y sus soluciones. El usuario no es muy técnico, así que explica TODO paso a paso como si fuera para alguien que nunca ha usado Django.
+
+## 🚀 CÓMO INICIAR EL SISTEMA CORRECTAMENTE
+
+### ⚠️ **PROBLEMA PRINCIPAL**
+La base de datos se creaba vacía después de las migraciones. Los datos de prueba no se cargaban automáticamente.
+
+### ✅ **SOLUCIÓN PASO A PASO**
+
+#### **PASO 1: Resetear todo (OBLIGATORIO)**
+```bash
+cd Backend
+reset.bat
+```
+**¿Qué hace?** Borra TODA la base de datos y archivos de migración para empezar limpio.
+
+#### **PASO 2: Configurar la base de datos**
+```bash
+setup.bat
+```
+**¿Qué hace?** Crea las tablas vacías en PostgreSQL pero SIN datos.
+
+#### **PASO 3: Cargar datos iniciales (NUEVO - MUY IMPORTANTE)**
+```bash
+python manage.py load_initial_data
+```
+**¿Qué hace?** Este comando personalizado que creamos carga:
+- ✅ Usuario SuperAdmin (superadmin / 1234)
+- ✅ Planes de suscripción (Básico, Profesional, Enterprise)
+- ✅ Empresa de ejemplo con estructura completa
+- ✅ Usuario admin de empresa (admin_empresa / 1234)
+- ✅ Plantas, departamentos, puestos automáticos
+- ✅ Suscripción activa automática
+
+#### **PASO 4: Iniciar el servidor**
+```bash
+start.bat
+```
+**¿Qué hace?** Inicia Django en http://localhost:8000
+
+---
+
+## 🧠 **¿POR QUÉ NECESITAMOS ESTO?**
+
+### **Problema Original:**
+1. 🔴 `reset.bat` → Base limpia
+2. 🔴 `setup.bat` → Tablas vacías
+3. 🔴 `start.bat` → Sistema funcionando PERO sin datos
+4. 😭 **Usuario ve pantallas vacías y no puede probar nada**
+
+### **Solución Nueva:**
+1. ✅ `reset.bat` → Base limpia
+2. ✅ `setup.bat` → Tablas vacías
+3. 🆕 `python manage.py load_initial_data` → **DATOS DE PRUEBA**
+4. ✅ `start.bat` → Sistema funcionando CON datos
+5. 🎉 **Usuario puede probar todo inmediatamente**
+
+---
+
+## 📋 **DATOS QUE SE CARGAN AUTOMÁTICAMENTE**
+
+### **👑 SuperAdmin**
+- **Usuario:** `superadmin`
+- **Contraseña:** `1234`
+- **Acceso:** Panel completo de administración
+
+### **🏢 Empresa Demo**
+- **Nombre:** "Empresa Demo S.A. de C.V."
+- **RFC:** "EDE123456789"
+- **Admin:** `admin_empresa` / `1234`
+
+### **💳 Planes Disponibles**
+1. **Básico** - $499 MXN (30 días)
+2. **Profesional** - $999 MXN (30 días)  
+3. **Enterprise** - $1999 MXN (30 días)
+
+### **🏭 Estructura Organizacional**
+- **1 Planta Principal** creada automáticamente
+- **7 Departamentos:** Administración, RRHH, Finanzas, Producción, etc.
+- **16 Puestos básicos** distribuidos en los departamentos
+- **Suscripción activa** al plan Básico
+
+---
+
+## 🔧 **COMANDOS ALTERNATIVOS**
+
+### **Si quieres crear más datos:**
+```bash
+python manage.py createsuperuser
+python manage.py shell
+```
+
+### **Si algo falla:**
+```bash
+python setup_database.py
+```
+**¿Qué hace?** Ejecuta todo el proceso automáticamente (migraciones + datos + fixtures).
+
+### **Para verificar que todo está bien:**
+```bash
+python verificar_sistema.py
+```
+**¿Qué hace?** Cuenta todos los registros y te dice si la base está lista.
+
+---
+
+## 🚨 **ERRORES COMUNES Y SOLUCIONES**
+
+### **Error: "cursor does not exist"**
+```bash
+# Esto pasaba al hacer dumpdata
+python manage.py dumpdata > archivo.json  # ❌ Fallaba
+
+# Solución: Usar nuestro comando personalizado
+python manage.py load_initial_data  # ✅ Funciona
+```
+
+### **Error: "No route to host" / "Connection refused"**
+```bash
+# Significa que Django no está corriendo
+python manage.py runserver  # Iniciar Django
+
+# O usar:
+start.bat
+```
+
+### **Error: "Token inválido"**
+- Borrar localStorage en el navegador
+- Hacer login nuevamente
+- El token se guarda automáticamente
+
+---
+
+## 📁 **ARCHIVOS IMPORTANTES CREADOS**
+
+### **Backend/apps/management/commands/load_initial_data.py**
+- Comando personalizado para cargar datos
+- Crea usuarios, empresas, planes automáticamente
+- Es SEGURO ejecutarlo múltiples veces
+
+### **Backend/setup_database.py**
+- Script que hace todo automáticamente
+- Migraciones + datos + verificación
+
+### **Backend/verificar_sistema.py**
+- Verifica que todos los datos estén cargados
+- Cuenta registros en cada tabla
+
+---
+
+## 🎯 **PARA OTRO DESARROLLADOR**
+
+Si alguien más quiere usar este proyecto:
+
+1. **Clonar el repo**
+2. **Instalar dependencias:** `pip install -r requirements.txt`
+3. **Configurar PostgreSQL** (usuario: postgres, contraseña: 1234)
+4. **Ejecutar secuencia:**
+   ```bash
+   reset.bat
+   setup.bat
+   python manage.py load_initial_data
+   start.bat
+   ```
+5. **Probar login:**
+   - SuperAdmin: `superadmin` / `1234`
+   - Admin Empresa: `admin_empresa` / `1234`
+
+---
+
+## ⚠️ **NOTAS IMPORTANTES**
+
+- **PostgreSQL debe estar corriendo** antes de ejecutar cualquier comando
+- **El puerto 8000 debe estar libre** para Django
+- **Los datos se crean solo UNA VEZ** - si ejecutas `load_initial_data` dos veces, no duplica nada
+- **Todos los passwords de prueba son: `1234`**
+- **La empresa demo ya tiene suscripción activa** - no necesitas pagar nada para probar
+
+---
+
+## 🔄 **PROCESO COMPLETO DE RESET**
+
+Si algo se rompe y quieres empezar de cero:
+
+```bash
+# 1. Parar Django (Ctrl+C si está corriendo)
+
+# 2. Reset completo
+reset.bat
+
+# 3. Configurar base
+setup.bat
+
+# 4. Cargar datos
+python manage.py load_initial_data
+
+# 5. Verificar (opcional)
+python verificar_sistema.py
+
+# 6. Iniciar
+start.bat
+```
+
+**Tiempo total:** ~2-3 minutos
+
+---
+
+## 🎉 **RESULTADO FINAL**
+
+Después de seguir estos pasos tendrás:
+- ✅ Sistema funcionando al 100%
+- ✅ Usuarios de prueba listos
+- ✅ Empresa con estructura completa
+- ✅ Suscripción activa
+- ✅ Datos para probar evaluaciones
+- ✅ Todo listo para demostrar el sistema
+
+**¡Ya no más pantallas vacías!** 🚀
+
+---
+
+# 📋 HISTORIA DE PROBLEMAS Y SOLUCIONES (CONTINUACIÓN)
+
+## ⚠️ **PROBLEMA FECHA:** Token duplicado en login
+### **Descripción del error:**
+El token se estaba generando dos veces en el proceso de login, causando conflictos en las requests subsequentes.
+
+### **Archivos afectados:**
+- `backend/apps/views.py` - AuthViewSet
+- `frontend/src/services/authService.ts`
+
+### **Solución aplicada:**
+1. **Simplificar generación de token en backend:**
+   ```python
+   # Obtener o crear token para el usuario
+   token, created = Token.objects.get_or_create(user=user)
+   ```
+
+2. **Mejorar manejo de token en frontend:**
+   ```typescript
+   // Guardar el token en localStorage para futuras requests
+   if (response.data.token) {
+       localStorage.setItem('authToken', response.data.token);
+   }
+   ```
+
+### **Estado:** ✅ **RESUELTO**
+
+---
+
+## ⚠️ **PROBLEMA FECHA:** Base de datos vacía después de migraciones
+### **Descripción del error:**
+Después de ejecutar `reset.bat` y `setup.bat`, las tablas se creaban correctamente pero no tenían datos de prueba, dejando al usuario con pantallas vacías.
+
+### **Archivos afectados:**
+- Nuevo: `backend/apps/management/commands/load_initial_data.py`
+- Nuevo: `backend/setup_database.py`
+
+### **Solución aplicada:**
+1. **Comando personalizado de Django** para cargar datos iniciales
+2. **Script automático** que ejecuta migraciones + datos + verificación
+3. **Datos predeterminados:** SuperAdmin, empresa demo, planes, estructura organizacional
+
+### **Estado:** ✅ **RESUELTO**
+
+---
+
+## ⚠️ **PROBLEMA FECHA:** Errores de importación en serializers
+### **Descripción del error:**
+```
+ImportError: cannot import name 'SubscriptionViewSet' from 'apps.models'
+```
+
+### **Archivos afectados:**
+- `backend/apps/serializers.py`
+
+### **Solución aplicada:**
+```python
+# Cambio: De importar ViewSet desde models (incorrecto)
+from .models import SubscriptionViewSet  # ❌
+
+# A importar modelo correcto
+from apps.subscriptions.models import PlanSuscripcion  # ✅
+```
+
+### **Estado:** ✅ **RESUELTO**
+
+---
+
+## ⚠️ **PROBLEMA FECHA:** CORS y configuración de API
+### **Descripción del error:**
+Problemas de conexión entre frontend React y backend Django, especialmente en desarrollo.
+
+### **Archivos afectados:**
+- `frontend/src/api.ts`
+- `backend/config/settings/local.py`
+
+### **Solución aplicada:**
+1. **Configuración correcta de CORS**
+2. **Interceptores de Axios** para manejo automático de tokens
+3. **URL base unificada** para evitar duplicación de rutas
+
+### **Estado:** ✅ **RESUELTO**
+
+---
+
+## ⚠️ **PROBLEMA FECHA:** Error 404 en evaluaciones
+### **Descripción del error:**

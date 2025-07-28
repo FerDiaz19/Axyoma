@@ -10,7 +10,7 @@ from django.utils.decorators import method_decorator
 from django.utils import timezone
 from datetime import timedelta
 from apps.users.models import PerfilUsuario, Empresa, Planta, AdminPlanta, Departamento, Puesto, Empleado
-from apps.subscriptions.models import SuscripcionEmpresa
+from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion
 from .serializers import (
     LoginSerializer, EmpresaRegistroSerializer,
     PlantaSerializer, PlantaCreateSerializer,
@@ -18,7 +18,6 @@ from .serializers import (
     PuestoSerializer, PuestoCreateSerializer,
     EmpleadoSerializer, EmpleadoCreateSerializer, PlanSuscripcionSerializer
 )
-from apps.subscriptions.models import PlanSuscripcion
 
 
 class SuscripcionViewSet(viewsets.ViewSet):
@@ -62,47 +61,22 @@ class SuscripcionViewSet(viewsets.ViewSet):
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])
-    def planes(self, request):  # Cambiado de listar_planes a planes para coincidir con la URL
-        """Lista todos los planes de suscripción disponibles"""
+    def planes(self, request):
+        """Listar planes disponibles"""
         try:
             from apps.subscriptions.models import PlanSuscripcion
-            planes = PlanSuscripcion.objects.all() #Anstes era filter(status=True)
-            serializer = PlanSuscripcionSerializer(planes, many=True)
-            return Response(serializer.data)
+            planes = PlanSuscripcion.objects.filter(status=True)
+            return Response([{
+                "plan_id": plan.id,
+                "nombre": plan.nombre,
+                "descripcion": plan.descripcion,
+                "duracion": plan.duracion,
+                "precio": plan.precio
+            } for plan in planes])
         except Exception as e:
-            return Response(
-                {'error': f'Error obteniendo planes: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    @action(detail=False, methods=['get'])
-    def listar(self, request):
-        """Listar todas las suscripciones para SuperAdmin"""
-        try:
-            from apps.subscriptions.models import SuscripcionEmpresa
-            
-            suscripciones = SuscripcionEmpresa.objects.select_related(
-                'empresa', 'plan_suscripcion'
-            ).values(
-                'suscripcion_id',
-                'empresa__nombre',
-                'empresa__empresa_id',
-                'plan_suscripcion__nombre',
-                'plan_suscripcion__precio',
-                'plan_suscripcion__duracion',
-                'fecha_inicio',
-                'fecha_fin',
-                'estado',
-                'status'
-            ).order_by('-fecha_inicio')
-            
-            return Response(list(suscripciones))
-            
-        except Exception as e:
-            return Response(
-                {'error': f'Error obteniendo suscripciones: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AuthViewSet(viewsets.ViewSet):
@@ -341,26 +315,20 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
                     empresa = Empresa.objects.get(administrador=user.perfil)
-                    # CAMBIO: Agregar select_related para obtener datos relacionados
+                    # Obtener empleados de todas las plantas de esta empresa
                     plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
-                    return Empleado.objects.select_related(
-                        'planta__empresa', 'departamento__planta', 'puesto__departamento'
-                    ).filter(planta__in=plantas_empresa, status=True)
+                    return Empleado.objects.filter(planta__in=plantas_empresa, status=True)
                 except Empresa.DoesNotExist:
                     return Empleado.objects.none()
             elif user.perfil.nivel_usuario == 'superadmin':
-                # CAMBIO: Agregar select_related para SuperAdmin
-                return Empleado.objects.select_related(
-                    'planta__empresa', 'departamento__planta', 'puesto__departamento'
-                ).all()
+                # Superadmin puede ver todos los empleados
+                return Empleado.objects.filter(status=True)
             elif user.perfil.nivel_usuario == 'admin-planta':
                 # Admin de planta solo ve empleados de sus plantas asignadas
                 from apps.users.models import AdminPlanta
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
                 plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
-                return Empleado.objects.select_related(
-                    'planta__empresa', 'departamento__planta', 'puesto__departamento'
-                ).filter(planta__planta_id__in=plantas_ids, status=True)
+                return Empleado.objects.filter(planta__planta_id__in=plantas_ids, status=True)
         
         return Empleado.objects.none()
     
@@ -381,7 +349,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 except Empresa.DoesNotExist:
                     plantas = Planta.objects.none()
             elif user.perfil.nivel_usuario == 'superadmin':
-                plantas = Planta.objects.all() #Anstes era filter(status=True)
+                plantas = Planta.objects.filter(status=True)
             elif user.perfil.nivel_usuario == 'admin-planta':
                 from apps.users.models import AdminPlanta
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
@@ -408,7 +376,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 except Empresa.DoesNotExist:
                     departamentos = Departamento.objects.none()
             elif user.perfil.nivel_usuario == 'superadmin':
-                departamentos = Departamento.objects.all() #Anstes era filter(status=True)
+                departamentos = Departamento.objects.filter(status=True)
             elif user.perfil.nivel_usuario == 'admin-planta':
                 from apps.users.models import AdminPlanta
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
@@ -436,7 +404,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 except Empresa.DoesNotExist:
                     puestos = Puesto.objects.none()
             elif user.perfil.nivel_usuario == 'superadmin':
-                puestos = Puesto.objects.all() #Anstes era filter(status=True)
+                puestos = Puesto.objects.filter(status=True)
             elif user.perfil.nivel_usuario == 'admin-planta':
                 from apps.users.models import AdminPlanta
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
@@ -461,7 +429,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 if user.perfil.nivel_usuario == 'admin-empresa':
                     try:
                         empresa = Empresa.objects.get(administrador=user.perfil)
-                        planta = Planta.objects.get(planta_id=planta_id, empresa=empresa, status=True)
+                        planta = Planta.objects.get(planta_id=planta_id, empresa=empresa)
                         departamentos = Departamento.objects.filter(planta=planta, status=True)
                     except (Empresa.DoesNotExist, Planta.DoesNotExist):
                         return Response([])
@@ -494,8 +462,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 if user.perfil.nivel_usuario == 'admin-empresa':
                     try:
                         empresa = Empresa.objects.get(administrador=user.perfil)
-                        plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
-                        departamento = Departamento.objects.get(departamento_id=departamento_id, planta__in=plantas_empresa, status=True)
+                        departamento = Departamento.objects.get(departamento_id=departamento_id, planta__empresa=empresa)
                         puestos = Puesto.objects.filter(departamento=departamento, status=True)
                     except (Empresa.DoesNotExist, Departamento.DoesNotExist):
                         return Response([])
@@ -506,8 +473,11 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                     admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
                     plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
                     try:
-                        departamento = Departamento.objects.get(departamento_id=departamento_id, planta__planta_id__in=plantas_ids, status=True)
-                        puestos = Puesto.objects.filter(departamento=departamento, status=True)
+                        departamento = Departamento.objects.get(departamento_id=departamento_id)
+                        if departamento.planta.planta_id in plantas_ids:
+                            puestos = Puesto.objects.filter(departamento=departamento, status=True)
+                        else:
+                            return Response([])
                     except Departamento.DoesNotExist:
                         return Response([])
                 else:
@@ -541,7 +511,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
                     return Planta.objects.none()
             elif user.perfil.nivel_usuario == 'superadmin':
                 # Superadmin puede ver todas las plantas
-                return Planta.objects.all() #Anstes era filter(status=True)
+                return Planta.objects.filter(status=True)
             elif user.perfil.nivel_usuario == 'admin-planta':
                 # Admin de planta solo ve sus plantas asignadas
                 from apps.users.models import AdminPlanta
@@ -554,20 +524,34 @@ class PlantaViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Asignar automáticamente la empresa del admin logueado
         user = self.request.user
+        
+        # AGREGAR MÁS LOGGING PARA DEPURAR
+        print(f"🔍 DEBUG: Usuario autenticado: {user}")
+        print(f"🔍 DEBUG: Usuario tiene perfil: {hasattr(user, 'perfil')}")
+        
+        if hasattr(user, 'perfil'):
+            print(f"🔍 DEBUG: Nivel usuario: {user.perfil.nivel_usuario}")
+    
         if not hasattr(user, 'perfil'):
+            print("❌ ERROR: Usuario sin perfil")
             raise ValidationError("Usuario sin perfil")
-            
+        
         if user.perfil.nivel_usuario == 'admin-empresa':
             try:
                 empresa = Empresa.objects.get(administrador=user.perfil)
+                print(f"🔍 DEBUG: Empresa encontrada: {empresa.nombre} (ID: {empresa.empresa_id})")
                 
                 # Verificar que no se excedan las 5 plantas por empresa
                 plantas_existentes = Planta.objects.filter(empresa=empresa, status=True).count()
+                print(f"🔍 DEBUG: Plantas existentes: {plantas_existentes}")
+                
                 if plantas_existentes >= 5:
+                    print("❌ ERROR: Límite de plantas excedido")
                     raise ValidationError("No se pueden crear más de 5 plantas por empresa")
                 
                 # Crear la planta
                 planta = serializer.save(empresa=empresa)
+                print(f"✅ DEBUG: Planta creada exitosamente: {planta.nombre}")
                 
                 # Crear usuario automático para la planta
                 self._crear_usuario_planta(planta)
@@ -669,18 +653,15 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
                 try:
                     empresa = Empresa.objects.get(administrador=user.perfil)
                     plantas = Planta.objects.filter(empresa=empresa, status=True)
-                    # CAMBIO: Agregar select_related para traer datos relacionados
-                    return Departamento.objects.select_related('planta__empresa').filter(planta__in=plantas, status=True)
+                    return Departamento.objects.filter(planta__in=plantas, status=True)
                 except Empresa.DoesNotExist:
                     return Departamento.objects.none()
             elif user.perfil.nivel_usuario == 'superadmin':
-                # CAMBIO: Agregar select_related para SuperAdmin
-                return Departamento.objects.select_related('planta__empresa').all()
+                return Departamento.objects.filter(status=True)
             elif user.perfil.nivel_usuario == 'admin-planta':
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
                 plantas = [ap.planta for ap in admin_plantas]
-                # CAMBIO: Agregar select_related para admin planta
-                return Departamento.objects.select_related('planta__empresa').filter(planta__in=plantas, status=True)
+                return Departamento.objects.filter(planta__in=plantas, status=True)
         return Departamento.objects.none()
     
     def perform_create(self, serializer):
@@ -742,19 +723,16 @@ class PuestoViewSet(viewsets.ModelViewSet):
                     empresa = Empresa.objects.get(administrador=user.perfil)
                     plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
                     departamentos_empresa = Departamento.objects.filter(planta__in=plantas_empresa, status=True)
-                    # CAMBIO: Agregar select_related para traer datos relacionados completos
-                    return Puesto.objects.select_related('departamento__planta__empresa').filter(departamento__in=departamentos_empresa, status=True)
+                    return Puesto.objects.filter(departamento__in=departamentos_empresa, status=True)
                 except Empresa.DoesNotExist:
                     return Puesto.objects.none()
             elif user.perfil.nivel_usuario == 'superadmin':
-                # CAMBIO: Agregar select_related para SuperAdmin
-                return Puesto.objects.select_related('departamento__planta__empresa').all()
+                return Puesto.objects.filter(status=True)
             elif user.perfil.nivel_usuario == 'admin-planta':
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
                 plantas = [ap.planta for ap in admin_plantas]
                 departamentos = Departamento.objects.filter(planta__in=plantas, status=True)
-                # CAMBIO: Agregar select_related para admin planta
-                return Puesto.objects.select_related('departamento__planta__empresa').filter(departamento__in=departamentos, status=True)
+                return Puesto.objects.filter(departamento__in=departamentos, status=True)
         return Puesto.objects.none()
     
     def perform_create(self, serializer):
@@ -836,14 +814,11 @@ class EstructuraViewSet(viewsets.ViewSet):
                     
                     for depto in departamentos:
                         puestos = Puesto.objects.filter(departamento=depto)
-                        empleados = Empleado.objects.filter(departamento=depto)
-                        
                         depto_data = {
                             'id': depto.departamento_id,
                             'nombre': depto.nombre,
                             'descripcion': depto.descripcion,
-                            'puestos': [{'id': p.puesto_id, 'nombre': p.nombre, 'descripcion': p.descripcion} for p in puestos],
-                            'empleados_count': empleados.count()
+                            'puestos': [{'id': p.puesto_id, 'nombre': p.nombre} for p in puestos]
                         }
                         planta_data['departamentos'].append(depto_data)
                     
@@ -872,17 +847,15 @@ class EstructuraViewSet(viewsets.ViewSet):
                 for planta in plantas:
                     admin_planta = AdminPlanta.objects.filter(planta=planta).first()
                     if admin_planta:
-                        usuario = admin_planta.usuario.user
                         usuarios_planta.append({
                             'planta_id': planta.planta_id,
                             'planta_nombre': planta.nombre,
-                            'usuario_id': usuario.id,
-                            'username': usuario.username,
-                            'email': usuario.email,
-                            'nombre_completo': f"{usuario.first_name} {usuario.last_name}",
-                            'fecha_creacion': admin_planta.fecha_asignacion,
-                            'status': admin_planta.status,
-                            'password_temporal': getattr(admin_planta, 'password_temporal', f'temp{planta.planta_id}Pass123')  # Temporal
+                            'usuario_id': admin_planta.usuario.user.id,
+                            'username': admin_planta.usuario.user.username,
+                            'email': admin_planta.usuario.user.email,
+                            'nombre_completo': f"{admin_planta.usuario.nombre} {admin_planta.usuario.apellido_paterno}",
+                            'fecha_creacion': admin_planta.usuario.user.date_joined.isoformat(),
+                            'status': admin_planta.usuario.user.is_active
                         })
                     else:
                         usuarios_planta.append({
@@ -891,10 +864,9 @@ class EstructuraViewSet(viewsets.ViewSet):
                             'usuario_id': None,
                             'username': None,
                             'email': None,
-                            'nombre_completo': None,
+                            'nombre_completo': 'Sin usuario asignado',
                             'fecha_creacion': None,
-                            'status': False,
-                            'password_temporal': None
+                            'status': False
                         })
                 
                 return Response(usuarios_planta, status=status.HTTP_200_OK)
@@ -1314,7 +1286,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
         empresa_id = request.query_params.get('empresa_id', '')
         status_filter = request.query_params.get('status', '')
         
-        plantas = Planta.objects.select_related('empresa').all()
+        plantas = Planta.objects.all()
         
         if buscar:
             plantas = plantas.filter(nombre__icontains=buscar)
@@ -1351,13 +1323,13 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'planta_id': planta.planta_id,
                 'nombre': planta.nombre,
                 'direccion': planta.direccion,
+                'telefono': None,  # El modelo Planta no tiene campo telefono
                 'status': planta.status,
                 'empresa': {
                     'id': planta.empresa.empresa_id,
                     'nombre': planta.empresa.nombre,
                     'status': planta.empresa.status
                 },
-                'empresa_nombre': planta.empresa.nombre,  # Campo adicional para compatibilidad
                 'administrador': admin_info,
                 'departamentos_count': departamentos_count,
                 'empleados_count': empleados_count,
@@ -1379,7 +1351,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
         empresa_id = request.query_params.get('empresa_id', '')
         status_filter = request.query_params.get('status', '')
         
-        departamentos = Departamento.objects.select_related('planta__empresa').all()
+        departamentos = Departamento.objects.all()
         
         if buscar:
             departamentos = departamentos.filter(nombre__icontains=buscar)
@@ -1410,15 +1382,11 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'nombre': depto.planta.nombre,
                     'status': depto.planta.status
                 },
-                'planta_id': depto.planta.planta_id,  # Campo adicional
-                'planta_nombre': depto.planta.nombre,  # Campo adicional
                 'empresa': {
                     'id': depto.planta.empresa.empresa_id,
                     'nombre': depto.planta.empresa.nombre,
                     'status': depto.planta.empresa.status
                 },
-                'empresa_id': depto.planta.empresa.empresa_id,  # Campo adicional
-                'empresa_nombre': depto.planta.empresa.nombre,  # Campo adicional
                 'puestos_count': puestos_count,
                 'empleados_count': empleados_count,
             })
@@ -1440,7 +1408,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
         empresa_id = request.query_params.get('empresa_id', '')
         status_filter = request.query_params.get('status', '')
         
-        puestos = Puesto.objects.select_related('departamento__planta__empresa').all()
+        puestos = Puesto.objects.all()
         
         if buscar:
             puestos = puestos.filter(nombre__icontains=buscar)
@@ -1473,22 +1441,16 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'nombre': puesto.departamento.nombre,
                     'status': puesto.departamento.status
                 },
-                'departamento_id': puesto.departamento.departamento_id,  # Campo adicional
-                'departamento_nombre': puesto.departamento.nombre,  # Campo adicional
                 'planta': {
                     'id': puesto.departamento.planta.planta_id,
                     'nombre': puesto.departamento.planta.nombre,
                     'status': puesto.departamento.planta.status
                 },
-                'planta_id': puesto.departamento.planta.planta_id,  # Campo adicional
-                'planta_nombre': puesto.departamento.planta.nombre,  # Campo adicional
                 'empresa': {
                     'id': puesto.departamento.planta.empresa.empresa_id,
                     'nombre': puesto.departamento.planta.empresa.nombre,
                     'status': puesto.departamento.planta.empresa.status
                 },
-                'empresa_id': puesto.departamento.planta.empresa.empresa_id,  # Campo adicional
-                'empresa_nombre': puesto.departamento.planta.empresa.nombre,  # Campo adicional
                 'empleados_count': empleados_count,
             })
         
@@ -1510,9 +1472,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
         puesto_id = request.query_params.get('puesto_id', '')
         status_filter = request.query_params.get('status', '')
         
-        empleados = Empleado.objects.select_related(
-            'planta__empresa', 'departamento__planta__empresa', 'puesto__departamento__planta__empresa'
-        ).all()
+        empleados = Empleado.objects.all()
         
         if buscar:
             empleados = empleados.filter(
@@ -1548,36 +1508,31 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'apellido_paterno': empleado.apellido_paterno,
                 'apellido_materno': empleado.apellido_materno or '',
                 'nombre_completo': f"{empleado.nombre} {empleado.apellido_paterno} {empleado.apellido_materno or ''}".strip(),
-                'genero': empleado.genero,
+                'correo': None,  # Campo no disponible en el modelo actual
+                'telefono': None,  # Campo no disponible en el modelo actual
+                'fecha_ingreso': None,  # Campo no disponible en el modelo actual
+                'salario': None,  # Campo no disponible en el modelo actual
                 'status': empleado.status,
                 'empresa': {
                     'id': empleado.planta.empresa.empresa_id,
                     'nombre': empleado.planta.empresa.nombre,
                     'status': empleado.planta.empresa.status
                 },
-                'empresa_id': empleado.planta.empresa.empresa_id,  # Campo adicional
-                'empresa_nombre': empleado.planta.empresa.nombre,  # Campo adicional
                 'planta': {
                     'id': empleado.planta.planta_id,
                     'nombre': empleado.planta.nombre,
                     'status': empleado.planta.status
                 },
-                'planta_id': empleado.planta.planta_id,  # Campo adicional
-                'planta_nombre': empleado.planta.nombre,  # Campo adicional
                 'departamento': {
                     'id': empleado.departamento.departamento_id,
                     'nombre': empleado.departamento.nombre,
                     'status': empleado.departamento.status
                 },
-                'departamento_id': empleado.departamento.departamento_id,  # Campo adicional
-                'departamento_nombre': empleado.departamento.nombre,  # Campo adicional
                 'puesto': {
                     'id': empleado.puesto.puesto_id,
                     'nombre': empleado.puesto.nombre,
                     'status': empleado.puesto.status
-                },
-                'puesto_id': empleado.puesto.puesto_id,  # Campo adicional
-                'puesto_nombre': empleado.puesto.nombre,  # Campo adicional
+                }
             })
         
         return Response({
@@ -1585,10 +1540,65 @@ class SuperAdminViewSet(viewsets.ViewSet):
             'total': len(empleados_data)
         })
 
-    # ======== ENDPOINTS PARA EDITAR ENTIDADES ========
-    @action(detail=False, methods=['put'])
-    def editar_planta(self, request):
-        """Editar datos de una planta"""
+    # ======== ENDPOINTS PARA PLANTAS ========
+    @action(detail=False, methods=['post'])
+    def suspender_planta(self, request):
+        """Suspender/activar una planta y todas sus entidades relacionadas"""
+        self._verify_superadmin(request.user)
+        
+        planta_id = request.data.get('planta_id')
+        accion = request.data.get('accion')  # 'suspender' o 'activar'
+        
+        if not planta_id or not accion:
+            return Response({'error': 'Faltan parámetros planta_id o accion'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            planta = Planta.objects.get(planta_id=planta_id)
+            nuevo_status = accion == 'activar'
+            
+            # Cambiar status de la planta
+            planta.status = nuevo_status
+            planta.save()
+            
+            # Cambiar status de todos los departamentos de la planta
+            departamentos = Departamento.objects.filter(planta=planta)
+            departamentos.update(status=nuevo_status)
+            
+            # Cambiar status de todos los puestos de los departamentos
+            puestos = Puesto.objects.filter(departamento__planta=planta)
+            puestos.update(status=nuevo_status)
+            
+            # Cambiar status de todos los empleados de la planta
+            empleados = Empleado.objects.filter(planta=planta)
+            empleados.update(status=nuevo_status)
+            
+            # Activar/desactivar cuenta del administrador de planta
+            try:
+                admin_planta = AdminPlanta.objects.get(planta=planta)
+                admin_planta.usuario.user.is_active = nuevo_status
+                admin_planta.usuario.user.save()
+                admin_planta.status = nuevo_status
+                admin_planta.save()
+            except AdminPlanta.DoesNotExist:
+                pass
+            
+            return Response({
+                'message': f'Planta {accion} exitosamente',
+                'planta_id': planta_id,
+                'nuevo_status': nuevo_status
+            })
+            
+        except Planta.DoesNotExist:
+            return Response({'error': 'Planta no encontrada'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['delete'])
+    def eliminar_planta(self, request):
+        """Eliminar completamente una planta y todas sus entidades relacionadas"""
         self._verify_superadmin(request.user)
         
         planta_id = request.data.get('planta_id')
@@ -1599,32 +1609,102 @@ class SuperAdminViewSet(viewsets.ViewSet):
         
         try:
             planta = Planta.objects.get(planta_id=planta_id)
+            nombre_planta = planta.nombre
             
-            # Actualizar campos permitidos
-            if 'nombre' in request.data:
-                planta.nombre = request.data['nombre']
-            if 'direccion' in request.data:
-                planta.direccion = request.data.get('direccion', '')
-            if 'status' in request.data:
-                planta.status = request.data['status']
+            # Eliminar en orden inverso para respetar las foreign keys
             
-            planta.save()
+            # 1. Eliminar empleados
+            empleados = Empleado.objects.filter(planta=planta)
+            empleados_count = empleados.count()
+            empleados.delete()
+            
+            # 2. Eliminar puestos
+            puestos = Puesto.objects.filter(departamento__planta=planta)
+            puestos_count = puestos.count()
+            puestos.delete()
+            
+            # 3. Eliminar departamentos
+            departamentos = Departamento.objects.filter(planta=planta)
+            departamentos_count = departamentos.count()
+            departamentos.delete()
+            
+            # 4. Eliminar administrador de planta y su usuario
+            admin_planta = None
+            try:
+                admin_planta = AdminPlanta.objects.get(planta=planta)
+                if admin_planta.usuario.user:
+                    admin_planta.usuario.user.delete()
+                admin_planta.usuario.delete()
+                admin_planta.delete()
+            except AdminPlanta.DoesNotExist:
+                pass
+            
+            # 5. Eliminar planta
+            planta.delete()
             
             return Response({
-                'message': f'Planta "{planta.nombre}" actualizada exitosamente',
-                'planta_id': planta_id
+                'message': f'Planta "{nombre_planta}" eliminada exitosamente',
+                'entidades_eliminadas': {
+                    'planta': 1,
+                    'departamentos': departamentos_count,
+                    'puestos': puestos_count,
+                    'empleados': empleados_count,
+                    'admin_planta': 1 if admin_planta else 0
+                }
             })
             
         except Planta.DoesNotExist:
             return Response({'error': 'Planta no encontrada'}, 
                           status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error actualizando planta: {str(e)}'}, 
+            return Response({'error': f'Error eliminando planta: {str(e)}'}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['put'])
-    def editar_departamento(self, request):
-        """Editar datos de un departamento"""
+    # ======== ENDPOINTS PARA DEPARTAMENTOS ========
+    @action(detail=False, methods=['post'])
+    def suspender_departamento(self, request):
+        """Suspender/activar un departamento y todas sus entidades relacionadas"""
+        self._verify_superadmin(request.user)
+        
+        departamento_id = request.data.get('departamento_id')
+        accion = request.data.get('accion')  # 'suspender' o 'activar'
+        
+        if not departamento_id or not accion:
+            return Response({'error': 'Faltan parámetros departamento_id o accion'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            departamento = Departamento.objects.get(departamento_id=departamento_id)
+            nuevo_status = accion == 'activar'
+            
+            # Cambiar status del departamento
+            departamento.status = nuevo_status
+            departamento.save()
+            
+            # Cambiar status de todos los puestos del departamento
+            puestos = Puesto.objects.filter(departamento=departamento)
+            puestos.update(status=nuevo_status)
+            
+            # Cambiar status de todos los empleados del departamento
+            empleados = Empleado.objects.filter(departamento=departamento)
+            empleados.update(status=nuevo_status)
+            
+            return Response({
+                'message': f'Departamento {accion} exitosamente',
+                'departamento_id': departamento_id,
+                'nuevo_status': nuevo_status
+            })
+            
+        except Departamento.DoesNotExist:
+            return Response({'error': 'Departamento no encontrado'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['delete'])
+    def eliminar_departamento(self, request):
+        """Eliminar completamente un departamento y todas sus entidades relacionadas"""
         self._verify_superadmin(request.user)
         
         departamento_id = request.data.get('departamento_id')
@@ -1635,32 +1715,80 @@ class SuperAdminViewSet(viewsets.ViewSet):
         
         try:
             departamento = Departamento.objects.get(departamento_id=departamento_id)
+            nombre_departamento = departamento.nombre
             
-            # Actualizar campos permitidos
-            if 'nombre' in request.data:
-                departamento.nombre = request.data['nombre']
-            if 'descripcion' in request.data:
-                departamento.descripcion = request.data.get('descripcion', '')
-            if 'status' in request.data:
-                departamento.status = request.data['status']
+            # Eliminar en orden inverso para respetar las foreign keys
             
-            departamento.save()
+            # 1. Eliminar empleados
+            empleados = Empleado.objects.filter(departamento=departamento)
+            empleados_count = empleados.count()
+            empleados.delete()
+            
+            # 2. Eliminar puestos
+            puestos = Puesto.objects.filter(departamento=departamento)
+            puestos_count = puestos.count()
+            puestos.delete()
+            
+            # 3. Eliminar departamento
+            departamento.delete()
             
             return Response({
-                'message': f'Departamento "{departamento.nombre}" actualizado exitosamente',
-                'departamento_id': departamento_id
+                'message': f'Departamento "{nombre_departamento}" eliminado exitosamente',
+                'entidades_eliminadas': {
+                    'departamento': 1,
+                    'puestos': puestos_count,
+                    'empleados': empleados_count
+                }
             })
             
         except Departamento.DoesNotExist:
             return Response({'error': 'Departamento no encontrado'}, 
                           status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error actualizando departamento: {str(e)}'}, 
+            return Response({'error': f'Error eliminando departamento: {str(e)}'}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['put'])
-    def editar_puesto(self, request):
-        """Editar datos de un puesto"""
+    # ======== ENDPOINTS PARA PUESTOS ========
+    @action(detail=False, methods=['post'])
+    def suspender_puesto(self, request):
+        """Suspender/activar un puesto y todos sus empleados"""
+        self._verify_superadmin(request.user)
+        
+        puesto_id = request.data.get('puesto_id')
+        accion = request.data.get('accion')  # 'suspender' o 'activar'
+        
+        if not puesto_id or not accion:
+            return Response({'error': 'Faltan parámetros puesto_id o accion'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            puesto = Puesto.objects.get(puesto_id=puesto_id)
+            nuevo_status = accion == 'activar'
+            
+            # Cambiar status del puesto
+            puesto.status = nuevo_status
+            puesto.save()
+            
+            # Cambiar status de todos los empleados del puesto
+            empleados = Empleado.objects.filter(puesto=puesto)
+            empleados.update(status=nuevo_status)
+            
+            return Response({
+                'message': f'Puesto {accion} exitosamente',
+                'puesto_id': puesto_id,
+                'nuevo_status': nuevo_status
+            })
+            
+        except Puesto.DoesNotExist:
+            return Response({'error': 'Puesto no encontrado'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['delete'])
+    def eliminar_puesto(self, request):
+        """Eliminar completamente un puesto y todos sus empleados"""
         self._verify_superadmin(request.user)
         
         puesto_id = request.data.get('puesto_id')
@@ -1671,32 +1799,68 @@ class SuperAdminViewSet(viewsets.ViewSet):
         
         try:
             puesto = Puesto.objects.get(puesto_id=puesto_id)
+            nombre_puesto = puesto.nombre
             
-            # Actualizar campos si se proporcionan
-            if 'nombre' in request.data:
-                puesto.nombre = request.data['nombre']
-            if 'descripcion' in request.data:
-                puesto.descripcion = request.data.get('descripcion', '')
-            if 'status' in request.data:
-                puesto.status = request.data['status']
+            # 1. Eliminar empleados
+            empleados = Empleado.objects.filter(puesto=puesto)
+            empleados_count = empleados.count()
+            empleados.delete()
             
-            puesto.save()
+            # 2. Eliminar puesto
+            puesto.delete()
             
             return Response({
-                'message': f'Puesto "{puesto.nombre}" actualizado exitosamente',
-                'puesto_id': puesto_id
+                'message': f'Puesto "{nombre_puesto}" eliminado exitosamente',
+                'entidades_eliminadas': {
+                    'puesto': 1,
+                    'empleados': empleados_count
+                }
             })
             
         except Puesto.DoesNotExist:
             return Response({'error': 'Puesto no encontrado'}, 
                           status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error actualizando puesto: {str(e)}'}, 
+            return Response({'error': f'Error eliminando puesto: {str(e)}'}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-    @action(detail=False, methods=['put'])
-    def editar_empleado(self, request):
-        """Editar datos de un empleado"""
+    # ======== ENDPOINTS PARA EMPLEADOS ========
+    @action(detail=False, methods=['post'])
+    def suspender_empleado(self, request):
+        """Suspender/activar un empleado específico"""
+        self._verify_superadmin(request.user)
+        
+        empleado_id = request.data.get('empleado_id')
+        accion = request.data.get('accion')  # 'suspender' o 'activar'
+        
+        if not empleado_id or not accion:
+            return Response({'error': 'Faltan parámetros empleado_id o accion'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            empleado = Empleado.objects.get(empleado_id=empleado_id)
+            nuevo_status = accion == 'activar'
+            
+            # Cambiar status del empleado
+            empleado.status = nuevo_status
+            empleado.save()
+            
+            return Response({
+                'message': f'Empleado {accion} exitosamente',
+                'empleado_id': empleado_id,
+                'nuevo_status': nuevo_status
+            })
+            
+        except Empleado.DoesNotExist:
+            return Response({'error': 'Empleado no encontrado'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['delete'])
+    def eliminar_empleado(self, request):
+        """Eliminar completamente un empleado del sistema"""
         self._verify_superadmin(request.user)
         
         empleado_id = request.data.get('empleado_id')
@@ -1707,23 +1871,13 @@ class SuperAdminViewSet(viewsets.ViewSet):
         
         try:
             empleado = Empleado.objects.get(empleado_id=empleado_id)
+            nombre_empleado = f"{empleado.nombre} {empleado.apellido_paterno}"
             
-            # Actualizar campos permitidos
-            if 'nombre' in request.data:
-                empleado.nombre = request.data['nombre']
-            if 'apellido_paterno' in request.data:
-                empleado.apellido_paterno = request.data['apellido_paterno']
-            if 'apellido_materno' in request.data:
-                empleado.apellido_materno = request.data.get('apellido_materno', '')
-            if 'genero' in request.data:
-                empleado.genero = request.data['genero']
-            if 'status' in request.data:
-                empleado.status = request.data['status']
-            
-            empleado.save()
+            # Eliminar empleado
+            empleado.delete()
             
             return Response({
-                'message': f'Empleado "{empleado.nombre} {empleado.apellido_paterno}" actualizado exitosamente',
+                'message': f'Empleado "{nombre_empleado}" eliminado exitosamente',
                 'empleado_id': empleado_id
             })
             
@@ -1731,7 +1885,101 @@ class SuperAdminViewSet(viewsets.ViewSet):
             return Response({'error': 'Empleado no encontrado'}, 
                           status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error actualizando empleado: {str(e)}'}, 
+            return Response({'error': f'Error eliminando empleado: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    # ======== ENDPOINTS PARA EDICIÓN ========
+    @action(detail=False, methods=['put'])
+    def editar_empresa(self, request):
+        """Editar datos de una empresa"""
+        self._verify_superadmin(request.user)
+        
+        empresa_id = request.data.get('empresa_id')
+        
+        if not empresa_id:
+            return Response({'error': 'Falta parámetro empresa_id'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            empresa = Empresa.objects.get(empresa_id=empresa_id)
+            
+            # Actualizar campos permitidos
+            if 'nombre' in request.data:
+                empresa.nombre = request.data['nombre']
+            if 'rfc' in request.data:
+                empresa.rfc = request.data['rfc']
+            if 'telefono' in request.data:
+                empresa.telefono_contacto = request.data.get('telefono', '')
+            if 'correo' in request.data:
+                empresa.email_contacto = request.data.get('correo', '')
+            if 'direccion' in request.data:
+                empresa.direccion = request.data.get('direccion', '')
+            if 'status' in request.data:
+                empresa.status = request.data['status']
+            
+            empresa.save()
+            
+            return Response({
+                'message': f'Empresa "{empresa.nombre}" actualizada exitosamente',
+                'empresa_id': empresa_id
+            })
+            
+        except Empresa.DoesNotExist:
+            return Response({'error': 'Empresa no encontrada'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error actualizando empresa: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['put'])
+    def editar_usuario(self, request):
+        """Editar datos de un usuario"""
+        self._verify_superadmin(request.user)
+        
+        user_id = request.data.get('user_id')
+        
+        if not user_id:
+            return Response({'error': 'Falta parámetro user_id'}, 
+                          status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            from django.contrib.auth.models import User
+            user = User.objects.get(id=user_id)
+            perfil = PerfilUsuario.objects.get(user=user)
+            
+            # Actualizar campos del usuario
+            if 'username' in request.data:
+                user.username = request.data['username']
+            if 'email' in request.data:
+                user.email = request.data['email']
+                perfil.correo = request.data['email']  # Actualizar también en perfil
+            if 'nombre' in request.data:
+                perfil.nombre = request.data['nombre']
+            if 'apellido_paterno' in request.data:
+                perfil.apellido_paterno = request.data['apellido_paterno']
+            if 'apellido_materno' in request.data:
+                perfil.apellido_materno = request.data.get('apellido_materno', '')
+            if 'nivel_usuario' in request.data:
+                perfil.nivel_usuario = request.data['nivel_usuario']
+            if 'is_active' in request.data:
+                user.is_active = request.data['is_active']
+            
+            user.save()
+            perfil.save()
+            
+            return Response({
+                'message': f'Usuario "{user.username}" actualizado exitosamente',
+                'user_id': user_id
+            })
+            
+        except User.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except PerfilUsuario.DoesNotExist:
+            return Response({'error': 'Perfil de usuario no encontrado'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error actualizando usuario: {str(e)}'}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'])

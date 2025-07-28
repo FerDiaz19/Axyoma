@@ -25,6 +25,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('apps.urls')),
     path('api/subscriptions/', include('apps.subscriptions.urls')),
+    path('api/evaluaciones/', include('apps.surveys.urls')),  # ← AGREGAR ESTA LÍNEA
     path("api/health-check/", health_check),
 
     # Swagger URLs

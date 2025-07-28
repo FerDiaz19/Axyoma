@@ -41,9 +41,10 @@ urlpatterns = [
     path('superadmin/listar_todos_empleados/', SuperAdminViewSet.as_view({'get': 'listar_todos_empleados'})),
     path('superadmin/estadisticas_sistema/', SuperAdminViewSet.as_view({'get': 'estadisticas_sistema'})),
     
-    # Ruta específica para planes
+    # Rutas de suscripciones - CORREGIDAS
     path('suscripciones/planes/', SuscripcionViewSet.as_view({'get': 'planes'})),
-    path('suscripciones/listar/', SuscripcionViewSet.as_view({'get': 'listar'})),
+    path('suscripciones/crear_suscripcion/', SuscripcionViewSet.as_view({'post': 'crear_suscripcion'})),
+    path('suscripciones/info_empresa/', SuscripcionViewSet.as_view({'get': 'info_empresa'})),
     
     # Incluir rutas automáticas del router
     path('', include(router.urls)),

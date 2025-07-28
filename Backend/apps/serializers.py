@@ -3,7 +3,8 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 from apps.users.models import PerfilUsuario, Empresa, Planta, Departamento, Puesto, Empleado
-from .models import PlanSuscripcion
+from apps.subscriptions.models import PlanSuscripcion  # Corregir importación
+
 # Serializers para LOGIN
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
@@ -225,76 +226,27 @@ class PlantaSerializer(serializers.ModelSerializer):
 class DepartamentoSerializer(serializers.ModelSerializer):
     planta_id = serializers.IntegerField(source='planta.planta_id', read_only=True)
     planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
-    # CAMBIO: Agregar campos de empresa
-    empresa_id = serializers.IntegerField(source='planta.empresa.empresa_id', read_only=True)
-    empresa_nombre = serializers.CharField(source='planta.empresa.nombre', read_only=True)
     
     class Meta:
         model = Departamento
-        fields = [
-            'departamento_id', 'nombre', 'descripcion', 'fecha_registro', 'status', 
-            'planta_id', 'planta_nombre',
-            # CAMBIO: Incluir campos de empresa
-            'empresa_id', 'empresa_nombre'
-        ]
+        fields = ['departamento_id', 'nombre', 'descripcion', 'fecha_registro', 'status', 'planta_id', 'planta_nombre']
         read_only_fields = ['departamento_id', 'fecha_registro']
 
 class PuestoSerializer(serializers.ModelSerializer):
     departamento_id = serializers.IntegerField(source='departamento.departamento_id', read_only=True)
     departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
-    # CAMBIO: Agregar campos de planta y empresa
-    planta_id = serializers.IntegerField(source='departamento.planta.planta_id', read_only=True)
-    planta_nombre = serializers.CharField(source='departamento.planta.nombre', read_only=True)
-    empresa_id = serializers.IntegerField(source='departamento.planta.empresa.empresa_id', read_only=True)
-    empresa_nombre = serializers.CharField(source='departamento.planta.empresa.nombre', read_only=True)
     
     class Meta:
         model = Puesto
-        fields = [
-            'puesto_id', 'nombre', 'descripcion', 'status', 
-            'departamento_id', 'departamento_nombre',
-            # CAMBIO: Incluir campos de planta y empresa
-            'planta_id', 'planta_nombre',
-            'empresa_id', 'empresa_nombre'
-        ]
+        fields = ['puesto_id', 'nombre', 'descripcion', 'status', 'departamento_id', 'departamento_nombre']
         read_only_fields = ['puesto_id']
 
 # Serializers para EMPLEADOS
 class EmpleadoSerializer(serializers.ModelSerializer):
-    # CAMBIO: Agregar campos relacionados para mostrar datos completos
-    planta_id = serializers.IntegerField(source='planta.planta_id', read_only=True)
-    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
-    empresa_id = serializers.IntegerField(source='planta.empresa.empresa_id', read_only=True)
-    empresa_nombre = serializers.CharField(source='planta.empresa.nombre', read_only=True)
-    departamento_id = serializers.IntegerField(source='departamento.departamento_id', read_only=True)
-    departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
-    puesto_id = serializers.IntegerField(source='puesto.puesto_id', read_only=True)
-    puesto_nombre = serializers.CharField(source='puesto.nombre', read_only=True)
-    nombre_completo = serializers.SerializerMethodField()
-    numero_empleado = serializers.SerializerMethodField()
-    
     class Meta:
         model = Empleado
-        fields = [
-            'empleado_id', 'nombre', 'apellido_paterno', 'apellido_materno', 
-            'genero', 'antiguedad', 'status',
-            # Campos relacionados
-            'planta_id', 'planta_nombre',
-            'empresa_id', 'empresa_nombre',
-            'departamento_id', 'departamento_nombre',
-            'puesto_id', 'puesto_nombre',
-            # Campos calculados
-            'nombre_completo', 'numero_empleado'
-        ]
-    
-    def get_nombre_completo(self, obj):
-        """Generar nombre completo del empleado"""
-        apellido_materno = f" {obj.apellido_materno}" if obj.apellido_materno else ""
-        return f"{obj.nombre} {obj.apellido_paterno}{apellido_materno}"
-    
-    def get_numero_empleado(self, obj):
-        """Generar número de empleado con formato"""
-        return f"EMP-{obj.empleado_id:06d}"
+        fields = ['empleado_id', 'nombre', 'apellido_paterno', 'apellido_materno', 
+                 'genero', 'antiguedad', 'status', 'puesto', 'departamento', 'planta']
 
 class EmpleadoCreateSerializer(serializers.ModelSerializer):
     class Meta:
@@ -310,7 +262,7 @@ class PlantaCreateSerializer(serializers.ModelSerializer):
 
 class PlanSuscripcionSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PlanSuscripcion  # asegúrate que este modelo esté bien importado
+        model = PlanSuscripcion
         fields = '__all__'
 
 class DepartamentoCreateSerializer(serializers.ModelSerializer):

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
+import { crearPlanta, actualizarPlanta } from '../services/organizacionService';
 
 interface Planta {
   planta_id: number;
@@ -63,23 +64,31 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError(null);
-    
+
     try {
+      console.log('📝 Datos del formulario a enviar:', formData);
+      console.log('🔑 Token disponible:', localStorage.getItem('authToken') ? 'SÍ' : 'NO');
+      
       if (editingPlanta) {
         // Actualizar planta existente
-        await api.put(`/plantas/${editingPlanta.planta_id}/`, formData);
+        const result = await actualizarPlanta(editingPlanta.planta_id, formData);
+        console.log('✅ Planta actualizada exitosamente:', result);
       } else {
         // Crear nueva planta
-        await api.post('/plantas/', formData);
+        const result = await crearPlanta(formData);
+        console.log('✅ Planta creada exitosamente:', result);
       }
       
       // Recargar lista y resetear formulario
       await cargarPlantas();
       resetForm();
     } catch (error: any) {
-      console.error('Error guardando planta:', error);
-      setError(error.response?.data?.detail || 'Error al guardar la planta');
+      console.error('❌ Error completo:', error);
+      console.error('❌ Respuesta del servidor:', error.response?.data);
+      console.error('❌ Status code:', error.response?.status);
+      console.error('❌ Headers de respuesta:', error.response?.headers);
+      
+      setError(error.message || 'Error al guardar la planta');
     } finally {
       setSaving(false);
     }
