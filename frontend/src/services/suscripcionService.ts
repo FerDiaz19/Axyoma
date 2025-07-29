@@ -295,14 +295,27 @@ export const suscribirseAPlan = async (planId: number): Promise<any> => {
 
 export const obtenerSuscripcionActual = async (): Promise<any> => {
   try {
-    console.log('🔄 Obteniendo suscripción actual de la empresa...');
-    // Eliminar el '/api' redundante
-    const response = await api.get('/suscripciones/actual/');
-    console.log('✅ Información de suscripción:', response.data);
+    console.log('🔑 Enviando petición autenticada a: /suscripciones/info_empresa/');
+    // CAMBIO: Usar el endpoint que existe en lugar de /actual/
+    const response = await api.get('/suscripciones/info_empresa/');
+    console.log('✅ Respuesta de suscripción actual:', response.data);
     return response.data;
-  } catch (error) {
-    console.error('❌ Error al obtener suscripción actual:', error);
-    return null;
+  } catch (error: any) {
+    console.log('❌ Error al obtener suscripción actual:', error);
+    
+    // Si es error 404, devolver estructura por defecto
+    if (error.response?.status === 404) {
+      return {
+        tiene_suscripcion: false,
+        estado: 'sin_suscripcion',
+        mensaje: 'No tiene suscripción activa. Seleccione un plan.',
+        requiere_pago: true,
+        dias_restantes: 0,
+        acceso_reportes: false
+      };
+    }
+    
+    throw error;
   }
 };
 

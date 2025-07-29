@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from datetime import timedelta
+import traceback  # AGREGAR ESTE IMPORT FALTANTE
 from apps.users.models import PerfilUsuario, Empresa, Planta, AdminPlanta, Departamento, Puesto, Empleado
 from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion
 from .serializers import (
@@ -25,39 +26,99 @@ class SuscripcionViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def actual(self, request):
-        """Obtener la suscripción actual de la empresa"""
+        """Obtener la suscripción actual de la empresa - ENDPOINT FALTANTE AGREGADO"""
         try:
-            # Obtener la empresa del usuario actual
+            from apps.subscriptions.models import SuscripcionEmpresa
+            from django.utils import timezone
+            
+            print(f"🔍 actual: Usuario autenticado: {request.user}")
+            print(f"🔍 actual: Usuario tiene perfil: {hasattr(request.user, 'perfil')}")
+            
+            # Verificar que el usuario tiene perfil
+            if not hasattr(request.user, 'perfil'):
+                print("❌ actual: Usuario sin perfil")
+                return Response({
+                    'error': 'Usuario sin perfil'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
             perfil = request.user.perfil
-            empresa = perfil.empresa
-
-            # Buscar la suscripción activa más reciente
+            print(f"🔍 actual: Nivel de usuario: {perfil.nivel_usuario}")
+            
+            # Solo permitir a admin-empresa
+            if perfil.nivel_usuario != 'admin-empresa':
+                print(f"❌ actual: Usuario sin permisos: {perfil.nivel_usuario}")
+                return Response({
+                    'error': 'Usuario sin permisos. Solo admin-empresa puede consultar suscripciones.'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Buscar la empresa del usuario
+            try:
+                empresa = Empresa.objects.get(administrador=perfil)
+                print(f"🔍 actual: Empresa encontrada: {empresa.nombre} (ID: {empresa.empresa_id})")
+            except Empresa.DoesNotExist:
+                print("❌ actual: Empresa no encontrada para este usuario")
+                return Response({
+                    'error': 'Empresa no encontrada para este usuario'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Buscar suscripción activa
             suscripcion = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
                 status=True
-            ).order_by('-fecha_inicio').first()
-
+            ).first()
+            
+            print(f"🔍 actual: Suscripción encontrada: {suscripcion}")
+            
             if not suscripcion:
+                print("⚠️ actual: No hay suscripción activa")
                 return Response({
-                    "mensaje": "No hay suscripción activa"
-                }, status=status.HTTP_404_NOT_FOUND)
-
-            # Calcular días restantes
-            dias_restantes = (suscripcion.fecha_fin - timezone.now()).days
-            esta_por_vencer = dias_restantes <= 7
-
+                    'tiene_suscripcion': False,
+                    'estado': 'sin_suscripcion',
+                    'mensaje': 'No tiene suscripción activa. Seleccione un plan.',
+                    'empresa_id': empresa.empresa_id,
+                    'empresa_nombre': empresa.nombre
+                })
+            
+            # Verificar si está vencida
+            hoy = timezone.now().date()
+            dias_restantes = (suscripcion.fecha_fin - hoy).days
+            
+            print(f"🔍 actual: Días restantes: {dias_restantes}")
+            
+            if dias_restantes < 0:
+                print("⚠️ actual: Suscripción vencida")
+                suscripcion.estado = 'Vencida'
+                suscripcion.save()
+                
+                return Response({
+                    'tiene_suscripcion': False,
+                    'estado': 'vencida',
+                    'mensaje': f'Su suscripción venció hace {abs(dias_restantes)} días.',
+                    'empresa_id': empresa.empresa_id,
+                    'empresa_nombre': empresa.nombre
+                })
+            
+            print("✅ actual: Suscripción activa encontrada")
             return Response({
-                "suscripcion_id": suscripcion.id,
-                "plan_nombre": suscripcion.plan.nombre,
-                "fecha_inicio": suscripcion.fecha_inicio,
-                "fecha_fin": suscripcion.fecha_fin,
-                "estado": suscripcion.estado,
-                "dias_restantes": dias_restantes,
-                "esta_por_vencer": esta_por_vencer
+                'tiene_suscripcion': True,
+                'estado': 'activa',
+                'plan_nombre': suscripcion.plan_suscripcion.nombre,
+                'fecha_inicio': suscripcion.fecha_inicio.isoformat(),
+                'fecha_fin': suscripcion.fecha_fin.isoformat(),
+                'dias_restantes': dias_restantes,
+                'esta_por_vencer': dias_restantes <= 7,
+                'precio': float(suscripcion.plan_suscripcion.precio),
+                'duracion': suscripcion.plan_suscripcion.duracion,
+                'empresa_id': empresa.empresa_id,
+                'empresa_nombre': empresa.nombre
             })
+            
         except Exception as e:
+            print(f"❌ Error en actual: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return Response({
-                "error": str(e)
+                'error': f'Error interno: {str(e)}'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])
@@ -67,7 +128,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
             from apps.subscriptions.models import PlanSuscripcion
             planes = PlanSuscripcion.objects.filter(status=True)
             return Response([{
-                "plan_id": plan.id,
+                "plan_id": plan.plan_id,
                 "nombre": plan.nombre,
                 "descripcion": plan.descripcion,
                 "duracion": plan.duracion,
@@ -289,18 +350,47 @@ class EmpresaViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['post'])
     def registro(self, request):
+        print(f"🔄 REGISTRO: Recibiendo datos: {request.data}")
+        
         serializer = EmpresaRegistroSerializer(data=request.data)
         if serializer.is_valid():
-            empresa = serializer.save()
-            return Response({
-                'message': 'Empresa registrada exitosamente',
-                'empresa_id': empresa.empresa_id,
-                'nombre': empresa.nombre,
-                'siguiente_paso': 'seleccionar_plan',
-                'mensaje_siguiente': 'Para completar el registro, selecciona un plan de suscripción.',
-                'requiere_suscripcion': True
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            print("✅ REGISTRO: Datos válidos, procediendo a crear empresa...")
+            
+            try:
+                empresa = serializer.save()
+                print(f"🎉 REGISTRO: Empresa creada exitosamente - ID: {empresa.empresa_id}")
+                
+                # Verificar inmediatamente que existe en la BD
+                empresas_total = Empresa.objects.count()
+                print(f"🔍 REGISTRO: Total de empresas en BD: {empresas_total}")
+                
+                # Verificar específicamente esta empresa
+                empresa_existe = Empresa.objects.filter(empresa_id=empresa.empresa_id).exists()
+                print(f"🔍 REGISTRO: ¿Empresa {empresa.empresa_id} existe en BD? {empresa_existe}")
+                
+                if empresa_existe:
+                    empresa_bd = Empresa.objects.get(empresa_id=empresa.empresa_id)
+                    print(f"🔍 REGISTRO: Datos en BD - Nombre: {empresa_bd.nombre}, RFC: {empresa_bd.rfc}")
+                
+                return Response({
+                    'message': 'Empresa registrada exitosamente',
+                    'empresa_id': empresa.empresa_id,
+                    'nombre': empresa.nombre,
+                    'siguiente_paso': 'seleccionar_plan',
+                    'mensaje_siguiente': 'Para completar el registro, selecciona un plan de suscripción.',
+                    'requiere_suscripcion': True
+                }, status=status.HTTP_201_CREATED)
+                
+            except Exception as e:
+                print(f"❌ REGISTRO: Error durante serializer.save(): {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return Response({
+                    'error': f'Error interno al crear empresa: {str(e)}'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            print(f"❌ REGISTRO: Datos inválidos: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class EmpleadoViewSet(viewsets.ModelViewSet):
@@ -2075,380 +2165,174 @@ class SuscripcionViewSet(viewsets.ViewSet):
             )
     
     @action(detail=False, methods=['post'])
-    def crear_plan(self, request):
-        """Crear un nuevo plan de suscripción (Solo SuperAdmin)"""
-        try:
-            from apps.subscriptions.models import PlanSuscripcion
-            from django.db import transaction
-            
-
-            data = request.data
-            nombre = data.get('nombre')
-            descripcion = data.get('descripcion', '')
-            precio = data.get('precio')
-            duracion = data.get('duracion')
-            
-            if not nombre or not precio or not duracion:
-                return Response(
-                    {'error': 'nombre, precio y duracion son requeridos'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            with transaction.atomic():
-                plan = PlanSuscripcion.objects.create(
-                    nombre=nombre,
-                    descripcion=descripcion,
-                    precio=float(precio),
-                    duracion=int(duracion),
-                    status=True
-                )
-            
-            return Response({
-                'message': f'Plan "{plan.nombre}" creado exitosamente',
-                'plan': {
-                    'plan_id': plan.plan_id,
-                    'nombre': plan.nombre,
-                    'descripcion': plan.descripcion,
-                    'precio': float(plan.precio),
-                    'duracion': plan.duracion
-                }
-            })
-            
-        except Exception as e:
-            return Response(
-                {'error': f'Error creando plan: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    @action(detail=False, methods=['put'], permission_classes=[])
-    def editar_plan(self, request):
-        """Editar un plan de suscripción"""
-        try:
-            from apps.subscriptions.models import PlanSuscripcion
-            
-            plan_id = request.data.get('plan_id')
-            if not plan_id:
-                return Response(
-                    {'error': 'plan_id es requerido'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            plan = PlanSuscripcion.objects.get(plan_id=plan_id)
-            
-            # Actualizar campos si se proporcionan
-            if 'nombre' in request.data:
-                plan.nombre = request.data['nombre']
-            if 'descripcion' in request.data:
-                plan.descripcion = request.data['descripcion']
-            if 'precio' in request.data:
-                plan.precio = float(request.data['precio'])
-            if 'duracion' in request.data:
-                plan.duracion = int(request.data['duracion'])
-            if 'status' in request.data:
-                plan.status = bool(request.data['status'])
-            
-            plan.save()
-            
-            return Response({
-                'message': f'Plan "{plan.nombre}" actualizado exitosamente',
-                'plan': {
-                    'plan_id': plan.plan_id,
-                    'nombre': plan.nombre,
-                    'descripcion': plan.descripcion,
-                    'precio': float(plan.precio),
-                    'duracion': plan.duracion,
-                    'status': plan.status
-                }
-            })
-            
-        except PlanSuscripcion.DoesNotExist:
-            return Response(
-                {'error': 'Plan no encontrado'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return Response(
-                {'error': f'Error actualizando plan: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    @action(detail=False, methods=['get'], permission_classes=[])
-    def listar_suscripciones(self, request):
-        """Lista todas las suscripciones de empresas"""
-        try:
-            from apps.subscriptions.models import SuscripcionEmpresa
-            
-            suscripciones = SuscripcionEmpresa.objects.select_related(
-                'empresa', 'plan_suscripcion'
-            ).values(
-                'suscripcion_id',
-                'empresa__nombre',
-                'empresa__empresa_id',
-                'plan_suscripcion__nombre',
-                'plan_suscripcion__precio',
-                'plan_suscripcion__duracion',
-                'fecha_inicio',
-                'fecha_fin',
-                'estado',
-                'status'
-            )
-            
-            return Response(list(suscripciones))
-            
-        except Exception as e:
-            return Response(
-                {'error': f'Error obteniendo suscripciones: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    @action(detail=False, methods=['post'], permission_classes=[])
     def crear_suscripcion(self, request):
-        """Crear una nueva suscripción para una empresa"""
+        """Crear una nueva suscripción (SIMPLIFICADO)"""
         try:
-            from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion, Pago
-            from django.db import transaction
+            from apps.subscriptions.models import PlanSuscripcion, SuscripcionEmpresa, Pago
+            from django.utils import timezone
             from datetime import timedelta
             
-            data = request.data
-            empresa_id = data.get('empresa_id')
-            plan_id = data.get('plan_id')
+            empresa_id = request.data.get('empresa_id')
+            plan_id = request.data.get('plan_id')
+            
+            print(f"🔄 Creando suscripción para empresa {empresa_id} con plan {plan_id}")
             
             if not empresa_id or not plan_id:
-                return Response(
-                    {'error': 'empresa_id y plan_id son requeridos'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                return Response({
+                    'error': 'Faltan empresa_id o plan_id'
+                }, status=status.HTTP_400_BAD_REQUEST)
             
+            # Obtener empresa y plan
             try:
                 empresa = Empresa.objects.get(empresa_id=empresa_id)
-            except Empresa.DoesNotExist:
-                return Response(
-                    {'error': f'Empresa con ID {empresa_id} no encontrada'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            try:
                 plan = PlanSuscripcion.objects.get(plan_id=plan_id)
+            except Empresa.DoesNotExist:
+                return Response({
+                    'error': 'Empresa no encontrada'
+                }, status=status.HTTP_404_NOT_FOUND)
             except PlanSuscripcion.DoesNotExist:
-                return Response(
-                    {'error': f'Plan con ID {plan_id} no encontrado'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
+                return Response({
+                    'error': 'Plan no encontrado'
+                }, status=status.HTTP_404_NOT_FOUND)
             
-            # Verificar si ya existe una suscripción activa
-            suscripcion_existente = SuscripcionEmpresa.objects.filter(
+            # Desactivar suscripciones existentes
+            SuscripcionEmpresa.objects.filter(empresa=empresa).update(status=False)
+            
+            # Crear nueva suscripción
+            fecha_inicio = timezone.now().date()
+            fecha_fin = fecha_inicio + timedelta(days=plan.duracion)
+            
+            suscripcion = SuscripcionEmpresa.objects.create(
+                empresa=empresa,
+                plan_suscripcion=plan,
+                fecha_inicio=fecha_inicio,
+                fecha_fin=fecha_fin,
+                estado='Activa',
+                status=True
+            )
+            
+            # Crear pago automático como completado
+            Pago.objects.create(
+                suscripcion=suscripcion,
+                costo=plan.precio,
+                monto_pago=plan.precio,
+                estado_pago='Completado',
+                fecha_pago=timezone.now(),
+                transaccion_id=f"AUTO-{empresa_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+                usuario=request.user
+            )
+            
+            print(f"✅ Suscripción creada exitosamente: {suscripcion.suscripcion_id}")
+            
+            return Response({
+                'message': 'Suscripción creada exitosamente',
+                'suscripcion_id': suscripcion.suscripcion_id,
+                'empresa': empresa.nombre,
+                'plan': plan.nombre,
+                'fecha_inicio': fecha_inicio.isoformat(),
+                'fecha_fin': fecha_fin.isoformat(),
+                'precio': float(plan.precio)
+            })
+            
+        except Exception as e:
+            print(f"❌ Error creando suscripción: {str(e)}")
+            return Response({
+                'error': f'Error interno del servidor: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'])
+    def info_empresa(self, request):
+        """Obtener información de suscripción de la empresa del usuario - CORREGIDO"""
+        try:
+            from apps.subscriptions.models import SuscripcionEmpresa
+            from django.utils import timezone
+            
+            print(f"🔍 info_empresa: Usuario autenticado: {request.user}")
+            print(f"🔍 info_empresa: Usuario tiene perfil: {hasattr(request.user, 'perfil')}")
+            
+            # Verificar que el usuario tiene perfil
+            if not hasattr(request.user, 'perfil'):
+                print("❌ info_empresa: Usuario sin perfil")
+                return Response({
+                    'error': 'Usuario sin perfil'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            perfil = request.user.perfil
+            print(f"🔍 info_empresa: Nivel de usuario: {perfil.nivel_usuario}")
+            
+            # Solo permitir a admin-empresa
+            if perfil.nivel_usuario != 'admin-empresa':
+                print(f"❌ info_empresa: Usuario sin permisos: {perfil.nivel_usuario}")
+                return Response({
+                    'error': 'Usuario sin permisos. Solo admin-empresa puede consultar suscripciones.'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Buscar la empresa del usuario
+            try:
+                empresa = Empresa.objects.get(administrador=perfil)
+                print(f"🔍 info_empresa: Empresa encontrada: {empresa.nombre} (ID: {empresa.empresa_id})")
+            except Empresa.DoesNotExist:
+                print("❌ info_empresa: Empresa no encontrada para este usuario")
+                return Response({
+                    'error': 'Empresa no encontrada para este usuario'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Buscar suscripción activa
+            suscripcion = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
                 status=True
             ).first()
             
-            if suscripcion_existente:
-                return Response(
-                    {'error': 'La empresa ya tiene una suscripción activa'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            print(f"🔍 info_empresa: Suscripción encontrada: {suscripcion}")
             
-            with transaction.atomic():
-                # Crear nueva suscripción
-                fecha_inicio = timezone.now().date()
-                fecha_fin = fecha_inicio + timedelta(days=plan.duracion)
-                
-                suscripcion = SuscripcionEmpresa.objects.create(
-                    empresa=empresa,
-                    plan_suscripcion=plan,
-                    fecha_inicio=fecha_inicio,
-                    fecha_fin=fecha_fin,
-                    estado='Activa',
-                    status=True
-                )
-                
-                # Crear pago completado
-                pago = Pago.objects.create(
-                    suscripcion=suscripcion,
-                    costo=plan.precio,
-                    monto_pago=plan.precio,
-                    estado_pago='Completado',
-                    fecha_pago=timezone.now()
-                )
+            if not suscripcion:
+                print("⚠️ info_empresa: No hay suscripción activa")
+                return Response({
+                    'tiene_suscripcion': False,
+                    'estado': 'sin_suscripcion',
+                    'mensaje': 'No tiene suscripción activa. Seleccione un plan.',
+                    'empresa_id': empresa.empresa_id,
+                    'empresa_nombre': empresa.nombre
+                })
             
+            # Verificar si está vencida
+            hoy = timezone.now().date()
+            dias_restantes = (suscripcion.fecha_fin - hoy).days
+            
+            print(f"🔍 info_empresa: Días restantes: {dias_restantes}")
+            
+            if dias_restantes < 0:
+                print("⚠️ info_empresa: Suscripción vencida")
+                suscripcion.estado = 'Vencida'
+                suscripcion.save()
+                
+                return Response({
+                    'tiene_suscripcion': False,
+                    'estado': 'vencida',
+                    'mensaje': f'Su suscripción venció hace {abs(dias_restantes)} días.',
+                    'empresa_id': empresa.empresa_id,
+                    'empresa_nombre': empresa.nombre
+                })
+            
+            print("✅ info_empresa: Suscripción activa encontrada")
             return Response({
-                'message': f'Suscripción creada exitosamente para {empresa.nombre}',
-                'suscripcion': {
-                    'suscripcion_id': suscripcion.suscripcion_id,
-                    'empresa': empresa.nombre,
-                    'plan': plan.nombre,
-                    'fecha_inicio': fecha_inicio.isoformat(),
-                    'fecha_fin': fecha_fin.isoformat(),
-                    'precio': float(plan.precio)
-                }
+                'tiene_suscripcion': True,
+                'estado': 'activa',
+                'plan_nombre': suscripcion.plan_suscripcion.nombre,
+                'fecha_inicio': suscripcion.fecha_inicio.isoformat(),
+                'fecha_fin': suscripcion.fecha_fin.isoformat(),
+                'dias_restantes': dias_restantes,
+                'esta_por_vencer': dias_restantes <= 7,
+                'precio': float(suscripcion.plan_suscripcion.precio),
+                'duracion': suscripcion.plan_suscripcion.duracion,
+                'empresa_id': empresa.empresa_id,
+                'empresa_nombre': empresa.nombre
             })
             
-        except Empresa.DoesNotExist:
-            return Response(
-                {'error': 'Empresa no encontrada'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except PlanSuscripcion.DoesNotExist:
-            return Response(
-                {'error': 'Plan no encontrado'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
         except Exception as e:
-            return Response(
-                {'error': f'Error creando suscripción: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    @action(detail=False, methods=['post'])
-    def renovar_suscripcion(self, request):
-        """Renovar una suscripción existente"""
-        try:
-            from apps.subscriptions.models import SuscripcionEmpresa, Pago
-            from django.utils import timezone
-            
-            data = request.data
-            suscripcion_id = data.get('suscripcion_id')
-            meses = data.get('meses', 1)
-            metodo_pago = data.get('metodo_pago', 'tarjeta_credito')
-            
-            suscripcion = SuscripcionEmpresa.objects.get(id=suscripcion_id)
-            
-            # Renovar la suscripción
-            suscripcion.renovar_suscripcion(meses)
-            
-            # Crear el registro de pago
-            monto = suscripcion.plan.precio_mensual * meses
-            pago = Pago.objects.create(
-                suscripcion=suscripcion,
-                monto=monto,
-                metodo_pago=metodo_pago,
-                estado_pago='completado',
-                referencia_pago=f"REN-{suscripcion.id}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
-            )
-            
+            print(f"❌ Error en info_empresa: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return Response({
-                'message': f'Suscripción renovada por {meses} mes(es)',
-                'nueva_fecha_fin': suscripcion.fecha_fin.strftime('%Y-%m-%d'),
-                'monto_pagado': str(monto)
-            })
-            
-        except SuscripcionEmpresa.DoesNotExist:
-            return Response({'error': 'Suscripción no encontrada'}, 
-                          status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({'error': f'Error renovando suscripción: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-    @action(detail=False, methods=['get'], permission_classes=[])
-    def listar_pagos(self, request):
-        """Listar todos los pagos del sistema con información de suscripción"""
-        try:
-            from apps.subscriptions.models import Pago
-            
-            pagos = Pago.objects.select_related(
-                'suscripcion__empresa', 'suscripcion__plan_suscripcion'
-            ).values(
-                'pago_id',
-                'suscripcion__empresa__nombre',
-                'suscripcion__plan_suscripcion__nombre',
-                'costo',
-                'monto_pago',
-                'estado_pago',
-                'fecha_pago',
-                'fecha_vencimiento'
-            ).order_by('-fecha_pago')
-            
-            return Response(list(pagos))
-            
-        except Exception as e:
-            return Response(
-                {'error': f'Error obteniendo pagos: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    @action(detail=False, methods=['post'], permission_classes=[])
-    def procesar_pago(self, request):
-        """Procesar un pago para una suscripción"""
-        try:
-            from apps.subscriptions.models import SuscripcionEmpresa, Pago
-            from django.db import transaction
-            
-            data = request.data
-            suscripcion_id = data.get('suscripcion_id')
-            monto_pago = data.get('monto_pago')
-            transaccion_id = data.get('transaccion_id', '')
-            
-            if not suscripcion_id or not monto_pago:
-                return Response(
-                    {'error': 'suscripcion_id y monto_pago son requeridos'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            try:
-                suscripcion = SuscripcionEmpresa.objects.get(suscripcion_id=suscripcion_id)
-            except SuscripcionEmpresa.DoesNotExist:
-                return Response(
-                    {'error': f'Suscripción con ID {suscripcion_id} no encontrada'}, 
-                    status=status.HTTP_404_NOT_FOUND
-                )
-            
-            with transaction.atomic():
-                pago = Pago.objects.create(
-                    suscripcion=suscripcion,
-                    costo=suscripcion.plan_suscripcion.precio,
-                    monto_pago=float(monto_pago),
-                    estado_pago='Completado',
-                    transaccion_id=transaccion_id
-                )
-                
-                # Activar suscripción si estaba suspendida
-                if suscripcion.estado != 'Activa':
-                    suscripcion.estado = 'Activa'
-                    suscripcion.status = True
-                    suscripcion.save()
-            
-            return Response({
-                'message': 'Pago procesado exitosamente',
-                'pago': {
-                    'pago_id': pago.pago_id,
-                    'monto': float(pago.monto_pago),
-                    'fecha': pago.fecha_pago.isoformat(),
-                    'estado': pago.estado_pago
-                }
-            })
-            
-        except SuscripcionEmpresa.DoesNotExist:
-            return Response(
-                {'error': 'Suscripción no encontrada'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return Response(
-                {'error': f'Error procesando pago: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-    
-    @action(detail=False, methods=['get'], permission_classes=[])
-    def info_suscripcion_empresa(self, request):
-        """Obtener información de suscripción de una empresa específica"""
-        try:
-            empresa_id = request.GET.get('empresa_id')
-            if not empresa_id:
-                return Response(
-                    {'error': 'empresa_id es requerido'}, 
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            
-            empresa = Empresa.objects.get(empresa_id=empresa_id)
-            info_suscripcion = self.get_subscription_info(empresa)
-            return Response(info_suscripcion)
-            
-        except Empresa.DoesNotExist:
-            return Response(
-                {'error': 'Empresa no encontrada'}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        except Exception as e:
-            return Response(
-                {'error': f'Error obteniendo información de suscripción: {str(e)}'}, 
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+                'error': f'Error interno: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

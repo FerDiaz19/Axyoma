@@ -230,6 +230,13 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
             <p className="header-subtitle">Gestión integral de la empresa</p>
           </div>
           <div className="header-right">
+            {/* Información del usuario actual */}
+            <div className="user-session-info">
+              <div className="user-details">
+                <span className="user-name">{userData?.nombre_completo || userData?.usuario}</span>
+                <span className="user-email">{userData?.correo || 'Sin correo'}</span>
+              </div>
+            </div>
             <div className="empresa-info">
               <div className="empresa-avatar">
                 <span className="avatar-icon">🏢</span>
