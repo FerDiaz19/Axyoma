@@ -7,6 +7,11 @@ const GestionBD: React.FC = () => {
   const [estadisticas, setEstadisticas] = useState<EstadisticasBD | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Filtrar tablas - remover evaluaciones y encuestas
+  const tablasDisponibles = tablas.filter(tabla => 
+    !['evaluaciones', 'encuestas'].includes(tabla.nombre)
+  );
+
   useEffect(() => {
     cargarEstadisticas();
   }, []);
@@ -123,7 +128,7 @@ const GestionBD: React.FC = () => {
             </p>
             
             <div className="exportacion-cards-grid">
-              {tablas.map((tabla) => (
+              {tablasDisponibles.map((tabla) => (
                 <div key={tabla.nombre} className="export-card">
                   <div className="export-card-header">
                     <div className="export-card-icon">

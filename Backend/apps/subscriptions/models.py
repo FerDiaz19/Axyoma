@@ -141,3 +141,55 @@ class Pago(models.Model):
     def __str__(self):
         usuario_info = f" - {self.usuario.username}" if self.usuario else ""
         return f"Pago ${self.monto_pago} - {self.suscripcion.empresa.nombre}{usuario_info}"
+
+
+# ============================================================================
+# MODELOS ADICIONALES PARA EXPORTACIÓN CSV (SIN AFECTAR LOS ORIGINALES)
+# ============================================================================
+
+class SuscripcionEmpresaExport(models.Model):
+    """
+    Modelo SOLO para exportación CSV - SIN relaciones complejas
+    NO AFECTA los modelos originales usados por empresas
+    """
+    suscripcion_id = models.AutoField(primary_key=True)
+    empresa = models.IntegerField()  # FK simple como integer
+    plan = models.IntegerField()     # FK simple como integer
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+    estado = models.CharField(max_length=20)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'suscripciones_empresa'
+        managed = False  # Django NO gestiona esta tabla
+        
+    def __str__(self):
+        return f"Suscripción Export {self.suscripcion_id}"
+
+
+class PagoExport(models.Model):
+    """
+    Modelo SOLO para exportación CSV - SIN relaciones complejas
+    NO AFECTA los modelos originales usados por empresas
+    """
+    ESTADO_PAGO_CHOICES = [
+        ('Completado', 'Completado'),
+        ('Pendiente', 'Pendiente'),
+        ('Cancelado', 'Cancelado'),
+        ('Fallido', 'Fallido'),
+    ]
+    
+    pago_id = models.AutoField(primary_key=True)
+    suscripcion_id = models.IntegerField()  # FK simple como integer
+    costo = models.DecimalField(max_digits=10, decimal_places=2)
+    monto_pago = models.DecimalField(max_digits=10, decimal_places=2)
+    estado_pago = models.CharField(max_length=20, choices=ESTADO_PAGO_CHOICES)
+    fecha_pago = models.DateTimeField()
+    
+    class Meta:
+        db_table = 'pagos'
+        managed = False  # Django NO gestiona esta tabla
+        
+    def __str__(self):
+        return f"Pago Export ${self.monto_pago}"

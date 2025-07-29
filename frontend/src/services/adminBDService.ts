@@ -64,16 +64,22 @@ class AdminBDService {
   // Exportar una tabla específica a CSV
   async exportarTabla(tablaNombre: string): Promise<Blob> {
     try {
-      console.log(`🔄 Iniciando exportación de tabla: ${tablaNombre}`);
+      console.log(`🔄 AdminBD: Exportando tabla ${tablaNombre}...`);
       
-      const response = await adminBDApi.get(`/exportar/${tablaNombre}/`, {
+      // Usar endpoints directos solo para las tablas problemáticas
+      const tablasProblematicas = ['empleados', 'suscripciones'];
+      const endpoint = tablasProblematicas.includes(tablaNombre) 
+        ? `/directo/exportar/${tablaNombre}/`
+        : `/exportar/${tablaNombre}/`;
+      
+      const response = await adminBDApi.get(endpoint, {
         responseType: 'blob',
       });
       
-      console.log(`✅ Exportación exitosa de tabla: ${tablaNombre}`);
+      console.log(`✅ AdminBD: Exportación exitosa de tabla ${tablaNombre}`);
       return response.data;
     } catch (error) {
-      console.error(`❌ Error al exportar tabla ${tablaNombre}:`, error);
+      console.error(`❌ AdminBD: Error al exportar tabla ${tablaNombre}:`, error);
       
       // Información adicional de debug
       if (axios.isAxiosError(error)) {
@@ -247,9 +253,5 @@ export const tablas = [
   { 
     nombre: 'suscripciones', 
     descripcion: 'Lista de todas las suscripciones de empresas'
-  },
-  { 
-    nombre: 'pagos', 
-    descripcion: 'Lista de todos los pagos realizados'
   }
 ];

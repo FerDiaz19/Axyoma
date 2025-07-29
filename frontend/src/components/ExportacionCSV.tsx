@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { exportarTabla } from '../services/adminBDService';
+import adminBDService from '../services/adminBDService';
 
 interface ExportacionCSVProps {
   tablaNombre: string;
@@ -12,71 +12,71 @@ const ExportacionCSV: React.FC<ExportacionCSVProps> = ({
   descripcion, 
   className = '' 
 }) => {
-  const [exportando, setExportando] = useState(false);
+  const [descargando, setDescargando] = useState(false);
+  const [mensaje, setMensaje] = useState<string | null>(null);
 
   const handleExportar = async () => {
-    setExportando(true);
     try {
-      await exportarTabla(tablaNombre);
-      // Mostrar notificación de éxito más sutil
-      const notification = document.createElement('div');
-      notification.className = 'export-success-notification';
-      notification.innerHTML = `
-        <div class="notification-content">
-          <span class="notification-icon">✅</span>
-          <span class="notification-text">Tabla ${tablaNombre} exportada exitosamente</span>
-        </div>
-      `;
-      document.body.appendChild(notification);
+      setDescargando(true);
+      setMensaje(null);
       
-      // Remover notificación después de 3 segundos
-      setTimeout(() => {
-        if (document.body.contains(notification)) {
-          document.body.removeChild(notification);
-        }
-      }, 3000);
-    } catch (error) {
+      const blob = await adminBDService.exportarTabla(tablaNombre);
+      
+      // Crear nombre del archivo con timestamp
+      const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '_');
+      const nombreArchivo = `${tablaNombre}_${timestamp}.csv`;
+      
+      // Descargar archivo
+      adminBDService.descargarArchivo(blob, nombreArchivo);
+      
+      setMensaje('✅ Exportación completada exitosamente');
+      
+      // Limpiar mensaje después de 3 segundos
+      setTimeout(() => setMensaje(null), 3000);
+      
+    } catch (error: any) {
       console.error('Error al exportar:', error);
-      // Mostrar notificación de error
-      const notification = document.createElement('div');
-      notification.className = 'export-error-notification';
-      notification.innerHTML = `
-        <div class="notification-content">
-          <span class="notification-icon">❌</span>
-          <span class="notification-text">Error al exportar tabla ${tablaNombre}</span>
-        </div>
-      `;
-      document.body.appendChild(notification);
+      setMensaje(`❌ Error: ${error.response?.data?.error || error.message || 'Error desconocido'}`);
       
-      setTimeout(() => {
-        if (document.body.contains(notification)) {
-          document.body.removeChild(notification);
-        }
-      }, 3000);
+      // Limpiar mensaje de error después de 5 segundos
+      setTimeout(() => setMensaje(null), 5000);
     } finally {
-      setExportando(false);
+      setDescargando(false);
     }
   };
 
   return (
-    <button 
-      onClick={handleExportar}
-      disabled={exportando}
-      className={`export-btn ${className} ${exportando ? 'exporting' : ''}`}
-      title={`Exportar ${tablaNombre} a CSV`}
-    >
-      {exportando ? (
-        <>
-          <span className="btn-spinner">⏳</span>
-          <span className="btn-text">Exportando...</span>
-        </>
-      ) : (
-        <>
-          <span className="btn-icon">📤</span>
-          <span className="btn-text">Exportar CSV</span>
-        </>
+    <div className={`exportacion-csv-container ${className}`}>
+      <div className="exportacion-info">
+        <h4>{descripcion}</h4>
+        <p>Tabla: {tablaNombre}</p>
+      </div>
+      
+      <button 
+        onClick={handleExportar}
+        disabled={descargando}
+        className={`export-btn ${descargando ? 'loading' : ''}`}
+        title={`Exportar ${tablaNombre} a CSV`}
+      >
+        {descargando ? (
+          <>
+            <span className="btn-spinner">⏳</span>
+            <span className="btn-text">Exportando...</span>
+          </>
+        ) : (
+          <>
+            <span className="btn-icon">📤</span>
+            <span className="btn-text">Exportar CSV</span>
+          </>
+        )}
+      </button>
+      
+      {mensaje && (
+        <div className={`mensaje ${mensaje.startsWith('✅') ? 'success' : 'error'}`}>
+          {mensaje}
+        </div>
       )}
-    </button>
+    </div>
   );
 };
 

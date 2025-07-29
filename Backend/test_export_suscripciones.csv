@@ -1,0 +1,4 @@
+﻿ID Suscripcion,ID Empresa,ID Plan,Fecha Inicio,Fecha Fin,Estado
+1,1,2,2024-01-01,2024-01-31,activa
+2,1,1,2023-12-01,2023-12-31,vencida
+3,1,3,2024-02-01,2024-02-28,activa
