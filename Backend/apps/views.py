@@ -44,8 +44,8 @@ class SuscripcionViewSet(viewsets.ViewSet):
             perfil = request.user.perfil
             print(f"🔍 actual: Nivel de usuario: {perfil.nivel_usuario}")
             
-            # Solo permitir a admin-empresa
-            if perfil.nivel_usuario != 'admin-empresa':
+            # CORREGIR: Aceptar tanto 'admin-empresa' como 'admin_empresa'
+            if perfil.nivel_usuario not in ['admin-empresa', 'admin_empresa']:
                 print(f"❌ actual: Usuario sin permisos: {perfil.nivel_usuario}")
                 return Response({
                     'error': 'Usuario sin permisos. Solo admin-empresa puede consultar suscripciones.'
@@ -231,7 +231,7 @@ class AuthViewSet(viewsets.ViewSet):
                 # Respuesta base
                 response_data = {
                     'message': 'Login exitoso',
-                    'token': token.key,  # Agregar token a la respuesta
+                    'token': token.key,
                     'usuario': user.username,
                     'user_id': user.id,
                     'profile_id': profile.id,
@@ -248,7 +248,8 @@ class AuthViewSet(viewsets.ViewSet):
                         'permisos': ['ver_todas_empresas', 'gestionar_usuarios', 'configuracion_sistema']
                     })
                     
-                elif profile.nivel_usuario == 'admin-empresa':
+                # CORREGIR: Aceptar tanto 'admin-empresa' como 'admin_empresa'
+                elif profile.nivel_usuario in ['admin-empresa', 'admin_empresa']:
                     # Admin de Empresa: gestión de su empresa
                     try:
                         empresa = Empresa.objects.get(administrador=profile)
@@ -276,8 +277,8 @@ class AuthViewSet(viewsets.ViewSet):
                             if suscripcion_info['estado'] == 'sin_suscripcion':
                                 response_data['advertencia'] = {
                                     'tipo': 'sin_suscripcion',
-                                    'mensaje': 'Su empresa no tiene una suscripción activa.',
-                                    'detalles': 'Active una suscripción para acceder a todas las funcionalidades.',
+                                    'mensaje': suscripcion_info['mensaje'],
+                                    'detalles': 'Seleccione un plan para activar todas las funcionalidades.',
                                     'requiere_accion': True
                                 }
                             elif suscripcion_info['estado'] == 'vencida':
@@ -299,7 +300,8 @@ class AuthViewSet(viewsets.ViewSet):
                         return Response({'error': 'Usuario sin empresa asignada'}, 
                                       status=status.HTTP_400_BAD_REQUEST)
                         
-                elif profile.nivel_usuario == 'admin-planta':
+                # CORREGIR: Aceptar tanto 'admin-planta' como 'admin_planta'
+                elif profile.nivel_usuario in ['admin-planta', 'admin_planta']:
                     # Admin de Planta: gestión de plantas específicas
                     try:
                         admin_planta = AdminPlanta.objects.get(usuario=profile, status=True)
@@ -1964,6 +1966,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
             nombre_empleado = f"{empleado.nombre} {empleado.apellido_paterno}"
             
             # Eliminar empleado
+
             empleado.delete()
             
             return Response({
@@ -2260,8 +2263,8 @@ class SuscripcionViewSet(viewsets.ViewSet):
             perfil = request.user.perfil
             print(f"🔍 info_empresa: Nivel de usuario: {perfil.nivel_usuario}")
             
-            # Solo permitir a admin-empresa
-            if perfil.nivel_usuario != 'admin-empresa':
+            # CORREGIR: Aceptar tanto 'admin-empresa' como 'admin_empresa'
+            if perfil.nivel_usuario not in ['admin-empresa', 'admin_empresa']:
                 print(f"❌ info_empresa: Usuario sin permisos: {perfil.nivel_usuario}")
                 return Response({
                     'error': 'Usuario sin permisos. Solo admin-empresa puede consultar suscripciones.'
