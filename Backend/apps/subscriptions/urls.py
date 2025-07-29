@@ -7,7 +7,7 @@ router.register(r'', SubscriptionViewSet, basename='subscriptions')
 
 urlpatterns = [
     # Rutas específicas para suscripciones
-    path('planes/', SubscriptionViewSet.as_view({'get': 'planes'}), name='planes'),
+    path('suscripciones/planes/', SubscriptionViewSet.as_view({'get': 'planes'}), name='planes'),
     path('suscripciones/', SubscriptionViewSet.as_view({'get': 'suscripciones'}), name='listar_suscripciones'),
     path('crear-suscripcion/', SubscriptionViewSet.as_view({'post': 'crear_suscripcion'}), name='crear_suscripcion'),
     path('crear-plan/', SubscriptionViewSet.as_view({'post': 'crear_plan'}), name='crear_plan'),

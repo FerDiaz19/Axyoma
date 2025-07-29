@@ -111,7 +111,7 @@ export const getEstadoPagoTexto = (estado: string): string => {
 export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
   try {
     console.log('🔍 Obteniendo lista de planes...');
-    const response = await api.get('/subscriptions/planes/');
+    const response = await api.get('/subscriptions/planes');
     console.log('✅ Planes obtenidos:', response.data);
     
     if (Array.isArray(response.data)) {
@@ -129,7 +129,7 @@ export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
 export const listarSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
   try {
     console.log('🔍 Obteniendo lista de suscripciones...');
-    const response = await api.get('/subscriptions/suscripciones/');
+    const response = await api.get('subscriptions/suscripciones/');
     console.log('✅ Suscripciones obtenidas:', response.data);
     
     if (Array.isArray(response.data)) {

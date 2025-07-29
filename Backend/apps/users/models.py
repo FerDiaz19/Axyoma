@@ -183,6 +183,7 @@ class Empleado(models.Model):
     ]
     
     empleado_id = models.AutoField(primary_key=True)
+    numero = models.CharField(max_length=20, blank=True, null=True, help_text="Número de empleado")
     nombre = models.CharField(max_length=128)
     apellido_paterno = models.CharField(max_length=64)
     apellido_materno = models.CharField(max_length=64, blank=True, null=True)
@@ -203,6 +204,14 @@ class Empleado(models.Model):
         Planta, 
         on_delete=models.CASCADE, 
         db_column='planta'  # Especificar nombre de columna
+    )
+    empresa = models.ForeignKey(
+        Empresa,
+        on_delete=models.CASCADE,
+        db_column='empresa',
+        blank=True,
+        null=True,
+        help_text="Empresa a la que pertenece el empleado"
     )
     
     class Meta:

@@ -275,10 +275,25 @@ class PuestoSerializer(serializers.ModelSerializer):
 
 # Serializers para EMPLEADOS
 class EmpleadoSerializer(serializers.ModelSerializer):
+    empresa_id = serializers.IntegerField(source='empresa.empresa_id', read_only=True)
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
+    planta_id = serializers.IntegerField(source='planta.planta_id', read_only=True)
+    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
+    departamento_id = serializers.IntegerField(source='departamento.departamento_id', read_only=True)
+    departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
+    puesto_id = serializers.IntegerField(source='puesto.puesto_id', read_only=True)
+    puesto_nombre = serializers.CharField(source='puesto.nombre', read_only=True)
+    numero = serializers.CharField(read_only=True)
     class Meta:
         model = Empleado
-        fields = ['empleado_id', 'nombre', 'apellido_paterno', 'apellido_materno', 
-                 'genero', 'antiguedad', 'status', 'puesto', 'departamento', 'planta']
+        fields = [
+            'empleado_id', 'numero', 'nombre', 'apellido_paterno', 'apellido_materno',
+            'genero', 'antiguedad', 'status',
+            'empresa_id', 'empresa_nombre',
+            'planta_id', 'planta_nombre',
+            'departamento_id', 'departamento_nombre',
+            'puesto_id', 'puesto_nombre'
+        ]
 
 class EmpleadoCreateSerializer(serializers.ModelSerializer):
     class Meta:
