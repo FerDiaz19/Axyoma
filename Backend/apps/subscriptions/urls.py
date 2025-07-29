@@ -6,16 +6,16 @@ router = DefaultRouter()
 router.register(r'', SubscriptionViewSet, basename='subscriptions')
 
 urlpatterns = [
-    # Endpoints específicos
-    path('planes/', SubscriptionViewSet.as_view({'get': 'planes'})),
-    path('suscripciones/', SubscriptionViewSet.as_view({'get': 'suscripciones'})),
-    path('listar/', SubscriptionViewSet.as_view({'get': 'suscripciones'})),  # Alias para compatibilidad
-    path('crear_suscripcion/', SubscriptionViewSet.as_view({'post': 'crear_suscripcion'})),
-    path('pagos/', SubscriptionViewSet.as_view({'get': 'pagos'})),
-    path('pago_simple/', SubscriptionViewSet.as_view({'post': 'pago_simple'})),
-    path('crear_plan/', SubscriptionViewSet.as_view({'post': 'crear_plan'})),
-    path('editar_plan/', SubscriptionViewSet.as_view({'put': 'editar_plan'})),
+    # Rutas específicas para suscripciones
+    path('planes/', SubscriptionViewSet.as_view({'get': 'planes'}), name='planes'),
+    path('suscripciones/', SubscriptionViewSet.as_view({'get': 'suscripciones'}), name='listar_suscripciones'),
+    path('crear-suscripcion/', SubscriptionViewSet.as_view({'post': 'crear_suscripcion'}), name='crear_suscripcion'),
+    path('crear-plan/', SubscriptionViewSet.as_view({'post': 'crear_plan'}), name='crear_plan'),
+    path('editar-plan/', SubscriptionViewSet.as_view({'put': 'editar_plan'}), name='editar_plan'),
+    path('pagos/', SubscriptionViewSet.as_view({'get': 'pagos'}), name='listar_pagos'),
+    path('pago-simple/', SubscriptionViewSet.as_view({'post': 'pago_simple'}), name='pago_simple'),
+    path('info-empresa/', SubscriptionViewSet.as_view({'get': 'info_empresa'}), name='info_empresa'),
     
-    # Router automático
+    # Incluir rutas del router
     path('', include(router.urls)),
 ]

@@ -1,97 +1,171 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { obtenerEstadisticasBD, tablas, type EstadisticasBD } from '../services/adminBDService';
 import ExportacionCSV from './ExportacionCSV';
-import RespaldoCompleto from './RespaldoCompleto';
-import RespaldoParcial from './RespaldoParcial';
-import RestaurarBD from './RestaurarBD';
-import './GestionBD.css';
+import '../css/GestionBD.css';
 
-interface GestionBDProps {
-  className?: string;
-}
+const GestionBD: React.FC = () => {
+  const [estadisticas, setEstadisticas] = useState<EstadisticasBD | null>(null);
+  const [loading, setLoading] = useState(false);
 
-const GestionBD: React.FC<GestionBDProps> = ({ className }) => {
-  const [pestañaActiva, setPestañaActiva] = useState<string>('exportaciones');
+  useEffect(() => {
+    cargarEstadisticas();
+  }, []);
 
-  const pestañas = [
-    { id: 'exportaciones', nombre: 'Exportaciones CSV', icono: '📄' },
-    { id: 'respaldo-completo', nombre: 'Respaldo Completo', icono: '🗄️' },
-    { id: 'respaldo-parcial', nombre: 'Respaldo Parcial', icono: '📋' },
-    { id: 'restaurar', nombre: 'Restaurar BD', icono: '🔄' },
-  ];
+  const cargarEstadisticas = async () => {
+    setLoading(true);
+    try {
+      const stats = await obtenerEstadisticasBD();
+      setEstadisticas(stats);
+    } catch (error) {
+      console.error('Error cargando estadísticas:', error);
+      alert('Error al cargar estadísticas de la base de datos');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const tablasExportables = [
-    { nombre: 'empresas', descripcion: 'Empresas registradas' },
-    { nombre: 'empleados', descripcion: 'Empleados del sistema' },
-    { nombre: 'plantas', descripcion: 'Plantas industriales' },
-    { nombre: 'departamentos', descripcion: 'Departamentos organizacionales' },
-    { nombre: 'puestos', descripcion: 'Puestos de trabajo' },
-    { nombre: 'suscripciones', descripcion: 'Suscripciones activas' },
-  ];
+  const getIcono = (tablaNombre: string) => {
+    switch (tablaNombre) {
+      case 'empresas': return '🏢';
+      case 'plantas': return '🏭';
+      case 'departamentos': return '🏢';
+      case 'puestos': return '💼';
+      case 'empleados': return '👤';
+      case 'usuarios': return '👥';
+      case 'suscripciones': return '💳';
+      case 'pagos': return '💰';
+      default: return '📊';
+    }
+  };
 
-  const renderContenido = () => {
-    switch (pestañaActiva) {
-      case 'exportaciones':
-        return (
-          <div className="exportaciones-grid">
-            <div className="exportaciones-header">
-              <h3>📄 Exportaciones CSV</h3>
-              <p>Exportar datos de tablas específicas en formato CSV</p>
-            </div>
-            
-            <div className="exportaciones-lista">
-              {tablasExportables.map((tabla) => (
-                <ExportacionCSV
-                  key={tabla.nombre}
-                  tablaNombre={tabla.nombre}
-                  descripcion={tabla.descripcion}
-                  className="exportacion-item"
-                />
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'respaldo-completo':
-        return <RespaldoCompleto />;
-
-      case 'respaldo-parcial':
-        return <RespaldoParcial />;
-
-      case 'restaurar':
-        return <RestaurarBD />;
-
-      default:
-        return <div>Sección no encontrada</div>;
+  const getContadorTabla = (tablaNombre: string): number => {
+    if (!estadisticas) return 0;
+    switch (tablaNombre) {
+      case 'empresas': return estadisticas.empresas;
+      case 'plantas': return estadisticas.plantas;
+      case 'departamentos': return estadisticas.departamentos;
+      case 'puestos': return estadisticas.puestos;
+      case 'empleados': return estadisticas.empleados;
+      case 'usuarios': return estadisticas.usuarios;
+      case 'suscripciones': return estadisticas.suscripciones || 0;
+      case 'pagos': return estadisticas.pagos || 0;
+      default: return 0;
     }
   };
 
   return (
-    <div className={`gestion-bd-container ${className || ''}`}>
+    <div className="gestion-bd">
       <div className="gestion-bd-header">
-        <h2>🛠️ Gestión de Base de Datos</h2>
-        <p className="gestion-bd-descripcion">
-          Herramientas para administrar, respaldar y restaurar la base de datos del sistema.
-        </p>
+        <div className="header-content">
+          <h2 className="gestion-bd-title">
+            <span className="title-icon">🗄️</span>
+            Gestión de Base de Datos
+          </h2>
+          <p className="gestion-bd-subtitle">
+            Exporta y gestiona los datos del sistema en formato CSV
+          </p>
+        </div>
+        <button 
+          onClick={cargarEstadisticas} 
+          className="btn-refresh"
+          disabled={loading}
+        >
+          {loading ? (
+            <>
+              <span className="spinner">⏳</span>
+              Cargando...
+            </>
+          ) : (
+            <>
+              <span>🔄</span>
+              Actualizar
+            </>
+          )}
+        </button>
       </div>
 
-      <div className="gestion-bd-tabs">
-        <div className="tabs-header">
-          {pestañas.map((pestaña) => (
-            <button
-              key={pestaña.id}
-              onClick={() => setPestañaActiva(pestaña.id)}
-              className={`tab-button ${pestañaActiva === pestaña.id ? 'active' : ''}`}
-            >
-              <span className="tab-icon">{pestaña.icono}</span>
-              <span className="tab-text">{pestaña.nombre}</span>
-            </button>
-          ))}
+      {loading ? (
+        <div className="loading-container">
+          <div className="loading-spinner">⏳</div>
+          <p>Cargando estadísticas de la base de datos...</p>
         </div>
+      ) : estadisticas ? (
+        <>
+          {/* Resumen de estadísticas */}
+          <div className="stats-summary">
+            <div className="stats-summary-card">
+              <h3>📊 Resumen del Sistema</h3>
+              <div className="stats-grid-mini">
+                <div className="stat-mini">
+                  <span className="stat-mini-number">{estadisticas.empresas + estadisticas.plantas + estadisticas.departamentos + estadisticas.puestos + estadisticas.empleados + estadisticas.usuarios}</span>
+                  <span className="stat-mini-label">Total Registros</span>
+                </div>
+                <div className="stat-mini">
+                  <span className="stat-mini-number">{tablas.length}</span>
+                  <span className="stat-mini-label">Tablas Disponibles</span>
+                </div>
+                <div className="stat-mini">
+                  <span className="stat-mini-number">CSV</span>
+                  <span className="stat-mini-label">Formato Export</span>
+                </div>
+              </div>
+            </div>
+          </div>
 
-        <div className="tabs-content">
-          {renderContenido()}
+          {/* Grid de tarjetas de exportación */}
+          <div className="exportacion-section">
+            <h3 className="section-title">
+              <span className="section-icon">📤</span>
+              Exportación de Datos
+            </h3>
+            <p className="section-description">
+              Selecciona las tablas que deseas exportar en formato CSV para análisis externo
+            </p>
+            
+            <div className="exportacion-cards-grid">
+              {tablas.map((tabla) => (
+                <div key={tabla.nombre} className="export-card">
+                  <div className="export-card-header">
+                    <div className="export-card-icon">
+                      {getIcono(tabla.nombre)}
+                    </div>
+                    <div className="export-card-info">
+                      <h4 className="export-card-title">{tabla.nombre}</h4>
+                      <div className="export-card-count">
+                        <span className="count-number">{getContadorTabla(tabla.nombre)}</span>
+                        <span className="count-label">registros</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="export-card-body">
+                    <p className="export-card-description">
+                      {tabla.descripcion}
+                    </p>
+                  </div>
+                  
+                  <div className="export-card-footer">
+                    <ExportacionCSV 
+                      tablaNombre={tabla.nombre}
+                      descripcion={tabla.descripcion}
+                      className="export-card-btn"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="error-container">
+          <div className="error-icon">❌</div>
+          <h3>Error al cargar datos</h3>
+          <p>No se pudieron cargar las estadísticas de la base de datos</p>
+          <button onClick={cargarEstadisticas} className="btn-retry">
+            🔄 Reintentar
+          </button>
         </div>
-      </div>
+      )}
     </div>
   );
 };

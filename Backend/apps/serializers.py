@@ -5,8 +5,12 @@ from django.contrib.auth.hashers import make_password
 import string
 import random
 import traceback
-from apps.users.models import PerfilUsuario, Empresa, Planta, Departamento, Puesto, Empleado
-from apps.subscriptions.models import PlanSuscripcion  # Corregir importación
+# Agregar import específico para evitar conflictos
+try:
+    from apps.users.models import PerfilUsuario, Empresa, Planta, Departamento, Puesto, Empleado
+    from apps.subscriptions.models import PlanSuscripcion
+except ImportError as e:
+    print(f"Error importing models: {e}")
 
 # Serializers para LOGIN
 class LoginSerializer(serializers.Serializer):

@@ -4,12 +4,13 @@ from .views import (
     AuthViewSet, EmpresaViewSet, PlantaViewSet, 
     DepartamentoViewSet, PuestoViewSet, EmpleadoViewSet,
     EstructuraViewSet, SuperAdminViewSet,
-    SuscripcionViewSet
+    SuscripcionViewSet, AdminBDViewSet  # Agregar AdminBDViewSet
 )
 
 # Crear router para las vistas
 router = DefaultRouter()
 router.register(r'superadmin', SuperAdminViewSet, basename='superadmin')
+router.register(r'admin-bd', AdminBDViewSet, basename='admin-bd')  # Agregar esta línea
 router.register(r'empresas', EmpresaViewSet, basename='empresas')
 router.register(r'plantas', PlantaViewSet, basename='plantas')
 router.register(r'departamentos', DepartamentoViewSet, basename='departamentos')
@@ -46,6 +47,10 @@ urlpatterns = [
     path('suscripciones/crear_suscripcion/', SuscripcionViewSet.as_view({'post': 'crear_suscripcion'})),
     path('suscripciones/info_empresa/', SuscripcionViewSet.as_view({'get': 'info_empresa'})),
     path('suscripciones/actual/', SuscripcionViewSet.as_view({'get': 'actual'})),  # ← NUEVA RUTA AGREGADA
+    
+    # Rutas de Admin BD - Agregar estas líneas
+    path('admin-bd/exportar/<str:tabla>/', AdminBDViewSet.as_view({'get': 'exportar_tabla'})),
+    path('admin-bd/estadisticas/', AdminBDViewSet.as_view({'get': 'estadisticas_bd'})),
     
     # Incluir rutas automáticas del router
     path('', include(router.urls)),

@@ -6,8 +6,8 @@ from datetime import datetime
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.db import connection, transaction
-from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status, viewsets
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from apps.users.models import (
@@ -18,6 +18,192 @@ from apps.subscriptions.models import PlanSuscripcion, SuscripcionEmpresa
 from .models import LogRespaldo
 from .utils.csv_exporter import CSVExporter
 from .utils.backup_manager import BackupManager
+import logging
+
+logger = logging.getLogger(__name__)
+
+class AdminBDViewSet(viewsets.ViewSet):
+    """
+    ViewSet para administración de base de datos
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def _verify_superadmin(self, user):
+        """Verificar que el usuario es SuperAdmin"""
+        if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'superadmin':
+            return False
+        return True
+    
+    @action(detail=False, methods=['get'])
+    def exportar_empresas_csv(self, request):
+        """Exportar empresas a CSV"""
+        if not self._verify_superadmin(request.user):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            from apps.users.models import Empresa
+            
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="empresas.csv"'
+            
+            # Agregar BOM para UTF-8
+            response.write('\ufeff')
+            
+            writer = csv.writer(response)
+            writer.writerow(['ID', 'Nombre', 'RFC', 'Teléfono', 'Email', 'Dirección', 'Status', 'Fecha Registro'])
+            
+            empresas = Empresa.objects.all()
+            for empresa in empresas:
+                writer.writerow([
+                    empresa.empresa_id,
+                    empresa.nombre,
+                    empresa.rfc,
+                    empresa.telefono_contacto or '',
+                    empresa.email_contacto or '',
+                    empresa.direccion or '',
+                    'Activa' if empresa.status else 'Suspendida',
+                    empresa.fecha_registro.strftime('%Y-%m-%d %H:%M:%S') if empresa.fecha_registro else ''
+                ])
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error exportando empresas: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'])
+    def exportar_usuarios_csv(self, request):
+        """Exportar usuarios a CSV"""
+        if not self._verify_superadmin(request.user):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            from apps.users.models import PerfilUsuario
+            
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="usuarios.csv"'
+            
+            # Agregar BOM para UTF-8
+            response.write('\ufeff')
+            
+            writer = csv.writer(response)
+            writer.writerow(['ID', 'Username', 'Email', 'Nombre Completo', 'Nivel Usuario', 'Activo', 'Fecha Registro'])
+            
+            usuarios = PerfilUsuario.objects.select_related('user').all()
+            for usuario in usuarios:
+                writer.writerow([
+                    usuario.user.id,
+                    usuario.user.username,
+                    usuario.user.email,
+                    f"{usuario.nombre} {usuario.apellido_paterno} {usuario.apellido_materno or ''}".strip(),
+                    usuario.nivel_usuario,
+                    'Sí' if usuario.user.is_active else 'No',
+                    usuario.user.date_joined.strftime('%Y-%m-%d %H:%M:%S') if usuario.user.date_joined else ''
+                ])
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error exportando usuarios: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'])
+    def exportar_empleados_csv(self, request):
+        """Exportar empleados a CSV"""
+        if not self._verify_superadmin(request.user):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            from apps.users.models import Empleado
+            
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="empleados.csv"'
+            
+            # Agregar BOM para UTF-8
+            response.write('\ufeff')
+            
+            writer = csv.writer(response)
+            writer.writerow([
+                'ID', 'Nombre', 'Apellido Paterno', 'Apellido Materno', 
+                'Género', 'Antiguedad', 'Empresa', 'Planta', 'Departamento', 
+                'Puesto', 'Status'
+            ])
+            
+            empleados = Empleado.objects.select_related(
+                'planta__empresa', 'departamento', 'puesto'
+            ).all()
+            
+            for empleado in empleados:
+                writer.writerow([
+                    empleado.empleado_id,
+                    empleado.nombre,
+                    empleado.apellido_paterno,
+                    empleado.apellido_materno or '',
+                    empleado.genero,
+                    empleado.antiguedad,
+                    empleado.planta.empresa.nombre if empleado.planta and empleado.planta.empresa else '',
+                    empleado.planta.nombre if empleado.planta else '',
+                    empleado.departamento.nombre if empleado.departamento else '',
+                    empleado.puesto.nombre if empleado.puesto else '',
+                    'Activo' if empleado.status else 'Inactivo'
+                ])
+            
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error exportando empleados: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['post'])
+    def backup_database(self, request):
+        """Crear backup de la base de datos"""
+        if not self._verify_superadmin(request.user):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            # Esta funcionalidad requiere configuración específica del servidor
+            # Por ahora solo retornamos un mensaje informativo
+            return Response({
+                'message': 'Función de backup en desarrollo',
+                'info': 'Esta funcionalidad requiere configuración del servidor de base de datos'
+            })
+            
+        except Exception as e:
+            logger.error(f"Error creando backup: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'])
+    def info_sistema(self, request):
+        """Obtener información del sistema"""
+        if not self._verify_superadmin(request.user):
+            return Response({'error': 'No autorizado'}, status=status.HTTP_403_FORBIDDEN)
+        
+        try:
+            from django.db import connection
+            from apps.users.models import Empresa, PerfilUsuario, Planta, Departamento, Puesto, Empleado
+            
+            info = {
+                'django_version': settings.DJANGO_VERSION if hasattr(settings, 'DJANGO_VERSION') else 'Unknown',
+                'python_version': f"{settings.PYTHON_VERSION}" if hasattr(settings, 'PYTHON_VERSION') else 'Unknown',
+                'database_info': {
+                    'engine': settings.DATABASES['default']['ENGINE'],
+                    'name': settings.DATABASES['default']['NAME']
+                },
+                'estadisticas': {
+                    'empresas': Empresa.objects.count(),
+                    'usuarios': PerfilUsuario.objects.count(),
+                    'plantas': Planta.objects.count(),
+                    'departamentos': Departamento.objects.count(),
+                    'puestos': Puesto.objects.count(),
+                    'empleados': Empleado.objects.count()
+                }
+            }
+            
+            return Response(info)
+            
+        except Exception as e:
+            logger.error(f"Error obteniendo info del sistema: {str(e)}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['GET'])

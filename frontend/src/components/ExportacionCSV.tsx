@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import adminBDService from '../services/adminBDService';
-import './ExportacionCSV.css';
+import { exportarTabla } from '../services/adminBDService';
 
 interface ExportacionCSVProps {
   tablaNombre: string;
@@ -11,73 +10,73 @@ interface ExportacionCSVProps {
 const ExportacionCSV: React.FC<ExportacionCSVProps> = ({ 
   tablaNombre, 
   descripcion, 
-  className 
+  className = '' 
 }) => {
-  const [descargando, setDescargando] = useState(false);
-  const [mensaje, setMensaje] = useState<string | null>(null);
+  const [exportando, setExportando] = useState(false);
 
   const handleExportar = async () => {
+    setExportando(true);
     try {
-      setDescargando(true);
-      setMensaje(null);
+      await exportarTabla(tablaNombre);
+      // Mostrar notificación de éxito más sutil
+      const notification = document.createElement('div');
+      notification.className = 'export-success-notification';
+      notification.innerHTML = `
+        <div class="notification-content">
+          <span class="notification-icon">✅</span>
+          <span class="notification-text">Tabla ${tablaNombre} exportada exitosamente</span>
+        </div>
+      `;
+      document.body.appendChild(notification);
       
-      const blob = await adminBDService.exportarTabla(tablaNombre);
-      
-      // Crear nombre del archivo con timestamp
-      const timestamp = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '_');
-      const nombreArchivo = `${tablaNombre}_${timestamp}.csv`;
-      
-      // Descargar archivo
-      adminBDService.descargarArchivo(blob, nombreArchivo);
-      
-      setMensaje('✅ Exportación completada exitosamente');
-      
-      // Limpiar mensaje después de 3 segundos
-      setTimeout(() => setMensaje(null), 3000);
-      
-    } catch (error: any) {
+      // Remover notificación después de 3 segundos
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
+    } catch (error) {
       console.error('Error al exportar:', error);
-      setMensaje(`❌ Error: ${error.response?.data?.error || error.message || 'Error desconocido'}`);
+      // Mostrar notificación de error
+      const notification = document.createElement('div');
+      notification.className = 'export-error-notification';
+      notification.innerHTML = `
+        <div class="notification-content">
+          <span class="notification-icon">❌</span>
+          <span class="notification-text">Error al exportar tabla ${tablaNombre}</span>
+        </div>
+      `;
+      document.body.appendChild(notification);
       
-      // Limpiar mensaje de error después de 5 segundos
-      setTimeout(() => setMensaje(null), 5000);
+      setTimeout(() => {
+        if (document.body.contains(notification)) {
+          document.body.removeChild(notification);
+        }
+      }, 3000);
     } finally {
-      setDescargando(false);
+      setExportando(false);
     }
   };
 
   return (
-    <div className={`exportacion-csv-card ${className || ''}`}>
-      <div className="exportacion-header">
-        <h4>📄 {descripcion}</h4>
-        <p className="exportacion-tabla-nombre">Tabla: {tablaNombre}</p>
-      </div>
-      
-      <div className="exportacion-actions">
-        <button 
-          onClick={handleExportar}
-          disabled={descargando}
-          className={`exportacion-button ${descargando ? 'loading' : ''}`}
-        >
-          {descargando ? (
-            <>
-              <span className="spinner"></span>
-              Exportando...
-            </>
-          ) : (
-            <>
-              📤 Exportar CSV
-            </>
-          )}
-        </button>
-      </div>
-      
-      {mensaje && (
-        <div className={`exportacion-mensaje ${mensaje.startsWith('✅') ? 'success' : 'error'}`}>
-          {mensaje}
-        </div>
+    <button 
+      onClick={handleExportar}
+      disabled={exportando}
+      className={`export-btn ${className} ${exportando ? 'exporting' : ''}`}
+      title={`Exportar ${tablaNombre} a CSV`}
+    >
+      {exportando ? (
+        <>
+          <span className="btn-spinner">⏳</span>
+          <span className="btn-text">Exportando...</span>
+        </>
+      ) : (
+        <>
+          <span className="btn-icon">📤</span>
+          <span className="btn-text">Exportar CSV</span>
+        </>
       )}
-    </div>
+    </button>
   );
 };
 

@@ -1,5 +1,6 @@
 // Servicio para gestión de BD y exportaciones
 import axios from 'axios';
+import api from '../api';
 
 // Configurar axios para admin BD
 const API_BASE = 'http://localhost:8000/api';
@@ -32,6 +33,17 @@ export interface EstadisticasExportacion {
     tablas: string[];
     exitoso: boolean;
   }[];
+}
+
+export interface EstadisticasBD {
+  empresas: number;
+  plantas: number;
+  departamentos: number;
+  puestos: number;
+  empleados: number;
+  usuarios: number;
+  suscripciones: number;
+  pagos: number;
 }
 
 class AdminBDService {
@@ -168,3 +180,76 @@ class AdminBDService {
 
 const adminBDService = new AdminBDService();
 export default adminBDService;
+
+export const obtenerEstadisticasBD = async (): Promise<EstadisticasBD> => {
+  try {
+    console.log('🔍 AdminBD: Obteniendo estadísticas de BD...');
+    const response = await api.get('/admin-bd/estadisticas/');
+    console.log('✅ AdminBD: Estadísticas obtenidas:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ AdminBD: Error obteniendo estadísticas:', error);
+    throw error;
+  }
+};
+
+export const exportarTabla = async (tabla: string): Promise<void> => {
+  try {
+    console.log(`📤 AdminBD: Exportando tabla ${tabla}...`);
+    
+    const response = await api.get(`/admin-bd/exportar/${tabla}/`, {
+      responseType: 'blob'
+    });
+    
+    console.log('✅ AdminBD: Tabla exportada exitosamente');
+    
+    // Crear enlace de descarga
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${tabla}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+    
+  } catch (error) {
+    console.error(`❌ AdminBD: Error al exportar tabla ${tabla}:`, error);
+    throw error;
+  }
+};
+
+export const tablas = [
+  { 
+    nombre: 'empresas', 
+    descripcion: 'Lista de todas las empresas registradas en el sistema'
+  },
+  { 
+    nombre: 'plantas', 
+    descripcion: 'Lista de todas las plantas de las empresas'
+  },
+  { 
+    nombre: 'departamentos', 
+    descripcion: 'Lista de todos los departamentos por planta'
+  },
+  { 
+    nombre: 'puestos', 
+    descripcion: 'Lista de todos los puestos por departamento'
+  },
+  { 
+    nombre: 'empleados', 
+    descripcion: 'Lista de todos los empleados del sistema'
+  },
+  { 
+    nombre: 'usuarios', 
+    descripcion: 'Lista de todos los usuarios del sistema'
+  },
+  { 
+    nombre: 'suscripciones', 
+    descripcion: 'Lista de todas las suscripciones de empresas'
+  },
+  { 
+    nombre: 'pagos', 
+    descripcion: 'Lista de todos los pagos realizados'
+  }
+];

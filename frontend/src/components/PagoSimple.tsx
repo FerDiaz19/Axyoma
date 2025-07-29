@@ -19,6 +19,21 @@ const PagoSimple: React.FC<PagoSimpleProps> = ({
   const [procesando, setProcesando] = useState(false);
 
   const handlePagar = async () => {
+    if (!planSeleccionado) {
+      alert('Debe seleccionar un plan');
+      return;
+    }
+
+    if (!metodoPago) {
+      alert('Debe seleccionar un método de pago');
+      return;
+    }
+
+    if (!referenciaPago.trim()) {
+      alert('Debe ingresar una referencia de pago');
+      return;
+    }
+
     setProcesando(true);
     
     try {
@@ -27,20 +42,23 @@ const PagoSimple: React.FC<PagoSimpleProps> = ({
       const resultado = await procesarPagoSimple({
         empresa_id: empresaId,
         plan_id: planSeleccionado.plan_id,
+        monto_pago: planSeleccionado.precio, // ✅ Agregar monto_pago que faltaba
         metodo_pago: metodoPago,
-        referencia_pago: referenciaPago
+        transaccion_id: referenciaPago // ✅ Cambiar referencia_pago por transaccion_id
       });
       
       // Mostrar notificación de éxito
-      alert(`🎉 ¡Pago Procesado Exitosamente!
+      alert(`¡Pago procesado exitosamente!
       
-Empresa: ${resultado.suscripcion.empresa}
-Plan: ${resultado.suscripcion.plan}
-Válido hasta: ${new Date(resultado.suscripcion.fecha_fin).toLocaleDateString()}
-Referencia: ${resultado.pago.referencia}
-
-Se ha enviado una confirmación por email.`);
+Plan: ${planSeleccionado.nombre}
+Monto: $${planSeleccionado.precio}
+Referencia: ${referenciaPago}`);
       
+      // Limpiar formulario
+      setMetodoPago('');
+      setReferenciaPago('');
+      
+      // Notificar al componente padre si existe
       onPagoCompletado(resultado);
       
     } catch (error: any) {

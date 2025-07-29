@@ -18,43 +18,63 @@ class PlanSuscripcion(models.Model):
 
     class Meta:
         db_table = 'planes'
-        managed = False  # No dejar que Django gestione esta tabla
+        verbose_name = "Plan de Suscripción"
+        verbose_name_plural = "Planes de Suscripción"
 
     def __str__(self):
         return f"{self.nombre} - ${self.precio}"
 
 class SuscripcionEmpresa(models.Model):
     """
-    Modelo para tabla SUSCRIPCIONES_EMPRESA existente
+    Modelo para tabla SUSCRIPCIONES_EMPRESA existente con ForeignKeys
     """
     suscripcion_id = models.AutoField(primary_key=True)
-    empresa = models.IntegerField()  # FK simple como integer
-    plan = models.IntegerField()     # FK simple como integer
+    empresa = models.ForeignKey(
+        'users.Empresa',
+        on_delete=models.CASCADE,
+        db_column='empresa_id',
+        verbose_name="Empresa"
+    )
+    plan_suscripcion = models.ForeignKey(
+        PlanSuscripcion,
+        on_delete=models.CASCADE,
+        db_column='plan_id',
+        verbose_name="Plan de Suscripción"
+    )
     fecha_inicio = models.DateField()
     fecha_fin = models.DateField()
-    estado = models.CharField(max_length=20)
+    estado = models.CharField(max_length=20, default='Activa')
     fecha_registro = models.DateTimeField(auto_now_add=True)
+    status = models.BooleanField(default=True)
 
     class Meta:
         db_table = 'suscripciones_empresa'
-        managed = False  # No dejar que Django gestione esta tabla
+        verbose_name = "Suscripción de Empresa"
+        verbose_name_plural = "Suscripciones de Empresas"
+        ordering = ['-fecha_inicio']
 
     def __str__(self):
-        return f"Suscripción {self.suscripcion_id}"
+        return f"Suscripción {self.suscripcion_id} - {self.empresa.nombre}"
 
-    # Propiedades para obtener objetos relacionados
-    def get_empresa(self):
-        try:
-            return Empresa.objects.get(empresa_id=self.empresa)
-        except Empresa.DoesNotExist:
-            return None
-    
-    def get_plan(self):
-        try:
-            return PlanSuscripcion.objects.get(plan_id=self.plan)
-        except PlanSuscripcion.DoesNotExist:
-            return None
-        self.save()
+    @property
+    def dias_restantes(self):
+        """Calcula los días restantes de la suscripción"""
+        from django.utils import timezone
+        hoy = timezone.now().date()
+        if self.fecha_fin >= hoy:
+            return (self.fecha_fin - hoy).days
+        return 0
+
+    @property
+    def esta_activa(self):
+        """Verifica si la suscripción está activa"""
+        from django.utils import timezone
+        return self.estado == 'Activa' and self.fecha_fin >= timezone.now().date() and self.status
+
+    @property
+    def esta_por_vencer(self):
+        """Verifica si la suscripción está por vencer (7 días o menos)"""
+        return self.esta_activa and self.dias_restantes <= 7
 
 class Pago(models.Model):
     """

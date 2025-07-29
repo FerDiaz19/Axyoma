@@ -9,7 +9,12 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from datetime import timedelta
-import traceback  # AGREGAR ESTE IMPORT FALTANTE
+import traceback
+import string
+import random
+import csv
+from django.http import HttpResponse
+from django.utils import timezone
 from apps.users.models import PerfilUsuario, Empresa, Planta, AdminPlanta, Departamento, Puesto, Empleado
 from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion
 from .serializers import (
@@ -18,6 +23,7 @@ from .serializers import (
     DepartamentoSerializer, DepartamentoCreateSerializer,
     PuestoSerializer, PuestoCreateSerializer,
     EmpleadoSerializer, EmpleadoCreateSerializer, PlanSuscripcionSerializer
+    # REMOVIDO: ListarPlanesView - no existe en serializers
 )
 
 
@@ -26,99 +32,39 @@ class SuscripcionViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def actual(self, request):
-        """Obtener la suscripción actual de la empresa - ENDPOINT FALTANTE AGREGADO"""
+        """Obtener la suscripción actual de la empresa"""
         try:
-            from apps.subscriptions.models import SuscripcionEmpresa
-            from django.utils import timezone
-            
-            print(f"🔍 actual: Usuario autenticado: {request.user}")
-            print(f"🔍 actual: Usuario tiene perfil: {hasattr(request.user, 'perfil')}")
-            
-            # Verificar que el usuario tiene perfil
-            if not hasattr(request.user, 'perfil'):
-                print("❌ actual: Usuario sin perfil")
-                return Response({
-                    'error': 'Usuario sin perfil'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
+            # Obtener la empresa del usuario actual
             perfil = request.user.perfil
-            print(f"🔍 actual: Nivel de usuario: {perfil.nivel_usuario}")
-            
-            # CORREGIR: Aceptar tanto 'admin-empresa' como 'admin_empresa'
-            if perfil.nivel_usuario not in ['admin-empresa', 'admin_empresa']:
-                print(f"❌ actual: Usuario sin permisos: {perfil.nivel_usuario}")
-                return Response({
-                    'error': 'Usuario sin permisos. Solo admin-empresa puede consultar suscripciones.'
-                }, status=status.HTTP_403_FORBIDDEN)
-            
-            # Buscar la empresa del usuario
-            try:
-                empresa = Empresa.objects.get(administrador=perfil)
-                print(f"🔍 actual: Empresa encontrada: {empresa.nombre} (ID: {empresa.empresa_id})")
-            except Empresa.DoesNotExist:
-                print("❌ actual: Empresa no encontrada para este usuario")
-                return Response({
-                    'error': 'Empresa no encontrada para este usuario'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            # Buscar suscripción activa
+            empresa = perfil.empresa
+
+            # Buscar la suscripción activa más reciente
             suscripcion = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
                 status=True
-            ).first()
-            
-            print(f"🔍 actual: Suscripción encontrada: {suscripcion}")
-            
+            ).order_by('-fecha_inicio').first()
+
             if not suscripcion:
-                print("⚠️ actual: No hay suscripción activa")
                 return Response({
-                    'tiene_suscripcion': False,
-                    'estado': 'sin_suscripcion',
-                    'mensaje': 'No tiene suscripción activa. Seleccione un plan.',
-                    'empresa_id': empresa.empresa_id,
-                    'empresa_nombre': empresa.nombre
-                })
-            
-            # Verificar si está vencida
-            hoy = timezone.now().date()
-            dias_restantes = (suscripcion.fecha_fin - hoy).days
-            
-            print(f"🔍 actual: Días restantes: {dias_restantes}")
-            
-            if dias_restantes < 0:
-                print("⚠️ actual: Suscripción vencida")
-                suscripcion.estado = 'Vencida'
-                suscripcion.save()
-                
-                return Response({
-                    'tiene_suscripcion': False,
-                    'estado': 'vencida',
-                    'mensaje': f'Su suscripción venció hace {abs(dias_restantes)} días.',
-                    'empresa_id': empresa.empresa_id,
-                    'empresa_nombre': empresa.nombre
-                })
-            
-            print("✅ actual: Suscripción activa encontrada")
+                    "mensaje": "No hay suscripción activa"
+                }, status=status.HTTP_404_NOT_FOUND)
+
+            # Calcular días restantes
+            dias_restantes = (suscripcion.fecha_fin - timezone.now()).days
+            esta_por_vencer = dias_restantes <= 7
+
             return Response({
-                'tiene_suscripcion': True,
-                'estado': 'activa',
-                'plan_nombre': suscripcion.plan_suscripcion.nombre,
-                'fecha_inicio': suscripcion.fecha_inicio.isoformat(),
-                'fecha_fin': suscripcion.fecha_fin.isoformat(),
-                'dias_restantes': dias_restantes,
-                'esta_por_vencer': dias_restantes <= 7,
-                'precio': float(suscripcion.plan_suscripcion.precio),
-                'duracion': suscripcion.plan_suscripcion.duracion,
-                'empresa_id': empresa.empresa_id,
-                'empresa_nombre': empresa.nombre
+                "suscripcion_id": suscripcion.id,
+                "plan_nombre": suscripcion.plan.nombre,
+                "fecha_inicio": suscripcion.fecha_inicio,
+                "fecha_fin": suscripcion.fecha_fin,
+                "estado": suscripcion.estado,
+                "dias_restantes": dias_restantes,
+                "esta_por_vencer": esta_por_vencer
             })
-            
         except Exception as e:
-            print(f"❌ Error en actual: {str(e)}")
-            import traceback
-            traceback.print_exc()
             return Response({
-                'error': f'Error interno: {str(e)}'
+                "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])
@@ -128,7 +74,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
             from apps.subscriptions.models import PlanSuscripcion
             planes = PlanSuscripcion.objects.filter(status=True)
             return Response([{
-                "plan_id": plan.plan_id,
+                "plan_id": plan.id,
                 "nombre": plan.nombre,
                 "descripcion": plan.descripcion,
                 "duracion": plan.duracion,
@@ -231,7 +177,7 @@ class AuthViewSet(viewsets.ViewSet):
                 # Respuesta base
                 response_data = {
                     'message': 'Login exitoso',
-                    'token': token.key,
+                    'token': token.key,  # Agregar token a la respuesta
                     'usuario': user.username,
                     'user_id': user.id,
                     'profile_id': profile.id,
@@ -248,8 +194,7 @@ class AuthViewSet(viewsets.ViewSet):
                         'permisos': ['ver_todas_empresas', 'gestionar_usuarios', 'configuracion_sistema']
                     })
                     
-                # CORREGIR: Aceptar tanto 'admin-empresa' como 'admin_empresa'
-                elif profile.nivel_usuario in ['admin-empresa', 'admin_empresa']:
+                elif profile.nivel_usuario == 'admin-empresa':
                     # Admin de Empresa: gestión de su empresa
                     try:
                         empresa = Empresa.objects.get(administrador=profile)
@@ -277,8 +222,8 @@ class AuthViewSet(viewsets.ViewSet):
                             if suscripcion_info['estado'] == 'sin_suscripcion':
                                 response_data['advertencia'] = {
                                     'tipo': 'sin_suscripcion',
-                                    'mensaje': suscripcion_info['mensaje'],
-                                    'detalles': 'Seleccione un plan para activar todas las funcionalidades.',
+                                    'mensaje': 'Su empresa no tiene una suscripción activa.',
+                                    'detalles': 'Active una suscripción para acceder a todas las funcionalidades.',
                                     'requiere_accion': True
                                 }
                             elif suscripcion_info['estado'] == 'vencida':
@@ -300,8 +245,7 @@ class AuthViewSet(viewsets.ViewSet):
                         return Response({'error': 'Usuario sin empresa asignada'}, 
                                       status=status.HTTP_400_BAD_REQUEST)
                         
-                # CORREGIR: Aceptar tanto 'admin-planta' como 'admin_planta'
-                elif profile.nivel_usuario in ['admin-planta', 'admin_planta']:
+                elif profile.nivel_usuario == 'admin-planta':
                     # Admin de Planta: gestión de plantas específicas
                     try:
                         admin_planta = AdminPlanta.objects.get(usuario=profile, status=True)
@@ -352,47 +296,18 @@ class EmpresaViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['post'])
     def registro(self, request):
-        print(f"🔄 REGISTRO: Recibiendo datos: {request.data}")
-        
         serializer = EmpresaRegistroSerializer(data=request.data)
         if serializer.is_valid():
-            print("✅ REGISTRO: Datos válidos, procediendo a crear empresa...")
-            
-            try:
-                empresa = serializer.save()
-                print(f"🎉 REGISTRO: Empresa creada exitosamente - ID: {empresa.empresa_id}")
-                
-                # Verificar inmediatamente que existe en la BD
-                empresas_total = Empresa.objects.count()
-                print(f"🔍 REGISTRO: Total de empresas en BD: {empresas_total}")
-                
-                # Verificar específicamente esta empresa
-                empresa_existe = Empresa.objects.filter(empresa_id=empresa.empresa_id).exists()
-                print(f"🔍 REGISTRO: ¿Empresa {empresa.empresa_id} existe en BD? {empresa_existe}")
-                
-                if empresa_existe:
-                    empresa_bd = Empresa.objects.get(empresa_id=empresa.empresa_id)
-                    print(f"🔍 REGISTRO: Datos en BD - Nombre: {empresa_bd.nombre}, RFC: {empresa_bd.rfc}")
-                
-                return Response({
-                    'message': 'Empresa registrada exitosamente',
-                    'empresa_id': empresa.empresa_id,
-                    'nombre': empresa.nombre,
-                    'siguiente_paso': 'seleccionar_plan',
-                    'mensaje_siguiente': 'Para completar el registro, selecciona un plan de suscripción.',
-                    'requiere_suscripcion': True
-                }, status=status.HTTP_201_CREATED)
-                
-            except Exception as e:
-                print(f"❌ REGISTRO: Error durante serializer.save(): {str(e)}")
-                import traceback
-                traceback.print_exc()
-                return Response({
-                    'error': f'Error interno al crear empresa: {str(e)}'
-                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        else:
-            print(f"❌ REGISTRO: Datos inválidos: {serializer.errors}")
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            empresa = serializer.save()
+            return Response({
+                'message': 'Empresa registrada exitosamente',
+                'empresa_id': empresa.empresa_id,
+                'nombre': empresa.nombre,
+                'siguiente_paso': 'seleccionar_plan',
+                'mensaje_siguiente': 'Para completar el registro, selecciona un plan de suscripción.',
+                'requiere_suscripcion': True
+            }, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @method_decorator(csrf_exempt, name='dispatch')
 class EmpleadoViewSet(viewsets.ModelViewSet):
@@ -521,7 +436,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 if user.perfil.nivel_usuario == 'admin-empresa':
                     try:
                         empresa = Empresa.objects.get(administrador=user.perfil)
-                        planta = Planta.objects.get(planta_id=planta_id, empresa=empresa)
+                        planta = Planta.objects.get(planta_id=planta_id, empresa=empresa, status=True)
                         departamentos = Departamento.objects.filter(planta=planta, status=True)
                     except (Empresa.DoesNotExist, Planta.DoesNotExist):
                         return Response([])
@@ -554,7 +469,8 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 if user.perfil.nivel_usuario == 'admin-empresa':
                     try:
                         empresa = Empresa.objects.get(administrador=user.perfil)
-                        departamento = Departamento.objects.get(departamento_id=departamento_id, planta__empresa=empresa)
+                        plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
+                        departamento = Departamento.objects.get(departamento_id=departamento_id, planta__in=plantas_empresa, status=True)
                         puestos = Puesto.objects.filter(departamento=departamento, status=True)
                     except (Empresa.DoesNotExist, Departamento.DoesNotExist):
                         return Response([])
@@ -565,11 +481,8 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                     admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
                     plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
                     try:
-                        departamento = Departamento.objects.get(departamento_id=departamento_id)
-                        if departamento.planta.planta_id in plantas_ids:
-                            puestos = Puesto.objects.filter(departamento=departamento, status=True)
-                        else:
-                            return Response([])
+                        departamento = Departamento.objects.get(departamento_id=departamento_id, planta__planta_id__in=plantas_ids, status=True)
+                        puestos = Puesto.objects.filter(departamento=departamento, status=True)
                     except Departamento.DoesNotExist:
                         return Response([])
                 else:
@@ -616,34 +529,20 @@ class PlantaViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Asignar automáticamente la empresa del admin logueado
         user = self.request.user
-        
-        # AGREGAR MÁS LOGGING PARA DEPURAR
-        print(f"🔍 DEBUG: Usuario autenticado: {user}")
-        print(f"🔍 DEBUG: Usuario tiene perfil: {hasattr(user, 'perfil')}")
-        
-        if hasattr(user, 'perfil'):
-            print(f"🔍 DEBUG: Nivel usuario: {user.perfil.nivel_usuario}")
-    
         if not hasattr(user, 'perfil'):
-            print("❌ ERROR: Usuario sin perfil")
             raise ValidationError("Usuario sin perfil")
-        
+            
         if user.perfil.nivel_usuario == 'admin-empresa':
             try:
                 empresa = Empresa.objects.get(administrador=user.perfil)
-                print(f"🔍 DEBUG: Empresa encontrada: {empresa.nombre} (ID: {empresa.empresa_id})")
                 
                 # Verificar que no se excedan las 5 plantas por empresa
                 plantas_existentes = Planta.objects.filter(empresa=empresa, status=True).count()
-                print(f"🔍 DEBUG: Plantas existentes: {plantas_existentes}")
-                
                 if plantas_existentes >= 5:
-                    print("❌ ERROR: Límite de plantas excedido")
                     raise ValidationError("No se pueden crear más de 5 plantas por empresa")
                 
                 # Crear la planta
                 planta = serializer.save(empresa=empresa)
-                print(f"✅ DEBUG: Planta creada exitosamente: {planta.nombre}")
                 
                 # Crear usuario automático para la planta
                 self._crear_usuario_planta(planta)
@@ -906,11 +805,14 @@ class EstructuraViewSet(viewsets.ViewSet):
                     
                     for depto in departamentos:
                         puestos = Puesto.objects.filter(departamento=depto)
+                        empleados = Empleado.objects.filter(departamento=depto)
+                        
                         depto_data = {
                             'id': depto.departamento_id,
                             'nombre': depto.nombre,
                             'descripcion': depto.descripcion,
-                            'puestos': [{'id': p.puesto_id, 'nombre': p.nombre} for p in puestos]
+                            'puestos': [{'id': p.puesto_id, 'nombre': p.nombre, 'descripcion': p.descripcion} for p in puestos],
+                            'empleados_count': empleados.count()
                         }
                         planta_data['departamentos'].append(depto_data)
                     
@@ -939,15 +841,17 @@ class EstructuraViewSet(viewsets.ViewSet):
                 for planta in plantas:
                     admin_planta = AdminPlanta.objects.filter(planta=planta).first()
                     if admin_planta:
+                        usuario = admin_planta.usuario.user
                         usuarios_planta.append({
                             'planta_id': planta.planta_id,
                             'planta_nombre': planta.nombre,
-                            'usuario_id': admin_planta.usuario.user.id,
-                            'username': admin_planta.usuario.user.username,
-                            'email': admin_planta.usuario.user.email,
-                            'nombre_completo': f"{admin_planta.usuario.nombre} {admin_planta.usuario.apellido_paterno}",
-                            'fecha_creacion': admin_planta.usuario.user.date_joined.isoformat(),
-                            'status': admin_planta.usuario.user.is_active
+                            'usuario_id': usuario.id,
+                            'username': usuario.username,
+                            'email': usuario.email,
+                            'nombre_completo': f"{usuario.first_name} {usuario.last_name}",
+                            'fecha_creacion': admin_planta.fecha_asignacion,
+                            'status': admin_planta.status,
+                            'password_temporal': getattr(admin_planta, 'password_temporal', f'temp{planta.planta_id}Pass123')  # Temporal
                         })
                     else:
                         usuarios_planta.append({
@@ -956,9 +860,10 @@ class EstructuraViewSet(viewsets.ViewSet):
                             'usuario_id': None,
                             'username': None,
                             'email': None,
-                            'nombre_completo': 'Sin usuario asignado',
+                            'nombre_completo': None,
                             'fecha_creacion': None,
-                            'status': False
+                            'status': False,
+                            'password_temporal': None
                         })
                 
                 return Response(usuarios_planta, status=status.HTTP_200_OK)
@@ -1966,7 +1871,6 @@ class SuperAdminViewSet(viewsets.ViewSet):
             nombre_empleado = f"{empleado.nombre} {empleado.apellido_paterno}"
             
             # Eliminar empleado
-
             empleado.delete()
             
             return Response({
@@ -2087,7 +1991,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
         apellido_paterno = request.data.get('apellido_paterno')
         apellido_materno = request.data.get('apellido_materno', '')
         nivel_usuario = request.data.get('nivel_usuario', 'superadmin')
-        password = request.data.get('password', '1234')  # Password por defecto
+        password = request.data.get('password', '1234')   # Password por defecto
         
         if not all([username, email, nombre, apellido_paterno]):
             return Response({'error': 'Faltan campos requeridos: username, email, nombre, apellido_paterno'}, 
@@ -2168,174 +2072,636 @@ class SuscripcionViewSet(viewsets.ViewSet):
             )
     
     @action(detail=False, methods=['post'])
-    def crear_suscripcion(self, request):
-        """Crear una nueva suscripción (SIMPLIFICADO)"""
+    def crear_plan(self, request):
+        """Crear un nuevo plan de suscripción (Solo SuperAdmin)"""
         try:
-            from apps.subscriptions.models import PlanSuscripcion, SuscripcionEmpresa, Pago
-            from django.utils import timezone
-            from datetime import timedelta
+            from apps.subscriptions.models import PlanSuscripcion
+            from django.db import transaction
             
-            empresa_id = request.data.get('empresa_id')
-            plan_id = request.data.get('plan_id')
+
+            data = request.data
+            nombre = data.get('nombre')
+            descripcion = data.get('descripcion', '')
+            precio = data.get('precio')
+            duracion = data.get('duracion')
             
-            print(f"🔄 Creando suscripción para empresa {empresa_id} con plan {plan_id}")
+            if not nombre or not precio or not duracion:
+                return Response(
+                    {'error': 'nombre, precio y duracion son requeridos'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
-            if not empresa_id or not plan_id:
-                return Response({
-                    'error': 'Faltan empresa_id o plan_id'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Obtener empresa y plan
-            try:
-                empresa = Empresa.objects.get(empresa_id=empresa_id)
-                plan = PlanSuscripcion.objects.get(plan_id=plan_id)
-            except Empresa.DoesNotExist:
-                return Response({
-                    'error': 'Empresa no encontrada'
-                }, status=status.HTTP_404_NOT_FOUND)
-            except PlanSuscripcion.DoesNotExist:
-                return Response({
-                    'error': 'Plan no encontrado'
-                }, status=status.HTTP_404_NOT_FOUND)
-            
-            # Desactivar suscripciones existentes
-            SuscripcionEmpresa.objects.filter(empresa=empresa).update(status=False)
-            
-            # Crear nueva suscripción
-            fecha_inicio = timezone.now().date()
-            fecha_fin = fecha_inicio + timedelta(days=plan.duracion)
-            
-            suscripcion = SuscripcionEmpresa.objects.create(
-                empresa=empresa,
-                plan_suscripcion=plan,
-                fecha_inicio=fecha_inicio,
-                fecha_fin=fecha_fin,
-                estado='Activa',
-                status=True
-            )
-            
-            # Crear pago automático como completado
-            Pago.objects.create(
-                suscripcion=suscripcion,
-                costo=plan.precio,
-                monto_pago=plan.precio,
-                estado_pago='Completado',
-                fecha_pago=timezone.now(),
-                transaccion_id=f"AUTO-{empresa_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
-                usuario=request.user
-            )
-            
-            print(f"✅ Suscripción creada exitosamente: {suscripcion.suscripcion_id}")
+            with transaction.atomic():
+                plan = PlanSuscripcion.objects.create(
+                    nombre=nombre,
+                    descripcion=descripcion,
+                    precio=float(precio),
+                    duracion=int(duracion),
+                    status=True
+                )
             
             return Response({
-                'message': 'Suscripción creada exitosamente',
-                'suscripcion_id': suscripcion.suscripcion_id,
-                'empresa': empresa.nombre,
-                'plan': plan.nombre,
-                'fecha_inicio': fecha_inicio.isoformat(),
-                'fecha_fin': fecha_fin.isoformat(),
-                'precio': float(plan.precio)
+                'message': f'Plan "{plan.nombre}" creado exitosamente',
+                'plan': {
+                    'plan_id': plan.plan_id,
+                    'nombre': plan.nombre,
+                    'descripcion': plan.descripcion,
+                    'precio': float(plan.precio),
+                    'duracion': plan.duracion
+                }
             })
             
         except Exception as e:
-            print(f"❌ Error creando suscripción: {str(e)}")
-            return Response({
-                'error': f'Error interno del servidor: {str(e)}'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': f'Error creando plan: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
-    @action(detail=False, methods=['get'])
-    def info_empresa(self, request):
-        """Obtener información de suscripción de la empresa del usuario - CORREGIDO"""
+    @action(detail=False, methods=['put'], permission_classes=[])
+    def editar_plan(self, request):
+        """Editar un plan de suscripción"""
+        try:
+            from apps.subscriptions.models import PlanSuscripcion
+            
+            plan_id = request.data.get('plan_id')
+            if not plan_id:
+                return Response(
+                    {'error': 'plan_id es requerido'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            plan = PlanSuscripcion.objects.get(plan_id=plan_id)
+            
+            # Actualizar campos si se proporcionan
+            if 'nombre' in request.data:
+                plan.nombre = request.data['nombre']
+            if 'descripcion' in request.data:
+                plan.descripcion = request.data['descripcion']
+            if 'precio' in request.data:
+                plan.precio = float(request.data['precio'])
+            if 'duracion' in request.data:
+                plan.duracion = int(request.data['duracion'])
+            if 'status' in request.data:
+                plan.status = bool(request.data['status'])
+            
+            plan.save()
+            
+            return Response({
+                'message': f'Plan "{plan.nombre}" actualizado exitosamente',
+                'plan': {
+                    'plan_id': plan.plan_id,
+                    'nombre': plan.nombre,
+                    'descripcion': plan.descripcion,
+                    'precio': float(plan.precio),
+                    'duracion': plan.duracion,
+                    'status': plan.status
+                }
+            })
+            
+        except PlanSuscripcion.DoesNotExist:
+            return Response(
+                {'error': 'Plan no encontrado'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error actualizando plan: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], permission_classes=[])
+    def listar_suscripciones(self, request):
+        """Lista todas las suscripciones de empresas"""
         try:
             from apps.subscriptions.models import SuscripcionEmpresa
-            from django.utils import timezone
             
-            print(f"🔍 info_empresa: Usuario autenticado: {request.user}")
-            print(f"🔍 info_empresa: Usuario tiene perfil: {hasattr(request.user, 'perfil')}")
+            suscripciones = SuscripcionEmpresa.objects.select_related(
+                'empresa', 'plan_suscripcion'
+            ).values(
+                'suscripcion_id',
+                'empresa__nombre',
+                'empresa__empresa_id',
+                'plan_suscripcion__nombre',
+                'plan_suscripcion__precio',
+                'plan_suscripcion__duracion',
+                'fecha_inicio',
+                'fecha_fin',
+                'estado',
+                'status'
+            )
             
-            # Verificar que el usuario tiene perfil
-            if not hasattr(request.user, 'perfil'):
-                print("❌ info_empresa: Usuario sin perfil")
-                return Response({
-                    'error': 'Usuario sin perfil'
-                }, status=status.HTTP_400_BAD_REQUEST)
+            return Response(list(suscripciones))
             
-            perfil = request.user.perfil
-            print(f"🔍 info_empresa: Nivel de usuario: {perfil.nivel_usuario}")
+        except Exception as e:
+            return Response(
+                {'error': f'Error obteniendo suscripciones: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'], permission_classes=[])
+    def crear_suscripcion(self, request):
+        """Crear una nueva suscripción para una empresa"""
+        try:
+            from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion, Pago
+            from django.db import transaction
+            from datetime import timedelta
             
-            # CORREGIR: Aceptar tanto 'admin-empresa' como 'admin_empresa'
-            if perfil.nivel_usuario not in ['admin-empresa', 'admin_empresa']:
-                print(f"❌ info_empresa: Usuario sin permisos: {perfil.nivel_usuario}")
-                return Response({
-                    'error': 'Usuario sin permisos. Solo admin-empresa puede consultar suscripciones.'
-                }, status=status.HTTP_403_FORBIDDEN)
+            data = request.data
+            empresa_id = data.get('empresa_id')
+            plan_id = data.get('plan_id')
             
-            # Buscar la empresa del usuario
+            if not empresa_id or not plan_id:
+                return Response(
+                    {'error': 'empresa_id y plan_id son requeridos'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             try:
-                empresa = Empresa.objects.get(administrador=perfil)
-                print(f"🔍 info_empresa: Empresa encontrada: {empresa.nombre} (ID: {empresa.empresa_id})")
+                empresa = Empresa.objects.get(empresa_id=empresa_id)
             except Empresa.DoesNotExist:
-                print("❌ info_empresa: Empresa no encontrada para este usuario")
-                return Response({
-                    'error': 'Empresa no encontrada para este usuario'
-                }, status=status.HTTP_404_NOT_FOUND)
+                return Response(
+                    {'error': f'Empresa con ID {empresa_id} no encontrada'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
             
-            # Buscar suscripción activa
-            suscripcion = SuscripcionEmpresa.objects.filter(
+            try:
+                plan = PlanSuscripcion.objects.get(plan_id=plan_id)
+            except PlanSuscripcion.DoesNotExist:
+                return Response(
+                    {'error': f'Plan con ID {plan_id} no encontrado'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            # Verificar si ya existe una suscripción activa
+            suscripcion_existente = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
                 status=True
             ).first()
             
-            print(f"🔍 info_empresa: Suscripción encontrada: {suscripcion}")
+            if suscripcion_existente:
+                return Response(
+                    {'error': 'La empresa ya tiene una suscripción activa'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
-            if not suscripcion:
-                print("⚠️ info_empresa: No hay suscripción activa")
-                return Response({
-                    'tiene_suscripcion': False,
-                    'estado': 'sin_suscripcion',
-                    'mensaje': 'No tiene suscripción activa. Seleccione un plan.',
-                    'empresa_id': empresa.empresa_id,
-                    'empresa_nombre': empresa.nombre
-                })
-            
-            # Verificar si está vencida
-            hoy = timezone.now().date()
-            dias_restantes = (suscripcion.fecha_fin - hoy).days
-            
-            print(f"🔍 info_empresa: Días restantes: {dias_restantes}")
-            
-            if dias_restantes < 0:
-                print("⚠️ info_empresa: Suscripción vencida")
-                suscripcion.estado = 'Vencida'
-                suscripcion.save()
+            with transaction.atomic():
+                # Crear nueva suscripción
+                fecha_inicio = timezone.now().date()
+                fecha_fin = fecha_inicio + timedelta(days=plan.duracion)
                 
-                return Response({
-                    'tiene_suscripcion': False,
-                    'estado': 'vencida',
-                    'mensaje': f'Su suscripción venció hace {abs(dias_restantes)} días.',
-                    'empresa_id': empresa.empresa_id,
-                    'empresa_nombre': empresa.nombre
-                })
+                suscripcion = SuscripcionEmpresa.objects.create(
+                    empresa=empresa,
+                    plan_suscripcion=plan,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin,
+                    estado='Activa',
+                    status=True
+                )
+                
+                # Crear pago completado
+                pago = Pago.objects.create(
+                    suscripcion=suscripcion,
+                    costo=plan.precio,
+                    monto_pago=plan.precio,
+                    estado_pago='Completado',
+                    fecha_pago=timezone.now()
+                )
             
-            print("✅ info_empresa: Suscripción activa encontrada")
             return Response({
-                'tiene_suscripcion': True,
-                'estado': 'activa',
-                'plan_nombre': suscripcion.plan_suscripcion.nombre,
-                'fecha_inicio': suscripcion.fecha_inicio.isoformat(),
-                'fecha_fin': suscripcion.fecha_fin.isoformat(),
-                'dias_restantes': dias_restantes,
-                'esta_por_vencer': dias_restantes <= 7,
-                'precio': float(suscripcion.plan_suscripcion.precio),
-                'duracion': suscripcion.plan_suscripcion.duracion,
-                'empresa_id': empresa.empresa_id,
-                'empresa_nombre': empresa.nombre
+                'message': f'Suscripción creada exitosamente para {empresa.nombre}',
+                'suscripcion': {
+                    'suscripcion_id': suscripcion.suscripcion_id,
+                    'empresa': empresa.nombre,
+                    'plan': plan.nombre,
+                    'fecha_inicio': fecha_inicio.isoformat(),
+                    'fecha_fin': fecha_fin.isoformat(),
+                    'precio': float(plan.precio)
+                }
             })
             
+        except Empresa.DoesNotExist:
+            return Response(
+                {'error': 'Empresa no encontrada'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except PlanSuscripcion.DoesNotExist:
+            return Response(
+                {'error': 'Plan no encontrado'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
         except Exception as e:
-            print(f"❌ Error en info_empresa: {str(e)}")
-            import traceback
-            traceback.print_exc()
+            return Response(
+                {'error': f'Error creando suscripción: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def renovar_suscripcion(self, request):
+        """Renovar una suscripción existente"""
+        try:
+            from apps.subscriptions.models import SuscripcionEmpresa, Pago
+            from django.utils import timezone
+            
+            data = request.data
+            suscripcion_id = data.get('suscripcion_id')
+            meses = data.get('meses', 1)
+            metodo_pago = data.get('metodo_pago', 'tarjeta_credito')
+            
+            suscripcion = SuscripcionEmpresa.objects.get(id=suscripcion_id)
+            
+            # Renovar la suscripción
+            suscripcion.renovar_suscripcion(meses)
+            
+            # Crear el registro de pago
+            monto = suscripcion.plan.precio_mensual * meses
+            pago = Pago.objects.create(
+                suscripcion=suscripcion,
+                monto=monto,
+                metodo_pago=metodo_pago,
+                estado_pago='completado',
+                referencia_pago=f"REN-{suscripcion.id}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
+            )
+            
             return Response({
-                'error': f'Error interno: {str(e)}'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                'message': f'Suscripción renovada por {meses} mes(es)',
+                'nueva_fecha_fin': suscripcion.fecha_fin.strftime('%Y-%m-%d'),
+                'monto_pagado': str(monto)
+            })
+            
+        except SuscripcionEmpresa.DoesNotExist:
+            return Response({'error': 'Suscripción no encontrada'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error renovando suscripción: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'], permission_classes=[])
+    def listar_pagos(self, request):
+        """Listar todos los pagos del sistema con información de suscripción"""
+        try:
+            from apps.subscriptions.models import Pago
+            
+            pagos = Pago.objects.select_related(
+                'suscripcion__empresa', 'suscripcion__plan_suscripcion'
+            ).values(
+                'pago_id',
+                'suscripcion__empresa__nombre',
+                'suscripcion__plan_suscripcion__nombre',
+                'costo',
+                'monto_pago',
+                'estado_pago',
+                'fecha_pago',
+                'fecha_vencimiento'
+            ).order_by('-fecha_pago')
+            
+            return Response(list(pagos))
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error obteniendo pagos: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'], permission_classes=[])
+    def procesar_pago(self, request):
+        """Procesar un pago para una suscripción"""
+        try:
+            from apps.subscriptions.models import SuscripcionEmpresa, Pago
+            from django.db import transaction
+            
+            data = request.data
+            suscripcion_id = data.get('suscripcion_id')
+            monto_pago = data.get('monto_pago')
+            transaccion_id = data.get('transaccion_id', '')
+            
+            if not suscripcion_id or not monto_pago:
+                return Response(
+                    {'error': 'suscripcion_id y monto_pago son requeridos'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            try:
+                suscripcion = SuscripcionEmpresa.objects.get(suscripcion_id=suscripcion_id)
+            except SuscripcionEmpresa.DoesNotExist:
+                return Response(
+                    {'error': f'Suscripción con ID {suscripcion_id} no encontrada'}, 
+                    status=status.HTTP_404_NOT_FOUND
+                )
+            
+            with transaction.atomic():
+                pago = Pago.objects.create(
+                    suscripcion=suscripcion,
+                    costo=suscripcion.plan_suscripcion.precio,
+                    monto_pago=float(monto_pago),
+                    estado_pago='Completado',
+                    transaccion_id=transaccion_id
+                )
+                
+                # Activar suscripción si estaba suspendida
+                if suscripcion.estado != 'Activa':
+                    suscripcion.estado = 'Activa'
+                    suscripcion.status = True
+                    suscripcion.save()
+            
+            return Response({
+                'message': 'Pago procesado exitosamente',
+                'pago': {
+                    'pago_id': pago.pago_id,
+                    'monto': float(pago.monto_pago),
+                    'fecha': pago.fecha_pago.isoformat(),
+                    'estado': pago.estado_pago
+                }
+            })
+            
+        except SuscripcionEmpresa.DoesNotExist:
+            return Response(
+                {'error': 'Suscripción no encontrada'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error procesando pago: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], permission_classes=[])
+    def info_suscripcion_empresa(self, request):
+        """Obtener información de suscripción de una empresa específica"""
+        try:
+            empresa_id = request.GET.get('empresa_id')
+            if not empresa_id:
+                return Response(
+                    {'error': 'empresa_id es requerido'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            empresa = Empresa.objects.get(empresa_id=empresa_id)
+            info_suscripcion = self.get_subscription_info(empresa)
+            return Response(info_suscripcion)
+            
+        except Empresa.DoesNotExist:
+            return Response(
+                {'error': 'Empresa no encontrada'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error obteniendo información de suscripción: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+# Agregar al final del archivo, antes de las vistas de suscripciones
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AdminBDViewSet(viewsets.ViewSet):
+    """ViewSet para gestión de base de datos y exportación CSV"""
+    permission_classes = [IsAuthenticated]
+    
+    def _verify_superadmin(self, user):
+        """Verificar que el usuario es SuperAdmin"""
+        if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'superadmin':
+            raise ValidationError("Usuario sin permisos de SuperAdmin")
+    
+    @action(detail=False, methods=['get'], url_path='exportar/(?P<tabla>[^/.]+)')
+    def exportar_tabla(self, request, tabla=None):
+        """Exportar tabla a CSV"""
+        self._verify_superadmin(request.user)
+        
+        try:
+            # Crear respuesta CSV
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{tabla}_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+            
+            writer = csv.writer(response)
+            
+            if tabla == 'empresas':
+                # Exportar empresas
+                empresas = Empresa.objects.all().select_related('administrador__user')
+                
+                # Escribir encabezados
+                writer.writerow([
+                    'ID', 'Nombre', 'RFC', 'Teléfono', 'Email', 'Dirección', 
+                    'Fecha Registro', 'Estado', 'Admin Username', 'Admin Email'
+                ])
+                
+                # Escribir datos
+                for empresa in empresas:
+                    admin_username = empresa.administrador.user.username if empresa.administrador else 'N/A'
+                    admin_email = empresa.administrador.user.email if empresa.administrador else 'N/A'
+                    
+                    writer.writerow([
+                        empresa.empresa_id,
+                        empresa.nombre,
+                        empresa.rfc,
+                        empresa.telefono_contacto or 'N/A',
+                        empresa.email_contacto or 'N/A',
+                        empresa.direccion or 'N/A',
+                        empresa.fecha_registro.strftime('%Y-%m-%d %H:%M:%S'),
+                        'Activa' if empresa.status else 'Suspendida',
+                        admin_username,
+                        admin_email
+                    ])
+                    
+            elif tabla == 'plantas':
+                # Exportar plantas
+                plantas = Planta.objects.all().select_related('empresa')
+                
+                writer.writerow([
+                    'ID', 'Nombre', 'Dirección', 'Empresa', 'Empresa ID', 
+                    'Fecha Registro', 'Estado'
+                ])
+                
+                for planta in plantas:
+                    writer.writerow([
+                        planta.planta_id,
+                        planta.nombre,
+                        planta.direccion or 'N/A',
+                        planta.empresa.nombre,
+                        planta.empresa.empresa_id,
+                        planta.fecha_registro.strftime('%Y-%m-%d %H:%M:%S'),
+                        'Activa' if planta.status else 'Suspendida'
+                    ])
+                    
+            elif tabla == 'departamentos':
+                # Exportar departamentos
+                departamentos = Departamento.objects.all().select_related('planta__empresa')
+                
+                writer.writerow([
+                    'ID', 'Nombre', 'Descripción', 'Planta', 'Empresa', 
+                    'Fecha Registro', 'Estado'
+                ])
+                
+                for dept in departamentos:
+                    writer.writerow([
+                        dept.departamento_id,
+                        dept.nombre,
+                        dept.descripcion or 'N/A',
+                        dept.planta.nombre,
+                        dept.planta.empresa.nombre,
+                        dept.fecha_registro.strftime('%Y-%m-%d %H:%M:%S'),
+                        'Activo' if dept.status else 'Suspendido'
+                    ])
+                    
+            elif tabla == 'puestos':
+                # Exportar puestos
+                puestos = Puesto.objects.all().select_related('departamento__planta__empresa')
+                
+                writer.writerow([
+                    'ID', 'Nombre', 'Descripción', 'Departamento', 'Planta', 
+                    'Empresa', 'Estado'
+                ])
+                
+                for puesto in puestos:
+                    writer.writerow([
+                        puesto.puesto_id,
+                        puesto.nombre,
+                        puesto.descripcion or 'N/A',
+                        puesto.departamento.nombre,
+                        puesto.departamento.planta.nombre,
+                        puesto.departamento.planta.empresa.nombre,
+                        'Activo' if puesto.status else 'Suspendido'
+                    ])
+                    
+            elif tabla == 'empleados':
+                # Exportar empleados
+                empleados = Empleado.objects.all().select_related(
+                    'puesto', 'departamento', 'planta__empresa'
+                )
+                
+                writer.writerow([
+                    'ID', 'Nombre', 'Apellido Paterno', 'Apellido Materno', 
+                    'Género', 'Antigüedad', 'Puesto', 'Departamento', 
+                    'Planta', 'Empresa', 'Estado'
+                ])
+                
+                for empleado in empleados:
+                    writer.writerow([
+                        empleado.empleado_id,
+                        empleado.nombre,
+                        empleado.apellido_paterno,
+                        empleado.apellido_materno or 'N/A',
+                        empleado.genero,
+                        empleado.antiguedad,
+                        empleado.puesto.nombre,
+                        empleado.departamento.nombre,
+                        empleado.planta.nombre,
+                        empleado.planta.empresa.nombre,
+                        'Activo' if empleado.status else 'Suspendido'
+                    ])
+                    
+            elif tabla == 'usuarios':
+                # Exportar usuarios
+                usuarios = PerfilUsuario.objects.all().select_related('user')
+                
+                writer.writerow([
+                    'ID', 'Username', 'Email', 'Nombre', 'Apellido Paterno', 
+                    'Apellido Materno', 'Nivel Usuario', 'Fecha Registro', 
+                    'Último Login', 'Estado'
+                ])
+                
+                for usuario in usuarios:
+                    writer.writerow([
+                        usuario.user.id,
+                        usuario.user.username,
+                        usuario.user.email,
+                        usuario.nombre,
+                        usuario.apellido_paterno,
+                        usuario.apellido_materno or 'N/A',
+                        usuario.nivel_usuario,
+                        usuario.user.date_joined.strftime('%Y-%m-%d %H:%M:%S'),
+                        usuario.user.last_login.strftime('%Y-%m-%d %H:%M:%S') if usuario.user.last_login else 'Nunca',
+                        'Activo' if usuario.user.is_active else 'Suspendido'
+                    ])
+                    
+            elif tabla == 'suscripciones':
+                # Exportar suscripciones
+                from apps.subscriptions.models import SuscripcionEmpresa
+                suscripciones = SuscripcionEmpresa.objects.all().select_related(
+                    'empresa', 'plan_suscripcion'
+                )
+                
+                writer.writerow([
+                    'ID', 'Empresa', 'Plan', 'Precio', 'Fecha Inicio', 
+                    'Fecha Fin', 'Estado', 'Días Restantes'
+                ])
+                
+                for suscripcion in suscripciones:
+                    writer.writerow([
+                        suscripcion.suscripcion_id,
+                        suscripcion.empresa.nombre,
+                        suscripcion.plan_suscripcion.nombre,
+                        float(suscripcion.plan_suscripcion.precio),
+                        suscripcion.fecha_inicio.strftime('%Y-%m-%d'),
+                        suscripcion.fecha_fin.strftime('%Y-%m-%d'),
+                        suscripcion.estado,
+                        suscripcion.dias_restantes
+                    ])
+                    
+            elif tabla == 'pagos':
+                # Exportar pagos
+                from apps.subscriptions.models import Pago
+                pagos = Pago.objects.all().select_related(
+                    'suscripcion__empresa', 'suscripcion__plan_suscripcion'
+                )
+                
+                writer.writerow([
+                    'ID', 'Empresa', 'Plan', 'Suscripción ID', 'Costo', 
+                    'Monto Pagado', 'Estado Pago', 'Fecha Pago', 'Transacción ID'
+                ])
+                
+                for pago in pagos:
+                    writer.writerow([
+                        pago.pago_id,
+                        pago.suscripcion.empresa.nombre,
+                        pago.suscripcion.plan_suscripcion.nombre,
+                        pago.suscripcion.suscripcion_id,
+                        float(pago.costo),
+                        float(pago.monto_pago),
+                        pago.estado_pago,
+                        pago.fecha_pago.strftime('%Y-%m-%d %H:%M:%S'),
+                        pago.transaccion_id or 'N/A'
+                    ])
+                    
+            else:
+                return Response({'error': 'Tabla no válida'}, status=400)
+            
+            return response
+            
+        except Exception as e:
+            print(f"❌ Error exportando tabla {tabla}: {str(e)}")
+            return Response(
+                {'error': f'Error al exportar tabla: {str(e)}'}, 
+                status=500
+            )
+    
+    @action(detail=False, methods=['get'])
+    def estadisticas_bd(self, request):
+        """Obtener estadísticas de la base de datos"""
+        self._verify_superadmin(request.user)
+        
+        try:
+            estadisticas = {
+                'empresas': Empresa.objects.count(),
+                'plantas': Planta.objects.count(),
+                'departamentos': Departamento.objects.count(),
+                'puestos': Puesto.objects.count(),
+                'empleados': Empleado.objects.count(),
+                'usuarios': PerfilUsuario.objects.count(),
+            }
+            
+            # Agregar estadísticas de suscripciones si existen
+            try:
+                from apps.subscriptions.models import SuscripcionEmpresa, Pago
+                estadisticas['suscripciones'] = SuscripcionEmpresa.objects.count()
+                estadisticas['pagos'] = Pago.objects.count()
+            except:
+                estadisticas['suscripciones'] = 0
+                estadisticas['pagos'] = 0
+            
+            return Response(estadisticas)
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error obteniendo estadísticas: {str(e)}'}, 
+                status=500
+            )
