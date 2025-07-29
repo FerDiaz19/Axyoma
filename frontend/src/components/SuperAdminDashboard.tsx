@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { logout } from '../services/authService';
 import EvaluacionesGestion from './EvaluacionesGestion';
+import GestionBD from './GestionBD';
 import {
   getEstadisticasSistema,
   getEmpresas,
@@ -111,7 +112,7 @@ interface EmpleadoExtendido extends SuperAdminEmpleado {
 }
 
 const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos' | 'evaluaciones'>('estadisticas');
+  const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos' | 'evaluaciones' | 'gestion-bd'>('estadisticas');
   const [loading, setLoading] = useState(false);
   
   // Modificamos los estados para usar los tipos extendidos
@@ -1872,6 +1873,13 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               <span className="nav-icon">📝</span>
               <span className="nav-text">Evaluaciones</span>
             </button>
+            <button 
+              className={activeSection === 'gestion-bd' ? 'active' : ''}
+              onClick={() => setActiveSection('gestion-bd')}
+            >
+              <span className="nav-icon">🗄️</span>
+              <span className="nav-text">Gestión BD</span>
+            </button>
         </nav>
       </aside>
 
@@ -1912,6 +1920,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           {activeSection === 'suscripciones' && renderSuscripciones()}
           {activeSection === 'pagos' && renderPagos()}
           {activeSection === 'evaluaciones' && <EvaluacionesGestion userData={{ nivel_usuario: 'superadmin' }} />}
+          {activeSection === 'gestion-bd' && <GestionBD />}
 
       {modalEditar.isOpen && (
         <EditModal

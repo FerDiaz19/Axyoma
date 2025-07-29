@@ -88,7 +88,7 @@ def verificar_datos():
 
 ---
 
-## 📊 ESTADO ACTUAL (85% COMPLETO)
+## 📊 ESTADO ACTUAL (95% COMPLETO)
 
 ### ✅ **MÓDULOS COMPLETAMENTE FUNCIONALES:**
 
@@ -104,6 +104,7 @@ def verificar_datos():
 - **Gestión completa:** plantas, departamentos, puestos, empleados
 - **Estadísticas:** contadores en tiempo real
 - **Filtros:** búsqueda, estado, nivel de usuario
+- **🆕 Gestión BD:** exportación CSV de todas las tablas
 - **Archivos:** `SuperAdminDashboard.tsx`, `superAdminService.ts`
 
 #### **🏢 Dashboard Admin Empresa (100%):**
@@ -112,6 +113,7 @@ def verificar_datos():
 - **Gestión organizacional:** departamentos, puestos
 - **CRUD empleados:** crear, editar, eliminar empleados
 - **Estructura automática:** se crea al registrar empresa
+- **🆕 Exportación datos:** CSV de empleados, plantas, departamentos, puestos de su empresa
 - **Archivos:** `EmpresaAdminDashboard.tsx`, `organizacionService.ts`
 
 #### **💳 Sistema de Suscripciones (100%):**
@@ -127,6 +129,15 @@ def verificar_datos():
 - **Estructura automática:** departamentos y puestos
 - **Suscripción automática:** plan básico incluido
 - **Archivos:** `Register.tsx`, `serializers.py`
+
+#### **🆕 📊 Sistema de Gestión BD (100% COMPLETADO):**
+- **Exportación CSV:** todas las tablas con permisos por usuario
+- **Logging y auditoría:** registro de todas las operaciones
+- **Seguridad:** permisos granulares por nivel de usuario
+- **API endpoints:** `/api/admin-bd/exportar/<tabla>/`
+- **Frontend completo:** componente integrado en SuperAdminDashboard
+- **10 tablas exportables:** usuarios, empresas, plantas, suscripciones, evaluaciones, etc.
+- **Archivos:** `apps/admin_bd/` (backend), `GestionBD.tsx` (frontend)
 
 ### ⚠️ **MÓDULOS PARCIALES:**
 
@@ -150,13 +161,19 @@ python verificar_sistema.py
 
 # 2. Verificar rutas disponibles  
 python verificar_rutas.py
-# Muestra todos los endpoints disponibles
+# Muestra todos los endpoints disponibles + nuevos endpoints de gestión BD
 
 # 3. Ver datos cargados
 python manage.py shell
 >>> from apps.users.models import *
 >>> print(f"Empresas: {Empresa.objects.count()}")
 >>> print(f"Usuarios: {PerfilUsuario.objects.count()}")
+
+# 4. 🆕 Probar nuevos endpoints de gestión BD
+# GET /api/admin-bd/tablas-exportables/          # Listar tablas exportables
+# GET /api/admin-bd/exportar/usuarios/           # Exportar usuarios a CSV
+# GET /api/admin-bd/exportar/empresas/           # Exportar empresas a CSV
+# GET /api/admin-bd/estadisticas-exportacion/    # Ver estadísticas
 ```
 
 ### **Si algo falla, reinicio completo:**
