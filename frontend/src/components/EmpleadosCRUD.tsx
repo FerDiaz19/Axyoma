@@ -12,15 +12,30 @@ import '../css/EmpleadosCRUD.css';
 
 interface Empleado {
   empleado_id?: number;
+  numero_empleado?: string;
   nombre: string;
   apellido_paterno: string;
   apellido_materno?: string;
-  genero: 'Masculino' | 'Femenino';
+  email?: string;
+  telefono?: string;
+  fecha_ingreso?: string;
+  fecha_registro?: string;
+  genero?: 'Masculino' | 'Femenino';
   antiguedad?: number;
   status?: boolean;
   puesto: number;
-  departamento: number;
-  planta: number;
+  departamento?: number;
+  planta?: number;
+  
+  // Datos relacionados del backend
+  empresa_id?: number;
+  empresa_nombre?: string;
+  planta_id?: number;
+  planta_nombre?: string;
+  departamento_id?: number;
+  departamento_nombre?: string;
+  puesto_id?: number;
+  puesto_nombre?: string;
 }
 
 interface Planta {
@@ -61,11 +76,12 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
     nombre: '',
     apellido_paterno: '',
     apellido_materno: '',
+    email: '',
+    telefono: '',
+    fecha_ingreso: '',
     genero: 'Masculino',
     antiguedad: 0,
-    puesto: 0,
-    departamento: 0,
-    planta: 0
+    puesto: 0
   });
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
@@ -127,7 +143,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
     
     if (filtroDepartamento) {
       filtrados = filtrados.filter(empleado => 
-        empleado.departamento === parseInt(filtroDepartamento)
+        empleado.departamento_id === parseInt(filtroDepartamento)
       );
     }
     
@@ -140,28 +156,10 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
     setEmpleadosFiltrados(filtrados);
   }, [empleados, filtroNombre, filtroDepartamento, filtroPuesto]);
 
-  const filteredDepartamentos = departamentos.filter(dept => dept.planta_id === formData.planta);
-  
-  const filteredPuestos = puestos.filter(puesto => puesto.departamento_id === formData.departamento);
-
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // Reset dependent fields when parent changes
-    if (name === 'planta') {
-      setFormData({
-        ...formData,
-        planta: parseInt(value) || 0,
-        departamento: 0, // Reset departamento when planta changes
-        puesto: 0 // Reset puesto when planta changes
-      });
-    } else if (name === 'departamento') {
-      setFormData({
-        ...formData,
-        departamento: parseInt(value) || 0,
-        puesto: 0 // Reset puesto when departamento changes
-      });
-    } else if (name === 'puesto' || name === 'antiguedad') {
+    if (name === 'puesto' || name === 'antiguedad') {
       setFormData({
         ...formData,
         [name]: parseInt(value) || 0
@@ -223,11 +221,12 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
       nombre: '',
       apellido_paterno: '',
       apellido_materno: '',
+      email: '',
+      telefono: '',
+      fecha_ingreso: '',
       genero: 'Masculino',
       antiguedad: 0,
-      puesto: 0,
-      departamento: 0,
-      planta: 0
+      puesto: 0
     });
     setEditingId(null);
     setShowForm(false);
@@ -383,53 +382,6 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="planta">Planta:</label>
-              {userData?.tipo_dashboard === 'admin-planta' ? (
-                <input
-                  type="text"
-                  value={userData?.nombre_planta || 'Planta no asignada'}
-                  disabled
-                  className="readonly-input"
-                  title="Como Admin de Planta, solo puedes gestionar empleados de tu planta asignada"
-                />
-              ) : (
-                <select
-                  id="planta"
-                  name="planta"
-                  value={formData.planta || ''}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Seleccionar planta</option>
-                  {plantas.map(planta => (
-                    <option key={planta.planta_id} value={planta.planta_id}>
-                      {planta.nombre}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="departamento">Departamento:</label>
-              <select
-                id="departamento"
-                name="departamento"
-                value={formData.departamento || ''}
-                onChange={handleChange}
-                required
-                disabled={!formData.planta}
-              >
-                <option value="">Seleccionar departamento</option>
-                {filteredDepartamentos.map(dept => (
-                  <option key={dept.departamento_id} value={dept.departamento_id}>
-                    {dept.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
               <label htmlFor="puesto">Puesto:</label>
               <select
                 id="puesto"
@@ -437,10 +389,9 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
                 value={formData.puesto || ''}
                 onChange={handleChange}
                 required
-                disabled={!formData.departamento}
               >
                 <option value="">Seleccionar puesto</option>
-                {filteredPuestos.map(puesto => (
+                {puestos.map(puesto => (
                   <option key={puesto.puesto_id} value={puesto.puesto_id}>
                     {puesto.nombre}
                   </option>
@@ -479,11 +430,11 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
               <tr key={empleado.empleado_id}>
                 <td>{empleado.nombre}</td>
                 <td>{`${empleado.apellido_paterno} ${empleado.apellido_materno || ''}`}</td>
-                <td>{empleado.genero}</td>
+                <td>{empleado.genero || 'N/A'}</td>
                 <td>{empleado.antiguedad || 0} años</td>
-                <td>{plantas.find(p => p.planta_id === empleado.planta)?.nombre || 'N/A'}</td>
-                <td>{departamentos.find(d => d.departamento_id === empleado.departamento)?.nombre || 'N/A'}</td>
-                <td>{puestos.find(p => p.puesto_id === empleado.puesto)?.nombre || 'N/A'}</td>
+                <td>{empleado.planta_nombre || 'N/A'}</td>
+                <td>{empleado.departamento_nombre || 'N/A'}</td>
+                <td>{empleado.puesto_nombre || 'N/A'}</td>
                 <td>
                   <div className="action-buttons">
                     <button 

@@ -16,12 +16,7 @@ import {
   suspenderDepartamento,
   suspenderPuesto,
   suspenderEmpleado,
-  eliminarEmpresa,
-  eliminarUsuario,
-  eliminarPlanta,
-  eliminarDepartamento,
-  eliminarPuesto,
-  eliminarEmpleado,
+  suspenderPlan,
   editarEmpresa,
   editarUsuario,
   editarPlanta,
@@ -112,7 +107,7 @@ interface EmpleadoExtendido extends SuperAdminEmpleado {
 }
 
 const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos' | 'evaluaciones' | 'gestion-bd'>('estadisticas');
+  const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos' | 'evaluaciones' | 'gestion-bd'>('empresas');
   const [loading, setLoading] = useState(false);
   
   // Modificamos los estados para usar los tipos extendidos
@@ -299,9 +294,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           break;
           
         case 'pagos':
-          // Temporalmente deshabilitado - endpoint no disponible
-          console.log('⚠️ Pagos temporalmente deshabilitados');
-          setPagos([]);
+          const pagosData = await listarPagos();
+          setPagos(pagosData);
           break;
       }
       
@@ -381,8 +375,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             item.empleado_id === id ? { ...item, status: !currentStatus } : item
           ));
         } else if (type === 'plan') {
-          const { cambiarEstadoPlan } = await import('../services/suscripcionService');
-          await cambiarEstadoPlan(id, !currentStatus);
+          await suspenderPlan(id, action);
           setPlanes(prev => prev.map(item => 
             item.plan_id === id ? { ...item, status: !currentStatus } : item
           ));
@@ -393,42 +386,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       } catch (error: any) {
         console.error(`Error al ${action}:`, error);
         alert(error.message || `Error al ${action}`);
-      }
-    }
-  };
-
-  // Función para eliminar
-  const handleDelete = async (type: string, id: number, nombre: string) => {
-    const confirmMessage = `¿Está seguro de ELIMINAR PERMANENTEMENTE "${nombre}"?\n\nEsta acción NO se puede deshacer y eliminará todos los datos relacionados.\n\nEscriba "ELIMINAR" para confirmar:`;
-    
-    const confirmation = prompt(confirmMessage);
-    if (confirmation === 'ELIMINAR') {
-      try {
-        if (type === 'empresa') {
-          await eliminarEmpresa(id);
-          setEmpresas(prev => prev.filter(item => item.empresa_id !== id));
-        } else if (type === 'usuario') {
-          await eliminarUsuario(id);
-          setUsuarios(prev => prev.filter(item => item.user_id !== id));
-        } else if (type === 'planta') {
-          await eliminarPlanta(id);
-          setPlantas(prev => prev.filter(item => item.planta_id !== id));
-        } else if (type === 'departamento') {
-          await eliminarDepartamento(id);
-          setDepartamentos(prev => prev.filter(item => item.departamento_id !== id));
-        } else if (type === 'puesto') {
-          await eliminarPuesto(id);
-          setPuestos(prev => prev.filter(item => item.puesto_id !== id));
-        } else if (type === 'empleado') {
-          await eliminarEmpleado(id);
-          setEmpleados(prev => prev.filter(item => item.empleado_id !== id));
-        }
-        
-        alert(`${nombre} eliminado exitosamente`);
-        
-      } catch (error: any) {
-        console.error('Error al eliminar:', error);
-        alert(error.message || 'Error al eliminar');
       }
     }
   };
@@ -1030,9 +987,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       <button onClick={() => handleToggleStatus('empresa', empresa.empresa_id, empresa.status, empresa.nombre)}>
                         {empresa.status ? "⏸️ Suspender" : "▶️ Activar"}
                       </button>
-                      <button onClick={() => handleDelete('empresa', empresa.empresa_id, empresa.nombre)}>
-                        🗑️ Eliminar
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -1121,12 +1075,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       {usuario.is_active ? '⏸️ Suspender' : '▶️ Activar'}
                     </button>
                     <button 
-                      onClick={() => handleDelete('usuario', usuario.user_id, usuario.nombre_completo || `${usuario.nombre} ${usuario.apellido_paterno}`)}
-                      className="btn-action danger"
-                    >
-                      🗑️ Eliminar
-                    </button>
-                    <button 
                       onClick={() => handleEdit('usuario', usuario)}
                       className="btn-action primary"
                     >
@@ -1188,9 +1136,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       </button>
                       <button onClick={() => handleToggleStatus('planta', planta.planta_id, planta.status, planta.nombre)}>
                         {planta.status ? "⏸️ Suspender" : "▶️ Activar"}
-                      </button>
-                      <button onClick={() => handleDelete('planta', planta.planta_id, planta.nombre)}>
-                        🗑️ Eliminar
                       </button>
                     </div>
                   </td>
@@ -1269,12 +1214,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       className={`btn-action ${departamento.status ? 'warning' : 'success'}`}
                     >
                       {departamento.status ? '⏸️ Suspender' : '▶️ Activar'}
-                    </button>
-                    <button 
-                      onClick={() => handleDelete('departamento', departamento.departamento_id, departamento.nombre)}
-                      className="btn-action danger"
-                    >
-                      🗑️ Eliminar
                     </button>
                     <button 
                       onClick={() => handleEdit('departamento', departamento)}
@@ -1361,12 +1300,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       className={`btn-action ${puesto.status ? 'warning' : 'success'}`}
                     >
                       {puesto.status ? '⏸️ Suspender' : '▶️ Activar'}
-                    </button>
-                    <button 
-                      onClick={() => handleDelete('puesto', puesto.puesto_id, puesto.nombre)}
-                      className="btn-action danger"
-                    >
-                      🗑️ Eliminar
                     </button>
                     <button 
                       onClick={() => handleEdit('puesto', puesto)}
@@ -1460,12 +1393,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       className={`btn-action ${empleado.status ? 'warning' : 'success'}`}
                     >
                       {empleado.status ? '⏸️ Suspender' : '▶️ Activar'}
-                    </button>
-                    <button 
-                      onClick={() => handleDelete('empleado', empleado.empleado_id, empleado.nombre_completo || `${empleado.nombre} ${empleado.apellido_paterno}`)}
-                      className="btn-action danger"
-                    >
-                      🗑️ Eliminar
                     </button>
                     <button 
                       onClick={() => handleEdit('empleado', empleado)}
@@ -1796,13 +1723,13 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           </div>
         </div>
           <nav className="sidebar-nav">
-            <button 
+            {/* <button 
               className={activeSection === 'estadisticas' ? 'active' : ''}
               onClick={() => setActiveSection('estadisticas')}
             >
               <span className="nav-icon">📊</span>
               <span className="nav-text">Estadísticas</span>
-            </button>
+            </button> */}
             <button 
               className={activeSection === 'empresas' ? 'active' : ''}
               onClick={() => setActiveSection('empresas')}

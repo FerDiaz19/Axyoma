@@ -3,26 +3,46 @@ import api from "../api";
 // Types
 export interface Empleado {
   empleado_id: number;
+  numero_empleado?: string;
   nombre: string;
   apellido_paterno: string;
   apellido_materno?: string;
-  genero: 'Masculino' | 'Femenino';
-  antiguedad?: number;
+  email?: string;
+  telefono?: string;
+  fecha_ingreso?: string;
+  fecha_registro?: string;
   status: boolean;
+  
+  // Datos relacionados
+  empresa_id?: number;
+  empresa_nombre?: string;
+  planta_id?: number;
+  planta_nombre?: string;
+  departamento_id?: number;
+  departamento_nombre?: string;
+  puesto_id?: number;
+  puesto_nombre?: string;
+  
+  // Para compatibilidad con formulario
+  genero?: 'Masculino' | 'Femenino';
+  antiguedad?: number;
   puesto: number;
-  departamento: number;
-  planta: number;
+  departamento?: number;
+  planta?: number;
 }
 
 export interface EmpleadoCreate {
   nombre: string;
   apellido_paterno: string;
   apellido_materno?: string;
-  genero: 'Masculino' | 'Femenino';
+  email?: string;
+  telefono?: string;
+  fecha_ingreso?: string;
+  genero?: 'Masculino' | 'Femenino';
   antiguedad?: number;
   puesto: number;
-  departamento: number;
-  planta: number;
+  departamento?: number;
+  planta?: number;
 }
 
 export interface Planta {

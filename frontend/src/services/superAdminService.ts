@@ -107,6 +107,39 @@ export interface SuperAdminEstadisticas {
   planes_disponibles?: number;
 }
 
+// Tipos para suscripciones
+export interface PlanSuscripcion {
+  plan_id: number;
+  nombre: string;
+  descripcion?: string;
+  duracion: number; // días
+  precio: number;
+  status: boolean;
+}
+
+export interface SuscripcionEmpresa {
+  suscripcion_id: number;
+  empresa_id: number;
+  empresa_nombre: string;
+  plan_id: number;
+  plan_nombre: string;
+  plan_precio: number;
+  fecha_inicio: string;
+  fecha_fin: string;
+  estado: string; // 'Activa', 'Suspendida', 'Vencida', etc.
+}
+
+export interface Pago {
+  pago_id: number;
+  suscripcion_id: number;
+  empresa_nombre?: string;
+  plan_nombre?: string;
+  monto_pago: number;
+  estado_pago: string; // 'Completado', 'Pendiente', 'Fallido'
+  fecha_pago: string;
+  transaccion_id?: string;
+}
+
 // Método que causa el problema - corregido
 export const getEstadisticasSistema = async (): Promise<SuperAdminEstadisticas> => {
   try {
@@ -494,19 +527,218 @@ export const getPuestos = async (params: any = {}): Promise<{puestos: any[]}> =>
 
 export const getEmpleados = async (params: any = {}): Promise<{empleados: any[]}> => {
   try {
-    console.log('🔄 SuperAdmin: Usando endpoint directo /empleados/');
+    console.log('🔄 SuperAdmin: Cargando empleados...');
     
-    const response = await api.get('/empleados/');
-    console.log('📊 SuperAdmin: Respuesta empleados directa:', response.data);
+    const queryParams = new URLSearchParams();
+    if (params.buscar) queryParams.append('buscar', params.buscar);
+    if (params.activo) queryParams.append('activo', params.activo);
     
-    if (Array.isArray(response.data)) {
-      console.log(`✅ SuperAdmin: Cargados ${response.data.length} empleados desde endpoint directo`);
-      return { empleados: response.data };
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    
+    const response = await api.get(`${BASE_URL}/listar_todos_empleados/${queryString}`);
+    console.log('📊 SuperAdmin: Respuesta empleados:', response.data);
+    
+    if (response.data && Array.isArray(response.data.empleados)) {
+      console.log(`✅ SuperAdmin: Cargados ${response.data.empleados.length} empleados`);
+      return { empleados: response.data.empleados };
     } else {
       return { empleados: [] };
     }
   } catch (error) {
-    console.error('❌ SuperAdmin: Error cargando empleados desde endpoint directo:', error);
+    console.error('❌ SuperAdmin: Error cargando empleados:', error);
     return { empleados: [] };
+  }
+};
+
+// ========== SUSCRIPCIONES ==========
+export const listarSuscripciones = async (): Promise<any[]> => {
+  try {
+    console.log('🔄 SuperAdmin: Cargando suscripciones...');
+    const response = await api.get('/suscripciones/listar_suscripciones/');
+    console.log('📊 SuperAdmin: Respuesta suscripciones:', response.data);
+    
+    if (response.data && Array.isArray(response.data.suscripciones)) {
+      return response.data.suscripciones;
+    } else if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando suscripciones:', error);
+    return [];
+  }
+};
+
+export const crearSuscripcion = async (empresa_id: number, plan_id: number): Promise<any> => {
+  try {
+    const response = await api.post('/suscripciones/crear_suscripcion/', {
+      empresa_id,
+      plan_id
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error creando suscripción:', error);
+    throw error;
+  }
+};
+
+export const renovarSuscripcion = async (empresa_id: number, plan_id: number): Promise<any> => {
+  try {
+    const response = await api.post('/suscripciones/renovar_suscripcion/', {
+      empresa_id,
+      plan_id
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error renovando suscripción:', error);
+    throw error;
+  }
+};
+
+export const suspenderSuscripcion = async (suscripcion_id: number): Promise<any> => {
+  try {
+    const response = await api.post(`${BASE_URL}/suspender_suscripcion/`, {
+      suscripcion_id,
+      accion: 'suspender'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error suspendiendo suscripción:', error);
+    throw error;
+  }
+};
+
+export const reactivarSuscripcion = async (suscripcion_id: number): Promise<any> => {
+  try {
+    const response = await api.post(`${BASE_URL}/suspender_suscripcion/`, {
+      suscripcion_id,
+      accion: 'activar'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error reactivando suscripción:', error);
+    throw error;
+  }
+};
+
+// ========== PAGOS ==========
+export const listarPagos = async (): Promise<any[]> => {
+  try {
+    console.log('🔄 SuperAdmin: Cargando pagos...');
+    const response = await api.get('/suscripciones/listar_pagos/');
+    console.log('📊 SuperAdmin: Respuesta pagos:', response.data);
+    
+    if (response.data && Array.isArray(response.data.pagos)) {
+      return response.data.pagos;
+    } else if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando pagos:', error);
+    return [];
+  }
+};
+
+// ========== PLANES ==========
+export const listarPlanes = async (): Promise<any[]> => {
+  try {
+    console.log('🔄 SuperAdmin: Cargando planes...');
+    const response = await api.get('/suscripciones/listar_planes/');
+    console.log('📊 SuperAdmin: Respuesta planes:', response.data);
+    
+    if (response.data && Array.isArray(response.data.planes)) {
+      return response.data.planes;
+    } else if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      return [];
+    }
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando planes:', error);
+    return [];
+  }
+};
+
+export const crearPlan = async (planData: any): Promise<any> => {
+  try {
+    const response = await api.post('/suscripciones/crear_plan/', planData);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error creando plan:', error);
+    throw error;
+  }
+};
+
+export const editarPlan = async (plan_id: number, planData: any): Promise<any> => {
+  try {
+    const response = await api.put('/suscripciones/editar_plan/', {
+      plan_id,
+      ...planData
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error editando plan:', error);
+    throw error;
+  }
+};
+
+export const suspenderPlan = async (plan_id: number, accion: string): Promise<any> => {
+  try {
+    const response = await api.post(`${BASE_URL}/suspender_plan/`, {
+      plan_id,
+      accion
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error al cambiar status del plan:', error);
+    throw error;
+  }
+};
+
+// ========== FUNCIONES DE FORMATO ==========
+export const formatearPrecio = (precio: number): string => {
+  return new Intl.NumberFormat('es-MX', {
+    style: 'currency',
+    currency: 'MXN'
+  }).format(precio);
+};
+
+export const formatearDuracion = (dias: number): string => {
+  if (dias === 30) return '1 mes';
+  if (dias === 365) return '1 año';
+  if (dias % 30 === 0) return `${dias / 30} meses`;
+  return `${dias} días`;
+};
+
+export const getEstadoSuscripcionTexto = (estado: string): string => {
+  switch (estado?.toLowerCase()) {
+    case 'activa': return '🟢 Activa';
+    case 'suspendida': return '🟡 Suspendida';
+    case 'vencida': return '🔴 Vencida';
+    case 'cancelada': return '❌ Cancelada';
+    default: return `⚪ ${estado || 'Desconocido'}`;
+  }
+};
+
+export const getEstadoSuscripcionColor = (estado: string): string => {
+  switch (estado?.toLowerCase()) {
+    case 'activa': return 'active';
+    case 'suspendida': return 'warning';
+    case 'vencida': return 'inactive';
+    case 'cancelada': return 'danger';
+    default: return 'inactive';
+  }
+};
+
+export const getEstadoPagoTexto = (estado: string): string => {
+  switch (estado?.toLowerCase()) {
+    case 'completado': return '✅ Completado';
+    case 'pendiente': return '⏳ Pendiente';
+    case 'fallido': return '❌ Fallido';
+    case 'cancelado': return '🚫 Cancelado';
+    default: return `⚪ ${estado || 'Desconocido'}`;
   }
 };

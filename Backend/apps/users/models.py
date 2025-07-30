@@ -180,47 +180,26 @@ class Puesto(models.Model):
         db_table = 'puestos'
         unique_together = ['nombre', 'departamento']  # Nombre único solo dentro del mismo departamento
 
-# EMPLEADOS - Según el esquema SQL original
+# EMPLEADOS - Según la estructura REAL de la base de datos
 class Empleado(models.Model):
-    GENERO_CHOICES = [
-        ('Masculino', 'Masculino'),
-        ('Femenino', 'Femenino'),
-    ]
-    
     empleado_id = models.AutoField(primary_key=True)
-    numero = models.CharField(max_length=20, blank=True, null=True, help_text="Número de empleado")
     nombre = models.CharField(max_length=128)
     apellido_paterno = models.CharField(max_length=64)
     apellido_materno = models.CharField(max_length=64, blank=True, null=True)
-    genero = models.CharField(max_length=10, choices=GENERO_CHOICES)
-    antiguedad = models.IntegerField(blank=True, null=True)
+    email = models.CharField(max_length=255, blank=True, null=True)
+    telefono = models.CharField(max_length=20, blank=True, null=True)
+    fecha_ingreso = models.DateField(blank=True, null=True)
+    fecha_registro = models.DateTimeField(auto_now_add=True)
     status = models.BooleanField(default=True)
     puesto = models.ForeignKey(
         Puesto, 
         on_delete=models.CASCADE, 
         db_column='puesto'  # Especificar nombre de columna
     )
-    departamento = models.ForeignKey(
-        Departamento, 
-        on_delete=models.CASCADE, 
-        db_column='departamento'  # Especificar nombre de columna
-    )
-    planta = models.ForeignKey(
-        Planta, 
-        on_delete=models.CASCADE, 
-        db_column='planta'  # Especificar nombre de columna
-    )
-    empresa = models.ForeignKey(
-        Empresa,
-        on_delete=models.CASCADE,
-        db_column='empresa',
-        blank=True,
-        null=True,
-        help_text="Empresa a la que pertenece el empleado"
-    )
     
     class Meta:
         db_table = 'empleados'
+        managed = False  # Django no gestiona esta tabla (para evitar migraciones)
 
 
 #MODELOS DE EVALUACION

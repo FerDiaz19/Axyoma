@@ -275,20 +275,26 @@ class PuestoSerializer(serializers.ModelSerializer):
 
 # Serializers para EMPLEADOS
 class EmpleadoSerializer(serializers.ModelSerializer):
-    empresa_id = serializers.IntegerField(source='empresa.empresa_id', read_only=True)
-    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
-    planta_id = serializers.IntegerField(source='planta.planta_id', read_only=True)
-    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
-    departamento_id = serializers.IntegerField(source='departamento.departamento_id', read_only=True)
-    departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
+    # Acceso a través de la estructura real: puesto->departamento->planta->empresa
+    empresa_id = serializers.IntegerField(source='puesto.departamento.planta.empresa.empresa_id', read_only=True)
+    empresa_nombre = serializers.CharField(source='puesto.departamento.planta.empresa.nombre', read_only=True)
+    planta_id = serializers.IntegerField(source='puesto.departamento.planta.planta_id', read_only=True)
+    planta_nombre = serializers.CharField(source='puesto.departamento.planta.nombre', read_only=True)
+    departamento_id = serializers.IntegerField(source='puesto.departamento.departamento_id', read_only=True)
+    departamento_nombre = serializers.CharField(source='puesto.departamento.nombre', read_only=True)
     puesto_id = serializers.IntegerField(source='puesto.puesto_id', read_only=True)
     puesto_nombre = serializers.CharField(source='puesto.nombre', read_only=True)
-    numero = serializers.CharField(read_only=True)
+    numero_empleado = serializers.SerializerMethodField()
+    
+    def get_numero_empleado(self, obj):
+        """Generar número de empleado basado en ID"""
+        return f"EMP-{obj.empleado_id:06d}"
+    
     class Meta:
         model = Empleado
         fields = [
-            'empleado_id', 'numero', 'nombre', 'apellido_paterno', 'apellido_materno',
-            'genero', 'antiguedad', 'status',
+            'empleado_id', 'numero_empleado', 'nombre', 'apellido_paterno', 'apellido_materno',
+            'email', 'telefono', 'fecha_ingreso', 'fecha_registro', 'status',
             'empresa_id', 'empresa_nombre',
             'planta_id', 'planta_nombre',
             'departamento_id', 'departamento_nombre',
@@ -296,10 +302,58 @@ class EmpleadoSerializer(serializers.ModelSerializer):
         ]
 
 class EmpleadoCreateSerializer(serializers.ModelSerializer):
+    # Campos extra que envía el frontend pero no están en el modelo
+    genero = serializers.CharField(max_length=20, required=False)
+    antiguedad = serializers.IntegerField(required=False)
+    departamento = serializers.IntegerField(required=False)
+    planta = serializers.IntegerField(required=False)
+    
     class Meta:
         model = Empleado
-        fields = ['nombre', 'apellido_paterno', 'apellido_materno', 
-                 'genero', 'antiguedad', 'puesto', 'departamento', 'planta']
+        fields = ['nombre', 'apellido_paterno', 'apellido_materno', 'email', 'telefono', 'fecha_ingreso', 'puesto', 'genero', 'antiguedad', 'departamento', 'planta']
+    
+    def to_internal_value(self, data):
+        """Procesar datos antes de la validación de Django"""
+        # Hacer una copia para no modificar el original
+        data = data.copy() if hasattr(data, 'copy') else dict(data)
+        
+        # Convertir strings vacíos a None para campos opcionales
+        optional_fields = ['apellido_materno', 'email', 'telefono', 'fecha_ingreso']
+        for field in optional_fields:
+            if field in data and data[field] == '':
+                data[field] = None
+                
+        # Si fecha_ingreso es None, usar fecha actual
+        if data.get('fecha_ingreso') is None:
+            from datetime import date
+            data['fecha_ingreso'] = date.today().isoformat()
+        
+        return super().to_internal_value(data)
+    
+    def validate(self, data):
+        """Validación personalizada para empleados"""
+        # Si no se proporciona email, generar uno por defecto
+        if not data.get('email'):
+            nombre = data.get('nombre', '').lower().replace(' ', '')
+            apellido = data.get('apellido_paterno', '').lower().replace(' ', '')
+            data['email'] = f"{nombre}.{apellido}@empresa.com"
+        
+        # Si no se proporciona fecha_ingreso, usar la fecha actual
+        if not data.get('fecha_ingreso'):
+            from datetime import date
+            data['fecha_ingreso'] = date.today()
+            
+        return data
+    
+    def create(self, validated_data):
+        """Crear empleado eliminando campos que no están en el modelo"""
+        # Eliminar campos que no están en el modelo Empleado
+        validated_data.pop('genero', None)
+        validated_data.pop('antiguedad', None)
+        validated_data.pop('departamento', None)
+        validated_data.pop('planta', None)
+        
+        return super().create(validated_data)
 
 # Serializers para crear registros (sin campos read-only)
 class PlantaCreateSerializer(serializers.ModelSerializer):
