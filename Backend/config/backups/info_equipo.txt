@@ -1,0 +1,7 @@
+Información del Equipo
+Fecha: mar 07/29/2025
+Proyecto: Axyoma2
+Ruta Proyecto: C:\xampp2\htdocs\UTT4B\Axyoma2
+Ruta Backend: C:\xampp2\htdocs\UTT4B\Axyoma2\Backend
+Ruta Respaldos: C:\xampp2\htdocs\UTT4B\Axyoma2\Backend\config\backups
+BD: axyomadb

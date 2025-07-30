@@ -138,12 +138,13 @@ def respaldar_completo_simple(request):
         db_host = db_config['HOST'] or 'localhost'
         db_port = db_config['PORT'] or '5432'
         
-        # Crear archivo de respaldo con ruta estándar
+        # Crear archivo de respaldo con ruta independiente del nombre del proyecto
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_filename = f'respaldo_completo_{timestamp}.sql'
-        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
-        os.makedirs(backup_dir, exist_ok=True)
-        backup_path = os.path.join(backup_dir, backup_filename)
+        backend_dir = settings.BASE_DIR.parent  # Backend/config -> Backend/
+        backup_dir = backend_dir / 'config' / 'backups'
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        backup_path = str(backup_dir / backup_filename)
         
         # Comando pg_dump
         cmd = [
@@ -243,12 +244,13 @@ def respaldar_parcial_simple(request):
         db_host = db_config['HOST'] or 'localhost'
         db_port = db_config['PORT'] or '5432'
         
-        # Crear archivo de respaldo con ruta estándar
+        # Crear archivo de respaldo con ruta independiente del nombre del proyecto
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_filename = f'respaldo_parcial_{timestamp}.sql'
-        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
-        os.makedirs(backup_dir, exist_ok=True)
-        backup_path = os.path.join(backup_dir, backup_filename)
+        backend_dir = settings.BASE_DIR.parent  # Backend/config -> Backend/
+        backup_dir = backend_dir / 'config' / 'backups'
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        backup_path = str(backup_dir / backup_filename)
         
         # Comando pg_dump para tablas específicas
         cmd = [

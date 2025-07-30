@@ -12,14 +12,15 @@ class BackupManager:
     
     def __init__(self):
         self.db_settings = settings.DATABASES['default']
-        # BASE_DIR está en Backend/config, necesitamos ir al directorio backups
-        self.backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+        # Ruta independiente del nombre del proyecto - usar Path para mejor compatibilidad
+        backend_dir = settings.BASE_DIR.parent  # Backend/config -> Backend/
+        self.backup_dir = backend_dir / 'config' / 'backups'
         self._crear_directorio_respaldos()
     
     def _crear_directorio_respaldos(self):
         """Crear directorio de respaldos si no existe"""
-        if not os.path.exists(self.backup_dir):
-            os.makedirs(self.backup_dir, exist_ok=True)
+        if not self.backup_dir.exists():
+            self.backup_dir.mkdir(parents=True, exist_ok=True)
     
     def crear_respaldo_completo(self, nombre_archivo=None):
         """
@@ -29,7 +30,7 @@ class BackupManager:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             nombre_archivo = f'respaldo_completo_{timestamp}.sql'
         
-        ruta_archivo = os.path.join(self.backup_dir, nombre_archivo)
+        ruta_archivo = str(self.backup_dir / nombre_archivo)
         
         comando = [
             'pg_dump',

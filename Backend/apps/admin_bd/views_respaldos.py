@@ -23,14 +23,20 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 
-# Configuración de respaldos - Ruta estándar relativa al proyecto
+# Configuración de respaldos - Ruta independiente del nombre del proyecto
 def get_backup_directory():
-    """Obtener directorio de respaldos estándar para todos los equipos"""
-    # BASE_DIR en Django apunta a Backend/config, necesitamos ir a Backend y luego a config/backups
-    backup_dir = os.path.join(settings.BASE_DIR, 'backups')
-    if not os.path.exists(backup_dir):
-        os.makedirs(backup_dir, exist_ok=True)
-    return backup_dir
+    """
+    Obtener directorio de respaldos que funcione en cualquier equipo
+    Independiente del nombre del directorio del proyecto (Axyoma, Axyoma2, etc.)
+    """
+    # BASE_DIR apunta a Backend/config, vamos un nivel arriba para llegar a Backend
+    backend_dir = settings.BASE_DIR.parent  # Esto es Backend/
+    backup_dir = backend_dir / 'config' / 'backups'
+    
+    # Crear directorio si no existe
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    
+    return str(backup_dir)
 
 BACKUP_DIR = get_backup_directory()
 
