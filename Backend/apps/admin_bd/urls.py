@@ -1,4 +1,23 @@
 # -*- coding: utf-8 -*-
+"""
+🗄️ URLS DE ADMINISTRACIÓN DE BASE DE DATOS
+==========================================
+
+Configuración de rutas para el sistema de gestión de BD y respaldos.
+Incluye endpoints para SuperAdmin y gestión de respaldos.
+
+📋 Responsable: Yael Contreras
+📅 Fecha: Enero 2025
+🔢 Versión: 2.0
+
+🚀 Rutas incluidas:
+- Sistema de respaldos y restauración
+- Exportación directa de tablas
+- Gestión de BD (reseteo, datos iniciales)
+- Endpoints de SuperAdmin
+
+🔒 Seguridad: Rutas protegidas solo para SuperAdmin
+"""
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import AdminBDViewSet
@@ -23,4 +42,10 @@ urlpatterns = [
     path('respaldos/descargar/<str:archivo>/', views_respaldos.descargar_respaldo, name='descargar_respaldo'),
     path('respaldos/info/', views_respaldos.info_sistema_respaldos, name='info_sistema_respaldos'),
     path('respaldos/verificar/', views_respaldos.verificar_sistema_respaldos, name='verificar_sistema_respaldos'),
+    
+    # NUEVAS FUNCIONES SUPERADMIN
+    path('respaldos/pgadmin/', views_respaldos.respaldo_limpio_pgadmin, name='respaldo_pgadmin'),
+    path('sistema/resetear-bd/', views_respaldos.resetear_bd_completa, name='resetear_bd'),
+    path('sistema/datos-iniciales/', views_respaldos.cargar_datos_iniciales, name='cargar_datos_iniciales'),
+    path('sistema/estado-inicial/', views_respaldos.restaurar_estado_inicial, name='restaurar_estado_inicial'),
 ]

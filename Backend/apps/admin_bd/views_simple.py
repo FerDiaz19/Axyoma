@@ -58,11 +58,7 @@ def exportar_tabla_csv_simple(request, tabla_nombre):
             },
             'puestos': {
                 'modelo': PuestoSimple,
-                'campos': ['puesto_id', 'nombre', 'descripcion', 'salario_base', 'departamento']
-            },
-            'suscripciones': {
-                'modelo': SuscripcionEmpresa,
-                'campos': ['suscripcion_id', 'empresa', 'plan', 'fecha_inicio', 'fecha_fin', 'estado']
+                'campos': ['puesto_id', 'nombre', 'descripcion', 'departamento']
             }
         }
         
@@ -223,8 +219,7 @@ def respaldar_parcial_simple(request):
             'empleados': 'empleados',
             'plantas': 'plantas',
             'departamentos': 'departamentos',
-            'puestos': 'puestos',
-            'suscripciones': 'suscripciones_empresa'
+            'puestos': 'puestos'
         }
         
         # Validar tablas
@@ -451,8 +446,7 @@ def listar_tablas_simple(request):
             {'nombre': 'empleados', 'descripcion': 'Datos de empleados'},
             {'nombre': 'plantas', 'descripcion': 'Plantas de las empresas'},
             {'nombre': 'departamentos', 'descripcion': 'Departamentos por planta'},
-            {'nombre': 'puestos', 'descripcion': 'Puestos de trabajo'},
-            {'nombre': 'suscripciones', 'descripcion': 'Suscripciones activas'}
+            {'nombre': 'puestos', 'descripcion': 'Puestos de trabajo'}
         ]
         
         return Response({

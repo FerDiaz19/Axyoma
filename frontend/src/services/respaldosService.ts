@@ -1,3 +1,25 @@
+/**
+ * 🗄️ SERVICIO DE RESPALDOS Y RESTAURACIÓN
+ * =======================================
+ * 
+ * Servicio TypeScript para gestión completa de respaldos de base de datos.
+ * Incluye interfaces, tipos y funciones para respaldos compatibles con pgAdmin.
+ * 
+ * 📋 Responsable: Yael Contreras
+ * 📅 Fecha: Enero 2025
+ * 🔢 Versión: 2.0
+ * 
+ * 🚀 Funcionalidades:
+ * - Interfaces TypeScript para respaldos
+ * - Gestión de metadatos de respaldos
+ * - Comunicación con API de respaldos
+ * - Formateo de datos para UI
+ * - Listado de tablas disponibles
+ * 
+ * 🔒 Seguridad: Solo disponible para SuperAdmin
+ * ✅ Compatible: 100% compatible con pgAdmin 4
+ */
+
 // Servicio para gestión de respaldos y restauración
 // Solo disponible para SuperAdmin
 

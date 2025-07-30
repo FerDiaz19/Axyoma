@@ -7,6 +7,11 @@ echo                           PROYECTO AXYOMA
 echo                           INICIO DEL SISTEMA                       
 echo ================================================================================
 echo.
+echo 👤 USUARIOS DISPONIBLES:
+echo • superadmin / 1234
+echo • admin_empresa / 1234  
+echo • admin_planta / 1234
+echo.
 
 echo [1/4] Verificando requisitos y directorio actual...
 echo Directorio actual: %CD%

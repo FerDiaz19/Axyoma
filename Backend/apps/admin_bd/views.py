@@ -245,13 +245,8 @@ def exportar_tabla_csv(request, tabla_nombre):
             },
             'puestos': {
                 'modelo': Puesto,
-                'campos': ['puesto_id', 'nombre', 'descripcion', 'salario_base'],
+                'campos': ['puesto_id', 'nombre', 'descripcion'],
                 'permisos': ['superadmin', 'admin-empresa']
-            },
-            'suscripciones': {
-                'modelo': SuscripcionEmpresa,
-                'campos': ['suscripcion_id', 'empresa', 'plan', 'fecha_inicio', 'fecha_fin', 'estado'],
-                'permisos': ['superadmin']
             }
         }
         
@@ -345,7 +340,6 @@ def listar_tablas_exportables(request):
                 {'nombre': 'plantas', 'descripcion': 'Todas las plantas'},
                 {'nombre': 'departamentos', 'descripcion': 'Todos los departamentos'},
                 {'nombre': 'puestos', 'descripcion': 'Todos los puestos de trabajo'},
-                {'nombre': 'suscripciones', 'descripcion': 'Todas las suscripciones activas'},
             ]
         elif perfil.nivel_usuario == 'admin-empresa':
             tablas_disponibles = [
@@ -567,7 +561,6 @@ def respaldar_bd_parcial(request):
             'plantas': 'users_planta',
             'departamentos': 'users_departamento',
             'puestos': 'users_puesto',
-            'suscripciones': 'suscripciones_empresa',
             'evaluaciones': 'evaluaciones_evaluacion',
             'encuestas': 'surveys_encuesta'
         }

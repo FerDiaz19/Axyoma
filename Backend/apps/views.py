@@ -3466,31 +3466,49 @@ class AdminBDViewSet(viewsets.ViewSet):
                     ])
                     
             elif tabla == 'empleados':
-                # Exportar empleados
+                # Exportar empleados con estructura correcta de BD
                 empleados = Empleado.objects.all().select_related(
-                    'puesto', 'departamento', 'planta__empresa'
+                    'puesto__departamento__planta__empresa'
                 )
                 
                 writer.writerow([
                     'ID', 'Nombre', 'Apellido Paterno', 'Apellido Materno', 
-                    'Género', 'Antigüedad', 'Puesto', 'Departamento', 
+                    'Email', 'Telefono', 'Fecha Ingreso', 'Puesto', 'Departamento', 
                     'Planta', 'Empresa', 'Estado'
                 ])
                 
                 for empleado in empleados:
-                    writer.writerow([
-                        empleado.empleado_id,
-                        empleado.nombre,
-                        empleado.apellido_paterno,
-                        empleado.apellido_materno or 'N/A',
-                        empleado.genero,
-                        empleado.antiguedad,
-                        empleado.puesto.nombre,
-                        empleado.departamento.nombre,
-                        empleado.planta.nombre,
-                        empleado.planta.empresa.nombre,
-                        'Activo' if empleado.status else 'Suspendido'
-                    ])
+                    try:
+                        writer.writerow([
+                            empleado.empleado_id,
+                            empleado.nombre,
+                            empleado.apellido_paterno,
+                            empleado.apellido_materno or 'N/A',
+                            empleado.email or 'N/A',
+                            empleado.telefono or 'N/A', 
+                            empleado.fecha_ingreso.strftime('%Y-%m-%d') if empleado.fecha_ingreso else 'N/A',
+                            empleado.puesto.nombre if empleado.puesto else 'Sin asignar',
+                            empleado.puesto.departamento.nombre if empleado.puesto and empleado.puesto.departamento else 'Sin asignar',
+                            empleado.puesto.departamento.planta.nombre if empleado.puesto and empleado.puesto.departamento and empleado.puesto.departamento.planta else 'Sin asignar',
+                            empleado.puesto.departamento.planta.empresa.nombre if empleado.puesto and empleado.puesto.departamento and empleado.puesto.departamento.planta and empleado.puesto.departamento.planta.empresa else 'Sin asignar',
+                            'Activo' if empleado.status else 'Inactivo'
+                        ])
+                    except Exception as e:
+                        # Si hay error con un empleado específico, usar datos básicos
+                        writer.writerow([
+                            empleado.empleado_id,
+                            empleado.nombre,
+                            empleado.apellido_paterno,
+                            'Error al cargar',
+                            'Error al cargar',
+                            'Error al cargar',
+                            'Error al cargar',
+                            'Error al cargar',
+                            'Error al cargar',
+                            'Error al cargar',
+                            'Error al cargar',
+                            'Activo' if empleado.status else 'Inactivo'
+                        ])
                     
             elif tabla == 'usuarios':
                 # Exportar usuarios
@@ -3514,55 +3532,6 @@ class AdminBDViewSet(viewsets.ViewSet):
                         usuario.user.date_joined.strftime('%Y-%m-%d %H:%M:%S'),
                         usuario.user.last_login.strftime('%Y-%m-%d %H:%M:%S') if usuario.user.last_login else 'Nunca',
                         'Activo' if usuario.user.is_active else 'Suspendido'
-                    ])
-                    
-            elif tabla == 'suscripciones':
-                # Exportar suscripciones
-                from apps.subscriptions.models import SuscripcionEmpresa
-                suscripciones = SuscripcionEmpresa.objects.all().select_related(
-                    'empresa', 'plan_suscripcion'
-                )
-                
-                writer.writerow([
-                    'ID', 'Empresa', 'Plan', 'Precio', 'Fecha Inicio', 
-                    'Fecha Fin', 'Estado', 'Días Restantes'
-                ])
-                
-                for suscripcion in suscripciones:
-                    writer.writerow([
-                        suscripcion.suscripcion_id,
-                        suscripcion.empresa.nombre,
-                        suscripcion.plan_suscripcion.nombre,
-                        float(suscripcion.plan_suscripcion.precio),
-                        suscripcion.fecha_inicio.strftime('%Y-%m-%d'),
-                        suscripcion.fecha_fin.strftime('%Y-%m-%d'),
-                        suscripcion.estado,
-                        suscripcion.dias_restantes
-                    ])
-                    
-            elif tabla == 'pagos':
-                # Exportar pagos
-                from apps.subscriptions.models import Pago
-                pagos = Pago.objects.all().select_related(
-                    'suscripcion__empresa', 'suscripcion__plan_suscripcion'
-                )
-                
-                writer.writerow([
-                    'ID', 'Empresa', 'Plan', 'Suscripción ID', 'Costo', 
-                    'Monto Pagado', 'Estado Pago', 'Fecha Pago', 'Transacción ID'
-                ])
-                
-                for pago in pagos:
-                    writer.writerow([
-                        pago.pago_id,
-                        pago.suscripcion.empresa.nombre,
-                        pago.suscripcion.plan_suscripcion.nombre,
-                        pago.suscripcion.suscripcion_id,
-                        float(pago.costo),
-                        float(pago.monto_pago),
-                        pago.estado_pago,
-                        pago.fecha_pago.strftime('%Y-%m-%d %H:%M:%S'),
-                        pago.transaccion_id or 'N/A'
                     ])
                     
             else:

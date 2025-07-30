@@ -39,8 +39,6 @@ const GestionBD: React.FC = () => {
       case 'puestos': return '💼';
       case 'empleados': return '👤';
       case 'usuarios': return '👥';
-      case 'suscripciones': return '💳';
-      case 'pagos': return '💰';
       default: return '📊';
     }
   };
@@ -54,8 +52,6 @@ const GestionBD: React.FC = () => {
       case 'puestos': return estadisticas.puestos;
       case 'empleados': return estadisticas.empleados;
       case 'usuarios': return estadisticas.usuarios;
-      case 'suscripciones': return estadisticas.suscripciones || 0;
-      case 'pagos': return estadisticas.pagos || 0;
       default: return 0;
     }
   };

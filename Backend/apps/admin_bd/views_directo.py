@@ -46,7 +46,7 @@ def exportar_tabla_csv_directo(request, tabla_nombre):
                         CASE WHEN e.status THEN 'Activo' ELSE 'Inactivo' END as status,
                         p.nombre as puesto_nombre
                     FROM empleados e
-                    LEFT JOIN puestos p ON e.puesto = p.puesto_id
+                    LEFT JOIN puestos p ON e.puesto_id = p.puesto_id
                     ORDER BY e.apellido_paterno, e.nombre
                 """,
                 'headers': ['ID Empleado', 'Nombre', 'Apellido Paterno', 'Apellido Materno', 'Email', 'Teléfono', 'Fecha Ingreso', 'Fecha Registro', 'Status', 'Puesto']

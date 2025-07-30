@@ -1,0 +1,37 @@
+{
+  "timestamp": "2025-01-28",
+  "version": "1.0",
+  "funciones_agregadas": [
+    {
+      "nombre": "Respaldo pgAdmin",
+      "endpoint": "/api/admin-bd/respaldos/pgadmin/",
+      "descripcion": "Genera respaldo compatible con pgAdmin 4",
+      "ui": "Botón 🗄️ Respaldo pgAdmin"
+    },
+    {
+      "nombre": "Resetear BD",
+      "endpoint": "/api/admin-bd/sistema/resetear-bd/",
+      "descripcion": "Elimina todos los datos de la BD",
+      "ui": "Botón 🗑️ Resetear BD",
+      "peligroso": true
+    },
+    {
+      "nombre": "Datos Iniciales",
+      "endpoint": "/api/admin-bd/sistema/datos-iniciales/",
+      "descripcion": "Carga datos de prueba completos",
+      "ui": "Botón 📊 Datos Iniciales"
+    }
+  ],
+  "archivos_modificados": [
+    "Backend/apps/admin_bd/views_respaldos.py",
+    "Backend/apps/admin_bd/urls.py",
+    "frontend/src/services/adminBDService.ts",
+    "frontend/src/components/GestionRespaldos.tsx"
+  ],
+  "instrucciones_uso": [
+    "1. Iniciar servidor Django: python manage.py runserver",
+    "2. Acceder como SuperAdmin en http://127.0.0.1:8000/admin/",
+    "3. Ir a 'Gestión de Base de Datos' > pestaña 'Respaldos'",
+    "4. Usar los nuevos botones: 🗄️🗑️📊"
+  ]
+}

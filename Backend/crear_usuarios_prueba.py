@@ -158,7 +158,7 @@ def crear_usuarios_prueba():
     print("\n✅ USUARIOS DE PRUEBA CREADOS EXITOSAMENTE")
     print("=" * 60)
     print("Credenciales disponibles:")
-    print("  👤 SuperAdmin:    testuser / testpass123")
+    print("  👤 SuperAdmin:    superadmin / 1234")
     print("  👤 Admin Empresa: admin_empresa / admin123")
     print("  👤 Admin Planta:  admin_planta / admin123")
     print("=" * 60)

@@ -1,5 +1,29 @@
+/**
+ * 🗄️ GESTIÓN DE RESPALDOS Y RESTAURACIÓN - FRONTEND
+ * ==================================================
+ * 
+ * Componente React para la gestión completa de respaldos de base de datos.
+ * Interfaz de usuario para SuperAdmin con funciones avanzadas de BD.
+ * 
+ * 📋 Responsable: Yael Contreras
+ * 📅 Fecha: Enero 2025
+ * 🔢 Versión: 2.0
+ * 
+ * 🚀 Funcionalidades:
+ * - Crear respaldos (tablas específicas o BD completa)
+ * - Descargar y eliminar respaldos
+ * - Restaurar respaldos con confirmaciones de seguridad
+ * - Resetear BD completa (con doble confirmación)
+ * - Cargar datos iniciales para pruebas
+ * - Visualización de información del sistema
+ * 
+ * 🔒 Seguridad: Solo accesible para SuperAdmin
+ * ✅ Compatible: Respaldos 100% compatibles con pgAdmin 4
+ */
+
 import React, { useState, useEffect } from 'react';
 import respaldosService, { RespaldoMetadata, InfoSistemaRespaldos } from '../services/respaldosService';
+import { resetearBD, cargarDatosIniciales, restaurarEstadoInicial } from '../services/adminBDService';
 
 interface GestionRespaldosProps {
   className?: string;
@@ -152,6 +176,135 @@ const GestionRespaldos: React.FC<GestionRespaldosProps> = ({ className = '' }) =
     }
   };
 
+  // ============= NUEVAS FUNCIONES SUPERADMIN =============
+  
+  const handleResetearBD = async () => {
+    const confirmacion1 = window.prompt(
+      `⚠️ PELIGRO: Esta acción eliminará TODOS los datos de la base de datos.\n\n` +
+      `Esto incluye:\n` +
+      `• Todas las empresas\n` +
+      `• Todas las plantas, departamentos y puestos\n` +
+      `• Todos los empleados\n` +
+      `• Todos los usuarios\n\n` +
+      `Para continuar, escriba exactamente: ELIMINAR TODO`
+    );
+    
+    if (confirmacion1 !== 'ELIMINAR TODO') {
+      mostrarMensaje('❌ Operación cancelada');
+      return;
+    }
+
+    const confirmacion2 = window.confirm(
+      `🚨 ÚLTIMA ADVERTENCIA 🚨\n\n` +
+      `¿Está absolutamente seguro de que quiere eliminar TODOS los datos?\n\n` +
+      `Esta acción NO se puede deshacer.`
+    );
+
+    if (!confirmacion2) {
+      mostrarMensaje('❌ Operación cancelada');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      mostrarMensaje('🗑️ Eliminando todos los datos...');
+      
+      const resultado = await resetearBD();
+      
+      mostrarMensaje(
+        `⚠️ BASE DE DATOS RESETEADA\n` +
+        `Registros eliminados: ${resultado.total_registros}\n` +
+        `¡Todos los datos han sido eliminados!`
+      );
+      
+      await cargarDatos(); // Recargar datos
+      
+    } catch (error: any) {
+      mostrarMensaje(`❌ Error reseteando BD: ${error.message}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCargarDatosIniciales = async () => {
+    const confirmacion = window.confirm(
+      `📊 Cargar datos de prueba\n\n` +
+      `Esto creará:\n` +
+      `• Usuarios de prueba (superadmin, admin_empresa, admin_planta)\n` +
+      `• Empresa demo con plantas, departamentos y puestos\n` +
+      `• Empleados de ejemplo\n\n` +
+      `¿Continuar?`
+    );
+    
+    if (!confirmacion) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      mostrarMensaje('📊 Cargando datos iniciales...');
+      
+      const resultado = await cargarDatosIniciales();
+      
+      mostrarMensaje(
+        `✅ DATOS INICIALES CARGADOS\n` +
+        `Registros creados: ${resultado.total_registros}\n\n` +
+        `Usuarios disponibles:\n` +
+        `• superadmin / 1234\n` +
+        `• admin_empresa / 1234\n` +
+        `• admin_planta / 1234`
+      );
+      
+      await cargarDatos(); // Recargar datos
+      
+    } catch (error: any) {
+      mostrarMensaje(`❌ Error cargando datos: ${error.message}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Nueva función para restaurar estado inicial
+  const handleRestaurarEstadoInicial = async () => {
+    const confirmacion = window.confirm(
+      `🎯 RESTAURAR BD AL ESTADO INICIAL\n\n` +
+      `Esta operación hará:\n` +
+      `1. ⚠️ ELIMINAR todos los datos actuales\n` +
+      `2. 📊 Cargar datos de demo\n\n` +
+      `Es como volver al primer día del software.\n\n` +
+      `⚠️ ESTA ACCIÓN NO SE PUEDE DESHACER\n\n` +
+      `¿Estás SEGURO de continuar?`
+    );
+    
+    if (!confirmacion) {
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      mostrarMensaje('🎯 Restaurando BD al estado inicial...');
+      
+      const resultado = await restaurarEstadoInicial();
+      
+      mostrarMensaje(
+        `🎉 BD RESTAURADA AL ESTADO INICIAL\n\n` +
+        `✅ Base de datos lista como primer día\n\n` +
+        `Usuarios disponibles:\n` +
+        `• superadmin / 1234\n` +
+        `• admin_empresa / 1234\n` +
+        `• admin_planta / 1234\n\n` +
+        `💡 Recomendación: Crear respaldo de este estado`
+      );
+      
+      await cargarDatos(); // Recargar datos
+      
+    } catch (error: any) {
+      mostrarMensaje(`❌ Error restaurando estado inicial: ${error.message}`, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleToggleTabla = (tabla: string) => {
     setTablasSeleccionadas(prev => 
       prev.includes(tabla) 
@@ -172,6 +325,35 @@ const GestionRespaldos: React.FC<GestionRespaldosProps> = ({ className = '' }) =
           >
             ➕ Crear Respaldo
           </button>
+          
+          {/* NUEVOS BOTONES SUPERADMIN */}
+          <button 
+            onClick={handleCargarDatosIniciales}
+            className="btn btn-info"
+            disabled={loading}
+            title="Cargar datos de prueba"
+          >
+            📊 Datos Iniciales
+          </button>
+          
+          <button 
+            onClick={handleRestaurarEstadoInicial}
+            className="btn btn-warning"
+            disabled={loading}
+            title="🎯 Restaurar BD al estado inicial (resetear + datos de demo)"
+          >
+            🎯 Estado Inicial
+          </button>
+          
+          <button 
+            onClick={handleResetearBD}
+            className="btn btn-danger"
+            disabled={loading}
+            title="⚠️ PELIGRO: Eliminar todos los datos"
+          >
+            🗑️ Resetear BD
+          </button>
+          
           <button 
             onClick={() => setVistaActual('info')}
             className="btn btn-secondary"

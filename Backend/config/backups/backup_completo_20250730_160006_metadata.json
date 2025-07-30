@@ -1,0 +1,10 @@
+{
+  "tipo": "bd_completa",
+  "incluir_datos": true,
+  "descripcion": "",
+  "fecha_creacion": "2025-07-30T16:00:07.338564",
+  "usuario": "superadmin",
+  "archivo": "backup_completo_20250730_160006.sql",
+  "tamaño_bytes": 145301,
+  "base_datos": "axyomadb"
+}

@@ -1,13 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-SISTEMA DE RESPALDOS Y RESTAURACIÓN PARA AXYOMA
-Funcionalidades:
-1. Respaldar tablas individuales o múltiples
-2. Respaldar toda la base de datos
-3. Restaurar tablas específicas
-4. Restaurar base de datos completa
-5. Gestión de archivos de respaldo
-Solo para SuperAdmin - Máxima seguridad
+🗄️ GESTIÓN DE RESPALDOS Y RESTAURACIÓN DE BASE DE DATOS
+========================================================
+
+Sistema completo de respaldos, restauración y gestión de base de datos para Axyoma.
+Incluye respaldos compatibles con pgAdmin, reseteo de BD y carga de datos iniciales.
+
+📋 Responsable: Yael Contreras
+📅 Fecha: Enero 2025
+🔢 Versión: 2.0
+
+🚀 Funcionalidades:
+- Respaldos de tablas específicas y BD completa
+- Restauración de respaldos
+- Reseteo completo de base de datos (SuperAdmin)
+- Carga de datos iniciales para pruebas
+- Compatibilidad total con pgAdmin 4
+- Gestión de archivos de respaldo
+- Sistema de logs y metadatos
+
+🔒 Seguridad: Solo para SuperAdmin - Máxima seguridad
 """
 import os
 import json
@@ -122,7 +134,7 @@ def respaldar_tablas(request):
         # Obtener configuración de BD
         db_config = obtener_config_db()
         
-        # Construir comando pg_dump
+        # Construir comando pg_dump (compatible con pgAdmin)
         cmd = [
             'C:/Program Files/PostgreSQL/17/bin/pg_dump.exe',
             f"--host={db_config['host']}",
@@ -131,8 +143,10 @@ def respaldar_tablas(request):
             f"--dbname={db_config['name']}",
             '--no-password',
             '--verbose',
-            '--create',
             '--clean',
+            '--if-exists',
+            '--no-owner',
+            '--no-privileges',
         ]
         
         # Agregar opciones según configuración
@@ -218,7 +232,7 @@ def respaldar_bd_completa(request):
         # Obtener configuración de BD
         db_config = obtener_config_db()
         
-        # Construir comando pg_dump para BD completa
+        # Construir comando pg_dump para BD completa (compatible con pgAdmin)
         cmd = [
             'C:/Program Files/PostgreSQL/17/bin/pg_dump.exe',
             f"--host={db_config['host']}",
@@ -227,9 +241,10 @@ def respaldar_bd_completa(request):
             f"--dbname={db_config['name']}",
             '--no-password',
             '--verbose',
-            '--create',
             '--clean',
             '--if-exists',
+            '--no-owner',
+            '--no-privileges',
         ]
         
         # Agregar opciones según configuración
@@ -350,11 +365,11 @@ def listar_respaldos(request):
 @permission_classes([IsAuthenticated])
 def restaurar_respaldo(request):
     """
-    Restaurar un respaldo
+    Restaurar un respaldo usando psql
     Body: {
         "archivo": "nombre_archivo.sql",
         "confirmar": true,
-        "modo": "replace" | "append"  // replace = reemplazar, append = agregar
+        "modo": "replace" | "append"
     }
     """
     try:
@@ -399,14 +414,15 @@ def restaurar_respaldo(request):
             f"--username={db_config['user']}",
             f"--dbname={db_config['name']}",
             '--no-password',
-            '--verbose',
+            '--quiet',  # Menos verbose para evitar ruido
+            '--echo-errors',  # Solo mostrar errores
         ]
         
         # Configurar según modo
         if modo == 'replace':
             cmd.extend(['--single-transaction'])  # Todo o nada
         
-        cmd.extend(['--file', ruta_backup])
+        cmd.extend(['-f', ruta_backup])  # Usar -f en lugar de --file
         
         # Configurar variables de entorno
         env = os.environ.copy()
@@ -414,19 +430,37 @@ def restaurar_respaldo(request):
         
         # Ejecutar restauración
         print(f"🔄 Ejecutando restauración desde: {archivo}")
+        print(f"🔧 Comando: {' '.join(cmd)}")
+        
         result = subprocess.run(cmd, env=env, capture_output=True, text=True)
         
-        # Preparar respuesta (psql puede dar warnings que no son errores)
+        print(f"📤 Return code: {result.returncode}")
+        print(f"📄 stdout: {result.stdout}")
+        print(f"⚠️ stderr: {result.stderr}")
+        
+        # Verificar resultado
+        if result.returncode != 0:
+            return Response({
+                'error': 'Error en la restauración',
+                'details': result.stderr,
+                'archivo': archivo,
+                'comando': ' '.join(cmd)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Preparar respuesta
         warnings = []
         if result.stderr:
-            warnings = result.stderr.split('\n')
+            # Filtrar mensajes que no son errores reales
+            lines = result.stderr.split('\n')
+            warnings = [line for line in lines if line.strip() and not line.startswith('psql:')]
         
         return Response({
-            'message': 'Restauración completada',
+            'message': '✅ Restauración completada exitosamente',
             'archivo': archivo,
             'modo': modo,
             'metadata': metadata,
             'warnings': warnings,
+            'comando_ejecutado': ' '.join(cmd),
             'output': result.stdout
         })
         
@@ -595,5 +629,275 @@ def verificar_sistema_respaldos(request):
         return Response({
             'error': f'Error en verificación del sistema: {str(e)}',
             'directorio_respaldos': BACKUP_DIR,
-            'base_dir': settings.BASE_DIR
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+# ============================================================================
+# NUEVAS FUNCIONES PARA SUPERADMIN
+# ============================================================================
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def respaldo_limpio_pgadmin(request):
+    """
+    Generar respaldo limpio compatible con pgAdmin usando pg_dump
+    """
+    try:
+        is_superadmin, error_response = verificar_superadmin(request)
+        if not is_superadmin:
+            return error_response
+        
+        db_config = obtener_config_db()
+        
+        # Crear directorio de respaldos
+        os.makedirs(BACKUP_DIR, exist_ok=True)
+        
+        # Nombre del archivo de respaldo
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_filename = f"respaldo_pgadmin_{timestamp}.sql"
+        backup_path = os.path.join(BACKUP_DIR, backup_filename)
+        
+        # Comando pg_dump con opciones para pgAdmin
+        pg_dump_cmd = [
+            'pg_dump',
+            '--host', db_config['host'],
+            '--port', str(db_config['port']),
+            '--username', db_config['user'],
+            '--dbname', db_config['name'],
+            '--no-password',
+            '--verbose',
+            '--clean',                # Incluir comandos DROP
+            '--if-exists',           # Solo DROP si existe
+            '--create',              # Incluir comando CREATE DATABASE
+            '--encoding', 'UTF8',    # Encoding UTF-8
+            '--no-owner',            # Sin comandos de propietario
+            '--no-privileges',       # Sin comandos de privilegios
+            '--file', backup_path
+        ]
+        
+        # Configurar variable de entorno para password
+        env = os.environ.copy()
+        env['PGPASSWORD'] = db_config['password']
+        
+        # Ejecutar pg_dump
+        result = subprocess.run(
+            pg_dump_cmd,
+            env=env,
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        
+        # Verificar que el archivo se creó
+        if os.path.exists(backup_path):
+            file_size = os.path.getsize(backup_path)
+            
+            return Response({
+                'mensaje': 'Respaldo limpio generado exitosamente',
+                'archivo': backup_filename,
+                'ruta': backup_path,
+                'tamaño': file_size,
+                'tamaño_mb': round(file_size / 1024 / 1024, 2),
+                'compatible_con': 'pgAdmin 4',
+                'formato': 'SQL estándar PostgreSQL',
+                'timestamp': timestamp,
+                'instrucciones': {
+                    'pgadmin': [
+                        'Abre pgAdmin 4',
+                        'Click derecho en Databases',
+                        'Create > Database',
+                        'Click derecho en nueva BD',
+                        'Restore > Selecciona archivo',
+                        'Format: Plain',
+                        'Ejecuta restauración'
+                    ],
+                    'comando_alternativo': f'psql -U postgres -h localhost -f "{backup_path}"'
+                }
+            })
+        else:
+            return Response({'error': 'Error: El archivo de respaldo no se creó'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    except subprocess.CalledProcessError as e:
+        return Response({
+            'error': 'Error al ejecutar pg_dump',
+            'codigo_salida': e.returncode,
+            'stderr': e.stderr,
+            'solucion': 'Verifica que PostgreSQL client tools estén instalados y en PATH'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except Exception as e:
+        return Response({'error': f'Error generando respaldo: {str(e)}'}, 
+                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def resetear_bd_completa(request):
+    """
+    PELIGROSO: Eliminar todos los datos de la base de datos usando BAT
+    """
+    try:
+        is_superadmin, error_response = verificar_superadmin(request)
+        if not is_superadmin:
+            return error_response
+        
+        confirmacion = request.data.get('confirmacion')
+        if confirmacion != 'CONFIRMO_RESETEAR_BD':
+            return Response({
+                'error': 'Confirmación requerida',
+                'requerido': 'confirmacion: "CONFIRMO_RESETEAR_BD"'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Ejecutar script Python de reseteo rápido
+        import subprocess
+        import os
+        
+        script_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resetear_bd_rapido.py')
+        script_path = os.path.abspath(script_path)
+        
+        print(f"🔄 Ejecutando reseteo rápido: {script_path}")
+        
+        # Ejecutar script Python
+        result = subprocess.run(['python', script_path], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            return Response({
+                'mensaje': '⚠️ BASE DE DATOS RESETEADA COMPLETAMENTE',
+                'metodo': 'BAT rápido',
+                'output': result.stdout,
+                'timestamp': datetime.now().isoformat(),
+                'advertencia': 'Todos los datos han sido eliminados permanentemente'
+            })
+        else:
+            return Response({
+                'error': 'Error en el reseteo',
+                'details': result.stderr,
+                'output': result.stdout
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    except Exception as e:
+        return Response({'error': f'Error reseteando BD: {str(e)}'}, 
+                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    except Exception as e:
+        return Response({'error': f'Error reseteando BD: {str(e)}'}, 
+                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cargar_datos_iniciales(request):
+    """
+    Cargar datos de prueba iniciales usando BAT
+    """
+    try:
+        is_superadmin, error_response = verificar_superadmin(request)
+        if not is_superadmin:
+            return error_response
+        
+        # Ejecutar script Python de carga rápida
+        import subprocess
+        import os
+        
+        script_path = os.path.join(os.path.dirname(__file__), '..', '..', 'cargar_datos_rapido.py')
+        script_path = os.path.abspath(script_path)
+        
+        print(f"🔄 Ejecutando carga rápida: {script_path}")
+        
+        # Ejecutar script Python
+        result = subprocess.run(['python', script_path], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            return Response({
+                'mensaje': '✅ DATOS INICIALES CARGADOS EXITOSAMENTE',
+                'metodo': 'BAT rápido',
+                'output': result.stdout,
+                'usuarios_disponibles': {
+                    'superadmin': 'superadmin / 1234',
+                    'admin_empresa': 'admin_empresa / 1234', 
+                    'admin_planta': 'admin_planta / 1234'
+                },
+                'timestamp': datetime.now().isoformat()
+            })
+        else:
+            return Response({
+                'error': 'Error cargando datos',
+                'details': result.stderr,
+                'output': result.stdout
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    except Exception as e:
+        return Response({'error': f'Error cargando datos iniciales: {str(e)}'}, 
+                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def restaurar_estado_inicial(request):
+    """
+    Restaurar la BD al punto de inicio usando BAT
+    """
+    try:
+        is_superadmin, error_response = verificar_superadmin(request)
+        if not is_superadmin:
+            return error_response
+        
+        confirmacion = request.data.get('confirmacion')
+        if confirmacion != 'CONFIRMO_RESTAURAR_INICIAL':
+            return Response({
+                'error': 'Confirmación requerida',
+                'requerido': 'confirmacion: "CONFIRMO_RESTAURAR_INICIAL"'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Ejecutar script combinado: reseteo + carga
+        import subprocess
+        import os
+        
+        # Paso 1: Resetear
+        reset_path = os.path.join(os.path.dirname(__file__), '..', '..', 'resetear_bd_rapido.py')
+        reset_path = os.path.abspath(reset_path)
+        
+        print(f"🔄 Paso 1/2: Reseteando BD...")
+        reset_result = subprocess.run(['python', reset_path], capture_output=True, text=True)
+        
+        if reset_result.returncode != 0:
+            return Response({
+                'error': 'Error en reseteo',
+                'details': reset_result.stderr,
+                'output': reset_result.stdout
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Paso 2: Cargar datos
+        load_path = os.path.join(os.path.dirname(__file__), '..', '..', 'cargar_datos_rapido.py')
+        load_path = os.path.abspath(load_path)
+        
+        print(f"🔄 Paso 2/2: Cargando datos...")
+        load_result = subprocess.run(['python', load_path], capture_output=True, text=True)
+        
+        if load_result.returncode != 0:
+            return Response({
+                'error': 'Error cargando datos',
+                'details': load_result.stderr,
+                'output': load_result.stdout
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Combinar outputs
+        combined_output = f"RESETEO:\n{reset_result.stdout}\n\nCARGA:\n{load_result.stdout}"
+        
+        return Response({
+            'mensaje': '🎉 BD RESTAURADA AL ESTADO INICIAL EXITOSAMENTE',
+            'metodo': 'Scripts Python combinados',
+            'output': combined_output,
+            'estado_final': 'BD lista para usar como primer día del software',
+            'usuarios_disponibles': {
+                'superadmin': 'superadmin / 1234',
+                'admin_empresa': 'admin_empresa / 1234', 
+                'admin_planta': 'admin_planta / 1234'
+            },
+            'timestamp': datetime.now().isoformat(),
+            'recomendacion': 'Crear respaldo después de este estado inicial'
+        })
+        
+    except Exception as e:
+        return Response({'error': f'Error restaurando estado inicial: {str(e)}'}, 
+                      status=status.HTTP_500_INTERNAL_SERVER_ERROR)

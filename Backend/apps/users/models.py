@@ -39,6 +39,12 @@ class PerfilUsuario(models.Model):
     
     class Meta:
         db_table = 'usuarios'
+    
+    def __str__(self):
+        apellido_completo = f"{self.apellido_paterno}"
+        if self.apellido_materno:
+            apellido_completo += f" {self.apellido_materno}"
+        return f"{self.nombre} {apellido_completo} ({self.nivel_usuario})"
 
 # EMPRESAS - Según el esquema SQL original
 class Empresa(models.Model):
@@ -117,6 +123,9 @@ class Planta(models.Model):
     
     class Meta:
         db_table = 'plantas'
+    
+    def __str__(self):
+        return f"{self.nombre} - {self.empresa.nombre}"
 
 # ADMIN_PLANTAS - Tabla intermedia para admins de plantas
 class AdminPlanta(models.Model):
@@ -179,6 +188,9 @@ class Puesto(models.Model):
     class Meta:
         db_table = 'puestos'
         unique_together = ['nombre', 'departamento']  # Nombre único solo dentro del mismo departamento
+    
+    def __str__(self):
+        return f"{self.nombre} - {self.departamento.nombre}"
 
 # EMPLEADOS - Según la estructura REAL de la base de datos
 class Empleado(models.Model):
@@ -194,12 +206,17 @@ class Empleado(models.Model):
     puesto = models.ForeignKey(
         Puesto, 
         on_delete=models.CASCADE, 
-        db_column='puesto'  # Especificar nombre de columna
+        db_column='puesto_id'  # Corregir nombre de columna
     )
     
     class Meta:
         db_table = 'empleados'
-        managed = False  # Django no gestiona esta tabla (para evitar migraciones)
+    
+    def __str__(self):
+        apellido_completo = f"{self.apellido_paterno}"
+        if self.apellido_materno:
+            apellido_completo += f" {self.apellido_materno}"
+        return f"{self.nombre} {apellido_completo} - {self.puesto.nombre}"
 
 
 #MODELOS DE EVALUACION

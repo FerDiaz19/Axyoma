@@ -1,3 +1,24 @@
+/**
+ * 🗄️ SERVICIO DE ADMINISTRACIÓN DE BASE DE DATOS
+ * ===============================================
+ * 
+ * Servicio TypeScript para gestión avanzada de BD y exportaciones.
+ * Funciones de SuperAdmin para respaldos, reseteo y datos iniciales.
+ * 
+ * 📋 Responsable: Yael Contreras
+ * 📅 Fecha: Enero 2025
+ * 🔢 Versión: 2.0
+ * 
+ * 🚀 Funcionalidades:
+ * - Servicios de exportación de datos
+ * - Gestión de respaldos de BD
+ * - Reseteo completo del sistema
+ * - Carga de datos iniciales
+ * - Integración con backend Django
+ * 
+ * 🔒 Seguridad: Token-based authentication para SuperAdmin
+ */
+
 // Servicio para gestión de BD y exportaciones
 import axios from 'axios';
 import api from '../api';
@@ -42,8 +63,6 @@ export interface EstadisticasBD {
   puestos: number;
   empleados: number;
   usuarios: number;
-  suscripciones: number;
-  pagos: number;
 }
 
 class AdminBDService {
@@ -67,7 +86,7 @@ class AdminBDService {
       console.log(`🔄 AdminBD: Exportando tabla ${tablaNombre}...`);
       
       // Usar endpoints directos solo para las tablas problemáticas
-      const tablasProblematicas = ['empleados', 'suscripciones'];
+      const tablasProblematicas = ['empleados'];
       const endpoint = tablasProblematicas.includes(tablaNombre) 
         ? `/directo/exportar/${tablaNombre}/`
         : `/exportar/${tablaNombre}/`;
@@ -127,6 +146,62 @@ class AdminBDService {
       return response.data;
     } catch (error) {
       console.error('❌ Error al crear respaldo parcial:', error);
+      throw error;
+    }
+  }
+
+  // Crear respaldo limpio compatible con pgAdmin
+  async crearRespaldoPgAdmin(): Promise<any> {
+    try {
+      console.log('🔄 Creando respaldo compatible con pgAdmin...');
+      const response = await adminBDApi.post('/respaldos/pgadmin/');
+      console.log('✅ Respaldo pgAdmin creado:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al crear respaldo pgAdmin:', error);
+      throw error;
+    }
+  }
+
+  // PELIGROSO: Resetear toda la base de datos
+  async resetearBD(): Promise<any> {
+    try {
+      console.log('⚠️ RESETEANDO BASE DE DATOS...');
+      const response = await adminBDApi.post('/sistema/resetear-bd/', {
+        confirmacion: 'CONFIRMO_RESETEAR_BD'
+      });
+      console.log('✅ Base de datos reseteada:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al resetear BD:', error);
+      throw error;
+    }
+  }
+
+  // Cargar datos iniciales de prueba
+  async cargarDatosIniciales(): Promise<any> {
+    try {
+      console.log('🔄 Cargando datos iniciales...');
+      const response = await adminBDApi.post('/sistema/datos-iniciales/');
+      console.log('✅ Datos iniciales cargados:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al cargar datos iniciales:', error);
+      throw error;
+    }
+  }
+
+  // Restaurar BD al estado inicial (resetear + cargar datos)
+  async restaurarEstadoInicial(): Promise<any> {
+    try {
+      console.log('🔄 Restaurando BD al estado inicial...');
+      const response = await adminBDApi.post('/sistema/estado-inicial/', {
+        confirmacion: 'CONFIRMO_RESTAURAR_INICIAL'
+      });
+      console.log('✅ BD restaurada al estado inicial:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al restaurar estado inicial:', error);
       throw error;
     }
   }
@@ -249,9 +324,11 @@ export const tablas = [
   { 
     nombre: 'usuarios', 
     descripcion: 'Lista de todos los usuarios del sistema'
-  },
-  { 
-    nombre: 'suscripciones', 
-    descripcion: 'Lista de todas las suscripciones de empresas'
   }
 ];
+
+// Exportar solo las nuevas funciones del SuperAdmin
+export const crearRespaldoPgAdmin = adminBDService.crearRespaldoPgAdmin.bind(adminBDService);
+export const resetearBD = adminBDService.resetearBD.bind(adminBDService);
+export const cargarDatosIniciales = adminBDService.cargarDatosIniciales.bind(adminBDService);
+export const restaurarEstadoInicial = adminBDService.restaurarEstadoInicial.bind(adminBDService);
