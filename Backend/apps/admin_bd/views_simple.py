@@ -254,7 +254,7 @@ def respaldar_parcial_simple(request):
         
         # Comando pg_dump para tablas específicas
         cmd = [
-            'pg_dump',
+            'C:/Program Files/PostgreSQL/17/bin/pg_dump.exe',
             f'--host={db_host}',
             f'--port={db_port}',
             f'--username={db_user}',
@@ -347,7 +347,7 @@ def restaurar_bd_simple(request):
         
         # Comando psql para restaurar
         cmd = [
-            'psql',
+            'C:/Program Files/PostgreSQL/17/bin/psql.exe',
             f'--host={db_host}',
             f'--port={db_port}',
             f'--username={db_user}',

@@ -124,7 +124,7 @@ def respaldar_tablas(request):
         
         # Construir comando pg_dump
         cmd = [
-            'pg_dump',
+            'C:/Program Files/PostgreSQL/17/bin/pg_dump.exe',
             f"--host={db_config['host']}",
             f"--port={db_config['port']}",
             f"--username={db_config['user']}",
@@ -220,7 +220,7 @@ def respaldar_bd_completa(request):
         
         # Construir comando pg_dump para BD completa
         cmd = [
-            'pg_dump',
+            'C:/Program Files/PostgreSQL/17/bin/pg_dump.exe',
             f"--host={db_config['host']}",
             f"--port={db_config['port']}",
             f"--username={db_config['user']}",
@@ -393,7 +393,7 @@ def restaurar_respaldo(request):
         
         # Construir comando psql para restaurar
         cmd = [
-            'psql',
+            'C:/Program Files/PostgreSQL/17/bin/psql.exe',
             f"--host={db_config['host']}",
             f"--port={db_config['port']}",
             f"--username={db_config['user']}",
