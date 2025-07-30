@@ -1,6 +1,6 @@
 Configuración completada exitosamente
-Fecha: mar 07/29/2025
-Proyecto: Axyoma2
-Ruta: C:\xampp2\htdocs\UTT4B\Axyoma2
+Fecha: Tue 07/29/2025
+Proyecto: Axyoma
+Ruta: C:\Users\yaelr\OneDrive\Escritorio\Proyectos_po\AXYOMA\Axyoma
 Usuario SuperAdmin: configurado
 Sistema de respaldos: funcionando

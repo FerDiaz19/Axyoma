@@ -148,7 +148,7 @@ def respaldar_completo_simple(request):
         
         # Comando pg_dump
         cmd = [
-            'pg_dump',
+            'C:/Program Files/PostgreSQL/17/bin/pg_dump.exe',  # Ruta al ejecutable de pg_dump
             f'--host={db_host}',
             f'--port={db_port}',
             f'--username={db_user}',

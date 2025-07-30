@@ -49,7 +49,6 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     'apps.users',
     'apps.subscriptions',
-    'apps.surveys',
     'apps.evaluaciones',
     'apps.admin_bd',
 ]
