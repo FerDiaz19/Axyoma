@@ -1,0 +1,14 @@
+{
+  "tipo": "tablas",
+  "tablas": [
+    "usuarios",
+    "empresas"
+  ],
+  "incluir_datos": true,
+  "descripcion": "Respaldo de prueba - usuarios y empresas",
+  "fecha_creacion": "2025-07-29T20:07:20.029539",
+  "usuario": "admin",
+  "archivo": "backup_tablas_usuarios_empresas_20250729_200719.sql",
+  "tamaño_bytes": 15095,
+  "base_datos": "axyomadb"
+}

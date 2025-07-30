@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { obtenerEstadisticasBD, tablas, type EstadisticasBD } from '../services/adminBDService';
 import ExportacionCSV from './ExportacionCSV';
+import GestionRespaldos from './GestionRespaldos';
 import '../css/GestionBD.css';
 
 const GestionBD: React.FC = () => {
   const [estadisticas, setEstadisticas] = useState<EstadisticasBD | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'exportacion' | 'respaldos'>('exportacion');
 
   // Filtrar tablas - remover evaluaciones y encuestas
   const tablasDisponibles = tablas.filter(tabla => 
@@ -67,7 +69,7 @@ const GestionBD: React.FC = () => {
             Gestión de Base de Datos
           </h2>
           <p className="gestion-bd-subtitle">
-            Exporta y gestiona los datos del sistema en formato CSV
+            Exporta datos en CSV y gestiona respaldos de la base de datos
           </p>
         </div>
         <button 
@@ -89,12 +91,35 @@ const GestionBD: React.FC = () => {
         </button>
       </div>
 
-      {loading ? (
-        <div className="loading-container">
-          <div className="loading-spinner">⏳</div>
-          <p>Cargando estadísticas de la base de datos...</p>
+      {/* Sistema de Pestañas */}
+      <div className="tabs-container">
+        <div className="tabs-header">
+          <button 
+            className={`tab-button ${activeTab === 'exportacion' ? 'active' : ''}`}
+            onClick={() => setActiveTab('exportacion')}
+          >
+            <span className="tab-icon">📤</span>
+            Exportación CSV
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'respaldos' ? 'active' : ''}`}
+            onClick={() => setActiveTab('respaldos')}
+          >
+            <span className="tab-icon">💾</span>
+            Respaldos de BD
+          </button>
         </div>
-      ) : estadisticas ? (
+      </div>
+
+      {/* Contenido de las pestañas */}
+      {activeTab === 'exportacion' ? (
+        // Contenido de Exportación CSV
+        loading ? (
+          <div className="loading-container">
+            <div className="loading-spinner">⏳</div>
+            <p>Cargando estadísticas de la base de datos...</p>
+          </div>
+        ) : estadisticas ? (
         <>
           {/* Resumen de estadísticas */}
           <div className="stats-summary">
@@ -161,15 +186,19 @@ const GestionBD: React.FC = () => {
             </div>
           </div>
         </>
+        ) : (
+          <div className="error-container">
+            <div className="error-icon">❌</div>
+            <h3>Error al cargar datos</h3>
+            <p>No se pudieron cargar las estadísticas de la base de datos</p>
+            <button onClick={cargarEstadisticas} className="btn-retry">
+              🔄 Reintentar
+            </button>
+          </div>
+        )
       ) : (
-        <div className="error-container">
-          <div className="error-icon">❌</div>
-          <h3>Error al cargar datos</h3>
-          <p>No se pudieron cargar las estadísticas de la base de datos</p>
-          <button onClick={cargarEstadisticas} className="btn-retry">
-            🔄 Reintentar
-          </button>
-        </div>
+        // Contenido de Respaldos de BD
+        <GestionRespaldos />
       )}
     </div>
   );

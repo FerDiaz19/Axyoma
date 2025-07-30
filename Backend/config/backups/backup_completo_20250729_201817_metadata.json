@@ -1,0 +1,10 @@
+{
+  "tipo": "bd_completa",
+  "incluir_datos": true,
+  "descripcion": "Prueba",
+  "fecha_creacion": "2025-07-29T20:18:17.542297",
+  "usuario": "ernesto",
+  "archivo": "backup_completo_20250729_201817.sql",
+  "tamaño_bytes": 198355,
+  "base_datos": "axyomadb"
+}

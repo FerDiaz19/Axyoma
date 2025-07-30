@@ -1,0 +1,13 @@
+{
+  "tipo": "tablas",
+  "tablas": [
+    "usuarios"
+  ],
+  "incluir_datos": false,
+  "descripcion": "",
+  "fecha_creacion": "2025-07-29T20:20:31.992094",
+  "usuario": "ernesto",
+  "archivo": "backup_tablas_usuarios_20250729_202031.sql",
+  "tamaño_bytes": 4254,
+  "base_datos": "axyomadb"
+}
