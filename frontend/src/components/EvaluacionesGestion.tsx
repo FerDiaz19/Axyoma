@@ -65,7 +65,7 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
   ];
 
   const isSuperAdmin = userData?.nivel_usuario === 'superadmin';
-  const isAdminEmpresa = userData?.nivel_usuario === 'admin-empresa';
+  const isAdminEmpresa = userData?.nivel_usuario.replace('-', '_') === 'admin_empresa';
 
   useEffect(() => {
     loadData();
@@ -602,8 +602,8 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
         </div>
       )}
 
-      {/* Botón para crear evaluación personalizada */}
-      {(isSuperAdmin || isAdminEmpresa) && (
+      {/* Botón para crear evaluación personalizada solo para AdminEmpresa */}
+      {isAdminEmpresa &&(
         <div className="add-evaluacion-section">
           <button 
             onClick={() => setShowCreateForm(true)}

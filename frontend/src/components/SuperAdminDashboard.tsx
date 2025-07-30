@@ -120,7 +120,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const [empleados, setEmpleados] = useState<EmpleadoExtendido[]>([]);
   const [suscripciones, setSuscripciones] = useState<SuscripcionEmpresa[]>([]);
   const [planes, setPlanes] = useState<PlanSuscripcion[]>([]);
-  const [pagos, setPagos] = useState<Pago[]>([]);
+  const [pagos, setPagos] = useState<Pago[]>([]); // Desactivado temporalmente
   
   // Estado para filtros
   const [filtroTexto, setFiltroTexto] = useState('');
@@ -875,7 +875,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               <span>⏳ Pendientes: {pagos?.filter(p => p.estado_pago === 'pendiente' || p.estado_pago === 'Pendiente').length || 0}</span>
               <span>❌ Fallidos: {pagos?.filter(p => p.estado_pago === 'fallido' || p.estado_pago === 'Fallido').length || 0}</span>
             </div>
-          </div>
+         </div>
           
           <div className="stat-card">
             <h4>🏭 Plantas</h4>
@@ -1786,13 +1786,13 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               <span className="nav-icon">📋</span>
               <span className="nav-text">Planes</span>
             </button>
-            <button 
+            {/* <button 
               className={activeSection === 'pagos' ? 'active' : ''}
               onClick={() => setActiveSection('pagos')}
             >
               <span className="nav-icon">💰</span>
               <span className="nav-text">Pagos</span>
-            </button>
+            </button> */}
             <button 
               className={activeSection === 'evaluaciones' ? 'active' : ''}
               onClick={() => setActiveSection('evaluaciones')}
@@ -1845,7 +1845,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           {activeSection === 'empleados' && renderEmpleados()}
           {activeSection === 'planes' && renderPlanes()}
           {activeSection === 'suscripciones' && renderSuscripciones()}
-          {activeSection === 'pagos' && renderPagos()}
+          {/* {activeSection === 'pagos' && renderPagos()} // Desactivado temporalmente */}
           {activeSection === 'evaluaciones' && <EvaluacionesGestion userData={{ nivel_usuario: 'superadmin' }} />}
           {activeSection === 'gestion-bd' && <GestionBD />}
 
@@ -1887,6 +1887,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           title="💳 Crear Nueva Suscripción"
           initialData={{
             empresa_id: '',
+
             plan_id: ''
           }}
           onSave={handleCrearSuscripcion}

@@ -161,7 +161,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
       case 'empleados':
         return <EmpleadosCRUD userData={userData} />;
       case 'evaluaciones':
-        return <EvaluacionesGestion userData={{ nivel_usuario: 'admin_empresa' }} />;
+        return empresaId ? <EvaluacionesGestion userData={{ nivel_usuario: 'admin_empresa', empresa_id: empresaId }} /> : <div className="loading">Cargando evaluaciones...</div>;
       case 'reportes':
         return (
           <div className="coming-soon">
