@@ -28,6 +28,8 @@ urlpatterns = [
     # path('api/evaluaciones/', include('apps.surveys.urls')),  # Eliminado: surveys ya no existe
     path('api/admin-bd/', include('apps.admin_bd.urls')),  # ← Nueva app para gestión BD
     path("api/health-check/", health_check),
+    path('api/evaluaciones/', include('apps.evaluaciones.urls')),
+path('api/evaluaciones/', include('apps.evaluaciones.urls')),
 
     # Swagger URLs
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),

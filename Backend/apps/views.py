@@ -197,7 +197,8 @@ class AuthViewSet(viewsets.ViewSet):
                 elif profile.nivel_usuario == 'admin-empresa':
                     # Admin de Empresa: gestión de su empresa
                     try:
-                        empresa = Empresa.objects.get(administrador=profile)
+                        # Usar el id del perfil para evitar problemas de instancia
+                        empresa = Empresa.objects.filter(administrador_id=profile.id).first()
                         
                         # Obtener información de suscripción
                         suscripcion_info = self.get_subscription_info(empresa)
@@ -321,7 +322,8 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
-                    empresa = Empresa.objects.get(administrador=user.perfil)
+                    # Usar el id del perfil para evitar problemas de instancia
+                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
                     # Obtener empleados de todas las plantas de esta empresa
                     plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
                     return Empleado.objects.filter(planta__in=plantas_empresa, status=True)
@@ -351,7 +353,8 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
-                    empresa = Empresa.objects.get(administrador=user.perfil)
+                    # Usar el id del perfil para evitar problemas de instancia
+                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
                     plantas = Planta.objects.filter(empresa=empresa, status=True)
                 except Empresa.DoesNotExist:
                     plantas = Planta.objects.none()
@@ -377,7 +380,8 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
-                    empresa = Empresa.objects.get(administrador=user.perfil)
+                    # Usar el id del perfil para evitar problemas de instancia
+                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
                     plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
                     departamentos = Departamento.objects.filter(planta__in=plantas_empresa, status=True)
                 except Empresa.DoesNotExist:
@@ -404,7 +408,8 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
-                    empresa = Empresa.objects.get(administrador=user.perfil)
+                    # Usar el id del perfil para evitar problemas de instancia
+                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
                     plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
                     departamentos_empresa = Departamento.objects.filter(planta__in=plantas_empresa, status=True)
                     puestos = Puesto.objects.filter(departamento__in=departamentos_empresa, status=True)
@@ -510,20 +515,27 @@ class PlantaViewSet(viewsets.ModelViewSet):
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
-                    empresa = Empresa.objects.get(administrador=user.perfil)
-                    return Planta.objects.filter(empresa=empresa, status=True)
+                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                    print(f"[DEBUG] get_queryset PlantaViewSet: user_id={user.id}, perfil_id={user.perfil.id}, empresa_id={empresa.empresa_id if empresa else None}")
+                    plantas = Planta.objects.filter(empresa=empresa, status=True)
+                    print(f"[DEBUG] get_queryset PlantaViewSet: plantas={[{'id': p.planta_id, 'nombre': p.nombre, 'status': p.status} for p in plantas]}")
+                    return plantas
                 except Empresa.DoesNotExist:
+                    print("[DEBUG] get_queryset PlantaViewSet: Empresa no encontrada para admin-empresa")
                     return Planta.objects.none()
             elif user.perfil.nivel_usuario == 'superadmin':
-                # Superadmin puede ver todas las plantas
-                return Planta.objects.filter(status=True)
+                plantas = Planta.objects.filter(status=True)
+                print(f"[DEBUG] get_queryset PlantaViewSet: superadmin plantas={[{'id': p.planta_id, 'nombre': p.nombre, 'status': p.status} for p in plantas]}")
+                return plantas
             elif user.perfil.nivel_usuario == 'admin-planta':
-                # Admin de planta solo ve sus plantas asignadas
                 from apps.users.models import AdminPlanta
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
                 plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
-                return Planta.objects.filter(planta_id__in=plantas_ids, status=True)
-        
+                print(f"[DEBUG] get_queryset PlantaViewSet: admin-planta plantas_ids={plantas_ids}")
+                plantas = Planta.objects.filter(planta_id__in=plantas_ids, status=True)
+                print(f"[DEBUG] get_queryset PlantaViewSet: admin-planta plantas={[{'id': p.planta_id, 'nombre': p.nombre, 'status': p.status} for p in plantas]}")
+                return plantas
+        print("[DEBUG] get_queryset PlantaViewSet: No perfil o tipo de usuario no soportado")
         return Planta.objects.none()
     
     def perform_create(self, serializer):
@@ -642,7 +654,8 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
-                    empresa = Empresa.objects.get(administrador=user.perfil)
+                    # Usar el id del perfil para evitar problemas de instancia
+                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
                     plantas = Planta.objects.filter(empresa=empresa, status=True)
                     return Departamento.objects.filter(planta__in=plantas, status=True)
                 except Empresa.DoesNotExist:
@@ -711,7 +724,8 @@ class PuestoViewSet(viewsets.ModelViewSet):
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
-                    empresa = Empresa.objects.get(administrador=user.perfil)
+                    # Usar el id del perfil para evitar problemas de instancia
+                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
                     plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
                     departamentos_empresa = Departamento.objects.filter(planta__in=plantas_empresa, status=True)
                     return Puesto.objects.filter(departamento__in=departamentos_empresa, status=True)

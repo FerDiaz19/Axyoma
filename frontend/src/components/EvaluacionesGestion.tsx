@@ -13,7 +13,8 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'evaluaciones'>('evaluaciones');
-  
+  const [preguntasPorNormativa, setPreguntasPorNormativa] = useState<{ [key: string]: number }>({});
+
   // Estados para crear evaluación
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
@@ -52,14 +53,15 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
       titulo: 'Factores de Riesgo Psicosocial en el Trabajo',
       descripcion: 'Normativa oficial para identificación y prevención de factores de riesgo psicosocial',
       icono: '🧠'
-    },
-    { 
-      id: 'evaluacion-360', 
-      nombre: 'Evaluación 360°', 
-      titulo: 'Evaluación de Competencias 360 Grados',
-      descripcion: 'Evaluación integral de competencias desde múltiples perspectivas',
-      icono: '🎯'
     }
+    // ,
+    // { 
+    //   id: 'evaluacion-360', 
+    //   nombre: 'Evaluación 360°', 
+    //   titulo: 'Evaluación de Competencias 360 Grados',
+    //   descripcion: 'Evaluación integral de competencias desde múltiples perspectivas',
+    //   icono: '🎯'
+    // }
   ];
 
   const isSuperAdmin = userData?.nivel_usuario === 'superadmin';
@@ -68,6 +70,19 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
   useEffect(() => {
     loadData();
   }, []);
+
+  useEffect(() => {
+  const fetchPreguntasNormativas = async () => {
+    const resultados: { [key: string]: number } = {};
+    for (const normativa of normativas) {
+      const response = await evaluacionesAPI.getPreguntas({ tipo_evaluacion: normativa.nombre });
+      resultados[normativa.id] = response.data.length;
+    }
+    setPreguntasPorNormativa(resultados);
+  };
+  fetchPreguntasNormativas();
+}, []);
+
 
   const loadData = async () => {
     setLoading(true);
@@ -542,7 +557,7 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
             <div className="evaluacion-stats">
               <div className="stat">
                 <span className="stat-number">
-                  {preguntas.filter(p => p.tipo_evaluacion === parseInt(normativa.id) || p.tipo_evaluacion?.toString() === normativa.id).length}
+                {preguntasPorNormativa[normativa.id] || 0}
                 </span>
                 <span className="stat-label">Preguntas</span>
               </div>

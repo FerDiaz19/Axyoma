@@ -6,7 +6,8 @@ import {
   formatearPrecio,
   formatearDuracion,
   formatearFecha,
-  type PlanSuscripcion
+  type PlanSuscripcion,
+  obtenerInfoSuscripcionEmpresa
 } from '../services/suscripcionService';
 import '../css/GestionSuscripcion.css';
 
@@ -28,13 +29,26 @@ const GestionSuscripcion: React.FC<GestionSuscripcionProps> = ({ empresaId }) =>
   const cargarDatos = async () => {
     try {
       setLoading(true);
-      
-      const infoSuscripcion = await obtenerSuscripcionActual();
-      setSuscripcionInfo(infoSuscripcion);
-      
+      // Usar obtenerSuscripcionActual y si no hay, mostrar el objeto completo recibido
+      const infoSuscripcion = await obtenerSuscripcionActual(empresaId);
+      // Si no hay suscripcion_id o estado, mostrar la info cruda del endpoint
+      if (!infoSuscripcion || !infoSuscripcion.suscripcion_id || !infoSuscripcion.estado) {
+        // Usa la función obtenerInfoSuscripcionEmpresa que ya hace el mapeo correcto
+        try {
+          const rawData = await obtenerInfoSuscripcionEmpresa(empresaId);
+          setSuscripcionInfo(rawData);
+        } catch (err) {
+          setSuscripcionInfo({
+            tiene_suscripcion: false,
+            estado: 'sin_suscripcion',
+            mensaje: 'No se pudo obtener información de suscripción (error de red o formato)'
+          });
+        }
+      } else {
+        setSuscripcionInfo(infoSuscripcion);
+      }
       const planesData = await listarPlanes();
       setPlanes(planesData);
-      
     } catch (error) {
       console.error('Error cargando datos:', error);
       setSuscripcionInfo({
@@ -48,10 +62,15 @@ const GestionSuscripcion: React.FC<GestionSuscripcionProps> = ({ empresaId }) =>
   };
 
   const handleSeleccionarPlan = async (planId: number) => {
+    // Validación antes de enviar al backend
+    if (!empresaId || !planId) {
+      alert('Faltan datos para crear la suscripción. Verifica que la empresa y el plan sean válidos.');
+      setProcesandoPlan(null);
+      return;
+    }
     try {
       setProcesandoPlan(planId);
-      
-      const resultado = await suscribirseAPlan(planId);
+      const resultado = await suscribirseAPlan(planId, empresaId);
       
       alert(`Suscripción exitosa`);
       
@@ -86,8 +105,19 @@ const GestionSuscripcion: React.FC<GestionSuscripcionProps> = ({ empresaId }) =>
 
       <div className="suscripcion-actual">
         <h3>Estado Actual</h3>
-        
-        {suscripcionInfo?.tiene_suscripcion ? (
+        {/* Mostrar mensaje claro si hay error o no hay suscripción */}
+        {suscripcionInfo?.estado === 'sin_suscripcion' ? (
+          <div className="sin-suscripcion">
+            <h4>Sin Suscripción Activa</h4>
+            <p>{suscripcionInfo?.mensaje || 'No tienes una suscripción activa.'}</p>
+            <button 
+              onClick={() => setMostrarPlanes(true)}
+              className="btn-contratar"
+            >
+              Ver Planes Disponibles
+            </button>
+          </div>
+        ) : suscripcionInfo?.tiene_suscripcion ? (
           <div className="suscripcion-activa">
             <div className="plan-info">
               <h4>Suscripción Activa</h4>
@@ -131,14 +161,8 @@ const GestionSuscripcion: React.FC<GestionSuscripcionProps> = ({ empresaId }) =>
           </div>
         ) : (
           <div className="sin-suscripcion">
-            <h4>Sin Suscripción Activa</h4>
-            <p>{suscripcionInfo?.mensaje || 'No tienes una suscripción activa.'}</p>
-            <button 
-              onClick={() => setMostrarPlanes(true)}
-              className="btn-contratar"
-            >
-              Ver Planes Disponibles
-            </button>
+            <h4>No se pudo obtener el estado de la suscripción</h4>
+            <p>{suscripcionInfo?.mensaje || 'Intenta recargar la página o contactar soporte.'}</p>
           </div>
         )}
       </div>

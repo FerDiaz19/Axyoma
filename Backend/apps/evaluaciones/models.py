@@ -146,3 +146,18 @@ class ResultadoEvaluacion(models.Model):
         
     def __str__(self):
         return f"Resultados - {self.evaluacion.titulo}"
+
+
+
+class SeccionEval(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True)
+    evaluacion = models.ForeignKey(EvaluacionCompleta, on_delete=models.CASCADE)
+    numero_orden = models.IntegerField(default=1)
+    # ...otros campos...
+
+class SeccionPregunta(models.Model):
+    seccion = models.ForeignKey(SeccionEval, on_delete=models.CASCADE)
+    pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE)
+    numero_orden = models.IntegerField(default=1)
+    # ...otros campos si necesitas...

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -15,6 +15,11 @@ from .serializers import (
     EvaluacionSerializer, EvaluacionCreateSerializer,
     RespuestaEvaluacionSerializer, RespuestaEvaluacionCreateSerializer,
     ResultadoEvaluacionSerializer
+)
+
+from .models import (
+    TipoEvaluacion, Pregunta, EvaluacionCompleta, EvaluacionPregunta,
+    RespuestaEvaluacion, DetalleRespuesta, ResultadoEvaluacion, SeccionPregunta
 )
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -228,11 +233,16 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
             return EvaluacionCompleta.objects.filter(empresa=user.perfil.empresa)
         
         # Otros usuarios ven evaluaciones donde están incluidos
-        return EvaluacionCompleta.objects.filter(
-            Q(plantas__in=user.perfil.plantas.all()) |
-            Q(departamentos__in=user.perfil.departamentos.all()) |
-            Q(empleados_objetivo__perfil__user=user)
-        ).distinct()
+        perfil = getattr(user, 'perfil', None)
+        query = Q()
+        # Solo agrega los filtros si existen los atributos
+        if perfil:
+            if hasattr(perfil, 'plantas'):
+                query |= Q(plantas__in=perfil.plantas.all())
+            if hasattr(perfil, 'departamentos'):
+                query |= Q(departamentos__in=perfil.departamentos.all())
+        query |= Q(empleados_objetivo__perfil__user=user)
+        return EvaluacionCompleta.objects.filter(query).distinct()
     
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
@@ -348,3 +358,20 @@ class RespuestaEvaluacionViewSet(viewsets.ModelViewSet):
         
         serializer = EvaluacionSerializer(evaluaciones_sin_responder, many=True)
         return Response(serializer.data)
+
+
+@api_view(['GET'])
+def preguntas_nom035(request):
+    # El ID de la evaluación NOM-035 es 1
+    preguntas = SeccionPregunta.objects.filter(
+        seccion__evaluacion__id=1
+    ).select_related('pregunta')
+    data = []
+    for sp in preguntas:
+        data.append({
+            'id': sp.pregunta.id,
+            'texto_pregunta': sp.pregunta.texto_pregunta,
+            # ...otros campos que quieras mostrar...
+        })
+    return Response({'total': len(data), 'preguntas': data})
+

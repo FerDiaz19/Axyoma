@@ -60,6 +60,8 @@ const evaluacionesAPI = {
   // Preguntas
   getPreguntas: (params?: any) => api.get<Pregunta[]>('/evaluaciones/preguntas/', { params }),
   
+  getPreguntasNom035: () => api.get<{ total: number; preguntas: Pregunta[] }>('/evaluaciones/preguntas-nom035/'),
+
   createPregunta: (data: Partial<Pregunta>) => 
     api.post<Pregunta>('/evaluaciones/preguntas/', data),
   
@@ -122,5 +124,6 @@ const evaluacionesAPI = {
     }>;
   }) => api.post<RespuestaEvaluacion>('/evaluaciones/respuestas/', data),
 };
+
 
 export default evaluacionesAPI;

@@ -37,7 +37,17 @@ class PreguntaCreateSerializer(serializers.ModelSerializer):
         ]
         
     def create(self, validated_data):
-        validated_data['creada_por'] = self.context['request'].user
+        preguntas_data = validated_data.pop('preguntas_seleccionadas', [])
+        plantas = validated_data.pop('plantas', [])
+        departamentos = validated_data.pop('departamentos', [])
+        empleados = validated_data.pop('empleados_objetivo', [])
+
+        user = self.context['request'].user
+        if not hasattr(user, 'perfil') or not getattr(user.perfil, 'empresa', None):
+            raise serializers.ValidationError("El usuario no tiene una empresa asociada en su perfil.")
+
+        validated_data['empresa'] = user.perfil.empresa
+        validated_data['creada_por'] = user
         return super().create(validated_data)
 
 class EvaluacionPreguntaSerializer(serializers.ModelSerializer):
