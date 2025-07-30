@@ -145,7 +145,24 @@ class RespaldosService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al crear respaldo completo');
+        console.error('Error completo del servidor:', errorData);
+        
+        // Mostrar información detallada del error para debug
+        let errorMessage = errorData.error || 'Error al crear respaldo completo';
+        if (errorData.directorio_backup) {
+          errorMessage += `\nDirectorio: ${errorData.directorio_backup}`;
+        }
+        if (errorData.archivo_destino) {
+          errorMessage += `\nArchivo: ${errorData.archivo_destino}`;
+        }
+        if (errorData.comando_ejecutado) {
+          errorMessage += `\nComando: ${errorData.comando_ejecutado}`;
+        }
+        if (errorData.details) {
+          errorMessage += `\nDetalles: ${errorData.details}`;
+        }
+        
+        throw new Error(errorMessage);
       }
 
       return await response.json();

@@ -22,4 +22,5 @@ urlpatterns = [
     path('respaldos/eliminar/<str:archivo>/', views_respaldos.eliminar_respaldo, name='eliminar_respaldo'),
     path('respaldos/descargar/<str:archivo>/', views_respaldos.descargar_respaldo, name='descargar_respaldo'),
     path('respaldos/info/', views_respaldos.info_sistema_respaldos, name='info_sistema_respaldos'),
+    path('respaldos/verificar/', views_respaldos.verificar_sistema_respaldos, name='verificar_sistema_respaldos'),
 ]

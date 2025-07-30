@@ -12,13 +12,14 @@ class BackupManager:
     
     def __init__(self):
         self.db_settings = settings.DATABASES['default']
-        self.backup_dir = os.path.join(settings.BASE_DIR, 'respaldos')
+        # BASE_DIR está en Backend/config, necesitamos ir al directorio backups
+        self.backup_dir = os.path.join(settings.BASE_DIR, 'backups')
         self._crear_directorio_respaldos()
     
     def _crear_directorio_respaldos(self):
         """Crear directorio de respaldos si no existe"""
         if not os.path.exists(self.backup_dir):
-            os.makedirs(self.backup_dir)
+            os.makedirs(self.backup_dir, exist_ok=True)
     
     def crear_respaldo_completo(self, nombre_archivo=None):
         """

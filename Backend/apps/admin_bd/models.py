@@ -40,7 +40,7 @@ class ConfiguracionBD(models.Model):
     host = models.CharField(max_length=100, default='localhost')
     puerto = models.IntegerField(default=5432)
     usuario_admin = models.CharField(max_length=100, default='postgres')
-    directorio_respaldos = models.CharField(max_length=255, default='respaldos/')
+    directorio_respaldos = models.CharField(max_length=255, default='config/backups/')
     max_respaldos_mantener = models.IntegerField(default=10)
     habilitar_respaldos_automaticos = models.BooleanField(default=False)
     frecuencia_respaldo_dias = models.IntegerField(default=7)

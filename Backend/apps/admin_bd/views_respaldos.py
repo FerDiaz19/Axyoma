@@ -23,10 +23,16 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 
-# Configuración de respaldos
-BACKUP_DIR = os.path.join(settings.BASE_DIR, 'backups')
-if not os.path.exists(BACKUP_DIR):
-    os.makedirs(BACKUP_DIR)
+# Configuración de respaldos - Ruta estándar relativa al proyecto
+def get_backup_directory():
+    """Obtener directorio de respaldos estándar para todos los equipos"""
+    # BASE_DIR en Django apunta a Backend/config, necesitamos ir a Backend y luego a config/backups
+    backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+    if not os.path.exists(backup_dir):
+        os.makedirs(backup_dir, exist_ok=True)
+    return backup_dir
+
+BACKUP_DIR = get_backup_directory()
 
 
 def verificar_superadmin(request):
@@ -232,12 +238,29 @@ def respaldar_bd_completa(request):
         
         # Ejecutar pg_dump
         print(f"🔄 Ejecutando respaldo completo de BD: {db_config['name']}")
+        print(f"📁 Directorio de respaldos: {BACKUP_DIR}")
+        print(f"📄 Archivo de respaldo: {ruta_backup}")
+        print(f"🔧 Comando: {' '.join(cmd)}")
+        
         result = subprocess.run(cmd, env=env, capture_output=True, text=True)
         
         if result.returncode != 0:
+            print(f"❌ Error en pg_dump: {result.stderr}")
             return Response({
                 'error': 'Error al crear respaldo completo',
-                'details': result.stderr
+                'details': result.stderr,
+                'directorio_backup': BACKUP_DIR,
+                'comando_ejecutado': ' '.join(cmd),
+                'archivo_destino': ruta_backup
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Verificar que el archivo fue creado
+        if not os.path.exists(ruta_backup):
+            return Response({
+                'error': 'El archivo de respaldo no fue creado',
+                'ruta_esperada': ruta_backup,
+                'directorio_backup': BACKUP_DIR,
+                'directorio_existe': os.path.exists(BACKUP_DIR)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         # Crear metadatos del respaldo
@@ -502,3 +525,69 @@ def info_sistema_respaldos(request):
     except Exception as e:
         return Response({'error': f'Error al obtener info del sistema: {str(e)}'}, 
                       status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def verificar_sistema_respaldos(request):
+    """
+    Verificar que el sistema de respaldos esté configurado correctamente
+    Para debugging de rutas y configuración
+    """
+    try:
+        is_superadmin, error_response = verificar_superadmin(request)
+        if not is_superadmin:
+            return error_response
+        
+        # Verificar directorio de respaldos
+        backup_dir_existe = os.path.exists(BACKUP_DIR)
+        
+        # Verificar permisos de escritura
+        permisos_ok = False
+        try:
+            test_file = os.path.join(BACKUP_DIR, 'test_permisos.tmp')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            permisos_ok = True
+        except:
+            pass
+        
+        # Verificar configuración de BD
+        try:
+            db_config = obtener_config_db()
+            bd_config_ok = True
+        except Exception as e:
+            db_config = {'error': str(e)}
+            bd_config_ok = False
+        
+        # Contar archivos existentes
+        archivos_existentes = []
+        if backup_dir_existe:
+            try:
+                archivos_existentes = [f for f in os.listdir(BACKUP_DIR) if f.endswith('.sql')]
+            except:
+                pass
+        
+        return Response({
+            'sistema': 'Sistema de respaldos - Verificación',
+            'directorio_respaldos': BACKUP_DIR,
+            'directorio_existe': backup_dir_existe,
+            'permisos_escritura': permisos_ok,
+            'configuracion_bd': db_config,
+            'bd_config_ok': bd_config_ok,
+            'archivos_respaldo_existentes': len(archivos_existentes),
+            'archivos_muestra': archivos_existentes[:5],
+            'base_dir': settings.BASE_DIR,
+            'rutas_relativas': {
+                'esperada': 'Backend/config/backups',
+                'completa': BACKUP_DIR
+            }
+        })
+        
+    except Exception as e:
+        return Response({
+            'error': f'Error en verificación del sistema: {str(e)}',
+            'directorio_respaldos': BACKUP_DIR,
+            'base_dir': settings.BASE_DIR
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

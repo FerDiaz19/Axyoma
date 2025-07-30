@@ -138,10 +138,10 @@ def respaldar_completo_simple(request):
         db_host = db_config['HOST'] or 'localhost'
         db_port = db_config['PORT'] or '5432'
         
-        # Crear archivo de respaldo
+        # Crear archivo de respaldo con ruta estándar
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_filename = f'respaldo_completo_{timestamp}.sql'
-        backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
+        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
         os.makedirs(backup_dir, exist_ok=True)
         backup_path = os.path.join(backup_dir, backup_filename)
         
@@ -243,10 +243,10 @@ def respaldar_parcial_simple(request):
         db_host = db_config['HOST'] or 'localhost'
         db_port = db_config['PORT'] or '5432'
         
-        # Crear archivo de respaldo
+        # Crear archivo de respaldo con ruta estándar
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         backup_filename = f'respaldo_parcial_{timestamp}.sql'
-        backup_dir = os.path.join(settings.MEDIA_ROOT, 'backups')
+        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
         os.makedirs(backup_dir, exist_ok=True)
         backup_path = os.path.join(backup_dir, backup_filename)
         
