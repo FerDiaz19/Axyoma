@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Login from './Login';
 import RegistroEmpresa from './RegistroEmpresa';
 import SuperAdminDashboard from './SuperAdminDashboard';
@@ -12,6 +13,7 @@ import { logout } from '../services/authService';
 import '../css/Dashboard.css';
 
 const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showRegistro, setShowRegistro] = useState(false);
   const [userData, setUserData] = useState<any>(null);
@@ -66,6 +68,14 @@ const Dashboard: React.FC = () => {
     setUserData(null);
     setShowSubscriptionAlert(false);
     localStorage.removeItem('userData');
+    
+    // Redirigir al landing page
+    navigate('/', { replace: true });
+    
+    // Forzar recarga para reiniciar completamente la app
+    setTimeout(() => {
+      window.location.reload();
+    }, 50);
   };
 
   const handleRegistroSuccess = () => {
