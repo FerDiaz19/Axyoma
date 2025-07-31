@@ -27,7 +27,7 @@ from .serializers import (
 )
 
 
-class SuscripcionViewSet(viewsets.ViewSet):
+class SuscripcionBasicaViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=['get'])
@@ -1101,19 +1101,15 @@ class SuperAdminViewSet(viewsets.ViewSet):
             raise ValidationError("Usuario sin permisos de SuperAdmin")
     
     # ===================================================================
-    # FUNCIONES DE ESTADÍSTICAS COMENTADAS POR SOLICITUD DEL USUARIO
+    # FUNCIONES DE ESTADÍSTICAS - REACTIVADAS
     # ===================================================================
-    # @action(detail=False, methods=['get'])
-    # def estadisticas_sistema(self, request):
-    #     """FUNCIÓN DESHABILITADA - Estadísticas del sistema"""
-    #     return Response({'error': 'Función de estadísticas deshabilitada'}, 
-    #                   status=status.HTTP_501_NOT_IMPLEMENTED)
-    # 
-    # @action(detail=False, methods=['get'])
-    # def estadisticas_simple(self, request):
-    #     """FUNCIÓN DESHABILITADA - Estadísticas simples"""
-    #     return Response({'error': 'Función de estadísticas deshabilitada'}, 
-    #                   status=status.HTTP_501_NOT_IMPLEMENTED)
+    @action(detail=False, methods=['get'])
+    def estadisticas_sistema(self, request):
+        """Estadísticas completas del sistema para SuperAdmin"""
+        self._verify_superadmin(request.user)
+        
+        # Registro de tiempo inicial para performance
+        inicio_tiempo = timezone.now()
         
         try:
             # Estadísticas principales con mejor estructura
@@ -1854,7 +1850,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
             
             # Contar entidades relacionadas
             departamentos_count = Departamento.objects.filter(planta=planta).count()
-            empleados_count = Empleado.objects.filter(planta=planta).count()
+            empleados_count = Empleado.objects.filter(puesto__departamento__planta=planta).count()
             
             plantas_data.append({
                 'planta_id': planta.planta_id,
@@ -2909,6 +2905,24 @@ class SuperAdminViewSet(viewsets.ViewSet):
 @method_decorator(csrf_exempt, name='dispatch')
 class SuscripcionViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
+    
+    @action(detail=False, methods=['get'])
+    def planes(self, request):
+        """Listar planes disponibles - COMPATIBILIDAD"""
+        try:
+            from apps.subscriptions.models import PlanSuscripcion
+            planes = PlanSuscripcion.objects.filter(status=True)
+            return Response([{
+                "plan_id": plan.plan_id,
+                "nombre": plan.nombre,
+                "descripcion": plan.descripcion,
+                "duracion": plan.duracion,
+                "precio": float(plan.precio)
+            } for plan in planes])
+        except Exception as e:
+            return Response({
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     @action(detail=False, methods=['get'], permission_classes=[])
     def listar_planes(self, request):

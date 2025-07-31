@@ -209,28 +209,43 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <span>o</span>
             </div>
 
-            {/* Credenciales de prueba - con nombre de función corregido */}
+            {/* Credenciales de prueba - CREDENCIALES REALES DEL SISTEMA */}
             <div className="test-credentials">
-              <h4>🧪 Usuarios de Prueba</h4>
+              <h4>🧪 Usuarios del Sistema</h4>
               <div className="credentials-list">
                 <div 
                   className="credential-item clickable"
-                  onClick={() => applyTestCredential('testuser', 'testpass123')}
+                  onClick={() => applyTestCredential('superadmin', 'admin123')}
                 >
-                  <strong>SuperAdmin:</strong> testuser / testpass123
+                  <strong>🔧 SuperAdmin:</strong> superadmin / admin123
                 </div>
                 <div 
                   className="credential-item clickable"
-                  onClick={() => applyTestCredential('admin_empresa', 'admin123')}
+                  onClick={() => applyTestCredential('admin_technomex', 'admin123')}
                 >
-                  <strong>Admin Empresa:</strong> admin_empresa / admin123
+                  <strong>🏢 TechnoMex Industries:</strong> admin_technomex / admin123
                 </div>
                 <div 
                   className="credential-item clickable"
-                  onClick={() => applyTestCredential('admin_planta', 'admin123')}
+                  onClick={() => applyTestCredential('admin_manu_gonzalez', 'admin123')}
                 >
-                  <strong>Admin Planta:</strong> admin_planta / admin123
+                  <strong>🏢 Manufactura González:</strong> admin_manu_gonzalez / admin123
                 </div>
+                <div 
+                  className="credential-item clickable"
+                  onClick={() => applyTestCredential('admin_axis', 'admin123')}
+                >
+                  <strong>🏢 Industrias AXIS:</strong> admin_axis / admin123
+                </div>
+                <div 
+                  className="credential-item clickable"
+                  onClick={() => applyTestCredential('admin_planta_1_1', 'admin123')}
+                >
+                  <strong>📍 Admin Planta:</strong> admin_planta_1_1 / admin123
+                </div>
+              </div>
+              <div className="note">
+                <small>💡 <strong>Nota:</strong> Los 3 tipos de usuarios están funcionando correctamente</small>
               </div>
             </div>
 

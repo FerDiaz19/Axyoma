@@ -6,21 +6,18 @@ from apps.users.models import Empresa
 
 class PlanSuscripcion(models.Model):
     """
-    Modelo para PLANES_SUSCRIPCION según el SQL original
+    Modelo para PLANES según la estructura real de la tabla
     """
     plan_id = models.AutoField(primary_key=True)
     nombre = models.CharField(max_length=50, unique=True, verbose_name="Nombre del Plan")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
     precio = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Precio")
     duracion = models.IntegerField(help_text="Duración en días", verbose_name="Duración")
-    limite_empleados = models.IntegerField(null=True, blank=True, help_text="NULL = sin límite", verbose_name="Límite de Empleados")
-    limite_plantas = models.IntegerField(null=True, blank=True, help_text="NULL = sin límite", verbose_name="Límite de Plantas")
-    caracteristicas = models.TextField(blank=True, null=True, verbose_name="Características")
+    fecha_registro = models.DateTimeField(blank=True, null=True, verbose_name="Fecha de Registro")
     status = models.BooleanField(default=True, verbose_name="Activo")
-    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
 
     class Meta:
-        db_table = 'planes_suscripcion'
+        db_table = 'planes'
         verbose_name = "Plan de Suscripción"
         verbose_name_plural = "Planes de Suscripción"
         ordering = ['precio']
@@ -29,47 +26,45 @@ class PlanSuscripcion(models.Model):
         return f"{self.nombre} - ${self.precio}"
 class SuscripcionEmpresa(models.Model):
     """
-    Modelo para SUSCRIPCION_EMPRESA según el SQL original
+    Modelo para SUSCRIPCIONES según la estructura real de la tabla
     """
     ESTADO_CHOICES = [
-        ('Activa', 'Activa'),
-        ('Vencida', 'Vencida'),
-        ('Cancelada', 'Cancelada'),
-        ('Suspendida', 'Suspendida'),
+        ('activa', 'Activa'),
+        ('vencida', 'Vencida'),
+        ('cancelada', 'Cancelada'),
     ]
     
     suscripcion_id = models.AutoField(primary_key=True)
     empresa = models.ForeignKey(
         Empresa, 
         on_delete=models.CASCADE,
-        db_column='empresa_id',
+        db_column='empresa',
         verbose_name="Empresa"
     )
-    plan_suscripcion = models.ForeignKey(
+    plan = models.ForeignKey(
         PlanSuscripcion, 
         on_delete=models.PROTECT,
-        db_column='plan_id',
+        db_column='plan',
         verbose_name="Plan"
     )
     fecha_inicio = models.DateField(verbose_name="Fecha de Inicio")
     fecha_fin = models.DateField(verbose_name="Fecha de Fin")
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, default='Activa', verbose_name="Estado")
-    status = models.BooleanField(default=True, verbose_name="Activa")
-    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, blank=True, null=True, verbose_name="Estado")
+    fecha_registro = models.DateTimeField(blank=True, null=True, verbose_name="Fecha de Registro")
 
     class Meta:
-        db_table = 'suscripciones_empresa'
+        db_table = 'suscripciones'
         verbose_name = "Suscripción de Empresa"
         verbose_name_plural = "Suscripciones de Empresas"
         ordering = ['-fecha_inicio']
 
     def __str__(self):
-        return f"Suscripción {self.empresa.nombre} - {self.plan_suscripcion.nombre}"
+        return f"Suscripción {self.empresa.nombre} - {self.plan.nombre}"
 
     @property
     def esta_activa(self):
         """Verifica si la suscripción está activa"""
-        if not self.status or self.estado != 'Activa':
+        if self.estado != 'activa':
             return False
         if self.fecha_fin and self.fecha_fin < timezone.now().date():
             return False
@@ -91,12 +86,12 @@ class SuscripcionEmpresa(models.Model):
     def renovar_suscripcion(self):
         """Renueva la suscripción por la duración del plan"""
         if self.fecha_fin:
-            nueva_fecha = self.fecha_fin + timedelta(days=self.plan_suscripcion.duracion)
+            nueva_fecha = self.fecha_fin + timedelta(days=self.plan.duracion)
         else:
-            nueva_fecha = timezone.now().date() + timedelta(days=self.plan_suscripcion.duracion)
+            nueva_fecha = timezone.now().date() + timedelta(days=self.plan.duracion)
         
         self.fecha_fin = nueva_fecha
-        self.status = True
+        self.estado = 'activa'
         self.save()
 
 class Pago(models.Model):

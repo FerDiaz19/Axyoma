@@ -22,10 +22,10 @@ from .models import (
 # Admin para PerfilUsuario
 @admin.register(PerfilUsuario)
 class PerfilUsuarioAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'apellido_paterno', 'correo', 'nivel_usuario', 'status', 'fecha_registro']
-    list_filter = ['nivel_usuario', 'status', 'fecha_registro']
+    list_display = ['nombre', 'apellido_paterno', 'correo', 'nivel_usuario', 'status']
+    list_filter = ['nivel_usuario', 'status']
     search_fields = ['nombre', 'apellido_paterno', 'correo']
-    readonly_fields = ['fecha_registro']
+    readonly_fields = []
     
     fieldsets = (
         ('Información Personal', {
@@ -33,10 +33,6 @@ class PerfilUsuarioAdmin(admin.ModelAdmin):
         }),
         ('Configuración del Sistema', {
             'fields': ('nivel_usuario', 'status', 'user')
-        }),
-        ('Información Adicional', {
-            'fields': ('fecha_registro',),
-            'classes': ('collapse',)
         }),
     )
     
@@ -125,10 +121,10 @@ class PerfilUsuarioAdmin(admin.ModelAdmin):
 # Admin para Empresa
 @admin.register(Empresa)
 class EmpresaAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'rfc', 'status', 'fecha_registro', 'tiene_suscripcion_activa']
-    list_filter = ['status', 'fecha_registro']
+    list_display = ['nombre', 'rfc', 'status', 'tiene_suscripcion_activa']
+    list_filter = ['status']
     search_fields = ['nombre', 'rfc']
-    readonly_fields = ['fecha_registro']
+    readonly_fields = []
     
     fieldsets = (
         ('Información de la Empresa', {
@@ -140,19 +136,15 @@ class EmpresaAdmin(admin.ModelAdmin):
         ('Estado', {
             'fields': ('status',)
         }),
-        ('Información del Sistema', {
-            'fields': ('fecha_registro',),
-            'classes': ('collapse',)
-        }),
     )
 
 # Admin para Planta
 @admin.register(Planta)
 class PlantaAdmin(admin.ModelAdmin):
-    list_display = ['nombre', 'empresa', 'status', 'fecha_registro']
-    list_filter = ['status', 'empresa', 'fecha_registro']
+    list_display = ['nombre', 'empresa', 'status']
+    list_filter = ['status', 'empresa']
     search_fields = ['nombre', 'empresa__nombre']
-    readonly_fields = ['fecha_registro']
+    readonly_fields = []
     
     fieldsets = (
         ('Información de la Planta', {
@@ -160,10 +152,6 @@ class PlantaAdmin(admin.ModelAdmin):
         }),
         ('Estado', {
             'fields': ('status',)
-        }),
-        ('Información del Sistema', {
-            'fields': ('fecha_registro',),
-            'classes': ('collapse',)
         }),
     )
 
@@ -205,7 +193,7 @@ class EmpleadoAdmin(admin.ModelAdmin):
     list_display = ['nombre', 'apellido_paterno', 'puesto', 'email', 'status', 'fecha_ingreso']
     list_filter = ['status', 'puesto__departamento__planta__empresa', 'fecha_ingreso']
     search_fields = ['nombre', 'apellido_paterno', 'email', 'puesto__nombre']
-    readonly_fields = ['fecha_registro']
+    readonly_fields = []
     
     fieldsets = (
         ('Información Personal', {
@@ -213,10 +201,6 @@ class EmpleadoAdmin(admin.ModelAdmin):
         }),
         ('Información Laboral', {
             'fields': ('puesto', 'fecha_ingreso', 'status')
-        }),
-        ('Información del Sistema', {
-            'fields': ('fecha_registro',),
-            'classes': ('collapse',)
         }),
     )
     
@@ -230,7 +214,7 @@ class EmpleadoAdmin(admin.ModelAdmin):
 # Admin para AdminPlanta
 @admin.register(AdminPlanta)
 class AdminPlantaAdmin(admin.ModelAdmin):
-    list_display = ['usuario', 'planta', 'status', 'fecha_asignacion']
-    list_filter = ['status', 'fecha_asignacion', 'planta__empresa']
+    list_display = ['usuario', 'planta', 'status']
+    list_filter = ['status', 'planta__empresa']
     search_fields = ['usuario__nombre', 'planta__nombre']
-    readonly_fields = ['fecha_asignacion']
+    readonly_fields = []

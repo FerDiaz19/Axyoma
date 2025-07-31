@@ -41,22 +41,27 @@ export const login = async (data: LoginData): Promise<LoginResponse> => {
   try {
     // Limpiar y sanitizar los datos de entrada
     const cleanData = {
-      username: data.username.trim().toLowerCase(),
+      username: data.username.trim(),  // No convertir a lowercase para emails
       password: data.password
     };
     
     console.log("🔄 Intentando inicio de sesión con:", cleanData.username);
     
-    // Corrección de tipos de usuario comunes
-    if (cleanData.username.includes('admin planta')) {
-      cleanData.username = 'admin_planta';
-      console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
-    } else if (cleanData.username.includes('admin empresa')) {
-      cleanData.username = 'admin_empresa';
-      console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
-    } else if (cleanData.username.includes('super admin')) {
-      cleanData.username = 'superadmin';
-      console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
+    // Solo aplicar correcciones para usuarios no-email (compatibilidad)
+    if (!cleanData.username.includes('@')) {
+      cleanData.username = cleanData.username.toLowerCase();
+      
+      // Corrección de tipos de usuario comunes para usuarios legacy
+      if (cleanData.username.includes('admin planta')) {
+        cleanData.username = 'admin_planta';
+        console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
+      } else if (cleanData.username.includes('admin empresa')) {
+        cleanData.username = 'admin_empresa';
+        console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
+      } else if (cleanData.username.includes('super admin')) {
+        cleanData.username = 'superadmin';
+        console.log("🔄 Corrigiendo nombre de usuario a:", cleanData.username);
+      }
     }
     
     const response = await api.post<LoginResponse>(`${context}login/`, cleanData);
@@ -72,13 +77,12 @@ export const login = async (data: LoginData): Promise<LoginResponse> => {
       throw new Error(`Tipo de usuario no válido: ${response.data.nivel_usuario}`);
     }
     
-    // Guardar el token en localStorage para futuras requests
+    // Guardar datos de sesión en localStorage
     if (response.data.token) {
       localStorage.setItem('authToken', response.data.token);
-      console.log("🔑 Token guardado en localStorage");
-      
-      // También guardar el tipo de usuario para diagnóstico
       localStorage.setItem('userType', tipoUsuario);
+      localStorage.setItem('userData', JSON.stringify(response.data));
+      console.log("🔑 Token y datos de usuario guardados en localStorage");
     } else {
       console.warn("⚠️ No se recibió token en la respuesta");
     }
@@ -112,6 +116,9 @@ export const logout = () => {
   console.log("🚪 Cerrando sesión y limpiando datos locales");
   localStorage.removeItem('authToken');
   localStorage.removeItem('token'); // Para compatibilidad
-  localStorage.removeItem('empresaData');
+  localStorage.removeItem('userType');
   localStorage.removeItem('userData');
+  localStorage.removeItem('empresaData');
+  localStorage.removeItem('plantaData');
+  localStorage.clear(); // Limpiar todo por seguridad
 };

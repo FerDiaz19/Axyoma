@@ -4,54 +4,52 @@ import api from '../api';
 // ya que axios ya incluye "api" en la baseURL
 const BASE_URL = 'superadmin';
 
-// Interfaces para los tipos de datos
+// Interfaces actualizadas según la estructura real de la API
 export interface Empresa {
   empresa_id: number;
   nombre: string;
   rfc: string;
-  telefono?: string;
-  correo?: string;
-  direccion?: string;
-  fecha_registro?: string;
   status: boolean;
-  administrador?: {
-    id: number;
-    username: string;
-    email: string;
-    nombre_completo: string;
-    activo: boolean;
-  };
-  plantas_count?: number;
-  empleados_count?: number;
-}
-
-export interface SuperAdminEmpresa {
-  empresa_id: number;
-  nombre: string;
-  rfc: string;
-  telefono: string;
-  correo: string;
-  direccion: string;
-  status: boolean;
+  administrador: string;
+  plantas_count: number;
+  empleados_count: number;
 }
 
 export interface SuperAdminUsuario {
   user_id: number;
+  profile_id: number;
   username: string;
   email: string;
-  nombre: string;
-  apellido_paterno: string;
-  apellido_materno?: string;
+  nombre_completo: string;
+  correo: string;
   nivel_usuario: string;
+  fecha_registro: string;
+  ultimo_login: string | null;
   is_active: boolean;
+  empresa: { nombre: string; id: number } | null;
+  planta: { nombre: string; id: number } | null;
 }
 
 export interface SuperAdminPlanta {
   planta_id: number;
   nombre: string;
   direccion: string;
+  telefono: string | null;
   status: boolean;
-  empresa_id: number;
+  empresa: {
+    id: number;
+    nombre: string;
+    status: boolean;
+  };
+  administrador: {
+    id: number;
+    username: string;
+    email: string;
+    nombre_completo: string;
+    activo: boolean;
+  };
+  departamentos_count: number;
+  empleados_count: number;
 }
 
 export interface SuperAdminDepartamento {
@@ -59,7 +57,18 @@ export interface SuperAdminDepartamento {
   nombre: string;
   descripcion: string;
   status: boolean;
-  planta_id: number;
+  planta: {
+    id: number;
+    nombre: string;
+    direccion: string;
+  };
+  empresa: {
+    id: number;
+    nombre: string;
+    status: boolean;
+  };
+  puestos_count: number;
+  empleados_count: number;
 }
 
 export interface SuperAdminPuesto {
@@ -67,44 +76,143 @@ export interface SuperAdminPuesto {
   nombre: string;
   descripcion: string;
   status: boolean;
-  departamento_id: number;
+  departamento: {
+    id: number;
+    nombre: string;
+    descripcion: string;
+  };
+  planta: {
+    id: number;
+    nombre: string;
+    direccion: string;
+  };
+  empresa: {
+    id: number;
+    nombre: string;
+    status: boolean;
+  };
+  empleados_count: number;
 }
 
 export interface SuperAdminEmpleado {
   empleado_id: number;
+  numero_empleado: string;
   nombre: string;
   apellido_paterno: string;
-  apellido_materno?: string;
-  genero: string;
-  puesto_id: number;
-  departamento_id: number;
-  planta_id: number;
+  apellido_materno: string;
+  nombre_completo: string;
   status: boolean;
+  status_texto: string;
+  puesto: {
+    id: number;
+    nombre: string;
+    descripcion: string;
+  };
+  departamento: {
+    id: number;
+    nombre: string;
+    descripcion: string;
+  };
+  planta: {
+    id: number;
+    nombre: string;
+    direccion: string;
+  };
+  empresa: {
+    id: number;
+    nombre: string;
+    status: boolean;
+  };
 }
 
 export interface SuperAdminEstadisticas {
-  total_empresas: number;
-  empresas_activas: number;
-  total_plantas: number;
-  plantas_activas: number;
-  total_departamentos: number;
-  departamentos_activos: number;
-  total_puestos: number;
-  puestos_activos: number;
-  total_empleados: number;
-  empleados_activos: number;
-  total_usuarios: number;
-  usuarios_activos: number; // Esta propiedad estaba faltando
-  usuarios_por_nivel?: {
-    superadmin: number;
-    'admin-empresa': number;
-    'admin-planta': number;
-    empleado: number;
+  dashboard: {
+    tarjetas_principales: {
+      empresas: {
+        total: number;
+        activas: number;
+        inactivas: number;
+        porcentaje_activas: number;
+        icono: string;
+        color: string;
+        tendencia: string;
+      };
+      usuarios: {
+        total: number;
+        activos: number;
+        inactivos: number;
+        porcentaje_activos: number;
+        icono: string;
+        color: string;
+        tendencia: string;
+      };
+      plantas: {
+        total: number;
+        activas: number;
+        inactivas: number;
+        porcentaje_activas: number;
+        icono: string;
+        color: string;
+        tendencia: string;
+      };
+      empleados: {
+        total: number;
+        activos: number;
+        inactivos: number;
+        porcentaje_activos: number;
+        icono: string;
+        color: string;
+        tendencia: string;
+      };
+    };
+    estadisticas_detalladas: {
+      departamentos: {
+        total: number;
+        activos: number;
+        inactivos: number;
+      };
+      puestos: {
+        total: number;
+        activos: number;
+        inactivos: number;
+      };
+      estructura: {
+        empresas_con_plantas: number;
+        plantas_con_departamentos: number;
+        departamentos_con_puestos: number;
+        promedio_plantas_por_empresa: number;
+        promedio_departamentos_por_planta: number;
+        promedio_empleados_por_departamento: number;
+      };
+    };
+    distribucion_usuarios: {
+      superadmin: { cantidad: number; porcentaje: number; color: string };
+      admin_empresa: { cantidad: number; porcentaje: number; color: string };
+      admin_planta: { cantidad: number; porcentaje: number; color: string };
+      empleado: { cantidad: number; porcentaje: number; color: string };
+    };
+    alertas_sistema: Array<{
+      tipo: string;
+      icono: string;
+      mensaje: string;
+      prioridad: string;
+    }>;
+    salud_sistema: {
+      estado_general: string;
+      puntuacion: number;
+      factores: {
+        empresas_activas: boolean;
+        usuarios_activos: boolean;
+        estructura_completa: boolean;
+        sin_errores_criticos: boolean;
+      };
+    };
   };
-  total_evaluaciones?: number;
-  total_suscripciones?: number;
-  suscripciones_activas?: number;
-  planes_disponibles?: number;
+  metadatos: {
+    ultima_actualizacion: string;
+    version: string;
+    tiempo_generacion: string;
+  };
 }
 
 // Tipos para suscripciones
@@ -209,7 +317,7 @@ export const eliminarEmpresa = async (id: number) => {
 };
 
 // Funciones de edición
-export const editarEmpresa = async (id: number, data: Partial<SuperAdminEmpresa>) => {
+export const editarEmpresa = async (id: number, data: Partial<Empresa>) => {
   try {
     console.log(`🔧 SuperAdmin: Editando empresa ${id}...`, data);
     const response = await api.put(`${BASE_URL}/editar_empresa/`, {
@@ -224,7 +332,7 @@ export const editarEmpresa = async (id: number, data: Partial<SuperAdminEmpresa>
 };
 
 // Usuarios
-export const getUsuarios = async (buscar = '', nivel_usuario = '', activo = ''): Promise<{usuarios: SuperAdminUsuario[]}> => {
+export const getUsuarios = async (buscar = '', nivel_usuario = '', activo = ''): Promise<SuperAdminUsuario[]> => {
   try {
     let params = new URLSearchParams();
     if (buscar) params.append('buscar', buscar);
@@ -232,10 +340,10 @@ export const getUsuarios = async (buscar = '', nivel_usuario = '', activo = ''):
     if (activo) params.append('activo', activo);
     
     const response = await api.get(`${BASE_URL}/listar_usuarios/?${params.toString()}`);
-    return response.data || { usuarios: [] };
+    return response.data?.usuarios || [];
   } catch (error) {
     console.error('❌ SuperAdmin: Error cargando usuarios:', error);
-    return { usuarios: [] };
+    return [];
   }
 };
 
@@ -464,89 +572,80 @@ export const editarEmpleado = async (id: number, data: Partial<SuperAdminEmplead
 };
 
 // CAMBIO: Usar endpoints existentes que sabemos que funcionan
-export const getPlantas = async (params: any = {}): Promise<{plantas: any[]}> => {
+export const getPlantas = async (params: any = {}): Promise<SuperAdminPlanta[]> => {
   try {
-    console.log('🔄 SuperAdmin: Usando endpoint directo /plantas/');
+    console.log('� SuperAdmin: Obteniendo plantas...');
     
-    // Usar el endpoint directo en lugar del endpoint de SuperAdmin
-    const response = await api.get('/plantas/');
-    console.log('📊 SuperAdmin: Respuesta plantas directa:', response.data);
-    
-    // Si es un array directo, devolverlo en el formato esperado
-    if (Array.isArray(response.data)) {
-      console.log(`✅ SuperAdmin: Cargadas ${response.data.length} plantas desde endpoint directo`);
-      return { plantas: response.data };
-    } else {
-      console.error('❌ SuperAdmin: formato de respuesta de plantas incorrecto:', response.data);
-      return { plantas: [] };
-    }
-  } catch (error) {
-    console.error('❌ SuperAdmin: Error cargando plantas desde endpoint directo:', error);
-    return { plantas: [] };
-  }
-};
-
-export const getDepartamentos = async (params: any = {}): Promise<{departamentos: any[]}> => {
-  try {
-    console.log('🔄 SuperAdmin: Usando endpoint directo /departamentos/');
-    
-    // Usar el endpoint directo
-    const response = await api.get('/departamentos/');
-    console.log('📊 SuperAdmin: Respuesta departamentos directa:', response.data);
-    
-    if (Array.isArray(response.data)) {
-      console.log(`✅ SuperAdmin: Cargados ${response.data.length} departamentos desde endpoint directo`);
-      return { departamentos: response.data };
-    } else {
-      return { departamentos: [] };
-    }
-  } catch (error) {
-    console.error('❌ SuperAdmin: Error cargando departamentos desde endpoint directo:', error);
-    return { departamentos: [] };
-  }
-};
-
-export const getPuestos = async (params: any = {}): Promise<{puestos: any[]}> => {
-  try {
-    console.log('🔄 SuperAdmin: Usando endpoint directo /puestos/');
-    
-    const response = await api.get('/puestos/');
-    console.log('📊 SuperAdmin: Respuesta puestos directa:', response.data);
-    
-    if (Array.isArray(response.data)) {
-      console.log(`✅ SuperAdmin: Cargados ${response.data.length} puestos desde endpoint directo`);
-      return { puestos: response.data };
-    } else {
-      return { puestos: [] };
-    }
-  } catch (error) {
-    console.error('❌ SuperAdmin: Error cargando puestos desde endpoint directo:', error);
-    return { puestos: [] };
-  }
-};
-
-export const getEmpleados = async (params: any = {}): Promise<{empleados: any[]}> => {
-  try {
-    console.log('🔄 SuperAdmin: Cargando empleados...');
-    
-    const queryParams = new URLSearchParams();
+    // Construir parámetros
+    let queryParams = new URLSearchParams();
     if (params.buscar) queryParams.append('buscar', params.buscar);
+    if (params.empresa_id) queryParams.append('empresa_id', params.empresa_id);
+    if (params.status) queryParams.append('status', params.status);
+    
+    const response = await api.get(`${BASE_URL}/listar_todas_plantas/?${queryParams.toString()}`);
+    console.log(`✅ SuperAdmin: Obtenidas ${response.data?.plantas?.length || 0} plantas`);
+    
+    return response.data?.plantas || [];
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando plantas:', error);
+    return [];
+  }
+};
+
+export const getDepartamentos = async (params: any = {}): Promise<SuperAdminDepartamento[]> => {
+  try {
+    console.log('� SuperAdmin: Obteniendo departamentos...');
+    
+    let queryParams = new URLSearchParams();
+    if (params.buscar) queryParams.append('buscar', params.buscar);
+    if (params.planta_id) queryParams.append('planta_id', params.planta_id);
+    if (params.status) queryParams.append('status', params.status);
+    
+    const response = await api.get(`${BASE_URL}/listar_todos_departamentos/?${queryParams.toString()}`);
+    console.log(`✅ SuperAdmin: Obtenidos ${response.data?.departamentos?.length || 0} departamentos`);
+    
+    return response.data?.departamentos || [];
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando departamentos:', error);
+    return [];
+  }
+};
+
+export const getPuestos = async (params: any = {}): Promise<SuperAdminPuesto[]> => {
+  try {
+    console.log('� SuperAdmin: Obteniendo puestos...');
+    
+    let queryParams = new URLSearchParams();
+    if (params.buscar) queryParams.append('buscar', params.buscar);
+    if (params.departamento_id) queryParams.append('departamento_id', params.departamento_id);
+    if (params.status) queryParams.append('status', params.status);
+    
+    const response = await api.get(`${BASE_URL}/listar_todos_puestos/?${queryParams.toString()}`);
+    console.log(`✅ SuperAdmin: Obtenidos ${response.data?.puestos?.length || 0} puestos`);
+    
+    return response.data?.puestos || [];
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error cargando puestos:', error);
+    return [];
+  }
+};
+
+export const getEmpleados = async (params: any = {}): Promise<SuperAdminEmpleado[]> => {
+  try {
+    console.log('� SuperAdmin: Obteniendo empleados...');
+    
+    let queryParams = new URLSearchParams();
+    if (params.buscar) queryParams.append('buscar', params.buscar);
+    if (params.puesto_id) queryParams.append('puesto_id', params.puesto_id);
     if (params.activo) queryParams.append('activo', params.activo);
     
-    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+    const response = await api.get(`${BASE_URL}/listar_todos_empleados/?${queryParams.toString()}`);
+    console.log(`✅ SuperAdmin: Obtenidos ${response.data?.empleados?.length || 0} empleados`);
     
-    const response = await api.get(`${BASE_URL}/listar_todos_empleados/${queryString}`);
-    console.log('📊 SuperAdmin: Respuesta empleados:', response.data);
-    
-    if (response.data && Array.isArray(response.data.empleados)) {
-      console.log(`✅ SuperAdmin: Cargados ${response.data.empleados.length} empleados`);
-      return { empleados: response.data.empleados };
-    } else {
-      return { empleados: [] };
-    }
+    return response.data?.empleados || [];
   } catch (error) {
     console.error('❌ SuperAdmin: Error cargando empleados:', error);
-    return { empleados: [] };
+    return [];
   }
 };
 

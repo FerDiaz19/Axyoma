@@ -111,7 +111,7 @@ export const getEstadoPagoTexto = (estado: string): string => {
 export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
   try {
     console.log('🔍 Obteniendo lista de planes...');
-    const response = await api.get('/subscriptions/planes');
+    const response = await api.get('/suscripciones/planes/');
     console.log('✅ Planes obtenidos:', response.data);
     
     if (Array.isArray(response.data)) {
