@@ -19,8 +19,13 @@ const AppRoutes = () => {
       <Route index element={<LandingPage />} />
       <Route path="/login" element={<Login onLogin={handleLogin} />} />
       <Route path="/dashboard" element={<Dashboard />} />
-      <Route path="/registro" element={<RegistroEmpresa onRegistroSuccess={() => window.location.href = '/dashboard'} />} />
-      <Route path="/plan-selection" element={<PlanSelection empresaId={1} onPlanSelected={() => window.location.href = '/dashboard'} />} />
+      <Route path="/registro" element={
+        <RegistroEmpresa 
+          onRegistroSuccess={() => window.location.href = '/dashboard'} 
+          onSwitchToLogin={() => window.location.href = '/login'}
+        />
+      } />
+      <Route path="/plan-selection" element={<PlanSelection onPlanSelected={() => window.location.href = '/dashboard'} />} />
     </Routes>
   );
 };

@@ -1,5 +1,5 @@
 from rest_framework import viewsets, status
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import ValidationError
@@ -41,7 +41,7 @@ class SuscripcionBasicaViewSet(viewsets.ViewSet):
             # Buscar la suscripción activa más reciente
             suscripcion = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
-                status=True
+                estado='activa'
             ).order_by('-fecha_inicio').first()
 
             if not suscripcion:
@@ -98,7 +98,7 @@ class AuthViewSet(viewsets.ViewSet):
             # Buscar suscripción activa de la empresa
             suscripcion = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
-                status=True
+                estado='activa'
             ).first()
             
             if not suscripcion:
@@ -3210,7 +3210,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
             # Verificar si ya existe una suscripción activa
             suscripcion_existente = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
-                status=True
+                estado='activa'
             ).first()
             
             if suscripcion_existente:
@@ -3664,3 +3664,93 @@ class AdminBDViewSet(viewsets.ViewSet):
                 {'error': f'Error obteniendo estadísticas: {str(e)}'}, 
                 status=500
             )
+
+
+# =============================================================================
+# VISTAS PÚBLICAS PARA SUSCRIPCIONES (SIN AUTENTICACIÓN)
+# =============================================================================
+
+@api_view(['POST'])
+@permission_classes([])
+def crear_suscripcion_publica(request):
+    """Crear una nueva suscripción sin requerir autenticación - para registro de empresas"""
+    try:
+        from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion, Pago
+        from django.db import transaction
+        from datetime import timedelta
+        from django.utils import timezone
+        
+        data = request.data
+        empresa_id = data.get('empresa_id')
+        plan_id = data.get('plan_id')
+        
+        print(f"🔄 CREAR SUSCRIPCIÓN PÚBLICA: empresa_id={empresa_id}, plan_id={plan_id}")
+        
+        if not empresa_id or not plan_id:
+            return Response(
+                {'error': 'empresa_id y plan_id son requeridos'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            empresa = Empresa.objects.get(empresa_id=empresa_id)
+            print(f"✅ Empresa encontrada: {empresa.nombre}")
+        except Empresa.DoesNotExist:
+            return Response(
+                {'error': f'Empresa con ID {empresa_id} no encontrada'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        try:
+            plan = PlanSuscripcion.objects.get(plan_id=plan_id)
+            print(f"✅ Plan encontrado: {plan.nombre}")
+        except PlanSuscripcion.DoesNotExist:
+            return Response(
+                {'error': f'Plan con ID {plan_id} no encontrado'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Verificar si ya existe una suscripción activa
+        suscripcion_existente = SuscripcionEmpresa.objects.filter(
+            empresa=empresa,
+            estado='activa'
+        ).first()
+        
+        if suscripcion_existente:
+            print(f"⚠️ Ya existe suscripción activa: {suscripcion_existente.suscripcion_id}")
+            return Response(
+                {'message': 'La empresa ya tiene una suscripción activa', 'suscripcion_id': suscripcion_existente.suscripcion_id}, 
+                status=status.HTTP_200_OK
+            )
+        
+        with transaction.atomic():
+            # Crear la suscripción
+            fecha_inicio = timezone.now()
+            fecha_fin = fecha_inicio + timedelta(days=plan.duracion)
+            
+            suscripcion = SuscripcionEmpresa.objects.create(
+                empresa=empresa,
+                plan=plan,
+                fecha_inicio=fecha_inicio,
+                fecha_fin=fecha_fin,
+                estado='activa'
+            )
+            
+            print(f"✅ Suscripción creada: ID={suscripcion.suscripcion_id}")
+            
+            return Response({
+                'message': f'Suscripción creada exitosamente para {empresa.nombre}',
+                'suscripcion_id': suscripcion.suscripcion_id,
+                'empresa': empresa.nombre,
+                'plan': plan.nombre,
+                'fecha_inicio': fecha_inicio.isoformat(),
+                'fecha_fin': fecha_fin.isoformat(),
+                'precio': float(plan.precio)
+            })
+        
+    except Exception as e:
+        print(f"❌ Error creando suscripción pública: {str(e)}")
+        return Response(
+            {'error': f'Error creando suscripción: {str(e)}'}, 
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

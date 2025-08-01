@@ -87,7 +87,7 @@ interface EstadisticasLegadas {
 }
 
 const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onLogout }) => {
-  const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos' | 'evaluaciones' | 'gestion-bd'>('empresas');
+  const [activeSection, setActiveSection] = useState<'estadisticas' | 'empresas' | 'usuarios' | 'plantas' | 'departamentos' | 'puestos' | 'empleados' | 'suscripciones' | 'planes' | 'pagos' | 'evaluaciones' | 'gestion-bd'>('estadisticas');
   const [loading, setLoading] = useState(false);
   
   // Modificamos los estados para usar los tipos extendidos
@@ -899,116 +899,393 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderEstadisticas = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3>📊 Estadísticas del Sistema</h3>
+        <h2 style={{ 
+          textAlign: 'center', 
+          marginBottom: '30px',
+          fontSize: '2.5rem',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          fontWeight: 'bold'
+        }}>
+          📊 Dashboard del Sistema
+        </h2>
+        <p style={{
+          textAlign: 'center',
+          color: '#666',
+          fontSize: '1.1rem',
+          marginBottom: '40px'
+        }}>
+          Monitoreo en tiempo real de todas las métricas del sistema
+        </p>
       </div>
       
       {estadisticas && (
-        <div className="stats-grid">
-          <div className="stat-card">
-            <h4>🏢 Empresas</h4>
-            <div className="stat-numbers">
-              <span className="stat-main">{getStatsData()?.total_empresas || 0}</span>
-              <span className="stat-detail">Total</span>
-            </div>
-            <div className="stat-breakdown">
-              <span>✅ Activas: {getStatsData()?.empresas_activas || 0}</span>
-              <span>❌ Suspendidas: {(getStatsData()?.total_empresas || 0) - (getStatsData()?.empresas_activas || 0)}</span>
+        <>
+          {/* Sección Principal - Métricas Principales */}
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '20px',
+            padding: '30px',
+            marginBottom: '30px',
+            color: 'white',
+            boxShadow: '0 20px 40px rgba(102, 126, 234, 0.3)'
+          }}>
+            <h3 style={{ 
+              textAlign: 'center', 
+              marginBottom: '25px',
+              fontSize: '1.8rem',
+              fontWeight: 'bold'
+            }}>
+              🎯 Métricas Principales del Sistema
+            </h3>
+            
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '20px'
+            }}>
+              {/* Tarjeta Empresas */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '15px',
+                padding: '25px',
+                textAlign: 'center',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                transition: 'transform 0.3s ease'
+              }}>
+                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🏢</div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
+                  {getStatsData()?.total_empresas || 0}
+                </div>
+                <div style={{ fontSize: '1rem', opacity: 0.9 }}>Empresas Totales</div>
+                <div style={{ 
+                  marginTop: '15px', 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  fontSize: '0.9rem'
+                }}>
+                  <span>✅ {getStatsData()?.empresas_activas || 0}</span>
+                  <span>❌ {(getStatsData()?.total_empresas || 0) - (getStatsData()?.empresas_activas || 0)}</span>
+                </div>
+              </div>
+
+              {/* Tarjeta Usuarios */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '15px',
+                padding: '25px',
+                textAlign: 'center',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}>
+                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>👥</div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
+                  {getStatsData()?.total_usuarios || 0}
+                </div>
+                <div style={{ fontSize: '1rem', opacity: 0.9 }}>Usuarios del Sistema</div>
+                <div style={{ 
+                  marginTop: '15px', 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  fontSize: '0.9rem'
+                }}>
+                  <span>✅ {getStatsData()?.usuarios_activos || 0}</span>
+                  <span>❌ {(getStatsData()?.total_usuarios || 0) - (getStatsData()?.usuarios_activos || 0)}</span>
+                </div>
+              </div>
+
+              {/* Tarjeta Plantas */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '15px',
+                padding: '25px',
+                textAlign: 'center',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}>
+                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🏭</div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
+                  {getStatsData()?.total_plantas || 0}
+                </div>
+                <div style={{ fontSize: '1rem', opacity: 0.9 }}>Plantas Industriales</div>
+                <div style={{ 
+                  marginTop: '15px', 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  fontSize: '0.9rem'
+                }}>
+                  <span>✅ {getStatsData()?.plantas_activas || 0}</span>
+                  <span>❌ {(getStatsData()?.total_plantas || 0) - (getStatsData()?.plantas_activas || 0)}</span>
+                </div>
+              </div>
+
+              {/* Tarjeta Empleados */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(10px)',
+                borderRadius: '15px',
+                padding: '25px',
+                textAlign: 'center',
+                border: '1px solid rgba(255, 255, 255, 0.2)'
+              }}>
+                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>👤</div>
+                <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
+                  {getStatsData()?.total_empleados || 0}
+                </div>
+                <div style={{ fontSize: '1rem', opacity: 0.9 }}>Empleados Activos</div>
+                <div style={{ 
+                  marginTop: '15px', 
+                  display: 'flex', 
+                  justifyContent: 'space-between',
+                  fontSize: '0.9rem'
+                }}>
+                  <span>✅ {getStatsData()?.empleados_activos || 0}</span>
+                  <span>❌ {(getStatsData()?.total_empleados || 0) - (getStatsData()?.empleados_activos || 0)}</span>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <div className="stat-card">
-            <h4>📋 Suscripciones</h4>
-            <div className="stat-numbers">
-              <span className="stat-main">{suscripciones?.length || 0}</span>
-              <span className="stat-detail">Total</span>
+
+          {/* Sección de Suscripciones y Finanzas */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))',
+            gap: '25px',
+            marginBottom: '30px'
+          }}>
+            {/* Panel de Suscripciones */}
+            <div style={{
+              background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+              borderRadius: '20px',
+              padding: '25px',
+              color: 'white',
+              boxShadow: '0 15px 35px rgba(17, 153, 142, 0.3)'
+            }}>
+              <h4 style={{ 
+                fontSize: '1.5rem', 
+                marginBottom: '20px',
+                textAlign: 'center',
+                fontWeight: 'bold'
+              }}>
+                📋 Estado de Suscripciones
+              </h4>
+              
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>
+                  {suscripciones?.length || 0}
+                </div>
+                <div style={{ fontSize: '1.1rem', opacity: 0.9 }}>Suscripciones Totales</div>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '15px',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '10px',
+                  padding: '15px'
+                }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+                    {suscripciones?.filter(s => s.estado === 'activa' || s.estado === 'Activa').length || 0}
+                  </div>
+                  <div style={{ fontSize: '0.9rem' }}>✅ Activas</div>
+                </div>
+                
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '10px',
+                  padding: '15px'
+                }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+                    {suscripciones?.filter(s => {
+                      const diasRestantes = Math.ceil((new Date(s.fecha_fin).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                      return diasRestantes <= 7 && diasRestantes >= 0;
+                    }).length || 0}
+                  </div>
+                  <div style={{ fontSize: '0.9rem' }}>⏰ Por Vencer</div>
+                </div>
+                
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '10px',
+                  padding: '15px'
+                }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+                    {suscripciones?.filter(s => {
+                      const diasRestantes = Math.ceil((new Date(s.fecha_fin).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                      return diasRestantes < 0;
+                    }).length || 0}
+                  </div>
+                  <div style={{ fontSize: '0.9rem' }}>❌ Vencidas</div>
+                </div>
+              </div>
             </div>
-            <div className="stat-breakdown">
-              <span>✅ Activas: {suscripciones?.filter(s => s.estado === 'activa' || s.estado === 'Activa').length || 0}</span>
-              <span>⏰ Por vencer: {suscripciones?.filter(s => {
-                const diasRestantes = Math.ceil((new Date(s.fecha_fin).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                return diasRestantes <= 7 && diasRestantes >= 0;
-              }).length || 0}</span>
-              <span>❌ Vencidas: {suscripciones?.filter(s => {
-                const diasRestantes = Math.ceil((new Date(s.fecha_fin).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                return diasRestantes < 0;
-              }).length || 0}</span>
+
+            {/* Panel de Pagos */}
+            <div style={{
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              borderRadius: '20px',
+              padding: '25px',
+              color: 'white',
+              boxShadow: '0 15px 35px rgba(240, 147, 251, 0.3)'
+            }}>
+              <h4 style={{ 
+                fontSize: '1.5rem', 
+                marginBottom: '20px',
+                textAlign: 'center',
+                fontWeight: 'bold'
+              }}>
+                💰 Estado Financiero
+              </h4>
+              
+              <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                <div style={{ fontSize: '3rem', fontWeight: 'bold' }}>
+                  {pagos?.length || 0}
+                </div>
+                <div style={{ fontSize: '1.1rem', opacity: 0.9 }}>Transacciones Totales</div>
+              </div>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(3, 1fr)',
+                gap: '15px',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '10px',
+                  padding: '15px'
+                }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+                    {pagos?.filter(p => p.estado_pago === 'completado' || p.estado_pago === 'Completado').length || 0}
+                  </div>
+                  <div style={{ fontSize: '0.9rem' }}>✅ Exitosos</div>
+                </div>
+                
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '10px',
+                  padding: '15px'
+                }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+                    {pagos?.filter(p => p.estado_pago === 'pendiente' || p.estado_pago === 'Pendiente').length || 0}
+                  </div>
+                  <div style={{ fontSize: '0.9rem' }}>⏳ Pendientes</div>
+                </div>
+                
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '10px',
+                  padding: '15px'
+                }}>
+                  <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+                    {pagos?.filter(p => p.estado_pago === 'fallido' || p.estado_pago === 'Fallido').length || 0}
+                  </div>
+                  <div style={{ fontSize: '0.9rem' }}>❌ Fallidos</div>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <div className="stat-card">
-            <h4>💰 Pagos</h4>
-            <div className="stat-numbers">
-              <span className="stat-main">{pagos?.length || 0}</span>
-              <span className="stat-detail">Total</span>
-            </div>
-            <div className="stat-breakdown">
-              <span>✅ Completados: {pagos?.filter(p => p.estado_pago === 'completado' || p.estado_pago === 'Completado').length || 0}</span>
-              <span>⏳ Pendientes: {pagos?.filter(p => p.estado_pago === 'pendiente' || p.estado_pago === 'Pendiente').length || 0}</span>
-              <span>❌ Fallidos: {pagos?.filter(p => p.estado_pago === 'fallido' || p.estado_pago === 'Fallido').length || 0}</span>
-            </div>
-         </div>
-          
-          <div className="stat-card">
-            <h4>🏭 Plantas</h4>
-            <div className="stat-numbers">
-              <span className="stat-main">{getStatsData()?.total_plantas || 0}</span>
-              <span className="stat-detail">Total</span>
-            </div>
-            <div className="stat-breakdown">
-              <span>✅ Activas: {getStatsData()?.plantas_activas || 0}</span>
-              <span>❌ Suspendidas: {(getStatsData()?.total_plantas || 0) - (getStatsData()?.plantas_activas || 0)}</span>
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <h4>🏢 Departamentos</h4>
-            <div className="stat-numbers">
-              <span className="stat-main">{getStatsData()?.total_departamentos || 0}</span>
-              <span className="stat-detail">Total</span>
-            </div>
-            <div className="stat-breakdown">
-              <span>✅ Activos: {getStatsData()?.departamentos_activos || 0}</span>
-              <span>❌ Suspendidos: {(getStatsData()?.total_departamentos || 0) - (getStatsData()?.departamentos_activos || 0)}</span>
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <h4>💼 Puestos</h4>
-            <div className="stat-numbers">
-              <span className="stat-main">{getStatsData()?.total_puestos || 0}</span>
-              <span className="stat-detail">Total</span>
-            </div>
-            <div className="stat-breakdown">
-              <span>✅ Activos: {getStatsData()?.puestos_activos || 0}</span>
-              <span>❌ Suspendidos: {(getStatsData()?.total_puestos || 0) - (getStatsData()?.puestos_activos || 0)}</span>
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <h4>👤 Empleados</h4>
-            <div className="stat-numbers">
-              <span className="stat-main">{getStatsData()?.total_empleados || 0}</span>
-              <span className="stat-detail">Total</span>
-            </div>
-            <div className="stat-breakdown">
-              <span>✅ Activos: {getStatsData()?.empleados_activos || 0}</span>
-              <span>❌ Suspendidos: {(getStatsData()?.total_empleados || 0) - (getStatsData()?.empleados_activos || 0)}</span>
-            </div>
-          </div>
-          
-          <div className="stat-card">
-            <h4>👥 Usuarios</h4>
-            <div className="stat-numbers">
-              <span className="stat-main">{getStatsData()?.total_usuarios || 0}</span>
-              <span className="stat-detail">Total</span>
-            </div>
-            <div className="stat-breakdown">
-              <span>👑 Total Usuarios: {getStatsData()?.total_usuarios || 0}</span>
-              <span>✅ Usuarios Activos: {getStatsData()?.usuarios_activos || 0}</span>
-              <span>👤 Total Empleados: {getStatsData()?.total_empleados || 0}</span>
+
+          {/* Sección de Estructura Organizacional */}
+          <div style={{
+            background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+            borderRadius: '20px',
+            padding: '30px',
+            marginBottom: '30px',
+            boxShadow: '0 15px 35px rgba(252, 182, 159, 0.3)'
+          }}>
+            <h3 style={{ 
+              textAlign: 'center', 
+              marginBottom: '25px',
+              fontSize: '1.8rem',
+              fontWeight: 'bold',
+              color: '#d4621a'
+            }}>
+              🏗️ Estructura Organizacional
+            </h3>
+            
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+              gap: '20px'
+            }}>
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                borderRadius: '15px',
+                padding: '20px',
+                textAlign: 'center',
+                color: '#d4621a'
+              }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🏢</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                  {getStatsData()?.total_departamentos || 0}
+                </div>
+                <div style={{ fontSize: '0.9rem' }}>Departamentos</div>
+                <div style={{ 
+                  marginTop: '10px', 
+                  fontSize: '0.8rem',
+                  display: 'flex', 
+                  justifyContent: 'space-between'
+                }}>
+                  <span>✅ {getStatsData()?.departamentos_activos || 0}</span>
+                  <span>❌ {(getStatsData()?.total_departamentos || 0) - (getStatsData()?.departamentos_activos || 0)}</span>
+                </div>
+              </div>
+
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                borderRadius: '15px',
+                padding: '20px',
+                textAlign: 'center',
+                color: '#d4621a'
+              }}>
+                <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>💼</div>
+                <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                  {getStatsData()?.total_puestos || 0}
+                </div>
+                <div style={{ fontSize: '0.9rem' }}>Puestos de Trabajo</div>
+                <div style={{ 
+                  marginTop: '10px', 
+                  fontSize: '0.8rem',
+                  display: 'flex', 
+                  justifyContent: 'space-between'
+                }}>
+                  <span>✅ {getStatsData()?.puestos_activos || 0}</span>
+                  <span>❌ {(getStatsData()?.total_puestos || 0) - (getStatsData()?.puestos_activos || 0)}</span>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+
+          {/* Botón de Actualización */}
+          <div style={{ textAlign: 'center', marginTop: '30px' }}>
+            <button 
+              onClick={cargarEstadisticas}
+              disabled={loading}
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '50px',
+                padding: '15px 40px',
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: '0 10px 25px rgba(102, 126, 234, 0.3)',
+                transition: 'all 0.3s ease',
+                opacity: loading ? 0.7 : 1
+              }}
+            >
+              {loading ? '🔄 Actualizando...' : '🔄 Actualizar Estadísticas'}
+            </button>
+          </div>
+        </>
       )}
     </div>
   );

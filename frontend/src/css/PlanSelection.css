@@ -1,18 +1,22 @@
 /* ============================================================================
-   PLAN SELECTION - SELECCIÓN DE PLAN DE SUSCRIPCIÓN
+   PLAN SELECTION - SELECCIÓN DE PLAN DE SUSCRIPCIÓN (ESTILO PROYECTO)
    ============================================================================ */
 
 .plan-selection-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  background-color: #f5f5f5;
   min-height: 100vh;
 }
 
 .plan-selection-header {
   text-align: center;
   margin-bottom: 3rem;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .plan-selection-header h2 {
@@ -31,7 +35,7 @@
 }
 
 /* ============================================================================
-   GRID DE PLANES
+   GRID DE PLANES (ESTILO LIMPIO)
    ============================================================================ */
 
 .planes-grid {
@@ -43,55 +47,46 @@
 
 .plan-card {
   background: white;
-  border-radius: 16px;
+  border-radius: 8px;
   padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
   cursor: pointer;
-  border: 3px solid transparent;
+  border: 2px solid transparent;
   position: relative;
-  overflow: hidden;
 }
 
-.plan-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(45deg, #007bff, #0056b3);
-  transform: scaleX(0);
-  transition: transform 0.3s ease;
+.plan-card {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: 2px solid transparent;
+  position: relative;
 }
 
 .plan-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-}
-
-.plan-card:hover::before {
-  transform: scaleX(1);
+  transform: translateY(-4px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border-color: #007bff;
 }
 
 .plan-card.selected {
   border-color: #007bff;
-  background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 100%);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 123, 255, 0.2);
-}
-
-.plan-card.selected::before {
-  transform: scaleX(1);
+  background: #f8f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 123, 255, 0.2);
 }
 
 /* ============================================================================
-   CONTENIDO DEL PLAN
+   CONTENIDO DEL PLAN (ESTILO LIMPIO)
    ============================================================================ */
 
 .plan-header {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   border-bottom: 1px solid #e9ecef;
   padding-bottom: 1.5rem;
 }
@@ -108,6 +103,7 @@
   align-items: baseline;
   justify-content: center;
   gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .plan-price .price {
@@ -123,37 +119,41 @@
 }
 
 .plan-description {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .plan-description p {
   color: #6c757d;
+  font-size: 1rem;
   line-height: 1.6;
   text-align: center;
 }
 
 /* ============================================================================
-   LÍMITES Y CARACTERÍSTICAS
+   LÍMITES Y CARACTERÍSTICAS (ESTILO LIMPIO)
    ============================================================================ */
 
 .plan-limits {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .limit-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 1rem;
   margin-bottom: 0.75rem;
+  color: #495057;
+  font-size: 1rem;
   padding: 0.5rem;
   background: #f8f9fa;
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .limit-item .icon {
   font-size: 1.2rem;
   width: 24px;
   text-align: center;
+  color: #007bff;
 }
 
 .limit-item span:last-child {
@@ -164,48 +164,52 @@
 .plan-features {
   margin-bottom: 2rem;
   padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
+  background: #e3f2fd;
+  border-radius: 6px;
   border-left: 4px solid #007bff;
 }
 
 .plan-features h4 {
-  color: #2c3e50;
+  color: #1976d2;
   font-size: 1rem;
   margin-bottom: 0.5rem;
   font-weight: 600;
 }
 
 .plan-features p {
-  color: #6c757d;
+  color: #424242;
   font-size: 0.9rem;
   line-height: 1.5;
   margin: 0;
 }
 
 /* ============================================================================
-   BOTÓN DE SELECCIÓN
+   BOTÓN DE SELECCIÓN (ESTILO LIMPIO DEL PROYECTO)
    ============================================================================ */
 
 .select-plan-btn {
   width: 100%;
-  padding: 1rem 2rem;
-  background: linear-gradient(45deg, #007bff, #0056b3);
+  padding: 0.75rem 1.5rem;
+  background: #007bff;
   color: white;
   border: none;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
 }
 
 .select-plan-btn:hover {
-  background: linear-gradient(45deg, #0056b3, #004085);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+
+.select-plan-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
 }
 
 .select-plan-btn:disabled {
@@ -216,21 +220,24 @@
 }
 
 .select-plan-btn.selected {
-  background: linear-gradient(45deg, #28a745, #1e7e34);
+  background: #28a745;
+  box-shadow: 0 2px 4px rgba(40, 167, 69, 0.2);
 }
 
 .select-plan-btn.selected:hover {
-  background: linear-gradient(45deg, #1e7e34, #155724);
+  background: #218838;
+  box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
 }
 
 /* ============================================================================
-   FOOTER
+   FOOTER (ESTILO LIMPIO DEL PROYECTO)
    ============================================================================ */
 
 .plan-selection-footer {
   text-align: center;
   border-top: 1px solid #e9ecef;
   padding-top: 2rem;
+  margin-top: 3rem;
 }
 
 .payment-info {
@@ -238,42 +245,59 @@
   margin-bottom: 1.5rem;
   font-size: 1rem;
   padding: 1rem;
-  background: #e3f2fd;
-  border-radius: 8px;
-  border-left: 4px solid #2196f3;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #007bff;
 }
 
 .skip-btn {
   padding: 0.75rem 2rem;
-  background: transparent;
-  color: #6c757d;
-  border: 2px solid #dee2e6;
-  border-radius: 8px;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 6px;
   font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s ease;
+  font-weight: 500;
 }
 
 .skip-btn:hover {
-  background: #f8f9fa;
-  border-color: #adb5bd;
-  color: #495057;
+  background: #545b62;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
 }
 
 .skip-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* ============================================================================
-   LOADING STATE
+   LOADING STATE (ESTILO LIMPIO)
    ============================================================================ */
 
 .loading {
   text-align: center;
-  padding: 4rem 2rem;
-  font-size: 1.5rem;
+  padding: 3rem 2rem;
+  font-size: 1.2rem;
   color: #6c757d;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin: 2rem auto;
+  max-width: 500px;
+  border: 1px solid #e9ecef;
+}
+
+/* ============================================================================
+   ANIMACIONES SIMPLES
+   ============================================================================ */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 /* ============================================================================
@@ -282,11 +306,15 @@
 
 @media (max-width: 768px) {
   .plan-selection-container {
-    padding: 1rem;
+    padding: 1.5rem;
   }
   
   .plan-selection-header h2 {
     font-size: 2rem;
+  }
+  
+  .plan-selection-header p {
+    font-size: 1rem;
   }
   
   .planes-grid {
@@ -304,15 +332,33 @@
 }
 
 @media (max-width: 480px) {
-  .plan-selection-header h2 {
-    font-size: 1.75rem;
+  .plan-selection-container {
+    padding: 1rem;
   }
   
-  .plan-selection-header p {
-    font-size: 1rem;
+  .plan-selection-header h2 {
+    font-size: 1.5rem;
   }
   
   .plan-card {
     padding: 1rem;
+  }
+  
+  .plan-price .price {
+    font-size: 1.5rem;
+  }
+  
+  .plan-price .period {
+    font-size: 1rem;
+  }
+  
+  .select-plan-btn {
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  .skip-btn {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
   }
 }

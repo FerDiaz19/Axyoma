@@ -52,21 +52,66 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
         nombre_completo: `${formData.admin_nombre} ${formData.admin_apellido_paterno} ${formData.admin_apellido_materno}`.trim()
       };
       
+      console.log('🔧 Datos a enviar al backend:', registroData);
+      
       const response = await registrarEmpresa(registroData);
+      
+      console.log('✅ Empresa registrada exitosamente:', response);
       
       // Si el registro fue exitoso, pasar a selección de plan
       setEmpresaRegistrada({
         id: response.empresa_id,
         nombre: response.nombre
       });
+      
+      // Mostrar mensaje de éxito
+      alert(`🎉 ¡Empresa "${response.nombre}" registrada exitosamente!\n\n✅ Se ha creado automáticamente:\n• Una planta principal\n• Departamentos básicos\n• Puestos de trabajo estándar\n\nAhora puedes seleccionar un plan de suscripción.`);
+      
       setPaso('seleccion_plan');
       
     } catch (err: any) {
-      const errorMessage = err.response?.data?.detail || 
-                          err.response?.data?.message || 
-                          err.response?.data?.error ||
-                          JSON.stringify(err.response?.data) ||
-                          'Error al registrar empresa';
+      console.error('🔥 Error completo:', err);
+      console.error('🔥 Response data:', err.response?.data);
+      console.error('🔥 Response status:', err.response?.status);
+      
+      let errorMessage = 'Error al registrar empresa';
+      
+      if (err.response?.status === 500) {
+        errorMessage = 'Error interno del servidor. Por favor intente nuevamente en unos momentos.';
+      } else if (err.response?.status === 400) {
+        // Errores de validación
+        const errorData = err.response.data;
+        
+        if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        } else if (errorData.detail) {
+          errorMessage = errorData.detail;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.non_field_errors && Array.isArray(errorData.non_field_errors)) {
+          errorMessage = errorData.non_field_errors.join(', ');
+        } else {
+          // Mostrar errores de campos específicos
+          const fieldErrors = [];
+          for (const [field, errors] of Object.entries(errorData)) {
+            if (Array.isArray(errors)) {
+              fieldErrors.push(`${field}: ${errors.join(', ')}`);
+            } else if (typeof errors === 'string') {
+              fieldErrors.push(`${field}: ${errors}`);
+            }
+          }
+          if (fieldErrors.length > 0) {
+            errorMessage = fieldErrors.join('\n');
+          }
+        }
+      } else if (err.code === 'NETWORK_ERROR' || err.message === 'Network Error') {
+        errorMessage = 'Error de conexión. Verifique su conexión a internet y que el servidor esté funcionando.';
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -75,13 +120,13 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
 
   const handlePlanSelected = () => {
     // Plan seleccionado exitosamente, completar el registro
-    alert('¡Registro completado exitosamente! Ya puedes acceder a tu cuenta.');
+    alert(`🎉 ¡Registro completado exitosamente!\n\n✅ Tu empresa "${empresaRegistrada?.nombre}" está lista.\n✅ Plan de suscripción activado.\n✅ Ya puedes acceder a tu cuenta.\n\n¡Bienvenido a Axyoma!`);
     onRegistroSuccess();
   };
 
   const handleSkipPlan = () => {
     // Usuario decidió omitir la selección de plan
-    alert('Empresa registrada. Podrás seleccionar un plan más tarde desde tu panel de administración.');
+    alert(`✅ Empresa "${empresaRegistrada?.nombre}" registrada exitosamente.\n\n📝 Puedes seleccionar un plan más tarde desde tu panel de administración.\n\n¡Bienvenido a Axyoma!`);
     onRegistroSuccess();
   };
 
@@ -99,12 +144,20 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
   return (
     <div className="registro-container">
       <form onSubmit={handleSubmit} className="registro-form">
-        <h2>Registrar Empresa</h2>
+        <div className="form-header">
+          <h2>🏢 Registrar Nueva Empresa</h2>
+          <p>Completa el formulario para crear tu cuenta empresarial</p>
+        </div>
         
-        {error && <div className="error-message">{error}</div>}
+        {error && (
+          <div className="error-message">
+            <span>❌</span>
+            {error}
+          </div>
+        )}
         
         <div className="form-section">
-          <h3>Datos de la Empresa</h3>
+          <h3>📋 Datos de la Empresa</h3>
           
           <div className="form-group">
             <label htmlFor="nombre">Nombre de la Empresa:</label>
@@ -176,7 +229,8 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
         </div>
 
         <div className="form-section">
-          <h3>Datos del Administrador</h3>
+          <h3>👤 Datos del Administrador</h3>
+          <p>Esta será la cuenta principal para administrar tu empresa</p>
           
           <div className="form-group">
             <label htmlFor="admin_username">Usuario:</label>
@@ -250,18 +304,32 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
           </div>
         </div>
 
-        <button type="submit" disabled={loading}>
-          {loading ? 'Registrando...' : 'Registrar Empresa'}
-        </button>
+        <div className="form-buttons">
+          <button type="submit" disabled={loading} className="btn-submit">
+            {loading ? (
+              <>
+                <span className="spinner">⏳</span>
+                Registrando empresa...
+              </>
+            ) : (
+              <>
+                <span>🚀</span>
+                Registrar Empresa
+              </>
+            )}
+          </button>
+        </div>
 
-        {onSwitchToLogin && (
-          <div className="switch-to-login">
-            <p>¿Ya tienes cuenta?</p>
-            <button type="button" onClick={onSwitchToLogin} className="login-link">
-              Iniciar Sesión
-            </button>
-          </div>
-        )}
+        <div className="form-footer">
+          {onSwitchToLogin && (
+            <div className="back-to-login">
+              <button type="button" onClick={onSwitchToLogin} className="btn-back">
+                ← Volver al Login
+              </button>
+              <p>¿Ya tienes cuenta? <span onClick={onSwitchToLogin} className="login-link">Iniciar Sesión</span></p>
+            </div>
+          )}
+        </div>
       </form>
     </div>
   );

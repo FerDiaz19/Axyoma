@@ -4,7 +4,8 @@ from .views import (
     AuthViewSet, EmpresaViewSet, PlantaViewSet, 
     DepartamentoViewSet, PuestoViewSet, EmpleadoViewSet,
     EstructuraViewSet, SuperAdminViewSet,
-    SuscripcionViewSet, AdminBDViewSet  # Agregar AdminBDViewSet
+    SuscripcionViewSet, AdminBDViewSet,  # Agregar AdminBDViewSet
+    crear_suscripcion_publica  # Nueva función pública
 )
 
 # Crear router para las vistas
@@ -46,7 +47,7 @@ urlpatterns = [
     
     # Rutas de suscripciones - AGREGAMOS LA RUTA FALTANTE
     path('suscripciones/planes/', SuscripcionViewSet.as_view({'get': 'planes'})),
-    path('suscripciones/crear_suscripcion/', SuscripcionViewSet.as_view({'post': 'crear_suscripcion'})),
+    path('suscripciones/crear_suscripcion/', crear_suscripcion_publica, name='crear_suscripcion_publica'),
     path('suscripciones/info_empresa/', SuscripcionViewSet.as_view({'get': 'info_empresa'})),
     path('suscripciones/actual/', SuscripcionViewSet.as_view({'get': 'actual'})),  # ← NUEVA RUTA AGREGADA
     

@@ -3,16 +3,28 @@ import { listarPlanes, suscribirseAPlan, formatearPrecio, type PlanSuscripcion }
 import '../css/PlanSelection.css';
 
 interface PlanSelectionProps {
-  empresaId: number;
+  empresaId?: number;
   onPlanSelected: () => void;
   onSkip?: () => void;
 }
 
-const PlanSelection: React.FC<PlanSelectionProps> = ({ empresaId, onPlanSelected, onSkip }) => {
+const PlanSelection: React.FC<PlanSelectionProps> = ({ empresaId: propEmpresaId, onPlanSelected, onSkip }) => {
   const [planes, setPlanes] = useState<PlanSuscripcion[]>([]);
   const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
+  
+  // Obtener empresaId de props o localStorage
+  const getEmpresaId = (): number | undefined => {
+    if (propEmpresaId) return propEmpresaId;
+    
+    const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+    return userData.empresa_id;
+  };
+  
+  const empresaId = getEmpresaId();
+
+  console.log(`🏢 PlanSelection inicializado para empresa ID: ${empresaId}`);
 
   useEffect(() => {
     cargarPlanes();
@@ -43,13 +55,19 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ empresaId, onPlanSelected
   const handleSelectPlan = async (planId: number) => {
     if (processingPayment) return;
     
+    if (!empresaId) {
+      alert('Error: No se pudo identificar la empresa. Por favor, inicia sesión nuevamente.');
+      return;
+    }
+    
     setProcessingPayment(true);
     try {
       const plan = planes.find(p => p.plan_id === planId);
       const confirmMessage = `¿Confirmar suscripción al plan "${plan?.nombre}"?\n\nPrecio: ${formatearPrecio(plan?.precio || 0)}\nDuración: ${plan?.duracion} días\n\nSe procesará el pago inmediatamente.`;
       
       if (window.confirm(confirmMessage)) {
-        const result = await suscribirseAPlan(planId);
+        console.log(`🎯 Suscribiendo empresa ${empresaId} al plan ${planId}`);
+        const result = await suscribirseAPlan(planId, empresaId);
         
         let successMessage = '¡Suscripción activada exitosamente!';
         if (result.pago) {
@@ -74,6 +92,25 @@ const PlanSelection: React.FC<PlanSelectionProps> = ({ empresaId, onPlanSelected
       setProcessingPayment(false);
     }
   };
+
+  if (!empresaId) {
+    return (
+      <div className="plan-selection-container">
+        <div className="plan-selection-header">
+          <h2>⚠️ Error de Empresa</h2>
+          <p>No se pudo identificar la empresa. Por favor, regresa al registro o inicia sesión.</p>
+        </div>
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <button 
+            onClick={() => window.location.href = '/registro'}
+            className="skip-btn"
+          >
+            Regresar al Registro
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

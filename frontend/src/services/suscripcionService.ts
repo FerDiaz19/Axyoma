@@ -111,7 +111,7 @@ export const getEstadoPagoTexto = (estado: string): string => {
 export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
   try {
     console.log('🔍 Obteniendo lista de planes...');
-    const response = await api.get('/suscripciones/planes/');
+    const response = await api.get('/suscripciones/listar_planes/');
     console.log('✅ Planes obtenidos:', response.data);
     
     if (Array.isArray(response.data)) {
@@ -148,7 +148,7 @@ export const listarPlanesAdmin = async (): Promise<PlanSuscripcion[]> => {
 export const listarSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
   try {
     console.log('🔍 Obteniendo lista de suscripciones...');
-    const response = await api.get('subscriptions/suscripciones/');
+    const response = await api.get('/suscripciones/listar_suscripciones/');
     console.log('✅ Suscripciones obtenidas:', response.data);
     
     if (Array.isArray(response.data)) {
@@ -230,7 +230,7 @@ export const cambiarEstadoPlan = async (planId: number, nuevoEstado: boolean): P
 export const crearSuscripcion = async (empresaId: number, planId: number): Promise<any> => {
   try {
     console.log(`🔄 Creando suscripción para empresa ${empresaId} con plan ${planId}...`);
-    const response = await api.post('/subscriptions/crear-suscripcion/', {
+    const response = await api.post('/suscripciones/crear_suscripcion/', {
       empresa_id: empresaId,
       plan_id: planId
     });
@@ -245,7 +245,7 @@ export const crearSuscripcion = async (empresaId: number, planId: number): Promi
 export const renovarSuscripcion = async (empresaId: number, planId: number): Promise<any> => {
   try {
     console.log(`🔄 Renovando suscripción para empresa ${empresaId} con plan ${planId}...`);
-    const response = await api.post('/subscriptions/crear-suscripcion/', {
+    const response = await api.post('/suscripciones/crear_suscripcion/', {
       empresa_id: empresaId,
       plan_id: planId
     });

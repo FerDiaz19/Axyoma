@@ -59,8 +59,8 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
         
         print(f"🔄 INICIO: Creando empresa con datos: {validated_data}")
         
-        with transaction.atomic():
-            try:
+        try:
+            with transaction.atomic():
                 # Extraer datos del usuario
                 usuario = validated_data.pop('usuario')
                 password = validated_data.pop('password')
@@ -68,13 +68,13 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                 
                 print(f"🔄 PASO 1: Datos extraídos - Usuario: {usuario}, Nombre: {nombre_completo}")
                 
-                # Separar el nombre completo
-                nombres = nombre_completo.strip().split(' ')
-                nombre = nombres[0] if nombres else ''
-                apellido_paterno = nombres[1] if len(nombres) > 1 else ''
+                # Separar el nombre completo (manejar espacios múltiples)
+                nombres = [n.strip() for n in nombre_completo.strip().split() if n.strip()]
+                nombre = nombres[0] if nombres else 'Admin'
+                apellido_paterno = nombres[1] if len(nombres) > 1 else 'Empresa'
                 apellido_materno = nombres[2] if len(nombres) > 2 else ''
                 
-                print(f"🔄 PASO 2: Nombres separados - {nombre} {apellido_paterno} {apellido_materno}")
+                print(f"🔄 PASO 2: Nombres separados - '{nombre}' '{apellido_paterno}' '{apellido_materno}'")
                 
                 # Crear usuario Django
                 user = User.objects.create_user(
@@ -177,7 +177,7 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                 
                 print(f"✅ PASO 8: {puestos_creados} puestos creados")
                 
-                # CREAR SUSCRIPCIÓN BÁSICA AUTOMÁTICA - Simplificado para evitar errores
+                # CREAR SUSCRIPCIÓN BÁSICA AUTOMÁTICA - Opcional, no debe fallar el registro
                 try:
                     from apps.subscriptions.models import PlanSuscripcion, SuscripcionEmpresa, Pago
                     from django.utils import timezone
@@ -185,25 +185,27 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                     
                     print("🔄 PASO 9: Iniciando creación de suscripción automática...")
                     
-                    # Crear un plan básico por defecto si no existe
-                    plan_basico, created = PlanSuscripcion.objects.get_or_create(
-                        nombre="Básico",
-                        defaults={
-                            'descripcion': "Plan básico para empresas nuevas",
-                            'duracion': 30,
-                            'precio': 499.00,
-                            'status': True
-                        }
-                    )
+                    # Buscar plan básico existente
+                    plan_basico = PlanSuscripcion.objects.filter(
+                        nombre__icontains="básico"
+                    ).first()
                     
-                    if created:
+                    # Si no existe, crear uno básico
+                    if not plan_basico:
+                        plan_basico = PlanSuscripcion.objects.create(
+                            nombre="Plan Básico",
+                            descripcion="Plan básico para empresas nuevas - Prueba gratuita",
+                            duracion=30,
+                            precio=0.00,  # Plan gratuito inicial
+                            status=True
+                        )
                         print(f"✅ PASO 9.1: Plan básico creado - ID: {plan_basico.plan_id}")
                     else:
                         print(f"✅ PASO 9.1: Plan básico encontrado - {plan_basico.nombre}")
                     
-                    # Crear suscripción automática
+                    # Crear suscripción automática de prueba
                     fecha_inicio = timezone.now().date()
-                    fecha_fin = fecha_inicio + timedelta(days=plan_basico.duracion)
+                    fecha_fin = fecha_inicio + timedelta(days=30)  # 30 días de prueba
                     
                     suscripcion = SuscripcionEmpresa.objects.create(
                         empresa=empresa,
@@ -213,25 +215,25 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                         estado='Activa',
                         status=True
                     )
-                    print(f"✅ PASO 9.2: Suscripción creada - ID: {suscripcion.suscripcion_id}")
+                    print(f"✅ PASO 9.2: Suscripción de prueba creada - ID: {suscripcion.suscripcion_id}")
                     
-                    # Crear pago automático como completado
+                    # Crear pago automático (gratuito para prueba)
                     pago = Pago.objects.create(
                         suscripcion=suscripcion,
-                        costo=plan_basico.precio,
-                        monto_pago=plan_basico.precio,
+                        costo=0.00,
+                        monto_pago=0.00,
                         estado_pago='Completado',
                         fecha_pago=timezone.now(),
-                        transaccion_id=f"AUTO-{empresa.empresa_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
+                        transaccion_id=f"TRIAL-{empresa.empresa_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
                         usuario=user
                     )
-                    print(f"✅ PASO 9.3: Pago automático creado - ID: {pago.pago_id}")
+                    print(f"✅ PASO 9.3: Pago de prueba creado - ID: {pago.pago_id}")
                     
                 except Exception as e:
-                    # Si falla la creación de la suscripción, solo logear el error
-                    # pero no fallar la creación de la empresa
-                    print(f"❌ PASO 9 ERROR: Error creando suscripción automática: {str(e)}")
-                    traceback.print_exc()
+                    # La suscripción es opcional - no debe hacer fallar el registro
+                    print(f"⚠️ PASO 9 ADVERTENCIA: Error creando suscripción automática: {str(e)}")
+                    print("📝 La empresa se ha creado exitosamente, la suscripción se puede agregar después")
+                    # No hacer raise - continuar con el registro
                 
                 print(f"🎉 ÉXITO TOTAL: Empresa {empresa.nombre} creada con ID {empresa.empresa_id}")
                 
@@ -241,10 +243,10 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                 
                 return empresa
                 
-            except Exception as e:
-                print(f"❌ ERROR CRÍTICO: Error durante la creación: {str(e)}")
-                traceback.print_exc()
-                raise e
+        except Exception as e:
+            print(f"❌ ERROR CRÍTICO: Error durante la creación: {str(e)}")
+            traceback.print_exc()
+            raise e
 
 # Serializers para PLANTAS, DEPARTAMENTOS Y PUESTOS
 class PlantaSerializer(serializers.ModelSerializer):
