@@ -1,6 +1,9 @@
-# 🎯 INSTRUCCIONES FINALES PARA COMPAÑEROS
-
-## ⚡ SI HAY ERROR "tabla de usuarios" EN NUEVA LAPTOP:
+# 🎯 INSTRUCCIONES FINALES PARA COMPAÑEROS### 📋 **REQUISITOS PREVIOS:**
+- ✅ PostgreSQL instalado y corriendo
+- ✅ Usuario 'postgres' configurado en PostgreSQL  
+- ✅ Python 3.8+ instalado
+- ✅ Git instalado
+**📝 La base de datos "axyomadb" se crea automáticamente**## ⚡ SI HAY ERROR "tabla de usuarios" EN NUEVA LAPTOP:
 
 ### 🔧 **SOLUCIÓN INMEDIATA:**
 ```bash
@@ -12,6 +15,11 @@ solucionador_nueva_laptop.bat    # En Windows
 # O
 python solucionador_nueva_laptop.py    # En Linux/Mac
 ```
+
+### ⚠️ **IMPORTANTE:** 
+- Los scripts **AHORA CREAN la base de datos "axyomadb" automáticamente**
+- Solo requieren PostgreSQL instalado y corriendo
+- **REQUIERE**: PostgreSQL corriendo + usuario 'postgres' configurado
 
 ### ⏱️ **Tiempo estimado:** 5-10 minutos
 
@@ -35,7 +43,12 @@ python solucionador_nueva_laptop.py    # En Linux/Mac
 
 ## 🚀 **FLUJO COMPLETO NUEVA LAPTOP:**
 
-### 📥 **Setup inicial (laptop nueva sin problemas):**
+### � **REQUISITOS PREVIOS:**
+- ✅ PostgreSQL instalado y corriendo
+- ✅ Base de datos "axyoma_db" creada en PostgreSQL
+- ✅ Python 3.8+ instalado
+
+### �📥 **Setup inicial (laptop nueva sin problemas):**
 ```bash
 git clone [repositorio]
 cd Axyoma/Backend
@@ -43,6 +56,7 @@ configurar_nueva_laptop.bat    # Windows
 # O
 python configurar_nueva_laptop.py    # Linux/Mac
 ```
+**⚠️ Los scripts AHORA CREAN la BD automáticamente**
 
 ### 🔧 **Si hay errores/conflictos:**
 ```bash

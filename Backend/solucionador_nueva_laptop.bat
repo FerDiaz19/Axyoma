@@ -31,7 +31,20 @@ if exist ".venv\Scripts\activate.bat" (
 )
 
 echo.
-echo 🔧 PASO 1: Limpiando base de datos completamente...
+echo 🔧 PASO 1: Creando base de datos axyomadb...
+echo -------------------------------------------------------
+echo 🏗️ Creando base de datos PostgreSQL automaticamente...
+psql -U postgres -c "DROP DATABASE IF EXISTS axyomadb;"
+psql -U postgres -c "CREATE DATABASE axyomadb;"
+if errorlevel 1 (
+    echo ⚠️  Error creando BD. Verificar que PostgreSQL este corriendo y usuario 'postgres' configurado.
+    echo 💡 Alternativa: Crear manualmente la BD 'axyomadb' en PostgreSQL
+    pause
+)
+echo ✅ Base de datos axyomadb creada
+
+echo.
+echo 🔧 PASO 2: Limpiando base de datos completamente...
 echo -------------------------------------------------------
 python manage.py flush --noinput
 if errorlevel 1 (
@@ -39,7 +52,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo 🔧 PASO 2: Eliminando migraciones antiguas...
+echo 🔧 PASO 3: Eliminando migraciones antiguas...
 echo -------------------------------------------------------
 if exist "apps\users\migrations" (
     for %%f in (apps\users\migrations\*.py) do (
@@ -71,7 +84,7 @@ if exist "apps\evaluaciones\migrations" (
 echo   ✅ Migraciones antiguas eliminadas
 
 echo.
-echo 🔧 PASO 3: Creando migraciones frescas...
+echo 🔧 PASO 4: Creando migraciones frescas...
 echo -------------------------------------------------------
 python manage.py makemigrations users
 python manage.py makemigrations subscriptions
@@ -85,7 +98,7 @@ if errorlevel 1 (
 echo ✅ Migraciones frescas creadas
 
 echo.
-echo 🔧 PASO 4: Aplicando migraciones...
+echo 🔧 PASO 5: Aplicando migraciones...
 echo -------------------------------------------------------
 python manage.py migrate
 if errorlevel 1 (
@@ -96,7 +109,7 @@ if errorlevel 1 (
 echo ✅ Migraciones aplicadas exitosamente
 
 echo.
-echo 🔧 PASO 5: Inicializando sistema completo...
+echo 🔧 PASO 6: Inicializando sistema completo...
 echo -------------------------------------------------------
 echo 🚀 Configurando todo el sistema automaticamente...
 python sistema_completo_listo.py
@@ -108,7 +121,7 @@ if errorlevel 1 (
 echo ✅ Sistema inicializado con todos los datos
 
 echo.
-echo 🔧 PASO 6: Verificando instalacion...
+echo 🔧 PASO 7: Verificando instalacion...
 echo -------------------------------------------------------
 python verificacion_simple.py
 

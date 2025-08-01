@@ -91,9 +91,40 @@ def configurar_entorno():
         print("❌ Error instalando dependencias")
         return False
 
+def crear_base_datos():
+    """Crear base de datos axyomadb automáticamente"""
+    imprimir_paso(3, "CREANDO BASE DE DATOS AXYOMADB")
+    
+    print("🏗️ Creando base de datos axyomadb automáticamente...")
+    
+    try:
+        import subprocess
+        
+        # Eliminar BD si existe y crear nueva
+        subprocess.run(['psql', '-U', 'postgres', '-c', 'DROP DATABASE IF EXISTS axyomadb;'], 
+                      capture_output=True, check=False)
+        
+        result = subprocess.run(['psql', '-U', 'postgres', '-c', 'CREATE DATABASE axyomadb;'], 
+                               capture_output=True, check=True)
+        
+        print("✅ Base de datos axyomadb creada exitosamente")
+        return True
+        
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ Error creando BD: {e}")
+        print("💡 Verifica que PostgreSQL esté corriendo y usuario 'postgres' configurado")
+        print("📝 Alternativa: Crear manualmente la BD 'axyomadb' en PostgreSQL")
+        return False
+        
+    except FileNotFoundError:
+        print("⚠️ psql no encontrado en PATH")
+        print("💡 Instala PostgreSQL o agrega psql al PATH")
+        print("📝 Alternativa: Crear manualmente la BD 'axyomadb' en PostgreSQL")
+        return False
+
 def limpiar_base_datos():
     """Limpiar completamente la base de datos"""
-    imprimir_paso(3, "LIMPIANDO BASE DE DATOS EXISTENTE")
+    imprimir_paso(4, "LIMPIANDO BASE DE DATOS EXISTENTE")
     
     print("🧹 ATENCIÓN: Limpiando toda la base de datos...")
     print("⚠️  Esto eliminará TODOS los datos existentes")
@@ -113,7 +144,7 @@ def limpiar_base_datos():
 
 def configurar_base_datos():
     """Configurar base de datos desde cero"""
-    imprimir_paso(4, "CONFIGURANDO BASE DE DATOS DESDE CERO")
+    imprimir_paso(5, "CONFIGURANDO BASE DE DATOS DESDE CERO")
     
     print("🔧 Aplicando migraciones desde cero...")
     comandos_db = [
@@ -131,7 +162,7 @@ def configurar_base_datos():
 
 def inicializar_sistema_completo():
     """Ejecutar inicialización completa del sistema"""
-    imprimir_paso(5, "INICIALIZANDO SISTEMA COMPLETO")
+    imprimir_paso(6, "INICIALIZANDO SISTEMA COMPLETO")
     
     print("🎯 Ejecutando configuración automática completa...")
     print("⚠️  ATENCIÓN: Esto creará todos los datos del sistema")
@@ -145,7 +176,7 @@ def inicializar_sistema_completo():
 
 def verificar_instalacion():
     """Verificar que la instalación sea correcta"""
-    imprimir_paso(6, "VERIFICANDO INSTALACIÓN")
+    imprimir_paso(7, "VERIFICANDO INSTALACIÓN")
     
     print("🔍 Verificando estado del sistema...")
     if ejecutar_comando("python verificacion_simple.py", "Verificar sistema"):
@@ -201,6 +232,7 @@ def main():
     pasos = [
         verificar_requisitos,
         configurar_entorno,
+        crear_base_datos,
         limpiar_base_datos,
         configurar_base_datos,
         inicializar_sistema_completo,

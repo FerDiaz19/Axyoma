@@ -24,6 +24,33 @@ def imprimir_paso(numero, titulo):
     print(f"🔧 PASO {numero}: {titulo}")
     print(f"{'='*60}")
 
+def crear_base_datos():
+    """Crear base de datos axyomadb automáticamente"""
+    print("🏗️ Creando base de datos axyomadb...")
+    
+    try:
+        # Intentar crear la base de datos usando psql
+        subprocess.run(['psql', '-U', 'postgres', '-c', 'DROP DATABASE IF EXISTS axyomadb;'], 
+                      capture_output=True, check=False)
+        
+        result = subprocess.run(['psql', '-U', 'postgres', '-c', 'CREATE DATABASE axyomadb;'], 
+                               capture_output=True, check=True)
+        
+        print("✅ Base de datos axyomadb creada exitosamente")
+        
+    except subprocess.CalledProcessError as e:
+        print(f"⚠️ Error creando BD con psql: {e}")
+        print("💡 Asegúrate de que PostgreSQL esté corriendo y 'postgres' configurado")
+        print("📝 Alternativa: Crear manualmente la BD 'axyomadb' en PostgreSQL")
+        return False
+    except FileNotFoundError:
+        print("⚠️ psql no encontrado en PATH")
+        print("💡 Instala PostgreSQL o agrega psql al PATH del sistema")
+        print("📝 Alternativa: Crear manualmente la BD 'axyomadb' en PostgreSQL")
+        return False
+    
+    return True
+
 def limpiar_migraciones():
     """Limpiar archivos de migración problemáticos"""
     print("🧹 Limpiando archivos de migración...")
@@ -205,12 +232,13 @@ def main():
     
     # Ejecutar pasos de solución
     pasos = [
-        (1, "LIMPIANDO MIGRACIONES ANTIGUAS", limpiar_migraciones),
-        (2, "RESETEANDO BASE DE DATOS", resetear_base_datos_forzado),
-        (3, "CREANDO MIGRACIONES FRESCAS", crear_migraciones_frescas),
-        (4, "APLICANDO MIGRACIONES", aplicar_migraciones_completas),
-        (5, "VERIFICANDO ESTRUCTURA", verificar_estructura),
-        (6, "INICIALIZANDO SISTEMA COMPLETO", ejecutar_sistema_completo)
+        (1, "CREANDO BASE DE DATOS AXYOMADB", crear_base_datos),
+        (2, "LIMPIANDO MIGRACIONES ANTIGUAS", limpiar_migraciones),
+        (3, "RESETEANDO BASE DE DATOS", resetear_base_datos_forzado),
+        (4, "CREANDO MIGRACIONES FRESCAS", crear_migraciones_frescas),
+        (5, "APLICANDO MIGRACIONES", aplicar_migraciones_completas),
+        (6, "VERIFICANDO ESTRUCTURA", verificar_estructura),
+        (7, "INICIALIZANDO SISTEMA COMPLETO", ejecutar_sistema_completo)
     ]
     
     for numero, titulo, funcion in pasos:
