@@ -24,6 +24,45 @@ def imprimir_paso(numero, titulo):
     print(f"🔧 PASO {numero}: {titulo}")
     print(f"{'='*60}")
 
+def corregir_fechas_usuarios():
+    """Corregir fechas problemáticas en usuarios"""
+    print("📅 Corrigiendo fechas de usuarios...")
+    
+    try:
+        from django.contrib.auth.models import User
+        from django.utils import timezone
+        
+        # Obtener fecha actual
+        ahora = timezone.now()
+        
+        # Actualizar usuarios sin fecha
+        usuarios_actualizados = 0
+        
+        for usuario in User.objects.all():
+            actualizado = False
+            
+            # Corregir date_joined si está nulo o inválido
+            if not usuario.date_joined or usuario.date_joined.year < 2020:
+                usuario.date_joined = ahora
+                actualizado = True
+            
+            # Corregir last_login si está nulo
+            if not usuario.last_login:
+                usuario.last_login = ahora
+                actualizado = True
+            
+            if actualizado:
+                usuario.save()
+                usuarios_actualizados += 1
+                print(f"  ✅ Corregido: {usuario.username}")
+        
+        print(f"✅ {usuarios_actualizados} usuarios con fechas corregidas")
+        return True
+        
+    except Exception as e:
+        print(f"❌ Error corrigiendo fechas: {e}")
+        return False
+
 def crear_base_datos():
     """Crear base de datos axyomadb automáticamente"""
     print("🏗️ Creando base de datos axyomadb...")
@@ -237,8 +276,9 @@ def main():
         (3, "RESETEANDO BASE DE DATOS", resetear_base_datos_forzado),
         (4, "CREANDO MIGRACIONES FRESCAS", crear_migraciones_frescas),
         (5, "APLICANDO MIGRACIONES", aplicar_migraciones_completas),
-        (6, "VERIFICANDO ESTRUCTURA", verificar_estructura),
-        (7, "INICIALIZANDO SISTEMA COMPLETO", ejecutar_sistema_completo)
+        (6, "CORRIGIENDO FECHAS DE USUARIOS", corregir_fechas_usuarios),
+        (7, "VERIFICANDO ESTRUCTURA", verificar_estructura),
+        (8, "INICIALIZANDO SISTEMA COMPLETO", ejecutar_sistema_completo)
     ]
     
     for numero, titulo, funcion in pasos:
