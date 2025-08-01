@@ -1545,93 +1545,56 @@ class SuperAdminViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'])
     def listar_empresas(self, request):
-        """Listar todas las empresas con información completa - VERSIÓN ROBUSTA"""
+        """Listar todas las empresas - VERSIÓN SIMPLIFICADA PARA DEBUG"""
         self._verify_superadmin(request.user)
+        
+        print("🔥 INICIANDO listar_empresas")
         
         try:
             empresas = Empresa.objects.all()
+            print(f"� Empresas encontradas: {empresas.count()}")
+            
             empresas_data = []
             
             for empresa in empresas:
-                try:
-                    print(f"🔍 Procesando empresa: {empresa.nombre} (ID: {empresa.empresa_id})")
-                    
-                    # Obtener el administrador de forma segura
-                    admin_info = "Sin administrador"
-                    fecha_registro = None
-                    if empresa.administrador:
-                        admin_info = f"{empresa.administrador.username}"
-                        if hasattr(empresa.administrador, 'fecha_registro') and empresa.administrador.fecha_registro:
-                            fecha_registro = empresa.administrador.fecha_registro.isoformat()
-                    
-                    print(f"📧 email_contacto: '{empresa.email_contacto}'")
-                    print(f"📞 telefono_contacto: '{empresa.telefono_contacto}'")
-                    print(f"📍 direccion: '{empresa.direccion}'")
-                    
-                    # Contar plantas de forma segura
-                    plantas_count = 0
-                    try:
-                        plantas_count = empresa.plantas.count()
-                        print(f"🏭 plantas_count: {plantas_count}")
-                    except Exception as e:
-                        print(f"Error contando plantas para empresa {empresa.empresa_id}: {e}")
-                    
-                    # Contar empleados de forma segura
-                    empleados_count = 0
-                    try:
-                        for planta in empresa.plantas.all():
-                            for departamento in planta.departamentos.all():
-                                empleados_count += departamento.empleados.count()
-                    except Exception as e:
-                        print(f"Error contando empleados para empresa {empresa.empresa_id}: {e}")
-                    
-                    empresas_data.append({
-                        'empresa_id': empresa.empresa_id,
-                        'nombre': empresa.nombre,
-                        'rfc': empresa.rfc,
-                        'direccion': empresa.direccion or '',
-                        'correo': empresa.email_contacto or '',  # Mapear email_contacto a correo
-                        'telefono': empresa.telefono_contacto or '',  # Mapear telefono_contacto a telefono
-                        'status': empresa.status,
-                        'administrador': admin_info,
-                        'plantas_count': plantas_count,
-                        'empleados_count': empleados_count,
-                        'fecha_registro': fecha_registro,
-                    })
-                    print(f"✅ Empresa procesada correctamente: {empresa.nombre}")
-                    
-                except Exception as e:
-                    print(f"❌ Error procesando empresa {empresa.empresa_id}: {e}")
-                    import traceback
-                    print(traceback.format_exc())
-                    # Agregar la empresa con datos mínimos en caso de error
-                    empresas_data.append({
-                        'empresa_id': empresa.empresa_id,
-                        'nombre': empresa.nombre,
-                        'rfc': empresa.rfc,
-                        'direccion': '',
-                        'correo': '',
-                        'telefono': '',
-                        'status': empresa.status,
-                        'administrador': 'Error cargando',
-                        'plantas_count': 0,
-                        'empleados_count': 0,
-                        'fecha_registro': None,
-                    })
+                print(f"🔥 Procesando empresa: {empresa.nombre}")
+                print(f"� email_contacto raw: '{empresa.email_contacto}'")
+                print(f"� telefono_contacto raw: '{empresa.telefono_contacto}'")
+                print(f"� direccion raw: '{empresa.direccion}'")
+                
+                # Simplificamos al máximo
+                data = {
+                    'empresa_id': empresa.empresa_id,
+                    'nombre': empresa.nombre,
+                    'rfc': empresa.rfc,
+                    'direccion': empresa.direccion or '',
+                    'correo': empresa.email_contacto or '',
+                    'telefono': empresa.telefono_contacto or '',
+                    'status': empresa.status,
+                    'administrador': 'OK',
+                    'plantas_count': 2,  # Hardcodeado para debug
+                    'empleados_count': 0,
+                    'fecha_registro': None,
+                }
+                
+                empresas_data.append(data)
+                print(f"🔥 Datos procesados: correo='{data['correo']}', telefono='{data['telefono']}', direccion='{data['direccion']}'")
             
-            return Response({
+            result = {
                 'empresas': empresas_data,
                 'total': len(empresas_data),
                 'mensaje': 'Lista completa de empresas'
-            })
+            }
+            
+            print(f"🔥 Respuesta final: {result}")
+            return Response(result)
             
         except Exception as e:
+            print(f"🔥 ERROR GENERAL: {e}")
             import traceback
-            print(f"Error general en listar_empresas: {e}")
-            print(traceback.format_exc())
+            print(f"🔥 TRACEBACK: {traceback.format_exc()}")
             return Response({
                 'error': f'Error: {str(e)}',
-                'trace': traceback.format_exc(),
                 'empresas': [],
                 'total': 0
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -1726,6 +1689,9 @@ class SuperAdminViewSet(viewsets.ViewSet):
                         'profile_id': usuario.id,
                         'username': usuario.user.username,
                         'email': usuario.user.email,
+                        'nombre': usuario.nombre,
+                        'apellido_paterno': usuario.apellido_paterno,
+                        'apellido_materno': getattr(usuario, 'apellido_materno', '') or '',
                         'nombre_completo': f"{usuario.nombre} {usuario.apellido_paterno} {getattr(usuario, 'apellido_materno', '') or ''}".strip(),
                         'correo': usuario.correo,
                         'nivel_usuario': usuario.nivel_usuario,
@@ -1735,6 +1701,8 @@ class SuperAdminViewSet(viewsets.ViewSet):
                         'empresa': None,
                         'planta': None,
                     }
+                    
+                    print(f"🔍 DEBUG: Usuario {usuario.user.username} - nivel_usuario: '{usuario.nivel_usuario}'")
                     
                     # Información de empresa/planta según el rol (de forma segura)
                     if usuario.nivel_usuario == 'admin-empresa':
@@ -1791,6 +1759,8 @@ class SuperAdminViewSet(viewsets.ViewSet):
         user_id = request.data.get('user_id')
         accion = request.data.get('accion')  # 'suspender' o 'activar'
         
+        print(f"🔧 DEBUG: user_id={user_id}, accion={accion}")
+        
         if not user_id or not accion:
             return Response({'error': 'Faltan parámetros user_id o accion'}, 
                           status=status.HTTP_400_BAD_REQUEST)
@@ -1799,9 +1769,13 @@ class SuperAdminViewSet(viewsets.ViewSet):
             from django.contrib.auth.models import User
             user = User.objects.get(id=user_id)
             
+            print(f"🔧 DEBUG: Usuario encontrado: {user.username}, is_active actual: {user.is_active}")
+            
             nuevo_status = accion == 'activar'
             user.is_active = nuevo_status
             user.save()
+            
+            print(f"🔧 DEBUG: Nuevo status guardado: {user.is_active}")
             
             return Response({
                 'message': f'Usuario {accion} exitosamente',
@@ -1814,6 +1788,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
             return Response({'error': 'Usuario no encontrado'}, 
                           status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            print(f"🔧 DEBUG: Error: {str(e)}")
             return Response({'error': f'Error: {str(e)}'}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
@@ -2606,6 +2581,9 @@ class SuperAdminViewSet(viewsets.ViewSet):
         
         user_id = request.data.get('user_id')
         
+        print(f"🔧 DEBUG: Editando usuario ID={user_id}")
+        print(f"🔧 DEBUG: Datos recibidos: {request.data}")
+        
         if not user_id:
             return Response({'error': 'Falta parámetro user_id'}, 
                           status=status.HTTP_400_BAD_REQUEST)
@@ -2615,25 +2593,49 @@ class SuperAdminViewSet(viewsets.ViewSet):
             user = User.objects.get(id=user_id)
             perfil = PerfilUsuario.objects.get(user=user)
             
-            # Actualizar campos del usuario
+            print(f"🔧 DEBUG: Usuario encontrado: {user.username}")
+            print(f"🔧 DEBUG: Datos originales - nombre: {perfil.nombre}, apellido_paterno: {perfil.apellido_paterno}, apellido_materno: {perfil.apellido_materno}")
+            
+            # Actualizar campos básicos del usuario
             if 'username' in request.data:
                 user.username = request.data['username']
             if 'email' in request.data:
                 user.email = request.data['email']
                 perfil.correo = request.data['email']  # Actualizar también en perfil
+            
+            # Manejar nombre_completo (para compatibilidad hacia atrás)
+            if 'nombre_completo' in request.data:
+                print(f"🔧 DEBUG: Procesando nombre_completo: {request.data['nombre_completo']}")
+                # Separar nombre completo en partes
+                nombres = request.data['nombre_completo'].strip().split()
+                if len(nombres) >= 1:
+                    perfil.nombre = nombres[0]
+                if len(nombres) >= 2:
+                    perfil.apellido_paterno = nombres[1]
+                if len(nombres) >= 3:
+                    perfil.apellido_materno = ' '.join(nombres[2:])
+                else:
+                    perfil.apellido_materno = ''
+            
+            # Manejar campos separados (preferir estos si están presentes)
             if 'nombre' in request.data:
+                print(f"🔧 DEBUG: Actualizando nombre: {request.data['nombre']}")
                 perfil.nombre = request.data['nombre']
             if 'apellido_paterno' in request.data:
+                print(f"🔧 DEBUG: Actualizando apellido_paterno: {request.data['apellido_paterno']}")
                 perfil.apellido_paterno = request.data['apellido_paterno']
             if 'apellido_materno' in request.data:
-                perfil.apellido_materno = request.data.get('apellido_materno', '')
-            if 'nivel_usuario' in request.data:
-                perfil.nivel_usuario = request.data['nivel_usuario']
+                print(f"🔧 DEBUG: Actualizando apellido_materno: {request.data['apellido_materno']}")
+                perfil.apellido_materno = request.data['apellido_materno']
+            
             if 'is_active' in request.data:
                 user.is_active = request.data['is_active']
             
+            print(f"🔧 DEBUG: Guardando cambios...")
             user.save()
             perfil.save()
+            
+            print(f"🔧 DEBUG: Datos después del guardado - nombre: {perfil.nombre}, apellido_paterno: {perfil.apellido_paterno}, apellido_materno: {perfil.apellido_materno}")
             
             return Response({
                 'message': f'Usuario "{user.username}" actualizado exitosamente',
@@ -2902,54 +2904,6 @@ class SuperAdminViewSet(viewsets.ViewSet):
             
         except Empleado.DoesNotExist:
             return Response({'error': 'Empleado no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
-        except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    @action(detail=False, methods=['put'])
-    def editar_usuario(self, request):
-        """Editar un usuario existente"""
-        self._verify_superadmin(request.user)
-        
-        user_id = request.data.get('user_id')
-        if not user_id:
-            return Response({'error': 'Falta parámetro user_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            from django.contrib.auth.models import User
-            user = User.objects.get(id=user_id)
-            perfil = user.perfil
-            
-            # Actualizar campos del User
-            if 'username' in request.data:
-                user.username = request.data['username']
-            if 'email' in request.data:
-                user.email = request.data['email']
-            if 'is_active' in request.data:
-                user.is_active = request.data['is_active']
-            
-            user.save()
-            
-            # Actualizar campos del PerfilUsuario
-            if 'nombre_completo' in request.data:
-                nombres = request.data['nombre_completo'].split(' ')
-                perfil.nombre = nombres[0] if len(nombres) > 0 else ''
-                perfil.apellido_paterno = nombres[1] if len(nombres) > 1 else ''
-                perfil.apellido_materno = ' '.join(nombres[2:]) if len(nombres) > 2 else ''
-            if 'nivel_usuario' in request.data:
-                perfil.nivel_usuario = request.data['nivel_usuario']
-            
-            perfil.save()
-            
-            return Response({
-                'message': 'Usuario actualizado exitosamente',
-                'user_id': user_id
-            })
-            
-        except User.DoesNotExist:
-            return Response({'error': 'Usuario no encontrado'}, 
                           status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': f'Error: {str(e)}'}, 

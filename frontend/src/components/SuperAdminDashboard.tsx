@@ -284,12 +284,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             params.nivel_usuario || '',
             params.activo || ''
           );
-          // Transformamos los datos para incluir propiedades adicionales
-          const usuariosExtendidos: UsuarioExtendido[] = usuariosData.map((usuario: any) => ({
-            ...usuario,
-            nombre_completo: usuario.nombre + ' ' + usuario.apellido_paterno + (usuario.apellido_materno ? ' ' + usuario.apellido_materno : '')
-          }));
-          setUsuarios(usuariosExtendidos || []);
+          // Los datos ya vienen del backend con nombre_completo construido correctamente
+          setUsuarios(usuariosData || []);
           break;
           
         case 'plantas':
@@ -430,9 +426,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           ));
         } else if (type === 'usuario') {
           await suspenderUsuario(id, action);
-          setUsuarios(prev => prev.map(item => 
-            item.user_id === id ? { ...item, is_active: !currentStatus } : item
-          ));
+          // Recargar los datos completos para asegurar consistencia
+          cargarDatosPorSeccion();
         } else if (type === 'planta') {
           await suspenderPlanta(id, action);
           setPlantas(prev => prev.map(item => 
@@ -491,8 +486,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
         data = {
           username: item.username,
           email: item.email,
-          nombre_completo: item.nombre_completo,
-          nivel_usuario: item.nivel_usuario,
+          nombre: item.nombre,
+          apellido_paterno: item.apellido_paterno,
+          apellido_materno: item.apellido_materno || '',
           is_active: item.is_active
         };
         break;
@@ -567,9 +563,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           break;
         case 'usuario':
           await editarUsuario(id, formData);
-          setUsuarios(prev => prev.map(item => 
-            item.user_id === id ? { ...item, ...formData } : item
-          ));
+          // Recargar los datos completos en lugar de solo actualizar
+          cargarDatosPorSeccion();
           break;
         case 'planta':
           await editarPlanta(id, formData);
@@ -664,37 +659,40 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   // Función para crear nuevo usuario SuperAdmin
   const handleCrearUsuario = async (formData: any) => {
     try {
-      const { crearUsuario } = await import('../services/superAdminService');
-      await crearUsuario({
-        profile_id: 0, // Se asignará automáticamente
+      // Preparar los datos según lo que espera el backend
+      const userData = {
         username: formData.username,
         email: formData.email,
-        nombre_completo: `${formData.nombre} ${formData.apellido_paterno} ${formData.apellido_materno || ''}`.trim(),
-        correo: formData.email,
-        password: formData.password || '1234',
-        is_active: formData.is_active !== false,
+        nombre: formData.nombre,
+        apellido_paterno: formData.apellido_paterno,
+        apellido_materno: formData.apellido_materno || '',
         nivel_usuario: 'superadmin',
-        fecha_registro: new Date().toISOString(),
-        ultimo_login: null,
-        empresa: null,
-        planta: null
-      });
+        password: formData.password || '1234',
+        is_active: formData.is_active !== false
+      };
       
-      // Recargar la lista de usuarios - corregimos la llamada
+      console.log('🔧 SuperAdmin: Datos a enviar:', userData);
+      
+      // Usar axios directamente en lugar de la función del servicio
+      const api = (await import('../api')).default;
+      await api.post('/superadmin/crear_usuario/', userData);
+      
+      // Recargar la lista de usuarios
       const usuariosData = await getUsuarios('', '', '');
+      setUsuarios(usuariosData || []);
       
-      // Transformamos los datos para incluir nombre_completo
-      const usuariosExtendidos: UsuarioExtendido[] = usuariosData.map((usuario: any) => ({
-        ...usuario,
-        nombre_completo: usuario.nombre + ' ' + usuario.apellido_paterno + (usuario.apellido_materno ? ' ' + usuario.apellido_materno : '')
-      }));
-      
-      setUsuarios(usuariosExtendidos || []);
-      
-      alert(`Usuario SuperAdmin creado exitosamente.\nUsuario: ${formData.username}\nContraseña temporal: ${formData.password || '1234'}`);
+      alert(`Usuario SuperAdmin creado exitosamente.\nUsuario: ${formData.username}\nContraseña temporal: ${userData.password}`);
     } catch (error: any) {
       console.error('Error creando usuario:', error);
-      alert(error.message || 'Error al crear el usuario');
+      
+      // Mostrar más detalles del error
+      if (error.response?.data) {
+        console.error('Detalles del error:', error.response.data);
+        const errorMsg = error.response.data.error || error.response.data.detail || error.response.data.message || 'Error desconocido';
+        alert(`Error al crear el usuario: ${errorMsg}`);
+      } else {
+        alert(error.message || 'Error al crear el usuario');
+      }
       throw error;
     }
   };
@@ -776,19 +774,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
         return [
           { name: 'username', label: 'Nombre de Usuario', type: 'text' as const, required: true },
           { name: 'email', label: 'Email', type: 'email' as const, required: true },
-          { name: 'nombre_completo', label: 'Nombre Completo', type: 'text' as const, required: true },
-          { 
-            name: 'nivel_usuario', 
-            label: 'Nivel de Usuario', 
-            type: 'select' as const, 
-            required: true,
-            options: [
-              { value: 'superadmin', label: '👑 Super Admin' },
-              { value: 'admin_empresa', label: '🏢 Admin Empresa' },
-              { value: 'admin_planta', label: '🏭 Admin Planta' },
-              { value: 'empleado', label: '👤 Empleado' }
-            ]
-          },
+          { name: 'nombre', label: 'Nombre', type: 'text' as const, required: true },
+          { name: 'apellido_paterno', label: 'Apellido Paterno', type: 'text' as const, required: true },
+          { name: 'apellido_materno', label: 'Apellido Materno', type: 'text' as const },
           { name: 'is_active', label: 'Usuario Activo', type: 'checkbox' as const }
         ];
       case 'crear-usuario':
@@ -876,8 +864,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           >
             <option value="">Todos los niveles</option>
             <option value="superadmin">Super Admin</option>
-            <option value="admin_empresa">Admin Empresa</option>
-            <option value="admin_planta">Admin Planta</option>
+            <option value="admin-empresa">Admin Empresa</option>
+            <option value="admin-planta">Admin Planta</option>
             <option value="empleado">Empleado</option>
           </select>
         )}
@@ -1029,31 +1017,34 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderEmpresas = () => (
     <div className="section-content">
       <div className="section-header">
-        <h2>🏢 Gestión de Empresas</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>🏢 Gestión de Empresas</h2>
         <div className="stats-mini" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '10px',
-          marginBottom: '20px'
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '15px',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
         }}>
           <div style={{
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             color: 'white',
-            padding: '15px',
+            padding: '12px 20px',
             borderRadius: '10px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minWidth: '140px'
           }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{empresas?.length || 0}</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{empresas?.length || 0}</div>
             <div style={{ fontSize: '0.8rem' }}>Total Empresas</div>
           </div>
           <div style={{
             background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
             color: 'white',
-            padding: '15px',
+            padding: '12px 20px',
             borderRadius: '10px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minWidth: '140px'
           }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
               {empresas?.filter(e => e.status).length || 0}
             </div>
             <div style={{ fontSize: '0.8rem' }}>Activas</div>
@@ -1061,19 +1052,22 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           <div style={{
             background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
             color: '#333',
-            padding: '15px',
+            padding: '12px 20px',
             borderRadius: '10px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minWidth: '140px'
           }}>
-            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
               {empresas?.filter(e => !e.status).length || 0}
             </div>
             <div style={{ fontSize: '0.8rem' }}>Suspendidas</div>
           </div>
         </div>
-        <button className="btn-primary" onClick={() => cargarDatosPorSeccion()}>
-          🔄 Recargar Datos
-        </button>
+        <div style={{ textAlign: 'center' }}>
+          <button className="btn-primary" onClick={() => cargarDatosPorSeccion()}>
+            🔄 Recargar Datos
+          </button>
+        </div>
       </div>
       
       {renderFiltros()}
@@ -1091,7 +1085,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 <th>Contacto</th>
                 <th>Ubicación</th>
                 <th>Plantas</th>
-                <th>Fecha Registro</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -1187,22 +1180,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     </div>
                   </td>
                   <td>
-                    <div style={{ lineHeight: '1.4' }}>
-                      {empresa.fecha_registro && empresa.fecha_registro !== null && typeof empresa.fecha_registro === 'string' && empresa.fecha_registro.trim() ? (
-                        <div>
-                          <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
-                            {new Date(empresa.fecha_registro).toLocaleDateString()}
-                          </div>
-                          <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                            {Math.floor((new Date().getTime() - new Date(empresa.fecha_registro).getTime()) / (1000 * 60 * 60 * 24))} días
-                          </div>
-                        </div>
-                      ) : (
-                        <span style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>📅 Sin fecha</span>
-                      )}
-                    </div>
-                  </td>
-                  <td>
                     <div style={{
                       display: 'inline-block',
                       padding: '8px 16px',
@@ -1273,13 +1250,66 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderUsuarios = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3>👥 Gestión de Usuarios</h3>
-        <div className="stats-mini">
-          <span>Total: {usuarios?.length || 0}</span>
-          <span>Activos: {usuarios?.filter(u => u.is_active).length || 0}</span>
-          <span>Suspendidos: {usuarios?.filter(u => !u.is_active).length || 0}</span>
+        <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>👥 Gestión de Usuarios</h3>
+        <div className="stats-mini" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '15px',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{usuarios?.length || 0}</div>
+            <div style={{ fontSize: '0.8rem' }}>Total Usuarios</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {usuarios?.filter(u => u.is_active).length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Activos</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            color: '#333',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {usuarios?.filter(u => !u.is_active).length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Suspendidos</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {usuarios?.filter(u => u.nivel_usuario === 'admin-empresa').length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Admins Empresa</div>
+          </div>
         </div>
-        <div className="section-actions">
+        <div className="section-actions" style={{ textAlign: 'center' }}>
           <button 
             onClick={() => setModalCrearUsuario(true)}
             className="btn-primary"
@@ -1308,44 +1338,128 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           <tbody>
             {usuarios?.map((usuario) => (
               <tr key={usuario.user_id}>
-                <td>{usuario.user_id}</td>
                 <td>
-                  <div>
-                    <strong>{usuario.username}</strong>
-                    <small>{usuario.email}</small>
+                  <div style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    minWidth: '50px'
+                  }}>
+                    #{usuario.user_id}
                   </div>
                 </td>
-                <td>{usuario.nombre_completo || `${usuario.nombre} ${usuario.apellido_paterno}`}</td>
                 <td>
-                  <span className={`nivel ${usuario.nivel_usuario}`}>
+                  <div style={{
+                    background: '#f8f9fa',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef',
+                    lineHeight: '1.4'
+                  }}>
+                    <strong style={{ color: '#333' }}>{usuario.username}</strong>
+                    <div style={{ fontSize: '0.8rem', color: '#666' }}>📧 {usuario.email}</div>
+                  </div>
+                </td>
+                <td>
+                  <div>
+                    <strong style={{ fontSize: '1.1rem', color: '#333' }}>
+                      {usuario.nombre_completo || `${usuario.nombre} ${usuario.apellido_paterno}`}
+                    </strong>
+                  </div>
+                </td>
+                <td>
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '6px 12px',
+                    borderRadius: '15px',
+                    fontSize: '0.8rem',
+                    fontWeight: 'bold',
+                    color: 'white',
+                    background: usuario.nivel_usuario === 'superadmin' ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' :
+                               usuario.nivel_usuario === 'admin-empresa' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' :
+                               usuario.nivel_usuario === 'admin-planta' ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' :
+                               'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                    textAlign: 'center',
+                    minWidth: '120px'
+                  }}>
                     {usuario.nivel_usuario === 'superadmin' && '👑 Super Admin'}
-                    {usuario.nivel_usuario === 'admin_empresa' && '🏢 Admin Empresa'}
-                    {usuario.nivel_usuario === 'admin_planta' && '🏭 Admin Planta'}
-                  </span>
-                </td>
-                <td>
-                  <div>
-                    {usuario.empresa && <strong>{usuario.empresa.nombre}</strong>}
-                    {usuario.planta && <small>{usuario.planta.nombre}</small>}
+                    {usuario.nivel_usuario === 'admin-empresa' && '🏢 Admin Empresa'}
+                    {usuario.nivel_usuario === 'admin-planta' && '🏭 Admin Planta'}
+                    {usuario.nivel_usuario === 'empleado' && '👤 Empleado'}
                   </div>
                 </td>
-                <td>{usuario.fecha_registro ? new Date(usuario.fecha_registro).toLocaleDateString() : 'N/A'}</td>
                 <td>
-                  <span className={`status ${usuario.is_active ? 'active' : 'inactive'}`}>
-                    {usuario.is_active ? '🟢 Activo' : '🔴 Suspendido'}
-                  </span>
+                  <div style={{
+                    background: '#f8f9fa',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef',
+                    lineHeight: '1.4'
+                  }}>
+                    {usuario.empresa && <strong style={{ color: '#333' }}>🏢 {usuario.empresa.nombre}</strong>}
+                    {usuario.planta && <div style={{ fontSize: '0.8rem', color: '#666' }}>🏭 {usuario.planta.nombre}</div>}
+                    {!usuario.empresa && !usuario.planta && <span style={{ color: '#999', fontStyle: 'italic' }}>Sin asignar</span>}
+                  </div>
                 </td>
                 <td>
-                  <div className="actions">
+                  <div style={{ fontSize: '0.9rem', color: '#666' }}>
+                    📅 {usuario.fecha_registro ? new Date(usuario.fecha_registro).toLocaleDateString() : 'N/A'}
+                  </div>
+                </td>
+                <td>
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '8px 16px',
+                    borderRadius: '20px',
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem',
+                    background: usuario.is_active ? '#e8f5e8' : '#ffebee',
+                    color: usuario.is_active ? '#2e7d32' : '#d32f2f',
+                    border: `2px solid ${usuario.is_active ? '#2e7d32' : '#d32f2f'}`,
+                    textAlign: 'center',
+                    minWidth: '100px'
+                  }}>
+                    {usuario.is_active ? '✅ Activo' : '❌ Suspendido'}
+                  </div>
+                </td>
+                <td>
+                  <div className="actions" style={{
+                    display: 'flex',
+                    gap: '8px',
+                    justifyContent: 'center'
+                  }}>
                     <button 
                       onClick={() => handleToggleStatus('usuario', usuario.user_id, usuario.is_active, usuario.nombre_completo)}
-                      className={`btn-action ${usuario.is_active ? 'warning' : 'success'}`}
+                      style={{
+                        background: usuario.is_active 
+                          ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' 
+                          : 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                      }}
                     >
                       {usuario.is_active ? '⏸️ Suspender' : '▶️ Activar'}
                     </button>
                     <button 
                       onClick={() => handleEdit('usuario', usuario)}
-                      className="btn-action primary"
+                      style={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                      }}
                     >
                       ✏️ Editar
                     </button>
@@ -1363,10 +1477,70 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderPlantas = () => (
     <div className="section-content">
       <div className="section-header">
-        <h2>Gestión de Plantas</h2>
-        <button className="btn-primary" onClick={() => cargarDatosPorSeccion()}>
-          🔄 Recargar Datos
-        </button>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>🏭 Gestión de Plantas</h2>
+        <div className="stats-mini" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '15px',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{plantas?.length || 0}</div>
+            <div style={{ fontSize: '0.8rem' }}>Total Plantas</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {plantas?.filter(p => p.status).length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Activas</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            color: '#333',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {plantas?.filter(p => !p.status).length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Suspendidas</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {plantas?.reduce((total, p) => total + (p.empleados_count || 0), 0) || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Total Empleados</div>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <button className="btn-primary" onClick={() => cargarDatosPorSeccion()}>
+            🔄 Recargar Datos
+          </button>
+        </div>
       </div>
       
       {renderFiltros()}
@@ -1379,9 +1553,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Nombre</th>
+                <th>Planta</th>
                 <th>Empresa</th>
-                <th>Dirección</th>
+                <th>Ubicación</th>
+                <th>Personal</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -1389,22 +1564,140 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <tbody>
               {plantas.map((planta) => (
                 <tr key={planta.planta_id}>
-                  <td>{planta.planta_id}</td>
-                  <td>{planta.nombre}</td>
-                  <td>{planta.empresa_nombre || (planta.empresa_nombre && planta.empresa_nombre) || "—"}</td>
-                  <td>{planta.direccion || "—"}</td>
                   <td>
-                    <span className={planta.status ? "status active" : "status inactive"}>
-                      {planta.status ? "Activa" : "Suspendida"}
-                    </span>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      minWidth: '50px'
+                    }}>
+                      #{planta.planta_id}
+                    </div>
                   </td>
                   <td>
-                    <div className="action-buttons">
-                      <button onClick={() => handleEdit('planta', planta)}>
+                    <div>
+                      <strong style={{ fontSize: '1.1rem', color: '#333' }}>{planta.nombre}</strong>
+                      <div style={{ 
+                        marginTop: '4px',
+                        fontSize: '0.85rem',
+                        color: '#666',
+                        fontWeight: 'normal'
+                      }}>
+                        🏭 {planta.nombre?.length > 25 ? planta.nombre.substring(0, 25) + '...' : planta.nombre}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{
+                      background: '#f8f9fa',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #e9ecef',
+                      lineHeight: '1.4'
+                    }}>
+                      <strong style={{ color: '#333' }}>🏢 {planta.empresa?.nombre || 'Sin empresa'}</strong>
+                      <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '2px' }}>
+                        ID: {planta.empresa?.id || 'N/A'}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ lineHeight: '1.4' }}>
+                      {planta.direccion && planta.direccion.trim() ? (
+                        <div style={{ fontSize: '0.9rem', color: '#555' }}>
+                          📍 {planta.direccion.length > 30 ? planta.direccion.substring(0, 30) + '...' : planta.direccion}
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '0.9rem', color: '#999', fontStyle: 'italic' }}>
+                          📍 Sin dirección
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px'
+                    }}>
+                      <div style={{
+                        background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.8rem',
+                        textAlign: 'center'
+                      }}>
+                        🏢 {planta.departamentos_count || 0} Depts.
+                      </div>
+                      <div style={{
+                        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        color: 'white',
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.8rem',
+                        textAlign: 'center'
+                      }}>
+                        👤 {planta.empleados_count || 0} Empl.
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      fontWeight: 'bold',
+                      fontSize: '0.9rem',
+                      background: planta.status ? '#e8f5e8' : '#ffebee',
+                      color: planta.status ? '#2e7d32' : '#d32f2f',
+                      border: `2px solid ${planta.status ? '#2e7d32' : '#d32f2f'}`,
+                      textAlign: 'center',
+                      minWidth: '100px'
+                    }}>
+                      {planta.status ? '✅ Activa' : '❌ Suspendida'}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="action-buttons" style={{
+                      display: 'flex',
+                      gap: '8px',
+                      justifyContent: 'center'
+                    }}>
+                      <button 
+                        onClick={() => handleEdit('planta', planta)}
+                        style={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
                         ✏️ Editar
                       </button>
-                      <button onClick={() => handleToggleStatus('planta', planta.planta_id, planta.status, planta.nombre)}>
-                        {planta.status ? "⏸️ Suspender" : "▶️ Activar"}
+                      <button 
+                        onClick={() => handleToggleStatus('planta', planta.planta_id, planta.status, planta.nombre)}
+                        style={{
+                          background: planta.status 
+                            ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' 
+                            : 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          fontSize: '0.8rem',
+                          cursor: 'pointer',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        {planta.status ? '⏸️ Suspender' : '▶️ Activar'}
                       </button>
                     </div>
                   </td>
@@ -1423,11 +1716,64 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderDepartamentos = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3>🏢 Gestión de Departamentos</h3>
-        <div className="stats-mini">
-          <span>Total: {departamentos?.length || 0}</span>
-          <span>Activos: {departamentos?.filter(d => d.status).length || 0}</span>
-          <span>Suspendidos: {departamentos?.filter(d => !d.status).length || 0}</span>
+        <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>🏢 Gestión de Departamentos</h3>
+        <div className="stats-mini" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '15px',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{departamentos?.length || 0}</div>
+            <div style={{ fontSize: '0.8rem' }}>Total Departamentos</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {departamentos?.filter(d => d.status).length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Activos</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            color: '#333',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {departamentos?.filter(d => !d.status).length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Suspendidos</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {departamentos?.reduce((total, d) => total + (d.empleados_count || 0), 0) || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Total Empleados</div>
+          </div>
         </div>
       </div>
       
@@ -1441,8 +1787,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               <th>Departamento</th>
               <th>Planta</th>
               <th>Empresa</th>
-              <th>Puestos</th>
-              <th>Empleados</th>
+              <th>Personal</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -1450,41 +1795,135 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           <tbody>
             {departamentos?.map((departamento) => (
               <tr key={departamento.departamento_id}>
-                <td>{departamento.departamento_id}</td>
                 <td>
-                  <div>
-                    <strong>{departamento.nombre}</strong>
-                    {departamento.descripcion && <small>{departamento.descripcion}</small>}
+                  <div style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    minWidth: '50px'
+                  }}>
+                    #{departamento.departamento_id}
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{departamento.planta?.nombre || "Sin planta"}</strong>
+                    <strong style={{ fontSize: '1.1rem', color: '#333' }}>{departamento.nombre}</strong>
+                    {departamento.descripcion && (
+                      <div style={{ 
+                        marginTop: '4px',
+                        fontSize: '0.85rem',
+                        color: '#666',
+                        fontWeight: 'normal'
+                      }}>
+                        📝 {departamento.descripcion}
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td>
-                  <div>
-                    <strong>{departamento.empresa?.nombre || "Sin empresa"}</strong>
+                  <div style={{
+                    background: '#f8f9fa',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef',
+                    lineHeight: '1.4'
+                  }}>
+                    <strong style={{ color: '#333' }}>🏭 {departamento.planta?.nombre || "Sin planta"}</strong>
                   </div>
                 </td>
-                <td>{departamento.puestos_count}</td>
-                <td>{departamento.empleados_count}</td>
                 <td>
-                  <span className={`status ${departamento.status ? 'active' : 'inactive'}`}>
-                    {departamento.status ? '🟢 Activo' : '🔴 Suspendido'}
-                  </span>
+                  <div style={{
+                    background: '#f8f9fa',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef',
+                    lineHeight: '1.4'
+                  }}>
+                    <strong style={{ color: '#333' }}>🏢 {departamento.empresa?.nombre || "Sin empresa"}</strong>
+                  </div>
                 </td>
                 <td>
-                  <div className="actions">
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px'
+                  }}>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: '0.8rem',
+                      textAlign: 'center'
+                    }}>
+                      💼 {departamento.puestos_count || 0} Puestos
+                    </div>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                      color: 'white',
+                      padding: '4px 8px',
+                      borderRadius: '12px',
+                      fontSize: '0.8rem',
+                      textAlign: 'center'
+                    }}>
+                      👤 {departamento.empleados_count || 0} Empleados
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '8px 16px',
+                    borderRadius: '20px',
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem',
+                    background: departamento.status ? '#e8f5e8' : '#ffebee',
+                    color: departamento.status ? '#2e7d32' : '#d32f2f',
+                    border: `2px solid ${departamento.status ? '#2e7d32' : '#d32f2f'}`,
+                    textAlign: 'center',
+                    minWidth: '100px'
+                  }}>
+                    {departamento.status ? '✅ Activo' : '❌ Suspendido'}
+                  </div>
+                </td>
+                <td>
+                  <div className="actions" style={{
+                    display: 'flex',
+                    gap: '8px',
+                    justifyContent: 'center'
+                  }}>
                     <button 
                       onClick={() => handleToggleStatus('departamento', departamento.departamento_id, departamento.status, departamento.nombre)}
-                      className={`btn-action ${departamento.status ? 'warning' : 'success'}`}
+                      style={{
+                        background: departamento.status 
+                          ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' 
+                          : 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                      }}
                     >
                       {departamento.status ? '⏸️ Suspender' : '▶️ Activar'}
                     </button>
                     <button 
                       onClick={() => handleEdit('departamento', departamento)}
-                      className="btn-action primary"
+                      style={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                      }}
                     >
                       ✏️ Editar
                     </button>
@@ -1502,11 +1941,64 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderPuestos = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3>💼 Gestión de Puestos</h3>
-        <div className="stats-mini">
-          <span>Total: {puestos?.length || 0}</span>
-          <span>Activos: {puestos?.filter(p => p.status).length || 0}</span>
-          <span>Suspendidos: {puestos?.filter(p => !p.status).length || 0}</span>
+        <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>💼 Gestión de Puestos</h3>
+        <div className="stats-mini" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '15px',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{puestos?.length || 0}</div>
+            <div style={{ fontSize: '0.8rem' }}>Total Puestos</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {puestos?.filter(p => p.status).length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Activos</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            color: '#333',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {puestos?.filter(p => !p.status).length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Suspendidos</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {puestos?.reduce((total, p) => total + (p.empleados_count || 0), 0) || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Total Empleados</div>
+          </div>
         </div>
       </div>
       
@@ -1521,7 +2013,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               <th>Departamento</th>
               <th>Planta</th>
               <th>Empresa</th>
-              <th>Empleados</th>
+              <th>Personal</th>
               <th>Estado</th>
               <th>Acciones</th>
             </tr>
@@ -1529,45 +2021,131 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           <tbody>
             {puestos?.map((puesto) => (
               <tr key={puesto.puesto_id}>
-                <td>{puesto.puesto_id}</td>
                 <td>
-                  <div>
-                    <strong>{puesto.nombre}</strong>
-                    {puesto.descripcion && <small>{puesto.descripcion}</small>}
+                  <div style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    minWidth: '50px'
+                  }}>
+                    #{puesto.puesto_id}
                   </div>
                 </td>
                 <td>
                   <div>
-                    <strong>{puesto.departamento?.nombre || "Sin departamento"}</strong>
+                    <strong style={{ fontSize: '1.1rem', color: '#333' }}>{puesto.nombre}</strong>
+                    {puesto.descripcion && (
+                      <div style={{ 
+                        marginTop: '4px',
+                        fontSize: '0.85rem',
+                        color: '#666',
+                        fontWeight: 'normal'
+                      }}>
+                        📝 {puesto.descripcion}
+                      </div>
+                    )}
                   </div>
                 </td>
                 <td>
-                  <div>
-                    <strong>{puesto.planta?.nombre || "Sin planta"}</strong>
+                  <div style={{
+                    background: '#f8f9fa',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef',
+                    lineHeight: '1.4'
+                  }}>
+                    <strong style={{ color: '#333' }}>🏢 {puesto.departamento?.nombre || "Sin departamento"}</strong>
                   </div>
                 </td>
                 <td>
-                  <div>
-                    <strong>{puesto.empresa?.nombre || "Sin empresa"}</strong>
+                  <div style={{
+                    background: '#f8f9fa',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef',
+                    lineHeight: '1.4'
+                  }}>
+                    <strong style={{ color: '#333' }}>🏭 {puesto.planta?.nombre || "Sin planta"}</strong>
                   </div>
                 </td>
-                <td>{puesto.empleados_count}</td>
                 <td>
-                  <span className={`status ${puesto.status ? 'active' : 'inactive'}`}>
-                    {puesto.status ? '🟢 Activo' : '🔴 Suspendido'}
-                  </span>
+                  <div style={{
+                    background: '#f8f9fa',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #e9ecef',
+                    lineHeight: '1.4'
+                  }}>
+                    <strong style={{ color: '#333' }}>🏢 {puesto.empresa?.nombre || "Sin empresa"}</strong>
+                  </div>
                 </td>
                 <td>
-                  <div className="actions">
+                  <div style={{
+                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    color: 'white',
+                    padding: '8px 12px',
+                    borderRadius: '12px',
+                    fontSize: '0.9rem',
+                    textAlign: 'center',
+                    fontWeight: 'bold'
+                  }}>
+                    👤 {puesto.empleados_count || 0} Empleados
+                  </div>
+                </td>
+                <td>
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '8px 16px',
+                    borderRadius: '20px',
+                    fontWeight: 'bold',
+                    fontSize: '0.9rem',
+                    background: puesto.status ? '#e8f5e8' : '#ffebee',
+                    color: puesto.status ? '#2e7d32' : '#d32f2f',
+                    border: `2px solid ${puesto.status ? '#2e7d32' : '#d32f2f'}`,
+                    textAlign: 'center',
+                    minWidth: '100px'
+                  }}>
+                    {puesto.status ? '✅ Activo' : '❌ Suspendido'}
+                  </div>
+                </td>
+                <td>
+                  <div className="actions" style={{
+                    display: 'flex',
+                    gap: '8px',
+                    justifyContent: 'center'
+                  }}>
                     <button 
                       onClick={() => handleToggleStatus('puesto', puesto.puesto_id, puesto.status, puesto.nombre)}
-                      className={`btn-action ${puesto.status ? 'warning' : 'success'}`}
+                      style={{
+                        background: puesto.status 
+                          ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' 
+                          : 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                      }}
                     >
                       {puesto.status ? '⏸️ Suspender' : '▶️ Activar'}
                     </button>
                     <button 
                       onClick={() => handleEdit('puesto', puesto)}
-                      className="btn-action primary"
+                      style={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 12px',
+                        borderRadius: '6px',
+                        fontSize: '0.8rem',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                      }}
                     >
                       ✏️ Editar
                     </button>
@@ -1585,87 +2163,235 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderEmpleados = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3>👤 Gestión de Empleados</h3>
-        <div className="stats-mini">
-          <span>Total: {empleados?.length || 0}</span>
-          <span>Activos: {empleados?.filter(e => e.status)?.length || 0}</span>
-          <span>Suspendidos: {empleados?.filter(e => !e.status)?.length || 0}</span>
+        <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>👤 Gestión de Empleados</h3>
+        <div className="stats-mini" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '15px',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{empleados?.length || 0}</div>
+            <div style={{ fontSize: '0.8rem' }}>Total Empleados</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            color: 'white',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {empleados?.filter(e => e.status)?.length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Activos</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            color: '#333',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            textAlign: 'center',
+            minWidth: '140px'
+          }}>
+            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
+              {empleados?.filter(e => !e.status)?.length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Suspendidos</div>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center' }}>
+          <button className="btn-primary" onClick={() => cargarDatosPorSeccion()}>
+            🔄 Recargar Datos
+          </button>
         </div>
       </div>
       
       {renderFiltros()}
 
       <div className="table-container">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Empleado</th>
-              <th>Número</th>
-              <th>Puesto</th>
-              <th>Departamento</th>
-              <th>Planta</th>
-              <th>Empresa</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {empleados?.map((empleado) => (
-              <tr key={empleado.empleado_id}>
-                <td>{empleado.empleado_id}</td>
-                <td>
-                  <div>
-                    <strong>{empleado.nombre_completo}</strong>
-                    {empleado.correo && <small>{empleado.correo}</small>}
-                  </div>
-                </td>
-                <td>{empleado.numero_empleado}</td>
-                <td>
-                  <div>
-                    <strong>{empleado.puesto?.nombre || "Sin puesto"}</strong>
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <strong>{empleado.departamento?.nombre || "Sin departamento"}</strong>
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <strong>{empleado.planta?.nombre || "Sin planta"}</strong>
-                  </div>
-                </td>
-                <td>
-                  <div>
-                    <strong>{empleado.empresa?.nombre || "Sin empresa"}</strong>
-                  </div>
-                </td>
-                <td>
-                  <span className={`status ${empleado.status ? 'active' : 'inactive'}`}>
-                    {empleado.status ? '🟢 Activo' : '🔴 Suspendido'}
-                  </span>
-                </td>
-                <td>
-                  <div className="actions">
-                    <button 
-                      onClick={() => handleToggleStatus('empleado', empleado.empleado_id, empleado.status, empleado.nombre_completo)}
-                      className={`btn-action ${empleado.status ? 'warning' : 'success'}`}
-                    >
-                      {empleado.status ? '⏸️ Suspender' : '▶️ Activar'}
-                    </button>
-                    <button 
-                      onClick={() => handleEdit('empleado', empleado)}
-                      className="btn-action primary"
-                    >
-                      ✏️ Editar
-                    </button>
-                  </div>
-                </td>
+        {loading ? (
+          <div className="loading">Cargando empleados...</div>
+        ) : empleados.length > 0 ? (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Empleado</th>
+                <th>Contacto</th>
+                <th>Empresa/Planta</th>
+                <th>Departamento/Puesto</th>
+                <th>Fecha Ingreso</th>
+                <th>Estado</th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {empleados.map((empleado) => (
+                <tr key={empleado.empleado_id}>
+                  <td>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      minWidth: '50px'
+                    }}>
+                      #{empleado.empleado_id}
+                    </div>
+                  </td>
+                  <td>
+                    <div>
+                      <strong style={{ fontSize: '1.1rem', color: '#333' }}>
+                        {empleado.nombre_completo || `${empleado.nombre} ${empleado.apellido_paterno} ${empleado.apellido_materno || ''}`.trim()}
+                      </strong>
+                      <div style={{ 
+                        marginTop: '4px',
+                        fontSize: '0.85rem',
+                        color: '#666',
+                        fontWeight: 'normal'
+                      }}>
+                        👤 Empleado #{empleado.numero_empleado || 'Sin número'}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ lineHeight: '1.4' }}>
+                      {(empleado.correo || empleado.email) && (
+                        <div style={{ marginBottom: '4px' }}>
+                          📧 <span style={{ fontSize: '0.9rem' }}>{empleado.correo || empleado.email}</span>
+                        </div>
+                      )}
+                      {empleado.telefono && (
+                        <div>
+                          📞 <span style={{ fontSize: '0.9rem' }}>{empleado.telefono}</span>
+                        </div>
+                      )}
+                      {!(empleado.correo || empleado.email) && !empleado.telefono && (
+                        <span style={{ color: '#999', fontSize: '0.9rem' }}>Sin contacto</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ lineHeight: '1.4' }}>
+                      {(empleado.empresa?.nombre || empleado.empresa_nombre) && (
+                        <div style={{ marginBottom: '4px' }}>
+                          🏢 <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{empleado.empresa?.nombre || empleado.empresa_nombre}</span>
+                        </div>
+                      )}
+                      {(empleado.planta?.nombre || empleado.planta_nombre) && (
+                        <div>
+                          🏭 <span style={{ fontSize: '0.9rem' }}>{empleado.planta?.nombre || empleado.planta_nombre}</span>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ lineHeight: '1.4' }}>
+                      {(empleado.departamento?.nombre || empleado.departamento_nombre) && (
+                        <div style={{ marginBottom: '4px' }}>
+                          🏢 <span style={{ fontSize: '0.9rem', fontWeight: 'bold' }}>{empleado.departamento?.nombre || empleado.departamento_nombre}</span>
+                        </div>
+                      )}
+                      {(empleado.puesto?.nombre || empleado.puesto_nombre) && (
+                        <div>
+                          💼 <span style={{ fontSize: '0.9rem' }}>{empleado.puesto?.nombre || empleado.puesto_nombre}</span>
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{
+                      background: '#f8f9fa',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #e9ecef',
+                      textAlign: 'center',
+                      fontSize: '0.9rem'
+                    }}>
+                      {empleado.fecha_ingreso ? new Date(empleado.fecha_ingreso).toLocaleDateString('es-MX') : 'Sin fecha'}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      fontWeight: 'bold',
+                      fontSize: '0.9rem',
+                      background: empleado.status ? '#e8f5e8' : '#ffebee',
+                      color: empleado.status ? '#2e7d32' : '#d32f2f',
+                      border: `2px solid ${empleado.status ? '#2e7d32' : '#d32f2f'}`,
+                      textAlign: 'center',
+                      minWidth: '100px'
+                    }}>
+                      {empleado.status ? '✅ Activo' : '❌ Suspendido'}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="action-buttons" style={{
+                      display: 'flex',
+                      gap: '8px',
+                      justifyContent: 'center'
+                    }}>
+                      <button
+                        onClick={() => handleEdit('empleado', empleado)}
+                        className="btn-icon btn-edit"
+                        title="Editar empleado"
+                        style={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '10px 12px',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          fontWeight: 'bold',
+                          transition: 'all 0.3s ease'
+                        }}
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        onClick={() => handleToggleStatus('empleado', empleado.empleado_id, empleado.status, empleado.nombre_completo || `${empleado.nombre} ${empleado.apellido_paterno}`.trim())}
+                        className={`btn-icon ${empleado.status ? 'btn-suspend' : 'btn-activate'}`}
+                        title={empleado.status ? 'Suspender empleado' : 'Activar empleado'}
+                        style={{
+                          background: empleado.status ? 
+                            'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' : 
+                            'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '8px',
+                          padding: '10px 12px',
+                          cursor: 'pointer',
+                          fontSize: '0.9rem',
+                          fontWeight: 'bold',
+                          transition: 'all 0.3s ease'
+                        }}
+                      >
+                        {empleado.status ? '⏸️ Suspender' : '▶️ Activar'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="no-data">No se encontraron empleados. {debouncedFiltroTexto ? "Intente con otros filtros." : ""}</div>
+        )}
       </div>
     </div>
   );
