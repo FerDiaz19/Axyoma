@@ -161,3 +161,9 @@ class SeccionPregunta(models.Model):
     pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE)
     numero_orden = models.IntegerField(default=1)
     # ...otros campos si necesitas...
+
+# Importar modelos oficiales para las normas NOM
+from .models_oficiales import (
+    EvaluacionOficial, SeccionOficial, PreguntaOficial,
+    AsignacionEvaluacion, EmpleadoAsignado, RespuestaEmpleado
+)
