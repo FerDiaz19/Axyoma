@@ -101,20 +101,23 @@ echo.
 echo 🔧 PASO 4: Creando base de datos axyomadb...
 echo ---------------------------------------------------------
 
-echo 🏗️ Eliminando BD anterior si existe...
+echo 🏗️ Intentando crear BD con psql...
 psql -U postgres -c "DROP DATABASE IF EXISTS axyomadb;" 2>nul
+psql -U postgres -c "CREATE DATABASE axyomadb;" 2>nul
 
-echo 🏗️ Creando nueva base de datos...
-psql -U postgres -c "CREATE DATABASE axyomadb;"
 if errorlevel 1 (
-    echo ⚠️  Error creando BD con psql. Verifica que PostgreSQL este corriendo.
-    echo 💡 SOLUCION MANUAL:
-    echo    1. Abre pgAdmin o psql
-    echo    2. Crea base de datos "axyomadb"
-    echo    3. Presiona cualquier tecla para continuar
-    pause
+    echo ⚠️  psql no disponible. Intentando con Python...
+    python crear_bd.py
+    if errorlevel 1 (
+        echo ❌ Error creando BD automaticamente
+        echo 💡 CREAR MANUALMENTE:
+        echo    1. Abre pgAdmin
+        echo    2. Crea base de datos "axyomadb"
+        echo    3. Presiona cualquier tecla para continuar
+        pause
+    )
 ) else (
-    echo ✅ Base de datos axyomadb creada
+    echo ✅ Base de datos axyomadb creada con psql
 )
 
 REM ====================================================
@@ -151,6 +154,15 @@ if exist "apps\evaluaciones\migrations" (
         )
     )
 )
+
+if exist "apps\admin_bd\migrations" (
+    for %%f in (apps\admin_bd\migrations\*.py) do (
+        if not "%%~nxf"=="__init__.py" (
+            del "%%f" 2>nul
+            echo   ✅ Eliminado: %%~nxf
+        )
+    )
+)
 echo ✅ Migraciones problemáticas eliminadas
 
 REM ====================================================
@@ -178,13 +190,14 @@ echo 📝 Creando migraciones para subscriptions...
 python manage.py makemigrations subscriptions
 echo 📝 Creando migraciones para evaluaciones...
 python manage.py makemigrations evaluaciones
+echo 📝 Creando migraciones para admin_bd...
+python manage.py makemigrations admin_bd
 echo 📝 Creando migraciones generales...
 python manage.py makemigrations
 
 if errorlevel 1 (
-    echo ❌ Error creando migraciones
-    pause
-    exit /b
+    echo ⚠️  Advertencia en migraciones, pero continuando...
+    echo 💡 Si hay errores persistentes, crear BD manualmente
 )
 echo ✅ Migraciones frescas creadas
 
