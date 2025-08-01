@@ -29,10 +29,17 @@ urlpatterns = [
     path('api/admin-bd/', include('apps.admin_bd.urls')),  # ← Nueva app para gestión BD
     path("api/health-check/", health_check),
     path('api/evaluaciones/', include('apps.evaluaciones.urls')),
-path('api/evaluaciones/', include('apps.evaluaciones.urls')),
+    path('api/evaluaciones/', include('apps.evaluaciones.urls')),
 
     # Swagger URLs
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     re_path(r'^redoc/$', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
+
+
+
+
+
+    # * Estas son las URLs de la toma de evaluaciones (DJANGO).
+    path('axyoma/', include('anorlondo.urls')),
 ]

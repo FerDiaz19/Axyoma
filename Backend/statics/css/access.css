@@ -1,0 +1,132 @@
+
+/* -------------------------------------------------------------------------- */
+
+body {
+    background-color: var(--color-alt-accent);
+}
+
+.access-container {
+    align-items: center;
+    width: 60%; padding: 4rem;
+    display: flex; flex-direction: column;
+}
+
+.access-container img {
+    margin: 6rem 0;
+    width: 45%; object-fit: contain;
+}
+
+/* -------------------------------------------------------------------------- */
+
+.login-form {
+    padding: 2rem; width: 80%;
+}
+
+.form-group.icon-input {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.form-group.icon-input i {
+    position: absolute;
+    font-size: 1rem; left: 1rem;
+    transform: translateY(-50%); top: 50%;
+    color: var(--color-hover);
+}
+
+.form-group.icon-input input {
+    border: none; outline: none;
+    box-shadow: none; background: none;
+
+    font-size: 1.2rem;
+    color: var(--color-canvas);
+    width: 100%; padding: .85rem .75rem .85rem 3rem;
+    border-bottom: .125rem solid var(--color-hover);
+}
+
+.form-group.icon-input input::placeholder {
+    color: var(--color-canvas);
+}
+
+.form-group.icon-input input:hover {
+    border-bottom-color: var(--color-accent);
+}
+
+.form-group.icon-input input:focus {
+    border-bottom-color: var(--color-accent);
+}
+
+/* -------------------------------------------------------------------------- */
+
+.login-button {
+    font-size: .95rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: var(--color-hover);
+    background-color: var(--color-canvas);
+
+    margin-top: 1rem;
+    border-radius: .5rem;
+    width: 100%; padding: .8rem;
+}
+
+.login-button:hover {
+    color: var(--color-background);
+    background-color: var(--color-hover);
+}
+
+/* -------------------------------------------------------------------------- */
+
+.messages {
+    list-style: none;
+    font-size: 1.15rem;
+    padding: 0; margin-top: 1.5rem;
+    font-weight: bold; text-align: center;
+}
+
+.messages li {
+    padding: .75rem;
+    border-radius: .5rem;
+}
+
+.messages .error {
+    color: var(--color-subtitle);
+    background-color: var(--color-danger);
+}
+
+.messages .success {
+    color: var(--color-solid-subtitle);
+    background-color: var(--color-success);
+}
+.messages .info {
+    color: var(--color-solid-subtitle);
+    background-color: var(--color-info);
+}
+
+/* -------------------------------------------------------------------------- */
+
+@media (max-width: 1680px) {
+    .access-container { width: 65%; }
+}
+
+@media (max-width: 1366px) {
+    .access-container { width: 70%; }
+}
+
+@media (max-width: 1024px) {
+    .access-container { width: 75%; }
+}
+
+@media (max-width: 960px) {
+    .access-container { width: 80%; }
+}
+
+@media (max-width: 720px) {
+    .access-container { width: 85%; }
+}
+
+@media (max-width: 480px) {
+    .access-container { width: 90%; }
+}
+
+/* -------------------------------------------------------------------------- */

@@ -1,163 +1,432 @@
-# -*- coding: utf-8 -*-
+
+# -- MODELOS RELACIONADOS A LAS EVALUACIONES (ED) --------------------------- --
+
+import uuid
 from django.db import models
 from django.contrib.auth.models import User
-from apps.users.models import Empresa, Empleado, Departamento, Planta
+from apps.users.models import Empresa, Empleado
 
+# ---------------------------------------------------------------------------- #
+
+''' Esto permite designar a una evaluación como normativa o interna. '''
 class TipoEvaluacion(models.Model):
-    """Tipos de evaluación: NOM-035, NOM-030, 360°"""
-    TIPOS_EVALUACION = [
-        ('NOM-035', 'NOM-035 - Factores de Riesgo Psicosocial'),
-        ('NOM-030', 'NOM-030 - Servicios Preventivos de Seguridad'),
-        ('360', 'Evaluación 360° - Competencias y Desempeño'),
-    ]
-    
-    nombre = models.CharField(max_length=50, choices=TIPOS_EVALUACION, unique=True)
-    descripcion = models.TextField()
-    normativa_oficial = models.BooleanField(default=True)  # True para NOM, False para internas
+    tipo_evaluacion_id = models.AutoField(primary_key=True)
+
+    nombre = models.CharField(max_length=32, blank=False, unique=True,
+        verbose_name='Nombre', help_text='Nombre del tipo de evaluación.')
+
+    descripcion = models.TextField(blank=True, null=True,
+        verbose_name='Descripción', help_text='Descripción del tipo de evaluación.')
+
+    # * Estos campos sí que podrían tener algún uso...
     activo = models.BooleanField(default=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        verbose_name = "Tipo de Evaluación"
-        verbose_name_plural = "Tipos de Evaluación"
-        
-    def __str__(self):
-        return self.nombre
 
-class Pregunta(models.Model):
-    """Preguntas para las evaluaciones"""
-    TIPO_RESPUESTA = [
-        ('multiple', 'Opción Múltiple'),
-        ('escala', 'Escala Likert'),
-        ('si_no', 'Sí/No'),
-        ('texto', 'Texto Libre'),
-    ]
-    
-    tipo_evaluacion = models.ForeignKey(TipoEvaluacion, on_delete=models.CASCADE, related_name='preguntas')
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, null=True, blank=True)  # Null para preguntas oficiales
-    texto_pregunta = models.TextField()
-    tipo_respuesta = models.CharField(max_length=20, choices=TIPO_RESPUESTA)
-    opciones_respuesta = models.JSONField(default=list, blank=True)  # Para opciones múltiples
-    es_obligatoria = models.BooleanField(default=True)
-    orden = models.IntegerField(default=1)
-    activa = models.BooleanField(default=True)
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
-    creada_por = models.ForeignKey(User, on_delete=models.CASCADE)
-    
     class Meta:
-        verbose_name = "Pregunta"
-        verbose_name_plural = "Preguntas"
-        ordering = ['tipo_evaluacion', 'orden']
-        
-    def __str__(self):
-        return f"{self.tipo_evaluacion.nombre} - {self.texto_pregunta[:50]}..."
+        ordering = [ 'nombre' ]
+        db_table = 'tipos_evaluacion'
+        verbose_name = 'Tipo de evaluación'
+        verbose_name_plural = 'Tipos de evaluación'
 
-class EvaluacionCompleta(models.Model):
-    """Evaluaciones completas creadas por las empresas"""
+    def __str__(self):
+        return f'{self.nombre}'
+
+# ---------------------------------------------------------------------------- #
+
+''' Guarda la información general necesaria al crear una evaluación '''
+class Evaluacion(models.Model):
     ESTADOS = [
-        ('borrador', 'Borrador'),
-        ('activa', 'Activa'),
-        ('finalizada', 'Finalizada'),
-        ('cancelada', 'Cancelada'),
+        ( 'borrador', 'Borrador' ),
+        ( 'activa', 'Activa' ),
+        ( 'finalizada', 'Finalizada' ),
+        ( 'cancelada', 'Cancelada' ),
     ]
-    
-    titulo = models.CharField(max_length=200)
-    descripcion = models.TextField()
-    tipo_evaluacion = models.ForeignKey(TipoEvaluacion, on_delete=models.CASCADE)
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name='evaluaciones_nuevas')
-    preguntas = models.ManyToManyField(Pregunta, through='EvaluacionPregunta')
-    
-    # Configuración de alcance
-    plantas = models.ManyToManyField(Planta, blank=True)
-    departamentos = models.ManyToManyField(Departamento, blank=True)
-    empleados_objetivo = models.ManyToManyField(Empleado, blank=True)
-    
-    estado = models.CharField(max_length=20, choices=ESTADOS, default='borrador')
-    fecha_inicio = models.DateTimeField()
-    fecha_fin = models.DateTimeField()
-    es_anonima = models.BooleanField(default=True)
-    
-    # Metadatos
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
-    creada_por = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    evaluacion_id = models.AutoField(primary_key=True)
+
+    titulo = models.CharField(max_length=128, blank=False,
+        verbose_name='Nombre', help_text='Nombre de la evaluación.')
+
+    descripcion = models.TextField(blank=True, null=True,
+        verbose_name='Descripción', help_text='Descripción de la evaluación.')
+
+    instrucciones = models.TextField(blank=True, null=True,
+        verbose_name='Instrucciones', help_text='Instrucciones de la evaluación.')
+
+    # ! Este campito es nuevo.
+    contenido_informativo = models.TextField(blank=True, null=True,
+        verbose_name='Contenido informativo', help_text='Enlace a información sobre la normativa.')
+
+    tiempo_limite = models.IntegerField(blank=True, null=True,
+        verbose_name='Tiempo límite', help_text='Tiempo máximo para contestar la evaluación.')
+
+    umbral_aprobacion = models.IntegerField(blank=True, null=True,
+        verbose_name='Umbral de aprobación', help_text='70 (%)')
+
+    estado = models.CharField(max_length=16, choices=ESTADOS, default='borrador')
+
+    fecha_registro = models.DateTimeField(auto_now_add=True)
     fecha_modificacion = models.DateTimeField(auto_now=True)
-    
+
+    tipo_evaluacion = models.ForeignKey(TipoEvaluacion, on_delete=models.PROTECT,
+        verbose_name='Tipo de evaluación', help_text='Asignación de tipo de evaluación.')
+
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, null=True, blank=True,
+        verbose_name='Empresa títular', help_text='Campo único de evaluaciones internas.')
+
+    creado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True,
+        verbose_name='Usuario creador', help_text='Campo único de evaluaciones internas.')
+
     class Meta:
-        verbose_name = "Evaluación"
-        verbose_name_plural = "Evaluaciones"
-        
+        db_table = 'evaluaciones'
+        ordering = [ 'fecha_registro' ]
+        verbose_name = 'Evaluación'
+        verbose_name_plural = 'Evaluaciones'
+
     def __str__(self):
-        return f"{self.titulo} - {self.empresa.nombre}"
+        return f'{self.titulo} ({self.tipo_evaluacion.nombre})'
 
-class EvaluacionPregunta(models.Model):
-    """Tabla intermedia para preguntas en evaluaciones"""
-    evaluacion = models.ForeignKey(EvaluacionCompleta, on_delete=models.CASCADE)
-    pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE)
-    orden = models.IntegerField()
-    es_obligatoria = models.BooleanField(default=True)
-    
-    class Meta:
-        unique_together = ['evaluacion', 'pregunta']
-        ordering = ['orden']
+# ---------------------------------------------------------------------------- #
 
-class RespuestaEvaluacion(models.Model):
-    """Respuestas de los empleados a las evaluaciones"""
-    evaluacion = models.ForeignKey(EvaluacionCompleta, on_delete=models.CASCADE)
-    empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE, null=True, blank=True)  # Null si es anónima
-    fecha_respuesta = models.DateTimeField(auto_now_add=True)
-    completada = models.BooleanField(default=False)
-    tiempo_completado = models.IntegerField(null=True, blank=True)  # minutos
-    
-    class Meta:
-        unique_together = ['evaluacion', 'empleado']
-        verbose_name = "Respuesta a Evaluación"
-        verbose_name_plural = "Respuestas a Evaluaciones"
-        
-    def __str__(self):
-        empleado_nombre = self.empleado.nombre if self.empleado else "Anónimo"
-        return f"{self.evaluacion.titulo} - {empleado_nombre}"
-
-class DetalleRespuesta(models.Model):
-    """Respuestas específicas a cada pregunta"""
-    respuesta_evaluacion = models.ForeignKey(RespuestaEvaluacion, on_delete=models.CASCADE, related_name='detalles')
-    pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE)
-    respuesta_texto = models.TextField(blank=True)
-    respuesta_numerica = models.IntegerField(null=True, blank=True)
-    respuesta_multiple = models.JSONField(default=list, blank=True)
-    
-    class Meta:
-        unique_together = ['respuesta_evaluacion', 'pregunta']
-        verbose_name = "Detalle de Respuesta"
-        verbose_name_plural = "Detalles de Respuestas"
-
-class ResultadoEvaluacion(models.Model):
-    """Resultados consolidados de las evaluaciones"""
-    evaluacion = models.ForeignKey(EvaluacionCompleta, on_delete=models.CASCADE)
-    fecha_calculo = models.DateTimeField(auto_now_add=True)
-    total_respuestas = models.IntegerField()
-    porcentaje_participacion = models.DecimalField(max_digits=5, decimal_places=2)
-    puntuacion_promedio = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    resultados_detallados = models.JSONField(default=dict)  # Resultados por pregunta/categoría
-    recomendaciones = models.TextField(blank=True)
-    
-    class Meta:
-        verbose_name = "Resultado de Evaluación"
-        verbose_name_plural = "Resultados de Evaluaciones"
-        
-    def __str__(self):
-        return f"Resultados - {self.evaluacion.titulo}"
-
-
-
+''' Permite definir las secciones de una evaluación. '''
 class SeccionEval(models.Model):
-    nombre = models.CharField(max_length=100)
-    descripcion = models.TextField(blank=True)
-    evaluacion = models.ForeignKey(EvaluacionCompleta, on_delete=models.CASCADE)
-    numero_orden = models.IntegerField(default=1)
-    # ...otros campos...
+    seccion_id = models.AutoField(primary_key=True)
 
+    nombre = models.CharField(max_length=64, blank=False,
+        verbose_name='Nombre', help_text='Nombre de la sección.')
+
+    descripcion = models.TextField(blank=True, null=True,
+        verbose_name='Descripción', help_text='Descripción de la sección.')
+
+    numero_orden = models.IntegerField(verbose_name='Orden', help_text='Número de orden dentro de la evaluación')
+    es_evaluable = models.BooleanField(default=True, verbose_name='¿Evaluable?', help_text='Define si el contenido de esta sección es evaluable')
+
+    evaluacion = models.ForeignKey(Evaluacion, on_delete=models.CASCADE,
+        verbose_name='Evaluación', help_text='Evaluación a la que pertenece esta sección.')
+
+    # ? Pa' evitar consultas complejas.
+    preguntas = models.ManyToManyField(
+        'Pregunta', through='SeccionPregunta',
+        related_name='secciones_asociadas',
+        verbose_name='Preguntas de la sección'
+    )
+
+    class Meta:
+        db_table = 'secciones_eval'
+        ordering = [ 'evaluacion', 'numero_orden' ]
+        verbose_name = 'Sección'
+        verbose_name_plural = 'Secciones'
+        constraints = [
+            models.UniqueConstraint(fields=['evaluacion', 'numero_orden'], name='unique_section_orden')
+        ]
+
+    def __str__(self):
+        return f'{self.nombre} ({self.evaluacion.titulo})'
+
+# ---------------------------------------------------------------------------- #
+
+''' Define sencillamente las preguntas, pudiendo ser reutilizadas. '''
+class Pregunta(models.Model):
+    TIPO_CHOICES = [
+        ('abierta', 'Abierta'),
+        ('múltiple', 'Múltiple'),
+        ('escala', 'Escala'),
+        ('bool', 'Bool'),
+    ]
+
+    pregunta_id = models.AutoField(primary_key=True)
+
+    texto_pregunta = models.TextField(blank=False, null=False,
+        verbose_name='Pregunta', help_text='Descripción de la pregunta.')
+
+    tipo_pregunta = models.CharField(max_length=20, choices=TIPO_CHOICES, default='abierta',
+
+        verbose_name='Tipo de pregunta', help_text='Define el tipo de pregunta.')
+
+    es_obligatoria = models.BooleanField(default=True,
+        verbose_name='¿Es obligatoria?', help_text='Define si la pregunta debe ser contestada obligatoriamente.')
+
+    pregunta_padre = models.ForeignKey('self', blank=True, null=True, on_delete=models.CASCADE,
+        db_column='pregunta_padre', related_name='preguntas_hijas',
+        verbose_name='Pregunta padre', help_text='Pregunta de la cual esta pregunta depende.')
+
+    activador_padre = models.CharField(max_length=255, blank=True, null=True,
+        verbose_name='Activador padre', help_text='Valor que activa esta pregunta cuando la pregunta padre es contestada.')
+
+    # ? Pa' evitar consultas complejas.
+    secciones = models.ManyToManyField(
+        'SeccionEval', through='SeccionPregunta',
+        related_name='preguntas_reutilizables',
+        verbose_name='Secciones de la pregunta'
+    )
+
+    class Meta:
+        db_table = 'preguntas'
+        ordering = [ 'pregunta_id' ]
+        verbose_name = 'Pregunta'
+        verbose_name_plural = 'Preguntas'
+
+    def __str__(self):
+        return f'{self.texto_pregunta[:32]}...'
+
+# ---------------------------------------------------------------------------- #
+
+''' Define un conjunto de posibles respuestas.
+    Su función principal es la reusabilidad, pues por ejemplo...
+    ...podría reutilizarse un conjunto de respuestas tipo escala. '''
+class ConjuntoRespuestas(models.Model):
+    conjunto_id = models.AutoField(primary_key=True)
+
+    nombre = models.CharField(max_length=64, unique=True,
+        verbose_name='Nombre del conjunto', help_text='Ej. Escala (malo, bueno)')
+
+    descripcion = models.TextField(blank=True, null=True,
+        verbose_name='Descripción', help_text='Descripción del conjunto de respuestas')
+
+    predefinido = models.BooleanField(default=False, verbose_name='¿Predefinido?',
+        help_text='Indica si el conjunto de opciones es predefinido del sistema.')
+
+    class Meta:
+        ordering = [ 'predefinido' ]
+        db_table = 'conjunto_respuestas'
+        verbose_name = 'Conjunto de respuestas'
+        verbose_name_plural = 'Conjuntos de respuestas'
+
+    def __str__(self):
+        return f'{self.nombre}'
+
+# ---------------------------------------------------------------------------- #
+
+''' Guarda cada una de las posibles respuestas. '''
+class PosiblesRespuestas(models.Model):
+    opcion_conjunto_id = models.AutoField(primary_key=True)
+
+    texto_opcion = models.CharField(max_length=256, blank=False, null=False,
+        verbose_name='Respuesta', help_text='Descripción/Valor de la respuesta.')
+
+    # Dependiendo del tipo de valor que se espere guardar:
+    valor_booleano = models.BooleanField(blank=True, null=True,
+        verbose_name='Valor booleano', help_text='Valor booleano asociado a la opción.')
+
+    valor_int = models.IntegerField(blank=True, null=True,
+        verbose_name='Valor numérico', help_text='Valor numérico asociado a la opción.')
+
+    valor_decimal = models.DecimalField(blank=True, null=True, max_digits=16, decimal_places=2,
+        verbose_name='Valor decimal', help_text='Valor númerico decimal asociado a la opción.')
+
+    # Número de orden, dentro del conjunto de respuestas.
+    numero_orden = models.IntegerField(verbose_name='Orden', help_text='Orden de la opción dentro del conjunto.')
+
+    conjunto_respuestas = models.ForeignKey(ConjuntoRespuestas, on_delete=models.CASCADE,
+        db_column='conjunto_respuestas', related_name='opciones',
+        verbose_name='Conjunto de respuestas', help_text='Conjunto de opciones al que pertenece esta respuesta.')
+
+    class Meta:
+        db_table = 'respuestas_conjunto'
+        verbose_name = 'Posible respuesta'
+        verbose_name_plural = 'Posibles respuestas'
+        ordering = [ 'conjunto_respuestas', 'numero_orden' ]
+        constraints = [
+            models.UniqueConstraint(fields=['conjunto_respuestas', 'numero_orden'], name='unique_opcion_orden')
+        ]
+
+    def __str__(self):
+        return f'{self.texto_opcion} ({self.conjunto_respuestas.nombre})'
+
+# ---------------------------------------------------------------------------- #
+
+''' Asigna preguntas (con sus posibles respuestas) a la sección de una evaluación. '''
 class SeccionPregunta(models.Model):
-    seccion = models.ForeignKey(SeccionEval, on_delete=models.CASCADE)
-    pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE)
-    numero_orden = models.IntegerField(default=1)
-    # ...otros campos si necesitas...
+    seccion_pregunta_id = models.AutoField(primary_key=True)
+
+    seccion = models.ForeignKey(SeccionEval, on_delete=models.CASCADE,
+        related_name='preguntas_seccion', verbose_name='Sección', help_text='Sección a la que se asigna la pregunta.')
+
+    pregunta = models.ForeignKey(Pregunta, on_delete=models.CASCADE, related_name='secciones_pregunta',
+        verbose_name='Pregunta', help_text='Pregunta a asignar a la sección.')
+
+    conjunto_respuestas = models.ForeignKey(ConjuntoRespuestas, blank=True, null=True,
+        on_delete=models.SET_NULL, verbose_name='Conjunto de respuestas',
+        help_text='Conjunto de respuestas para la pregunta anteriormente seleccionada.')
+
+    respuesta_correcta = models.ForeignKey(PosiblesRespuestas, on_delete=models.SET_NULL,
+        blank=True, null=True, related_name='preguntas_con_respuesta_correcta',
+        verbose_name='Respuesta correcta', help_text='Opción correcta para esta pregunta en particular, si aplica.'
+    )
+
+    numero_orden = models.IntegerField(verbose_name='Orden de la pregunta', help_text='Orden de la pregunta dentro de la sección.')
+
+    class Meta:
+        db_table = 'seccion_preguntas'
+        verbose_name = 'Pregunta de una sección'
+        verbose_name_plural = 'Preguntas de una sección'
+        ordering = [ 'seccion', 'numero_orden' ]
+        constraints = [
+            models.UniqueConstraint(fields=['seccion', 'pregunta'], name='unique_seccion_pregunta'),
+            models.UniqueConstraint(fields=['seccion', 'numero_orden'], name='unique_seccion_orden')
+        ]
+
+    def __str__(self):
+        return f'Sección: {self.seccion.nombre} - Pregunta: {self.pregunta.texto_pregunta[:32]}...'
+
+# ---------------------------------------------------------------------------- #
+
+''' Inicia la asignación de una evaluación. '''
+class Asignacion(models.Model):
+    asignacion_id = models.AutoField(primary_key=True)
+
+    evaluacion = models.ForeignKey(Evaluacion, on_delete=models.PROTECT,
+        verbose_name='Evaluación', help_text='Evaluación asignada.')
+
+    fecha_inicio = models.DateTimeField(verbose_name='Fecha de inicio',
+        help_text='Fecha exacta en que la evaluación estará disponible.')
+
+    fecha_fin = models.DateTimeField(verbose_name='Fecha de fin',
+        help_text='Fecha exacta en que la evaluación dejará de estar disponible.')
+
+    status = models.BooleanField(default=True, verbose_name='¿Se encuentra activa?', help_text='Indica si la asignación está activa actualmente.')
+
+    fecha_registro = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    fecha_actualizacion = models.DateTimeField(auto_now=True, null=True, blank=True)
+
+    # Para evaluaciones 360:
+    empleado_evaluado = models.ForeignKey(Empleado, on_delete=models.CASCADE, blank=True, null=True,
+        related_name='evaluaciones_360_asignadas', verbose_name='Empleado evaluado',
+        help_text='Empleado que será el sujeto de esta evaluación 360. Un campo obligatorio para evaluaciones 360.')
+
+    # He de aclarar que estos no se relacionan directamente.
+    # Para guardar el puesto y departamento que tenía el empleado evaluado en ese momento.
+    puesto = models.CharField(max_length=64, blank=True, null=True,
+        verbose_name='Puesto del empleado', help_text='Puesto del empleado evaluado en el momento de la asignación.')
+    departamento = models.CharField(max_length=64, blank=True, null=True,
+        verbose_name='Departamento del empleado', help_text='Departamento del empleado evaluado en el momento de la asignación.')
+
+    class Meta:
+        db_table = 'asignaciones'
+        ordering = [ '-fecha_registro' ]
+        verbose_name = 'Asignación de evaluación'
+        verbose_name_plural = 'Asignaciones base de las evaluaciones'
+
+    def __str__(self):
+        return f'Asignación de {self.evaluacion.titulo} ({self.evaluacion.tipo_evaluacion.nombre})'
+
+# ---------------------------------------------------------------------------- #
+
+''' Registra la asignación específica de cada empleadoa a una evaluación. '''
+class AsignacionEmpleado(models.Model):
+    ESTADO_CHOICES = [
+        ('Expirada', 'Expirada'),
+        ('Pendiente', 'Pendiente'),
+        ('Completada', 'Completada'),
+    ]
+
+    asignacion_empleado_id = models.AutoField(primary_key=True)
+
+    asignacion = models.ForeignKey(Asignacion, on_delete=models.CASCADE,
+        verbose_name='Asignación', help_text='Asignación de evaluación a la que pertenece.')
+
+    empleado = models.ForeignKey(Empleado, on_delete=models.CASCADE,
+        verbose_name='Empleado', help_text='Empleado al que se le asignó la evaluación.')
+
+    # El Token se genera de manera automática por DJANGO.
+    token_acceso = models.UUIDField(default=uuid.uuid4, editable=False, unique=True,
+        verbose_name='Token de acceso', help_text='Token único para que el empleado acceda a la evaluación.')
+
+    status = models.CharField(max_length=16, choices=ESTADO_CHOICES, default='Pendiente',
+        verbose_name='Estado de la asignación', help_text='Estado actual de la asignación para el empleado.')
+
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+    fecha_completado = models.DateTimeField(blank=True)
+
+    class Meta:
+        db_table = 'asignaciones_empleado'
+        ordering = [ '-fecha_asignacion' ]
+        unique_together = ( 'asignacion', 'empleado' )
+        verbose_name = 'Asignación de evaluación a empleado'
+        verbose_name_plural = 'Asignaciones de evaluaciones a empleados'
+
+    def __str__(self):
+        return f'{self.empleado.nombre} - {self.asignacion.evaluacion.titulo} ({self.status})'
+
+# ---------------------------------------------------------------------------- #
+
+''' Registra cada respuesta dada por un empleado en una evaluación asignada. '''
+class RespuestaEmpleado(models.Model):
+    respuesta_empleado_id = models.AutoField(primary_key=True)
+
+    asignacion_empleado = models.ForeignKey('AsignacionEmpleado', on_delete=models.CASCADE,
+        verbose_name='Asignación del empleado', help_text='Asignación específica a la que pertenece esta respuesta.')
+
+    seccion_pregunta = models.ForeignKey('SeccionPregunta', on_delete=models.CASCADE,
+        verbose_name='Pregunta de la sección', help_text='La pregunta a la que se le dio respuesta.')
+
+    # Valor de la respuesta dada por el empleado:
+    opcion_seleccionada = models.ForeignKey('PosiblesRespuestas', on_delete=models.SET_NULL,
+        blank=True, null=True, verbose_name='Opción seleccionada',
+        help_text='La opción predefinida que el empleado seleccionó (si aplica).')
+
+    # Esto tampoco se toma de la relación directamente.
+    # Para guardar exactamente el valor que se tenía en el momento en que se registró.
+    respuesta_texto = models.TextField(blank=True, null=True,
+        verbose_name='Respuesta de texto', help_text='Respuesta de texto libre para preguntas abiertas.')
+    respuesta_valor_numerico = models.IntegerField(blank=True, null=True,
+        verbose_name='Valor numérico', help_text='Valor numérico dado como respuesta.')
+    respuesta_valor_decimal = models.DecimalField(blank=True, null=True, max_digits=16, decimal_places=2,
+        verbose_name='Valor decimal', help_text='Valor decimal dado como respuesta.')
+
+    es_correcta = models.BooleanField(default=False,
+        verbose_name='¿Es correcta?', help_text='Indica si la respuesta dada por el empleado es la correcta.')
+
+    fecha_respuesta = models.DateTimeField(auto_now_add=True,
+        verbose_name='Fecha de respuesta', help_text='Fecha exacta en que se registró esta respuesta.')
+
+    class Meta:
+        db_table = 'respuestas_empleado'
+        verbose_name = 'Evaluación'
+        verbose_name_plural = 'Respuestas de empleados'
+        ordering = [ 'asignacion_empleado', 'fecha_respuesta' ]
+        unique_together = ( 'asignacion_empleado', 'seccion_pregunta' )
+
+    def __str__(self):
+        return f'Respuesta de {self.asignacion_empleado.empleado.nombre} para {self.seccion_pregunta.pregunta.texto_pregunta[:32]}...'
+
+# ---------------------------------------------------------------------------- #
+
+''' Registra el resultado obtenido por un empleado al completar una evaluación. '''
+class ResultadoEvaluacion(models.Model):
+    resultado_id = models.AutoField(primary_key=True)
+
+    evaluacion = models.ForeignKey(Evaluacion, on_delete=models.SET_NULL, null=True,
+        verbose_name='Evaluación', help_text='Evaluación de la asignación.')
+
+    asignacion_empleado = models.OneToOneField('AsignacionEmpleado', on_delete=models.CASCADE, unique=True, null=True,
+        verbose_name='Asignación del empleado', help_text='Asignación específica a la que corresponde este resultado.')
+
+    puntaje_total = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True,
+        verbose_name='Puntaje total', help_text='Puntaje total obtenido en la evaluación.')
+
+    num_respuestas_correctas = models.IntegerField(default=0,
+        verbose_name='Respuestas correctas', help_text='Número de respuestas correctas dadas en secciones evaluables.')
+
+    num_preguntas_evaluables = models.IntegerField(default=0,
+        verbose_name='Preguntas evaluables', help_text='Número total de preguntas en secciones evaluables con respuesta correcta definida.')
+
+    porcentaje_correctas = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True,
+        verbose_name='Porcentaje correctas', help_text='Porcentaje de respuestas correctas sobre preguntas evaluables.')
+
+    fecha_calculo = models.DateTimeField(auto_now_add=True,
+        verbose_name='Fecha de cálculo', help_text='Fecha en que se calculó este resultado.')
+
+    aprobado = models.BooleanField(blank=True, null=True,
+        verbose_name='¿Aprobado?', help_text='Indica si el empleado aprobó la evaluación (según un criterio predefinido).')
+
+    class Meta:
+        ordering = [ '-fecha_calculo' ]
+        db_table = 'resultados_evaluacion'
+        verbose_name = 'Resultado de una evaluación'
+        verbose_name_plural = 'Resultados de evaluaciones'
+
+    def __str__(self):
+        return f'Resultado de {self.asignacion_empleado.empleado.nombre} para {self.evaluacion.titulo}'
+
+# ---------------------------------------------------------------------------- #
