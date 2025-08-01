@@ -33,6 +33,7 @@ import {
 } from '../services/superAdminService';
 import {
   listarPlanes,
+  listarPlanesAdmin,  // ← Nueva función para SuperAdmin
   listarSuscripciones,
   listarPagos,
   crearPlan,
@@ -258,8 +259,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           console.log('🔄 SuperAdmin: Cargando empresas...');
           const empresasData = await getEmpresas(params.buscar, params.status);
           console.log('📊 SuperAdmin: Empresas cargadas:', empresasData?.length || 0);
+          console.log('🔍 SuperAdmin: Estructura de datos de empresas:', empresasData?.[0]);
+          console.log('🔎 SuperAdmin: Todos los datos de empresas:', empresasData);
           if (Array.isArray(empresasData)) {
             setEmpresas(empresasData);
+            console.log('✅ SuperAdmin: Datos de empresas cargados exitosamente');
           } else {
             console.error('❌ SuperAdmin: datos de empresas no es un array:', empresasData);
             setEmpresas([]);
@@ -349,7 +353,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           break;
           
         case 'planes':
-          const planesData = await listarPlanes();
+          const planesData = await listarPlanesAdmin();  // ← Usar función específica para SuperAdmin
           setPlanes(planesData);
           break;
           
@@ -390,6 +394,21 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       cargarDatosPorSeccion();
     }
   }, [activeSection, cargarDatosPorSeccion]);
+
+  // Agregar log para monitorear el estado de empresas
+  useEffect(() => {
+    console.log('🔎 SuperAdmin: Estado empresas actualizado:', empresas?.length || 0, 'empresas');
+    if (empresas?.length > 0) {
+      console.log('📋 SuperAdmin: Datos primer empresa:', {
+        id: empresas[0].empresa_id,
+        nombre: empresas[0].nombre,
+        correo: empresas[0].correo,
+        telefono: empresas[0].telefono,
+        direccion: empresas[0].direccion,
+        plantas_count: empresas[0].plantas_count
+      });
+    }
+  }, [empresas]);
 
   const handleLogout = async () => {
     await logout();
@@ -611,7 +630,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       });
       
       // Recargar la lista de planes
-      const planesData = await listarPlanes();
+      const planesData = await listarPlanesAdmin();  // ← Usar función específica para SuperAdmin
       setPlanes(planesData);
       
       alert('Plan creado exitosamente');
@@ -1010,7 +1029,48 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderEmpresas = () => (
     <div className="section-content">
       <div className="section-header">
-        <h2>Gestión de Empresas</h2>
+        <h2>🏢 Gestión de Empresas</h2>
+        <div className="stats-mini" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '10px',
+          marginBottom: '20px'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            padding: '15px',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{empresas?.length || 0}</div>
+            <div style={{ fontSize: '0.8rem' }}>Total Empresas</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            color: 'white',
+            padding: '15px',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+              {empresas?.filter(e => e.status).length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Activas</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            color: '#333',
+            padding: '15px',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>
+              {empresas?.filter(e => !e.status).length || 0}
+            </div>
+            <div style={{ fontSize: '0.8rem' }}>Suspendidas</div>
+          </div>
+        </div>
         <button className="btn-primary" onClick={() => cargarDatosPorSeccion()}>
           🔄 Recargar Datos
         </button>
@@ -1026,8 +1086,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Nombre</th>
+                <th>Empresa</th>
                 <th>RFC</th>
+                <th>Contacto</th>
+                <th>Ubicación</th>
+                <th>Plantas</th>
+                <th>Fecha Registro</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -1035,20 +1099,161 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <tbody>
               {empresas.map((empresa) => (
                 <tr key={empresa.empresa_id}>
-                  <td>{empresa.empresa_id}</td>
-                  <td>{empresa.nombre}</td>
-                  <td>{empresa.rfc}</td>
                   <td>
-                    <span className={empresa.status ? "status active" : "status inactive"}>
-                      {empresa.status ? "Activa" : "Suspendida"}
-                    </span>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      minWidth: '50px'
+                    }}>
+                      #{empresa.empresa_id}
+                    </div>
                   </td>
                   <td>
-                    <div className="action-buttons">
-                      <button onClick={() => handleEdit('empresa', empresa)}>
+                    <div>
+                      <strong style={{ fontSize: '1.1rem', color: '#333' }}>{empresa.nombre}</strong>
+                      <div style={{ 
+                        marginTop: '4px',
+                        fontSize: '0.85rem',
+                        color: '#666',
+                        fontWeight: 'normal'
+                      }}>
+                        🏢 {empresa.nombre?.length > 25 ? empresa.nombre.substring(0, 25) + '...' : empresa.nombre}
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{
+                      background: '#f8f9fa',
+                      padding: '8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #e9ecef',
+                      fontFamily: 'monospace',
+                      fontWeight: 'bold',
+                      fontSize: '0.9rem'
+                    }}>
+                      {empresa.rfc || 'Sin RFC'}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ lineHeight: '1.4' }}>
+                      {empresa.correo && empresa.correo.trim() && (
+                        <div style={{ marginBottom: '4px' }}>
+                          <span style={{ fontSize: '0.8rem', color: '#666' }}>📧</span>
+                          <span style={{ fontSize: '0.85rem', marginLeft: '4px' }}>
+                            {empresa.correo.length > 20 ? empresa.correo.substring(0, 20) + '...' : empresa.correo}
+                          </span>
+                        </div>
+                      )}
+                      {empresa.telefono && empresa.telefono.trim() && (
+                        <div>
+                          <span style={{ fontSize: '0.8rem', color: '#666' }}>📞</span>
+                          <span style={{ fontSize: '0.85rem', marginLeft: '4px' }}>{empresa.telefono}</span>
+                        </div>
+                      )}
+                      {(!empresa.correo || !empresa.correo.trim()) && (!empresa.telefono || !empresa.telefono.trim()) && (
+                        <span style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>Sin contacto</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ lineHeight: '1.4' }}>
+                      {empresa.direccion && empresa.direccion.trim() ? (
+                        <div>
+                          <span style={{ fontSize: '0.8rem', color: '#666' }}>📍</span>
+                          <span style={{ fontSize: '0.85rem', marginLeft: '4px' }}>
+                            {empresa.direccion.length > 30 ? empresa.direccion.substring(0, 30) + '...' : empresa.direccion}
+                          </span>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>Sin dirección</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{
+                      background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                      color: 'white',
+                      padding: '8px 12px',
+                      borderRadius: '20px',
+                      textAlign: 'center',
+                      fontWeight: 'bold',
+                      minWidth: '60px'
+                    }}>
+                      🏭 {empresa.plantas_count || 0}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ lineHeight: '1.4' }}>
+                      {empresa.fecha_registro && empresa.fecha_registro !== null && typeof empresa.fecha_registro === 'string' && empresa.fecha_registro.trim() ? (
+                        <div>
+                          <div style={{ fontWeight: 'bold', fontSize: '0.9rem' }}>
+                            {new Date(empresa.fecha_registro).toLocaleDateString()}
+                          </div>
+                          <div style={{ fontSize: '0.8rem', color: '#666' }}>
+                            {Math.floor((new Date().getTime() - new Date(empresa.fecha_registro).getTime()) / (1000 * 60 * 60 * 24))} días
+                          </div>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>📅 Sin fecha</span>
+                      )}
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      fontWeight: 'bold',
+                      fontSize: '0.9rem',
+                      background: empresa.status ? '#e8f5e8' : '#ffebee',
+                      color: empresa.status ? '#2e7d32' : '#d32f2f',
+                      border: `2px solid ${empresa.status ? '#2e7d32' : '#d32f2f'}`,
+                      textAlign: 'center',
+                      minWidth: '100px'
+                    }}>
+                      {empresa.status ? '✅ ACTIVA' : '❌ SUSPENDIDA'}
+                    </div>
+                  </td>
+                  <td>
+                    <div className="action-buttons" style={{
+                      display: 'flex',
+                      gap: '8px',
+                      justifyContent: 'center'
+                    }}>
+                      <button 
+                        onClick={() => handleEdit('empresa', empresa)}
+                        style={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer'
+                        }}
+                      >
                         ✏️ Editar
                       </button>
-                      <button onClick={() => handleToggleStatus('empresa', empresa.empresa_id, empresa.status, empresa.nombre)}>
+                      <button 
+                        onClick={() => handleToggleStatus('empresa', empresa.empresa_id, empresa.status, empresa.nombre)}
+                        style={{
+                          background: empresa.status ? 
+                            'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' : 
+                            'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                          color: empresa.status ? '#333' : 'white',
+                          border: 'none',
+                          padding: '8px 12px',
+                          borderRadius: '6px',
+                          fontSize: '0.85rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer'
+                        }}
+                      >
                         {empresa.status ? "⏸️ Suspender" : "▶️ Activar"}
                       </button>
                     </div>
@@ -1470,14 +1675,54 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
     <div className="section-content">
       <div className="section-header">
         <h3>📋 Gestión de Planes de Suscripción</h3>
-        <div className="stats-mini">
-          <span>Total: {planes.length}</span>
-          <span>Activos: {planes.filter(p => p.status).length}</span>
-          <span>Inactivos: {planes.filter(p => !p.status).length}</span>
+        <div className="stats-mini" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '10px',
+          marginBottom: '20px'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            padding: '15px',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{planes.length}</div>
+            <div style={{ fontSize: '0.8rem' }}>Total Planes</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            color: 'white',
+            padding: '15px',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{planes.filter(p => p.status).length}</div>
+            <div style={{ fontSize: '0.8rem' }}>✅ Activos</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            color: '#333',
+            padding: '15px',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{planes.filter(p => !p.status).length}</div>
+            <div style={{ fontSize: '0.8rem' }}>❌ Inactivos</div>
+          </div>
         </div>
         <button 
           onClick={() => setModalCrearPlan(true)}
           className="btn-primary"
+          style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            border: 'none',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            color: 'white',
+            fontWeight: 'bold'
+          }}
         >
           ➕ Crear Nuevo Plan
         </button>
@@ -1558,24 +1803,59 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderSuscripciones = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3>💳 Gestión de Suscripciones</h3>
-        <div className="stats-mini">
-          <span>Total: {suscripciones?.length || 0}</span>
-          <span>Activas: {suscripciones?.filter(s => s.estado === 'Activa').length || 0}</span>
-          <span>Por vencer: {suscripciones?.filter(s => {
-            const fechaFin = new Date(s.fecha_fin);
-            const hoy = new Date();
-            const diasRestantes = Math.ceil((fechaFin.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
-            return s.estado === 'Activa' && diasRestantes <= 30 && diasRestantes > 0;
-          }).length || 0}</span>
-          <span>Vencidas: {suscripciones?.filter(s => s.estado !== 'Activa').length || 0}</span>
+        <h3>💳 Empresas con Suscripciones Activas</h3>
+        <div className="stats-mini" style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+          gap: '10px',
+          marginBottom: '20px'
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            color: 'white',
+            padding: '15px',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{suscripciones?.length || 0}</div>
+            <div style={{ fontSize: '0.8rem' }}>Total</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            color: 'white',
+            padding: '15px',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{suscripciones?.filter(s => s.estado === 'Activa').length || 0}</div>
+            <div style={{ fontSize: '0.8rem' }}>✅ Activas</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            color: 'white',
+            padding: '15px',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{suscripciones?.filter(s => {
+              const fechaFin = new Date(s.fecha_fin);
+              const hoy = new Date();
+              const diasRestantes = Math.ceil((fechaFin.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+              return s.estado === 'Activa' && diasRestantes <= 30 && diasRestantes > 0;
+            }).length || 0}</div>
+            <div style={{ fontSize: '0.8rem' }}>⏰ Por Vencer</div>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+            color: '#333',
+            padding: '15px',
+            borderRadius: '10px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{suscripciones?.filter(s => s.estado !== 'Activa').length || 0}</div>
+            <div style={{ fontSize: '0.8rem' }}>❌ Vencidas</div>
+          </div>
         </div>
-        <button 
-          onClick={() => setModalCrearSuscripcion(true)}
-          className="btn-primary"
-        >
-          ➕ Crear Nueva Suscripción
-        </button>
       </div>
 
       <div className="table-container">
@@ -1586,10 +1866,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               <th>Empresa</th>
               <th>Plan</th>
               <th>Precio</th>
+              <th>Fecha Inicio</th>
               <th>Fecha Fin</th>
               <th>Días Restantes</th>
               <th>Estado</th>
-              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -1623,57 +1903,46 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     <strong className="precio">{formatearPrecio(parseFloat(String(suscripcion.plan_precio || '0')))}</strong>
                   </td>
                   <td>
-                    <div>
-                      <strong>{fechaFin.toLocaleDateString()}</strong>
-                      <small>Inicio: {new Date(suscripcion.fecha_inicio).toLocaleDateString()}</small>
-                    </div>
+                    <strong>{new Date(suscripcion.fecha_inicio).toLocaleDateString()}</strong>
                   </td>
                   <td>
-                    <span className={`dias-restantes ${estaVencida ? 'expired' : porVencer ? 'warning' : 'active'}`}>
+                    <strong>{fechaFin.toLocaleDateString()}</strong>
+                  </td>
+                  <td>
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '8px 16px',
+                      borderRadius: '20px',
+                      fontWeight: 'bold',
+                      fontSize: '0.9rem',
+                      background: estaVencida ? '#ffebee' : porVencer ? '#fff3e0' : '#e8f5e8',
+                      color: estaVencida ? '#d32f2f' : porVencer ? '#f57c00' : '#2e7d32',
+                      border: `2px solid ${estaVencida ? '#d32f2f' : porVencer ? '#f57c00' : '#2e7d32'}`,
+                      textAlign: 'center',
+                      minWidth: '120px'
+                    }}>
                       {estaVencida ? (
-                        <span style={{ color: '#dc3545' }}>⚠️ Vencida hace {Math.abs(diasRestantes)} días</span>
+                        <div>
+                          <div>⚠️ VENCIDA</div>
+                          <div style={{ fontSize: '0.8rem' }}>hace {Math.abs(diasRestantes)} días</div>
+                        </div>
                       ) : porVencer ? (
-                        <span style={{ color: '#ffc107' }}>⏰ {diasRestantes} días (Pronto vence)</span>
+                        <div>
+                          <div>⏰ {diasRestantes} DÍAS</div>
+                          <div style={{ fontSize: '0.8rem' }}>¡Por vencer!</div>
+                        </div>
                       ) : (
-                        <span style={{ color: '#28a745' }}>✅ {diasRestantes} días</span>
+                        <div>
+                          <div>✅ {diasRestantes} DÍAS</div>
+                          <div style={{ fontSize: '0.8rem' }}>Activa</div>
+                        </div>
                       )}
-                    </span>
+                    </div>
                   </td>
                   <td>
                     <span className={`status ${estadoColor}`}>
                       {estadoTexto}
                     </span>
-                  </td>
-                  <td>
-                    <div className="actions">
-                      {suscripcion.estado === 'Activa' && (
-                        <button 
-                          onClick={() => handleRenovarSuscripcion(suscripcion.suscripcion_id)}
-                          className="btn-action success"
-                          title="Renovar suscripción"
-                        >
-                          🔄 Renovar
-                        </button>
-                      )}
-                      {suscripcion.estado === 'Activa' && (
-                        <button 
-                          onClick={() => handleSuspenderSuscripcion(suscripcion.suscripcion_id)}
-                          className="btn-action warning"
-                          title="Suspender suscripción"
-                        >
-                          ⏸️ Suspender
-                        </button>
-                      )}
-                      {suscripcion.estado === 'Suspendida' && (
-                        <button 
-                          onClick={() => handleReactivarSuscripcion(suscripcion.suscripcion_id)}
-                          className="btn-action primary"
-                          title="Reactivar suscripción"
-                        >
-                          ⚡ Reactivar
-                        </button>
-                      )}
-                    </div>
                   </td>
                 </tr>
               );

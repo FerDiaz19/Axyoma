@@ -41,6 +41,8 @@ urlpatterns = [
     path('superadmin/listar_todos_puestos/', SuperAdminViewSet.as_view({'get': 'listar_todos_puestos'})),
     path('superadmin/listar_todos_empleados/', SuperAdminViewSet.as_view({'get': 'listar_todos_empleados'})),
     path('superadmin/estadisticas_sistema/', SuperAdminViewSet.as_view({'get': 'estadisticas_sistema'})),
+    path('superadmin/listar_planes_admin/', SuperAdminViewSet.as_view({'get': 'listar_planes_admin'})),
+    path('superadmin/suspender_plan/<int:plan_id>/', SuperAdminViewSet.as_view({'post': 'suspender_plan'})),
     
     # Rutas de suscripciones - AGREGAMOS LA RUTA FALTANTE
     path('suscripciones/planes/', SuscripcionViewSet.as_view({'get': 'planes'})),

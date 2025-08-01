@@ -126,6 +126,25 @@ export const listarPlanes = async (): Promise<PlanSuscripcion[]> => {
   }
 };
 
+// Nueva función específica para SuperAdmin que incluye el campo status
+export const listarPlanesAdmin = async (): Promise<PlanSuscripcion[]> => {
+  try {
+    console.log('🔍 SuperAdmin: Obteniendo TODOS los planes (incluye status)...');
+    const response = await api.get('/superadmin/listar_planes_admin/');
+    console.log('✅ SuperAdmin: Planes obtenidos con status:', response.data);
+    
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      console.warn('⚠️ SuperAdmin: Formato de respuesta inesperado:', response.data);
+      return [];
+    }
+  } catch (error) {
+    console.error('❌ SuperAdmin: Error obteniendo planes:', error);
+    throw error;
+  }
+};
+
 export const listarSuscripciones = async (): Promise<SuscripcionEmpresa[]> => {
   try {
     console.log('🔍 Obteniendo lista de suscripciones...');
@@ -529,6 +548,7 @@ export const obtenerPagos = listarPagos;
 export default {
   // Planes
   listarPlanes,
+  listarPlanesAdmin,  // ← Agregar nueva función
   crearPlan,
   editarPlan,
   cambiarEstadoPlan,

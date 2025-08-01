@@ -13,6 +13,11 @@ export interface Empresa {
   administrador: string;
   plantas_count: number;
   empleados_count: number;
+  // Campos adicionales para la tabla mejorada
+  correo?: string;
+  telefono?: string;
+  direccion?: string;
+  fecha_registro?: string;
 }
 
 export interface SuperAdminUsuario {
@@ -786,9 +791,8 @@ export const editarPlan = async (plan_id: number, planData: any): Promise<any> =
 
 export const suspenderPlan = async (plan_id: number, accion: string): Promise<any> => {
   try {
-    const response = await api.post(`${BASE_URL}/suspender_plan/`, {
-      plan_id,
-      accion
+    const response = await api.post(`${BASE_URL}/suspender_plan/${plan_id}/`, {
+      action: accion  // ← Cambiar 'accion' a 'action' para coincidir con el backend
     });
     return response.data;
   } catch (error) {

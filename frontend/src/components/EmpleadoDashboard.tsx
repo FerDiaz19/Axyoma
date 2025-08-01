@@ -20,7 +20,7 @@ const EmpleadoDashboard: React.FC<EmpleadoDashboardProps> = ({ userData }) => {
       console.log("✅ Sesión cerrada, redirigiendo a página principal...");
       navigate('/', { replace: true });
 
-      // Forzamos recarga para reiniciar el estado de la app
+      // Forzamos recarga para reiniciar el estado de la app soy gay jiji
       setTimeout(() => {
         window.location.reload();
       }, 50);

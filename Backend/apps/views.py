@@ -1545,7 +1545,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'])
     def listar_empresas(self, request):
-        """Listar todas las empresas - VERSIÓN ULTRA SIMPLE"""
+        """Listar todas las empresas con información completa - VERSIÓN ROBUSTA"""
         self._verify_superadmin(request.user)
         
         try:
@@ -1553,24 +1553,82 @@ class SuperAdminViewSet(viewsets.ViewSet):
             empresas_data = []
             
             for empresa in empresas:
-                empresas_data.append({
-                    'empresa_id': empresa.empresa_id,
-                    'nombre': empresa.nombre,
-                    'rfc': empresa.rfc,
-                    'status': empresa.status,
-                    'administrador': 'Información disponible',
-                    'plantas_count': 0,
-                    'empleados_count': 0,
-                })
+                try:
+                    print(f"🔍 Procesando empresa: {empresa.nombre} (ID: {empresa.empresa_id})")
+                    
+                    # Obtener el administrador de forma segura
+                    admin_info = "Sin administrador"
+                    fecha_registro = None
+                    if empresa.administrador:
+                        admin_info = f"{empresa.administrador.username}"
+                        if hasattr(empresa.administrador, 'fecha_registro') and empresa.administrador.fecha_registro:
+                            fecha_registro = empresa.administrador.fecha_registro.isoformat()
+                    
+                    print(f"📧 email_contacto: '{empresa.email_contacto}'")
+                    print(f"📞 telefono_contacto: '{empresa.telefono_contacto}'")
+                    print(f"📍 direccion: '{empresa.direccion}'")
+                    
+                    # Contar plantas de forma segura
+                    plantas_count = 0
+                    try:
+                        plantas_count = empresa.plantas.count()
+                        print(f"🏭 plantas_count: {plantas_count}")
+                    except Exception as e:
+                        print(f"Error contando plantas para empresa {empresa.empresa_id}: {e}")
+                    
+                    # Contar empleados de forma segura
+                    empleados_count = 0
+                    try:
+                        for planta in empresa.plantas.all():
+                            for departamento in planta.departamentos.all():
+                                empleados_count += departamento.empleados.count()
+                    except Exception as e:
+                        print(f"Error contando empleados para empresa {empresa.empresa_id}: {e}")
+                    
+                    empresas_data.append({
+                        'empresa_id': empresa.empresa_id,
+                        'nombre': empresa.nombre,
+                        'rfc': empresa.rfc,
+                        'direccion': empresa.direccion or '',
+                        'correo': empresa.email_contacto or '',  # Mapear email_contacto a correo
+                        'telefono': empresa.telefono_contacto or '',  # Mapear telefono_contacto a telefono
+                        'status': empresa.status,
+                        'administrador': admin_info,
+                        'plantas_count': plantas_count,
+                        'empleados_count': empleados_count,
+                        'fecha_registro': fecha_registro,
+                    })
+                    print(f"✅ Empresa procesada correctamente: {empresa.nombre}")
+                    
+                except Exception as e:
+                    print(f"❌ Error procesando empresa {empresa.empresa_id}: {e}")
+                    import traceback
+                    print(traceback.format_exc())
+                    # Agregar la empresa con datos mínimos en caso de error
+                    empresas_data.append({
+                        'empresa_id': empresa.empresa_id,
+                        'nombre': empresa.nombre,
+                        'rfc': empresa.rfc,
+                        'direccion': '',
+                        'correo': '',
+                        'telefono': '',
+                        'status': empresa.status,
+                        'administrador': 'Error cargando',
+                        'plantas_count': 0,
+                        'empleados_count': 0,
+                        'fecha_registro': None,
+                    })
             
             return Response({
                 'empresas': empresas_data,
                 'total': len(empresas_data),
-                'mensaje': 'Lista básica de empresas'
+                'mensaje': 'Lista completa de empresas'
             })
             
         except Exception as e:
             import traceback
+            print(f"Error general en listar_empresas: {e}")
+            print(traceback.format_exc())
             return Response({
                 'error': f'Error: {str(e)}',
                 'trace': traceback.format_exc(),
@@ -2893,6 +2951,67 @@ class SuperAdminViewSet(viewsets.ViewSet):
         except User.DoesNotExist:
             return Response({'error': 'Usuario no encontrado'}, 
                           status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def suspender_plan(self, request, plan_id=None):
+        """Suspender o activar un plan de suscripción"""
+        self._verify_superadmin(request.user)
+        
+        try:
+            from apps.subscriptions.models import PlanSuscripcion
+            
+            plan = PlanSuscripcion.objects.get(plan_id=plan_id)
+            action = request.data.get('action', 'suspender')
+            
+            if action == 'suspender':
+                plan.status = False
+                mensaje = f'Plan "{plan.nombre}" suspendido exitosamente'
+            else:  # activar
+                plan.status = True
+                mensaje = f'Plan "{plan.nombre}" activado exitosamente'
+            
+            plan.save()
+            
+            return Response({
+                'success': True,
+                'message': mensaje,
+                'plan_id': plan.plan_id,
+                'nuevo_status': plan.status
+            })
+            
+        except PlanSuscripcion.DoesNotExist:
+            return Response({'error': 'Plan no encontrado'}, 
+                          status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error: {str(e)}'}, 
+                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=False, methods=['get'])
+    def listar_planes_admin(self, request):
+        """Listar TODOS los planes para SuperAdmin (incluye inactivos y campo status)"""
+        self._verify_superadmin(request.user)
+        
+        try:
+            from apps.subscriptions.models import PlanSuscripcion
+            
+            planes = PlanSuscripcion.objects.all().order_by('plan_id')
+            
+            planes_data = []
+            for plan in planes:
+                planes_data.append({
+                    'plan_id': plan.plan_id,
+                    'nombre': plan.nombre,
+                    'descripcion': plan.descripcion,
+                    'duracion': plan.duracion,
+                    'precio': float(plan.precio),
+                    'status': plan.status  # ← INCLUIMOS EL CAMPO STATUS
+                })
+            
+            return Response(planes_data)
+            
         except Exception as e:
             return Response({'error': f'Error: {str(e)}'}, 
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -9,12 +9,22 @@ from django.db import transaction
 import traceback
 from apps.users.models import Empresa
 from apps.subscriptions.models import PlanSuscripcion, SuscripcionEmpresa, Pago
+from apps.subscriptions.utils import SuscripcionManager, requiere_suscripcion_activa
 
 class SubscriptionViewSet(viewsets.ViewSet):
     """
     ViewSet para manejar suscripciones usando PostgreSQL únicamente
     """
     permission_classes = [IsAuthenticated]
+    
+    def get_permissions(self):
+        """
+        Permite acceso sin autenticación para algunos endpoints durante debug
+        TODO: Implementar verificación de SuperAdmin
+        """
+        if self.action in ['suscripciones', 'planes']:
+            return [AllowAny()]
+        return [IsAuthenticated()]
     
     def get_subscription_info(self, empresa):
         """Obtiene información de suscripción de PostgreSQL"""
@@ -37,14 +47,14 @@ class SubscriptionViewSet(viewsets.ViewSet):
             return {
                 'tiene_suscripcion': True,
                 'estado': suscripcion.estado.lower(),
-                'plan_nombre': suscripcion.plan_suscripcion.nombre,
+                'plan_nombre': suscripcion.plan.nombre,
                 'fecha_inicio': suscripcion.fecha_inicio.isoformat(),
                 'fecha_fin': suscripcion.fecha_fin.isoformat() if suscripcion.fecha_fin else None,
                 'dias_restantes': suscripcion.dias_restantes,
                 'esta_activa': suscripcion.esta_activa,
                 'esta_por_vencer': suscripcion.esta_por_vencer,
-                'precio': float(suscripcion.plan_suscripcion.precio),
-                'duracion': suscripcion.plan_suscripcion.duracion,
+                'precio': float(suscripcion.plan.precio),
+                'duracion': suscripcion.plan.duracion,
                 'requiere_pago': not suscripcion.esta_activa
             }
             
@@ -176,7 +186,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
         """Obtener todas las suscripciones con datos completos"""
         try:
             suscripciones = SuscripcionEmpresa.objects.select_related(
-                'empresa', 'plan_suscripcion'
+                'empresa', 'plan'
             ).all().order_by('-fecha_inicio')
             
             # Procesar los datos para que coincidan con lo que espera el frontend
@@ -189,14 +199,14 @@ class SubscriptionViewSet(viewsets.ViewSet):
                     'suscripcion_id': suscripcion.suscripcion_id,
                     'empresa_id': suscripcion.empresa.empresa_id,
                     'empresa_nombre': suscripcion.empresa.nombre,
-                    'plan_id': suscripcion.plan_suscripcion.plan_id,
-                    'plan_nombre': suscripcion.plan_suscripcion.nombre,
-                    'plan_precio': float(suscripcion.plan_suscripcion.precio),
-                    'plan_duracion': suscripcion.plan_suscripcion.duracion,
+                    'plan_id': suscripcion.plan.plan_id,
+                    'plan_nombre': suscripcion.plan.nombre,
+                    'plan_precio': float(suscripcion.plan.precio),
+                    'plan_duracion': suscripcion.plan.duracion,
                     'fecha_inicio': suscripcion.fecha_inicio.isoformat(),
                     'fecha_fin': suscripcion.fecha_fin.isoformat(),
                     'estado': suscripcion.estado,
-                    'status': suscripcion.status,
+                    'status': True,  # Asumiendo que está activa si existe
                     'dias_restantes': dias_restantes,
                     'esta_activa': suscripcion.esta_activa,
                     'esta_por_vencer': suscripcion.esta_por_vencer
@@ -261,7 +271,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
                 
                 suscripcion = SuscripcionEmpresa.objects.create(
                     empresa=empresa,
-                    plan_suscripcion=plan,
+                    plan=plan,
                     fecha_inicio=fecha_inicio,
                     fecha_fin=fecha_fin,
                     estado='Activa',
@@ -302,7 +312,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
         """Obtener todos los pagos"""
         try:
             pagos = Pago.objects.select_related(
-                'suscripcion__empresa', 'suscripcion__plan_suscripcion', 'usuario'
+                'suscripcion__empresa', 'suscripcion__plan', 'usuario'
             ).all().order_by('-fecha_pago')
             
             pagos_procesados = []
@@ -311,7 +321,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
                     'pago_id': pago.pago_id,
                     'suscripcion_id': pago.suscripcion.suscripcion_id,
                     'empresa_nombre': pago.suscripcion.empresa.nombre,
-                    'plan_nombre': pago.suscripcion.plan_suscripcion.nombre,
+                    'plan_nombre': pago.suscripcion.plan.nombre,
                     'costo': float(pago.costo),
                     'monto_pago': float(pago.monto_pago),
                     'estado_pago': pago.estado_pago,
@@ -365,7 +375,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
                 # Buscar suscripción existente o crear nueva
                 suscripcion = SuscripcionEmpresa.objects.filter(
                     empresa=empresa,
-                    plan_suscripcion=plan
+                    plan=plan
                 ).first()
                 
                 if suscripcion:
@@ -383,7 +393,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
                     
                     suscripcion = SuscripcionEmpresa.objects.create(
                         empresa=empresa,
-                        plan_suscripcion=plan,
+                        plan=plan,
                         fecha_inicio=fecha_inicio,
                         fecha_fin=fecha_fin,
                         estado='Activa',
@@ -442,5 +452,181 @@ class SubscriptionViewSet(viewsets.ViewSet):
             traceback.print_exc()
             return Response(
                 {'error': f'Error obteniendo información de suscripción: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def mi_suscripcion(self, request):
+        """
+        Obtiene la información de suscripción del usuario actual
+        """
+        try:
+            perfil = request.user.perfil
+            
+            # SuperAdmin tiene acceso completo
+            if perfil.nivel_usuario == 'superadmin':
+                return Response({
+                    'tiene_acceso': True,
+                    'es_superadmin': True,
+                    'mensaje': 'Acceso completo como SuperAdmin'
+                })
+            
+            # Buscar empresa del usuario
+            empresa = None
+            if perfil.nivel_usuario == 'admin-empresa':
+                empresa = Empresa.objects.filter(administrador=perfil).first()
+            elif perfil.nivel_usuario == 'admin-planta':
+                from apps.users.models import AdminPlanta
+                admin_planta = AdminPlanta.objects.filter(usuario=perfil).first()
+                if admin_planta:
+                    empresa = admin_planta.planta.empresa
+            
+            if not empresa:
+                return Response({
+                    'error': 'No se encontró empresa asociada al usuario'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Usar el nuevo manager
+            estado = SuscripcionManager.obtener_estado_suscripcion(empresa)
+            return Response(estado)
+            
+        except Exception as e:
+            print(f"❌ Error obteniendo mi suscripción: {str(e)}")
+            return Response(
+                {'error': f'Error obteniendo suscripción: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def planes_disponibles(self, request):
+        """
+        Obtiene todos los planes disponibles para suscripción
+        """
+        try:
+            planes = SuscripcionManager.obtener_planes_disponibles()
+            
+            planes_data = []
+            for plan in planes:
+                planes_data.append({
+                    'plan_id': plan.plan_id,
+                    'nombre': plan.nombre,
+                    'descripcion': plan.descripcion,
+                    'precio': float(plan.precio),
+                    'duracion_dias': plan.duracion,
+                    'duracion_texto': f"{plan.duracion} días",
+                    'activo': plan.status
+                })
+            
+            return Response({
+                'planes': planes_data,
+                'total': len(planes_data)
+            })
+            
+        except Exception as e:
+            print(f"❌ Error obteniendo planes: {str(e)}")
+            return Response(
+                {'error': f'Error obteniendo planes: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def contratar_plan(self, request):
+        """
+        Contrata un nuevo plan para la empresa del usuario
+        """
+        try:
+            plan_id = request.data.get('plan_id')
+            metodo_pago = request.data.get('metodo_pago', 'tarjeta')
+            
+            if not plan_id:
+                return Response({
+                    'error': 'plan_id es requerido'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Verificar que el usuario puede contratar
+            perfil = request.user.perfil
+            if perfil.nivel_usuario not in ['superadmin', 'admin-empresa']:
+                return Response({
+                    'error': 'Solo administradores de empresa pueden contratar planes'
+                }, status=status.HTTP_403_FORBIDDEN)
+            
+            # Buscar empresa
+            if perfil.nivel_usuario == 'admin-empresa':
+                empresa = Empresa.objects.filter(administrador=perfil).first()
+            else:  # superadmin puede especificar empresa
+                empresa_id = request.data.get('empresa_id')
+                empresa = Empresa.objects.get(empresa_id=empresa_id) if empresa_id else None
+            
+            if not empresa:
+                return Response({
+                    'error': 'No se encontró empresa para contratar'
+                }, status=status.HTTP_404_NOT_FOUND)
+            
+            # Buscar plan
+            plan = PlanSuscripcion.objects.get(plan_id=plan_id, status=True)
+            
+            # Crear suscripción
+            with transaction.atomic():
+                suscripcion, pago = SuscripcionManager.crear_suscripcion(
+                    empresa=empresa,
+                    plan=plan,
+                    metodo_pago=metodo_pago
+                )
+            
+            return Response({
+                'success': True,
+                'mensaje': f'Plan {plan.nombre} contratado exitosamente',
+                'suscripcion': {
+                    'suscripcion_id': suscripcion.suscripcion_id,
+                    'plan': plan.nombre,
+                    'precio': float(plan.precio),
+                    'fecha_inicio': suscripcion.fecha_inicio,
+                    'fecha_fin': suscripcion.fecha_fin,
+                    'estado': suscripcion.estado
+                },
+                'pago': {
+                    'pago_id': pago.pago_id,
+                    'referencia': pago.referencia_pago,
+                    'estado': pago.estado_pago
+                }
+            })
+            
+        except PlanSuscripcion.DoesNotExist:
+            return Response({
+                'error': 'Plan no encontrado o no disponible'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            print(f"❌ Error contratando plan: {str(e)}")
+            return Response(
+                {'error': f'Error contratando plan: {str(e)}'}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def verificar_acceso(self, request):
+        """
+        Verifica si el usuario actual tiene acceso al sistema
+        """
+        try:
+            tiene_acceso = SuscripcionManager.usuario_tiene_acceso(request.user)
+            
+            response_data = {
+                'tiene_acceso': tiene_acceso
+            }
+            
+            if not tiene_acceso:
+                perfil = request.user.perfil
+                response_data.update({
+                    'mensaje': 'Suscripción requerida para acceder',
+                    'accion': 'contratar_plan',
+                    'nivel_usuario': perfil.nivel_usuario
+                })
+            
+            return Response(response_data)
+            
+        except Exception as e:
+            print(f"❌ Error verificando acceso: {str(e)}")
+            return Response(
+                {'error': f'Error verificando acceso: {str(e)}'}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
