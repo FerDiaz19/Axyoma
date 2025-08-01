@@ -65,8 +65,16 @@ if errorlevel 1 (
 echo ✅ Dependencias instaladas
 echo.
 
-REM Paso 4: Configurar base de datos
-echo 📋 PASO 4: Configurando base de datos...
+REM Paso 4: Limpiar base de datos existente
+echo 📋 PASO 4: Limpiando base de datos existente...
+echo 🧹 ATENCION: Eliminando todos los datos existentes...
+python manage.py flush --noinput
+python manage.py migrate --run-syncdb
+echo ✅ Base de datos limpia
+echo.
+
+REM Paso 5: Configurar base de datos desde cero
+echo 📋 PASO 5: Configurando base de datos desde cero...
 echo 🔧 Aplicando migraciones...
 python manage.py makemigrations
 python manage.py migrate
@@ -80,11 +88,11 @@ if errorlevel 1 (
     pause
     exit /b
 )
-echo ✅ Base de datos configurada
+echo ✅ Base de datos configurada desde cero
 echo.
 
-REM Paso 5: Inicializar sistema completo
-echo 📋 PASO 5: Inicializando sistema completo...
+REM Paso 6: Inicializar sistema completo
+echo 📋 PASO 6: Inicializando sistema completo...
 echo 🎯 Configurando todo el sistema automaticamente...
 echo ⚠️  ATENCION: Esto creara todos los datos del sistema
 python sistema_completo_listo.py
@@ -96,8 +104,8 @@ if errorlevel 1 (
 echo ✅ Sistema inicializado con todos los datos
 echo.
 
-REM Paso 6: Verificar instalacion
-echo 📋 PASO 6: Verificando instalacion...
+REM Paso 7: Verificar instalacion
+echo 📋 PASO 7: Verificando instalacion...
 python verificacion_simple.py
 echo.
 
