@@ -373,6 +373,8 @@ class RespuestaEmpleado(models.Model):
         verbose_name='Valor numérico', help_text='Valor numérico dado como respuesta.')
     respuesta_valor_decimal = models.DecimalField(blank=True, null=True, max_digits=16, decimal_places=2,
         verbose_name='Valor decimal', help_text='Valor decimal dado como respuesta.')
+    respuesta_valor_booleano = models.BooleanField(blank=True, null=True,
+        verbose_name='Valor booleano', help_text='Valor booleano dado como respuesta.')
 
     es_correcta = models.BooleanField(default=False,
         verbose_name='¿Es correcta?', help_text='Indica si la respuesta dada por el empleado es la correcta.')

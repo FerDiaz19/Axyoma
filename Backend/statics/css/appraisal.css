@@ -1,14 +1,12 @@
 
-/* -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------- */
 
 .main-container {
     width: 60%;
-    font-size: 1.1rem;
 }
 
 .survey-header {
-    background-color: transparent;
-
+    margin-top: 1rem;
     line-height: 1.5; padding: 2rem;
     display: flex; flex-direction: column;
 }
@@ -23,6 +21,7 @@
 .header-info h3 {
     margin: 0;
     font-weight: bold;
+    font-size: 1.5rem;
     color: var(--color-text);
 }
 
@@ -32,7 +31,7 @@
 }
 
 .employee-info i, .employee-info p {
-    font-size: small;
+    font-size: 1rem;
     color: var(--color-subtitle);
 }
 
@@ -46,7 +45,7 @@
 }
 
 .header-status span {
-    font-size: small;
+    font-size: 1rem;
     color: var(--color-text);
 }
 
@@ -60,7 +59,7 @@
 }
 
 .progress-label, .progress-percent {
-    font-size: small;
+    font-size: .95rem;
     color: var(--color-text);
 }
 
@@ -127,8 +126,6 @@
 .section-content {
     line-height: 1.5;
     display: flex; flex-direction: column;
-
-    view-transition-name: section-content-transition;
 }
 
 .section-info-container {
@@ -141,16 +138,21 @@
 
 .section-info-container h3 {
     margin: 0;
+    font-size: 1.4rem;
     font-weight: bold;
+    padding-right: .75rem;
     color: var(--color-canvas);
 }
 
 .section-info-container p {
-    font-size: small;
+    font-size: .925rem;
+    padding-right: .75rem;
     color: var(--color-canvas);
+    margin: 0; margin-top: .25rem;
 }
 
 .question-count {
+    white-space: nowrap;
     color: var(--color-canvas);
     text-align: center; font-size: small;
     background-color: var(--color-subtitle);
@@ -269,22 +271,20 @@ textarea:focus {
 .bool-group {
     margin-inline: 2rem;
     align-items: center;
+    color: var(--color-canvas);
     display: flex; flex-direction: row;
     width: fit-content; border-radius: .25rem;
-    border: solid .025rem var(--color-alt-soft);
+    border: solid .025rem var(--color-alt-accent);
 }
 
 .bool-item {
     display: flex; align-items: center;
 }
 
-.bool-item:hover {
-    background-color: var(--color-soft);
-}
-
 .bool-item label {
     cursor: pointer;
     padding: .75rem 2rem;
+    color: var(--color-accent);
     font-size: small; text-align: center;
 }
 
@@ -296,8 +296,16 @@ textarea:focus {
     display: none;
 }
 
-.bool-item:has(input[type='radio']:checked) {
+.bool-item:has(input[type='radio']:hover) {
     background-color: var(--color-subtitle);
+}
+
+.bool-item:has(input[type='radio']:checked) {
+    background-color: var(--color-active);
+}
+
+.bool-item:has(input[type='radio']:checked) label {
+    color: var(--color-subtitle);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -314,16 +322,15 @@ textarea:focus {
     border: solid .025rem var(--color-text);
 }
 
-
-
 .multiple-item label {
     cursor: pointer;
     hyphens: auto;
-    font-size: small;
+    font-size: .98rem;
     word-break: break-word;
     overflow-wrap: break-word;
-    color: var(--color-canvas);
+    color: var(--color-accent);
     flex-grow: 1; padding: .5rem 1rem;
+    border: .0125rem solid var(--color-alt-accent);
 }
 
 .multiple-item input[type='radio'] {
@@ -336,16 +343,14 @@ textarea:focus {
 
 .multiple-item:has(input[type='radio']:hover) {
     background-color: var(--color-subtitle);
-    border-color: var(--color-canvas);
 }
 
-.scale-item:has(input[type='radio']:checked) {
-    background-color: var(--color-subtitle);
-    border-color: var(--color-accent);
+.multiple-item:has(input[type='radio']:checked) {
+    background-color: var(--color-active);
 }
 
-.scale-item:has(input[type='radio']:checked) label {
-    color: var(--color-canvas);
+.multiple-item:has(input[type='radio']:checked) label {
+    color: var(--color-subtitle);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -439,7 +444,7 @@ textarea:focus {
         max-width: 85%; width: 85%;
         display: flex; flex-direction: column;
     }
-    .header-status {
+    .header-status, .question-count {
         display: none;
     }
 }

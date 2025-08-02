@@ -155,7 +155,7 @@ class RespuestaEmpleadoAdmin(admin.ModelAdmin):
     list_filter = [ 'asignacion_empleado__empleado', 'seccion_pregunta__seccion__evaluacion' ]
     search_fields = [ 'asignacion_empleado__empleado__nombre', 'seccion_pregunta__pregunta__texto_pregunta' ]
     readonly_fields = [ 'asignacion_empleado', 'seccion_pregunta', 'opcion_seleccionada', 'respuesta_texto',
-        'respuesta_valor_numerico', 'respuesta_valor_decimal', 'es_correcta', 'fecha_respuesta' ]
+        'respuesta_valor_numerico', 'respuesta_valor_decimal', 'respuesta_valor_booleano', 'es_correcta', 'fecha_respuesta' ]
     # raw_id_fields = ( 'asignacion_empleado', 'seccion_pregunta', 'opcion_seleccionada' )
     list_select_related = [ 'asignacion_empleado__empleado', 'seccion_pregunta__pregunta', 'opcion_seleccionada' ]
 

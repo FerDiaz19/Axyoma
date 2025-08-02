@@ -1,5 +1,5 @@
 
-import { showModalMessage } from '../main.js';
+import { showModalMessage, backToTop } from './main.js';
 
 // -------------------------------------------------------------------------- //
 
@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const sectionLabel = document.getElementById('section-label');
     const sectionPercent = document.getElementById('section-percent');
     const sectionProgressFill = document.getElementById('section-progress');
+
+    // Preguntillas que dependen del resultado de otra.
+    const dependentQuestions = document.querySelectorAll('.question-block[data-parent-question-id]');
 
     // * -------------------------------------------------------------------- //
 
@@ -69,6 +72,7 @@ document.addEventListener('DOMContentLoaded', function() {
         Adicionalmente se actualiza el estado del botoncillo de la sección.
     */
     function showSection(sectionId) {
+
         // Primero ocultamo' todas las secciones.
         sectionContents.forEach(section => {
             section.classList.add('hidden');
@@ -76,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Posteriormente mostramos la sección especificada.
         document.getElementById(sectionId).classList.remove('hidden');
-
 
         // Marca cada uno de los botones como desactivados.
         tabButtons.forEach(button => {
@@ -86,6 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Y después, se marca como activo el botón de la sección mostrada.
         document.querySelector(`[data-section-id="${sectionId}"]`).classList.add('active');
         updateSectionProgress();
+        backToTop();
     };
 
     // * -------------------------------------------------------------------- //
@@ -142,15 +146,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Se añade un pequeño 'EventListener' a los botones de navegación entre secciones.
     tabButtons.forEach(button => {
         button.addEventListener('click', function() {
+
             // Obtén la sección actualmente visible antes de cambiar.
             const currentActiveSection = document.querySelector('.section-content:not(.hidden)');
 
-            // Si hay una sección activa y no es la sección a la que se va a navegar, validar.
-            if (currentActiveSection && currentActiveSection.id !== this.dataset.sectionId) {
-                // Si la validación falla, muestra el mensaje y no cambia de sección.
+            // Sección a la que se desea ir.
+            const targetSection = document.getElementById(this.dataset.sectionId);
+
+            // Sección actual y sección a la que se desea ir.
+            const currentIndex = Array.from(sectionContents).indexOf(currentActiveSection);
+            const targetIndex = Array.from(sectionContents).indexOf(targetSection);
+
+            if (targetIndex > currentIndex) {
                 if (!validateSectionFields(currentActiveSection)) {
-                    showModalMessage('Por favor, conteste todas las preguntas obligatorias antes de cambiar de sección.');
-                    return; // Detiene la ejecución si la validación falla
+                    showModalMessage('Por favor, conteste todas las preguntas obligatorias antes de avanzar.');
+                    return;
                 }
             }
 
@@ -182,6 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (nextSection && nextSection.classList.contains('section-content')) {
                 showSection(nextSection.id);
             };
+
         });
     });
 
@@ -209,6 +220,72 @@ document.addEventListener('DOMContentLoaded', function() {
     if (sectionContents.length > 0) {
         showSection(sectionContents[0].id);
     };
+
+    // * -------------------------------------------------------------------- //
+
+    // Oculta todas las preguntas dependientes al acceder a la sección.
+    dependentQuestions.forEach(question => {
+        question.style.display = 'none';
+    });
+
+
+    /*
+        Esta función maneja la visibilidad de las preguntas dependientes.
+    */
+    function handleQuestionVisibility() {
+        dependentQuestions.forEach(question => {
+
+            // Pregunta padre y valor activador.
+            const parentQuestionId = question.getAttribute('data-parent-question-id');
+            const activatorValue = question.getAttribute('data-parent-activator-value');
+
+            // Input de la pregunta padre.
+            const parentInputName = `pregunta_${parentQuestionId}`;
+            const parentInputs = document.querySelectorAll(`[name="${parentInputName}"]`);
+
+            let parentValue = null;
+
+            if (parentInputs.length > 0) {
+                const parentType = parentInputs[0].type;
+
+                switch(parentType) {
+                    case 'radio':
+                        const selectedRadio = document.querySelector(`input[name="${parentInputName}"]:checked`);
+                        if (selectedRadio) {
+                        parentValue = selectedRadio.value;
+                        }
+                        break;
+                    case 'textarea':
+                        parentValue = parentInputs[0].value;
+                        break;
+                }
+            }
+
+            if (parentValue === activatorValue) {
+                question.style.display = 'block';
+            } else {
+                question.style.display = 'none';
+
+            // Limpia la preguntas dependientes al ocultarlas.
+            const childInput = question.querySelector('textarea, input:checked');
+                if (childInput) {
+                    if (childInput.type === 'textarea') {
+                        childInput.value = '';
+                    } else if (childInput.type === 'radio') {
+                        childInput.checked = false;
+                    }
+                }
+            }
+        });
+    }
+
+    handleQuestionVisibility();
+
+    const surveyForm = document.querySelector('.survey-form');
+    if (surveyForm) {
+        surveyForm.addEventListener('change', handleQuestionVisibility);
+        surveyForm.addEventListener('input', handleQuestionVisibility);
+    }
 });
 
 // -------------------------------------------------------------------------- //

@@ -12,6 +12,8 @@ urlpatterns = [
     path('', views.AccesoEvaluacion.as_view(), name='AccesoEvaluacion'),
     path('ashen-one/', views.EvaluacionActiva.as_view(), name='EvaluacionActiva'),
     path('chosen-undead/', views.EvaluacionCompletada.as_view(), name='EvaluacionCompletada'),
+
+    # path('solaire/', views.GenerarPDF, name='Certificado'),
 ]
 
 # ---------------------------------------------------------------------------- #

@@ -1,64 +1,14 @@
 
+{% extends 'solaire/main.html' %}
 {% load static %}
 
-<!DOCTYPE html>
-<html lang='es'>
+{% block title %}Evaluación completada{% endblock title %}
+{% block childStylesheet %}<link href='{% static "css/certificate.css" %}' rel='stylesheet' />{% endblock childStylesheet %}
+<!-- {% block childScripts %}<script src='{% static "scripts/certificate.js" %}' type='module'></script>{% endblock childScripts %} -->
 
 
-<head>
-    <!-- Metadatos -->
-    <meta charset='UTF-8' />
-    <meta name='author' content='Yukas Team (Ed Rubio)' />
-    <meta name='viewport' content='width=device-width, initial-scale=1.0' />
+{% block content%}
+<div class='main-container'>
 
-    <!-- Título mostrado en la página. -->
-    <title>Iniciar evaluación | Axyoma</title>
-
-
-    <!-- Ícono sagrado... -->
-    <link rel='shortcut icon' type='image/png' href='{% static "images/small-icon.png" %}'>
-
-    <!-- Estilos base de esta plantilla -->
-    <link href='{% static "css/base/signin.css" %}' rel='stylesheet' />
-
-    <!-- Boxicons CSS -->
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet' />
-
-
-    <!-- Scripts base de esta plantilla -->
-    <script src='{% static "scripts/public.js" %}'></script>
-</head>
-
-
-<body>
-    <main class='base-content'>
-        <div class='main-container'>
-
-            <div class='survey-login-section'>
-                <img src={% static 'images/full-logo.png' %} draggable='false' loading='lazy' alt='Axyoma' />
-
-                <form method='post' class='login-form'>{% csrf_token %}
-                        <div class='form-group icon-input'>
-                            <i class='bx bxs-user'></i>
-                            <input type='text' id='id_username' name='Token' placeholder='Token de acceso' required>
-                        </div>
-
-                        <button type='submit' class='login-button'>Continuar</button>
-
-                        {% if messages %}
-                            <ul class='messages'>
-
-                                {% for message in messages %}
-                                    <li {% if message.tags %} class="{{ message.tags }}" {% endif %}>{{ message }}</li>
-                                {% endfor %}
-
-                            </ul>
-                        {% endif %}
-                    </form>
-            </div>
-        </div>
-    </main>
-</body>
-
-
-</html>
+</div>
+{% endblock content %}
