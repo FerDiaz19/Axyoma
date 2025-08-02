@@ -47,6 +47,7 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
+    'apps',  # App principal con modelos centralizados
     'apps.users',
     'apps.subscriptions',
     'apps.evaluaciones',

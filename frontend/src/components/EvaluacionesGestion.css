@@ -558,3 +558,138 @@
     flex-direction: column;
   }
 }
+
+/* Estilos para modo solo lectura */
+.info-solo-lectura {
+  background: #e0f2fe;
+  border: 1px solid #0288d1;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin: 16px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #01579b;
+}
+
+.icono-info {
+  font-size: 16px;
+}
+
+.btn-asignar-evaluaciones {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+}
+
+.btn-asignar-evaluaciones:hover {
+  background: #45a049;
+  transform: translateY(-1px);
+}
+
+.btn-asignar {
+  background: #2196f3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-asignar:hover {
+  background: #1976d2;
+  transform: translateY(-1px);
+}
+
+.info-solo-lectura-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.badge-tipo {
+  background: #e3f2fd;
+  color: #1565c0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.badge-obligatoria {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Modal para asignaciones */
+.modal-asignaciones {
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.asignacion-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.asignacion-info h4 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+}
+
+.asignacion-info p {
+  margin: 0;
+  color: #6b7280;
+}
+
+.empleados-selector h4 {
+  color: #1f2937;
+  margin-bottom: 12px;
+}
+
+.info-desarrollo {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.icono-desarrollo {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.info-desarrollo h5 {
+  margin: 0 0 12px 0;
+  color: #856404;
+}
+
+.info-desarrollo ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #856404;
+}
+
+.info-desarrollo li {
+  margin-bottom: 4px;
+}

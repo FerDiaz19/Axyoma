@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { obtenerDepartamentos, crearDepartamento, actualizarDepartamento, eliminarDepartamento, obtenerPlantas, Departamento, Planta } from '../services/organizacionService';
 import '../css/GestionDepartamentos.css';
 
-const GestionDepartamentos: React.FC = () => {
+interface GestionDepartamentosProps {
+  empresaId?: number;
+}
+
+const GestionDepartamentos: React.FC<GestionDepartamentosProps> = ({ empresaId }) => {
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [plantas, setPlantas] = useState<Planta[]>([]);
   const [loading, setLoading] = useState(true);

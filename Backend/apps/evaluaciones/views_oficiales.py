@@ -440,3 +440,496 @@ class RespuestaEmpleadoViewSet(viewsets.ReadOnlyModelViewSet):
                 estadisticas['respuestas_no'] = no_count
         
         return Response(estadisticas)
+
+
+# ===== NUEVOS VIEWSETS PARA FASE 2: ASIGNACIÓN CON TOKENS =====
+
+import secrets
+import string
+from django.db import transaction
+from apps.users.models import Departamento, Puesto
+
+class EmpleadosAsignacionViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet para obtener empleados filtrados por empresa/planta para asignación"""
+    
+    serializer_class = EmpleadoAsignadoSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [SearchFilter, OrderingFilter]
+    
+    search_fields = ['nombre', 'apellido', 'numero_empleado']
+    ordering_fields = ['nombre', 'apellido', 'fecha_ingreso']
+    ordering = ['nombre', 'apellido']
+    
+    def get_queryset(self):
+        """Filtrar empleados según el usuario logueado"""
+        user = self.request.user
+        
+        # SuperAdmin ve todos los empleados
+        if hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'superadmin':
+            return Empleado.objects.all()
+        
+        # Admin Empresa ve empleados de su empresa
+        elif hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'admin-empresa':
+            try:
+                empresa = Empresa.objects.get(administrador=user.perfil)
+                return Empleado.objects.filter(empresa=empresa)
+            except Empresa.DoesNotExist:
+                return Empleado.objects.none()
+        
+        # Admin Planta ve empleados de su planta
+        elif hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'admin-planta':
+            try:
+                from apps.users.models import AdminPlanta
+                admin_planta = AdminPlanta.objects.get(usuario=user.perfil, status=True)
+                return Empleado.objects.filter(planta=admin_planta.planta)
+            except:
+                return Empleado.objects.none()
+        
+        return Empleado.objects.none()
+    
+    @action(detail=False, methods=['get'])
+    def filtros_disponibles(self, request):
+        """Obtener opciones de filtros disponibles"""
+        queryset = self.get_queryset()
+        
+        # Departamentos únicos
+        departamentos = Departamento.objects.filter(
+            id__in=queryset.values_list('departamento_id', flat=True).distinct()
+        ).values('id', 'nombre')
+        
+        # Puestos únicos
+        puestos = Puesto.objects.filter(
+            id__in=queryset.values_list('puesto_id', flat=True).distinct()
+        ).values('id', 'nombre')
+        
+        # Plantas únicas (si aplica)
+        plantas = []
+        if hasattr(self.request.user, 'perfil') and self.request.user.perfil.nivel_usuario in ['superadmin', 'admin-empresa']:
+            plantas = queryset.values_list('planta__id', 'planta__nombre').distinct()
+            plantas = [{'id': p[0], 'nombre': p[1]} for p in plantas if p[0]]
+        
+        return Response({
+            'departamentos': list(departamentos),
+            'puestos': list(puestos),
+            'plantas': plantas,
+            'total_empleados': queryset.count()
+        })
+    
+    @action(detail=False, methods=['get'])
+    def por_departamento(self, request):
+        """Filtrar empleados por departamento"""
+        departamento_id = request.query_params.get('departamento_id')
+        
+        if not departamento_id:
+            return Response({'error': 'Se requiere departamento_id'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        queryset = self.get_queryset().filter(departamento_id=departamento_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=False, methods=['get'])
+    def por_puesto(self, request):
+        """Filtrar empleados por puesto"""
+        puesto_id = request.query_params.get('puesto_id')
+        
+        if not puesto_id:
+            return Response({'error': 'Se requiere puesto_id'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        queryset = self.get_queryset().filter(puesto_id=puesto_id)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class AsignacionTokenViewSet(viewsets.ModelViewSet):
+    """ViewSet para gestionar asignaciones de evaluaciones con tokens"""
+    
+    queryset = AsignacionEvaluacion.objects.all()
+    serializer_class = AsignacionEvaluacionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [SearchFilter, OrderingFilter]
+    
+    search_fields = ['nombre_asignacion', 'evaluacion_oficial__nombre']
+    ordering_fields = ['fecha_creacion', 'fecha_inicio', 'fecha_fin']
+    ordering = ['-fecha_creacion']
+    
+    def get_queryset(self):
+        """Filtrar asignaciones según el usuario"""
+        user = self.request.user
+        
+        if hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'superadmin':
+            return AsignacionEvaluacion.objects.all()
+        elif hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'admin-empresa':
+            try:
+                empresa = Empresa.objects.get(administrador=user.perfil)
+                return AsignacionEvaluacion.objects.filter(empresa=empresa)
+            except Empresa.DoesNotExist:
+                return AsignacionEvaluacion.objects.none()
+        elif hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'admin-planta':
+            try:
+                from apps.users.models import AdminPlanta
+                admin_planta = AdminPlanta.objects.get(usuario=user.perfil, status=True)
+                return AsignacionEvaluacion.objects.filter(planta=admin_planta.planta)
+            except:
+                return AsignacionEvaluacion.objects.none()
+        
+        return AsignacionEvaluacion.objects.none()
+    
+    def generar_token_unico(self):
+        """Generar token único de 8 caracteres"""
+        while True:
+            token = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8))
+            if not EmpleadoAsignado.objects.filter(token_acceso=token).exists():
+                return token
+    
+    @action(detail=False, methods=['post'])
+    def crear_asignacion(self, request):
+        """Crear nueva asignación con empleados y tokens"""
+        try:
+            with transaction.atomic():
+                # Validar datos requeridos
+                evaluacion_id = request.data.get('evaluacion_id')
+                empleados_ids = request.data.get('empleados_ids', [])
+                duracion_dias = request.data.get('duracion_dias', 7)
+                nombre_asignacion = request.data.get('nombre_asignacion', f'Evaluación {timezone.now().strftime("%d/%m/%Y")}')
+                
+                if not evaluacion_id or not empleados_ids:
+                    return Response({
+                        'error': 'Se requiere evaluacion_id y empleados_ids'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Obtener evaluación oficial
+                try:
+                    evaluacion = EvaluacionOficial.objects.get(id=evaluacion_id)
+                except EvaluacionOficial.DoesNotExist:
+                    return Response({
+                        'error': 'Evaluación no encontrada'
+                    }, status=status.HTTP_404_NOT_FOUND)
+                
+                # Validar empleados pertenecen al usuario
+                empleados_validos = self.get_empleados_validos(empleados_ids)
+                if not empleados_validos:
+                    return Response({
+                        'error': 'No se encontraron empleados válidos'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # Obtener empresa y planta del usuario
+                empresa, planta = self.get_empresa_planta_usuario()
+                
+                # Crear asignación
+                fecha_inicio = timezone.now()
+                fecha_fin = fecha_inicio + timezone.timedelta(days=duracion_dias)
+                
+                asignacion = AsignacionEvaluacion.objects.create(
+                    evaluacion_oficial=evaluacion,
+                    empresa=empresa,
+                    planta=planta,
+                    administrador_asignador=request.user.perfil,
+                    nombre_asignacion=nombre_asignacion,
+                    fecha_inicio=fecha_inicio,
+                    fecha_fin=fecha_fin,
+                    duracion_dias=duracion_dias,
+                    estado='activa'
+                )
+                
+                # Crear empleados asignados con tokens
+                empleados_con_tokens = []
+                for empleado in empleados_validos:
+                    token = self.generar_token_unico()
+                    
+                    empleado_asignado = EmpleadoAsignado.objects.create(
+                        asignacion=asignacion,
+                        empleado=empleado,
+                        token_acceso=token,
+                        fecha_asignacion=timezone.now(),
+                        estado='pendiente'
+                    )
+                    
+                    empleados_con_tokens.append({
+                        'empleado_id': empleado.id,
+                        'nombre_completo': f"{empleado.nombre} {empleado.apellido}",
+                        'token': token,
+                        'numero_empleado': empleado.numero_empleado if hasattr(empleado, 'numero_empleado') else None
+                    })
+                
+                return Response({
+                    'success': True,
+                    'message': f'Asignación creada exitosamente para {len(empleados_con_tokens)} empleados',
+                    'asignacion_id': asignacion.id,
+                    'nombre_asignacion': asignacion.nombre_asignacion,
+                    'evaluacion': evaluacion.nombre,
+                    'tipo_norma': evaluacion.tipo_norma,
+                    'fecha_inicio': asignacion.fecha_inicio,
+                    'fecha_fin': asignacion.fecha_fin,
+                    'empleados_asignados': empleados_con_tokens,
+                    'total_empleados': len(empleados_con_tokens)
+                }, status=status.HTTP_201_CREATED)
+                
+        except Exception as e:
+            return Response({
+                'error': f'Error al crear asignación: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def get_empleados_validos(self, empleados_ids):
+        """Obtener empleados válidos según permisos del usuario"""
+        user = self.request.user
+        
+        if hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'admin-empresa':
+            try:
+                empresa = Empresa.objects.get(administrador=user.perfil)
+                return Empleado.objects.filter(id__in=empleados_ids, empresa=empresa)
+            except Empresa.DoesNotExist:
+                return Empleado.objects.none()
+                
+        elif hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'admin-planta':
+            try:
+                from apps.users.models import AdminPlanta
+                admin_planta = AdminPlanta.objects.get(usuario=user.perfil, status=True)
+                return Empleado.objects.filter(id__in=empleados_ids, planta=admin_planta.planta)
+            except:
+                return Empleado.objects.none()
+        
+        # SuperAdmin puede asignar a cualquier empleado
+        elif hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'superadmin':
+            return Empleado.objects.filter(id__in=empleados_ids)
+        
+        return Empleado.objects.none()
+    
+    def get_empresa_planta_usuario(self):
+        """Obtener empresa y planta del usuario logueado"""
+        user = self.request.user
+        
+        if hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'admin-empresa':
+            try:
+                empresa = Empresa.objects.get(administrador=user.perfil)
+                return empresa, None
+            except Empresa.DoesNotExist:
+                return None, None
+                
+        elif hasattr(user, 'perfil') and user.perfil.nivel_usuario == 'admin-planta':
+            try:
+                from apps.users.models import AdminPlanta
+                admin_planta = AdminPlanta.objects.get(usuario=user.perfil, status=True)
+                return admin_planta.planta.empresa, admin_planta.planta
+            except:
+                return None, None
+        
+        return None, None
+    
+    @action(detail=True, methods=['get'])
+    def empleados_asignados(self, request, pk=None):
+        """Ver empleados asignados con sus tokens"""
+        asignacion = self.get_object()
+        empleados = EmpleadoAsignado.objects.filter(asignacion=asignacion)
+        
+        datos_empleados = []
+        for emp_asignado in empleados:
+            datos_empleados.append({
+                'id': emp_asignado.id,
+                'empleado_id': emp_asignado.empleado.id,
+                'nombre_completo': f"{emp_asignado.empleado.nombre} {emp_asignado.empleado.apellido}",
+                'numero_empleado': emp_asignado.empleado.numero_empleado if hasattr(emp_asignado.empleado, 'numero_empleado') else None,
+                'departamento': emp_asignado.empleado.departamento.nombre if emp_asignado.empleado.departamento else None,
+                'puesto': emp_asignado.empleado.puesto.nombre if emp_asignado.empleado.puesto else None,
+                'token_acceso': emp_asignado.token_acceso,
+                'estado': emp_asignado.estado,
+                'fecha_asignacion': emp_asignado.fecha_asignacion,
+                'fecha_inicio_evaluacion': emp_asignado.fecha_inicio_evaluacion,
+                'fecha_completado': emp_asignado.fecha_completado,
+                'progreso_porcentaje': emp_asignado.progreso_porcentaje
+            })
+        
+        return Response({
+            'asignacion_id': asignacion.id,
+            'nombre_asignacion': asignacion.nombre_asignacion,
+            'evaluacion': asignacion.evaluacion_oficial.nombre,
+            'estado': asignacion.estado,
+            'total_empleados': len(datos_empleados),
+            'empleados': datos_empleados
+        })
+    
+    @action(detail=False, methods=['get'])
+    def activas(self, request):
+        """Obtener asignaciones activas"""
+        asignaciones_activas = self.get_queryset().filter(
+            estado='activa',
+            fecha_fin__gt=timezone.now()
+        )
+        
+        datos = []
+        for asignacion in asignaciones_activas:
+            empleados_count = EmpleadoAsignado.objects.filter(asignacion=asignacion).count()
+            completados_count = EmpleadoAsignado.objects.filter(
+                asignacion=asignacion, 
+                estado='completado'
+            ).count()
+            
+            datos.append({
+                'id': asignacion.id,
+                'nombre_asignacion': asignacion.nombre_asignacion,
+                'evaluacion': asignacion.evaluacion_oficial.nombre,
+                'tipo_norma': asignacion.evaluacion_oficial.tipo_norma,
+                'fecha_inicio': asignacion.fecha_inicio,
+                'fecha_fin': asignacion.fecha_fin,
+                'dias_restantes': (asignacion.fecha_fin.date() - timezone.now().date()).days,
+                'total_empleados': empleados_count,
+                'completados': completados_count,
+                'pendientes': empleados_count - completados_count,
+                'progreso_porcentaje': (completados_count / empleados_count * 100) if empleados_count > 0 else 0
+            })
+        
+        return Response({
+            'asignaciones_activas': datos,
+            'total': len(datos)
+        })
+
+
+# ===== ENDPOINT PÚBLICO PARA EMPLEADOS CON TOKEN =====
+
+class EvaluacionTokenViewSet(viewsets.ViewSet):
+    """ViewSet público para que empleados accedan con token"""
+    
+    permission_classes = [permissions.AllowAny]  # Acceso público con token
+    
+    @action(detail=False, methods=['post'])
+    def validar_token(self, request):
+        """Validar token de empleado y devolver datos de evaluación"""
+        token = request.data.get('token', '').upper().strip()
+        
+        if not token:
+            return Response({
+                'error': 'Token requerido'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            # Buscar empleado asignado con el token
+            empleado_asignado = EmpleadoAsignado.objects.select_related(
+                'asignacion__evaluacion_oficial',
+                'empleado'
+            ).get(token_acceso=token)
+            
+            # Validar que la asignación esté activa
+            if empleado_asignado.asignacion.estado != 'activa':
+                return Response({
+                    'error': 'La evaluación ya no está activa'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validar que no haya expirado
+            if empleado_asignado.asignacion.fecha_fin < timezone.now():
+                return Response({
+                    'error': 'La evaluación ha expirado'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Validar que el empleado no haya completado ya
+            if empleado_asignado.estado == 'completado':
+                return Response({
+                    'error': 'Ya has completado esta evaluación'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Marcar como iniciado si está pendiente
+            if empleado_asignado.estado == 'pendiente':
+                empleado_asignado.estado = 'en_progreso'
+                empleado_asignado.fecha_inicio_evaluacion = timezone.now()
+                empleado_asignado.save()
+            
+            # Obtener preguntas de la evaluación
+            evaluacion = empleado_asignado.asignacion.evaluacion_oficial
+            preguntas = PreguntaOficial.objects.filter(
+                evaluacion_oficial=evaluacion
+            ).order_by('numero_orden')
+            
+            return Response({
+                'success': True,
+                'empleado': {
+                    'nombre': empleado_asignado.empleado.nombre,
+                    'apellido': empleado_asignado.empleado.apellido,
+                    'id': empleado_asignado.empleado.id
+                },
+                'evaluacion': {
+                    'id': evaluacion.id,
+                    'nombre': evaluacion.nombre,
+                    'descripcion': evaluacion.descripcion,
+                    'tipo_norma': evaluacion.tipo_norma,
+                    'instrucciones': evaluacion.instrucciones,
+                    'tiempo_limite_minutos': evaluacion.tiempo_limite_minutos,
+                    'total_preguntas': preguntas.count()
+                },
+                'asignacion': {
+                    'id': empleado_asignado.asignacion.id,
+                    'fecha_fin': empleado_asignado.asignacion.fecha_fin,
+                    'dias_restantes': (empleado_asignado.asignacion.fecha_fin.date() - timezone.now().date()).days
+                },
+                'token_session': token,  # Para mantener la sesión
+                'progreso_actual': empleado_asignado.progreso_porcentaje
+            }, status=status.HTTP_200_OK)
+            
+        except EmpleadoAsignado.DoesNotExist:
+            return Response({
+                'error': 'Token inválido'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Error interno: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    @action(detail=False, methods=['get'])
+    def obtener_preguntas(self, request):
+        """Obtener preguntas de la evaluación con token"""
+        token = request.query_params.get('token', '').upper().strip()
+        
+        if not token:
+            return Response({
+                'error': 'Token requerido'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            empleado_asignado = EmpleadoAsignado.objects.select_related(
+                'asignacion__evaluacion_oficial'
+            ).get(token_acceso=token)
+            
+            # Validaciones básicas
+            if empleado_asignado.estado == 'completado':
+                return Response({
+                    'error': 'Evaluación ya completada'
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Obtener preguntas
+            evaluacion = empleado_asignado.asignacion.evaluacion_oficial
+            preguntas = PreguntaOficial.objects.filter(
+                evaluacion_oficial=evaluacion
+            ).order_by('numero_orden')
+            
+            preguntas_data = []
+            for pregunta in preguntas:
+                pregunta_data = {
+                    'id': pregunta.id,
+                    'numero_orden': pregunta.numero_orden,
+                    'texto_pregunta': pregunta.texto_pregunta,
+                    'tipo_pregunta': pregunta.tipo_pregunta,
+                    'es_obligatoria': pregunta.es_obligatoria,
+                    'seccion': pregunta.seccion_oficial.nombre if pregunta.seccion_oficial else None
+                }
+                
+                # Agregar opciones según el tipo
+                if pregunta.tipo_pregunta == 'Múltiple' and pregunta.opciones_multiple:
+                    pregunta_data['opciones'] = pregunta.opciones_multiple
+                elif pregunta.tipo_pregunta == 'Escala':
+                    pregunta_data['escala_min'] = pregunta.escala_min
+                    pregunta_data['escala_max'] = pregunta.escala_max
+                    pregunta_data['etiquetas_escala'] = pregunta.etiquetas_escala
+                
+                preguntas_data.append(pregunta_data)
+            
+            return Response({
+                'preguntas': preguntas_data,
+                'total': len(preguntas_data),
+                'evaluacion': evaluacion.nombre
+            })
+            
+        except EmpleadoAsignado.DoesNotExist:
+            return Response({
+                'error': 'Token inválido'
+            }, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({
+                'error': f'Error: {str(e)}'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -191,3 +191,66 @@ class RespuestaEmpleadoCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Se requiere respuesta_numerica para preguntas de escala")
             
         return data
+
+
+# ===== SERIALIZERS PARA FASE 2: ASIGNACIONES CON TOKENS =====
+
+from apps.users.models import Empleado
+
+class EmpleadoAsignadoSimpleSerializer(serializers.ModelSerializer):
+    """Serializer simple para empleados en asignaciones"""
+    
+    departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
+    puesto_nombre = serializers.CharField(source='puesto.nombre', read_only=True)
+    planta_nombre = serializers.CharField(source='planta.nombre', read_only=True)
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
+    
+    class Meta:
+        model = Empleado
+        fields = [
+            'id', 'nombre', 'apellido', 'numero_empleado',
+            'departamento_nombre', 'puesto_nombre', 'planta_nombre', 'empresa_nombre',
+            'fecha_ingreso', 'activo'
+        ]
+
+
+class AsignacionEvaluacionCreateSerializer(serializers.ModelSerializer):
+    """Serializer para crear asignaciones"""
+    
+    empleados_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        help_text="Lista de IDs de empleados a asignar"
+    )
+    evaluacion_id = serializers.IntegerField(write_only=True)
+    
+    class Meta:
+        model = AsignacionEvaluacion
+        fields = [
+            'evaluacion_id', 'nombre_asignacion', 'duracion_dias',
+            'empleados_ids', 'instrucciones_adicionales'
+        ]
+        
+    def validate_empleados_ids(self, value):
+        if not value or len(value) == 0:
+            raise serializers.ValidationError("Debe seleccionar al menos un empleado")
+        return value
+    
+    def validate_duracion_dias(self, value):
+        if value < 1 or value > 365:
+            raise serializers.ValidationError("La duración debe estar entre 1 y 365 días")
+        return value
+
+
+class TokenValidacionSerializer(serializers.Serializer):
+    """Serializer para validar tokens de empleados"""
+    
+    token = serializers.CharField(
+        max_length=20,
+        min_length=8,
+        help_text="Token de acceso de 8 caracteres"
+    )
+    
+    def validate_token(self, value):
+        # Convertir a mayúsculas y limpiar espacios
+        return value.upper().strip()

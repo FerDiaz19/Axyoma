@@ -31,6 +31,7 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
   const [loading, setLoading] = useState(true);
   const [mostrarFormulario, setMostrarFormulario] = useState(false);
   const [editandoPregunta, setEditandoPregunta] = useState<Pregunta | null>(null);
+  const [mostrarAsignaciones, setMostrarAsignaciones] = useState(false);
   
   const [formulario, setFormulario] = useState<FormularioPregunta>({
     texto: '',
@@ -38,6 +39,19 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
     opciones: ['', ''],
     obligatoria: true
   });
+
+  // Función para verificar permisos basados en el nivel de usuario
+  const tienePermisosEdicion = () => {
+    return userData?.nivel_usuario === 'superadmin';
+  };
+
+  const tienePermisosAsignacion = () => {
+    return userData?.nivel_usuario === 'admin_empresa' || userData?.nivel_usuario === 'admin_planta';
+  };
+
+  const esSoloLectura = () => {
+    return userData?.nivel_usuario === 'admin_empresa' || userData?.nivel_usuario === 'admin_planta';
+  };
 
   const cargarPreguntas = useCallback(async () => {
     try {
@@ -372,6 +386,13 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
     }
   };
 
+  const asignarPregunta = (pregunta: Pregunta) => {
+    console.log('🎯 Asignando pregunta:', pregunta);
+    // Por ahora, mostrar el modal de asignaciones con la pregunta seleccionada
+    setMostrarAsignaciones(true);
+    // TODO: Implementar lógica específica para asignar esta pregunta individual
+  };
+
   const cambiarTipo = (tipo: string) => {
     const nuevoFormulario = { ...formulario, tipo: tipo as any };
     
@@ -430,8 +451,19 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
     <div className="evaluaciones-gestion">
       {/* Header */}
       <div className="evaluaciones-header">
-        <h2>🎯 Gestión de Evaluaciones Oficiales</h2>
-        <p>Administra las preguntas de las normativas NOM-030 y NOM-035</p>
+        <h2>🎯 {tienePermisosEdicion() ? 'Gestión' : 'Consulta'} de Evaluaciones Oficiales</h2>
+        <p>
+          {tienePermisosEdicion() 
+            ? 'Administra las preguntas de las normativas NOM-030 y NOM-035'
+            : 'Consulta las preguntas oficiales de las normativas NOM-030 y NOM-035'
+          }
+        </p>
+        {esSoloLectura() && (
+          <div className="info-solo-lectura">
+            <span className="icono-info">ℹ️</span>
+            <span>Modo solo lectura - Para crear evaluaciones ve a la sección "Asignar Evaluaciones"</span>
+          </div>
+        )}
       </div>
 
       {/* Selector de Normativa */}
@@ -453,12 +485,23 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
           </button>
         </div>
         
-        <button 
-          onClick={() => setMostrarFormulario(true)}
-          className="btn-nueva-pregunta"
-        >
-          ➕ Nueva Pregunta
-        </button>
+        {tienePermisosEdicion() && (
+          <button 
+            onClick={() => setMostrarFormulario(true)}
+            className="btn-nueva-pregunta"
+          >
+            ➕ Nueva Pregunta
+          </button>
+        )}
+
+        {tienePermisosAsignacion() && (
+          <button 
+            onClick={() => setMostrarAsignaciones(true)}
+            className="btn-asignar-evaluaciones"
+          >
+            👥 Asignar Evaluaciones
+          </button>
+        )}
       </div>
 
       {/* Lista de Preguntas */}
@@ -467,13 +510,20 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
           <div className="estado-vacio">
             <div className="icono-vacio">📝</div>
             <h3>No hay preguntas para {normativaSeleccionada.toUpperCase()}</h3>
-            <p>Comienza creando la primera pregunta de esta normativa</p>
-            <button 
-              onClick={() => setMostrarFormulario(true)}
-              className="btn-primary"
-            >
-              Crear primera pregunta
-            </button>
+            <p>
+              {tienePermisosEdicion() 
+                ? 'Comienza creando la primera pregunta de esta normativa'
+                : 'No hay preguntas disponibles para esta normativa'
+              }
+            </p>
+            {tienePermisosEdicion() && (
+              <button 
+                onClick={() => setMostrarFormulario(true)}
+                className="btn-primary"
+              >
+                Crear primera pregunta
+              </button>
+            )}
           </div>
         ) : (
           preguntasFiltradas.map((pregunta, index) => {
@@ -529,20 +579,41 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
                 </div>
                 
                 <div className="pregunta-acciones">
-                  <button 
-                    onClick={() => editarPregunta(pregunta)}
-                    className="btn-editar"
-                    title="Editar esta pregunta"
-                  >
-                    ✏️ Editar
-                  </button>
-                  <button 
-                    onClick={() => eliminarPregunta(pregunta.id)}
-                    className="btn-eliminar"
-                    title="Eliminar esta pregunta"
-                  >
-                    🗑️ Eliminar
-                  </button>
+                  {tienePermisosEdicion() && (
+                    <>
+                      <button 
+                        onClick={() => editarPregunta(pregunta)}
+                        className="btn-editar"
+                        title="Editar esta pregunta"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button 
+                        onClick={() => eliminarPregunta(pregunta.id)}
+                        className="btn-eliminar"
+                        title="Eliminar esta pregunta"
+                      >
+                        🗑️ Eliminar
+                      </button>
+                    </>
+                  )}
+                  {tienePermisosAsignacion() && (
+                    <button 
+                      onClick={() => asignarPregunta(pregunta)}
+                      className="btn-asignar"
+                      title="Asignar esta pregunta a empleados"
+                    >
+                      👥 Asignar
+                    </button>
+                  )}
+                  {esSoloLectura() && (
+                    <div className="info-solo-lectura-item">
+                      <span className="badge-tipo">{pregunta.tipo}</span>
+                      <span className="badge-obligatoria">
+                        {pregunta.obligatoria ? '🔴 Obligatoria' : '🔵 Opcional'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -706,6 +777,59 @@ const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) =
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Asignación de Evaluaciones */}
+      {mostrarAsignaciones && (
+        <div className="modal-overlay">
+          <div className="modal-content modal-asignaciones">
+            <div className="modal-header">
+              <h3>👥 Asignar Evaluaciones a Empleados</h3>
+              <button 
+                onClick={() => setMostrarAsignaciones(false)}
+                className="modal-close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="asignacion-info">
+                <h4>📋 Evaluación Seleccionada: {normativaSeleccionada.toUpperCase()}</h4>
+                <p>Total de preguntas: {preguntasFiltradas.length}</p>
+              </div>
+
+              <div className="empleados-selector">
+                <h4>👤 Seleccionar Empleados</h4>
+                <p>Próximamente: Lista de empleados para asignar evaluaciones</p>
+                
+                <div className="info-desarrollo">
+                  <div className="icono-desarrollo">🚧</div>
+                  <div>
+                    <h5>Funcionalidad en Desarrollo</h5>
+                    <ul>
+                      <li>✅ Visualización de preguntas oficiales</li>
+                      <li>🔄 Selección de empleados por departamento</li>
+                      <li>🔄 Asignación de evaluaciones individuales</li>
+                      <li>🔄 Programación de evaluaciones</li>
+                      <li>🔄 Seguimiento de progreso</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button 
+                type="button" 
+                onClick={() => setMostrarAsignaciones(false)}
+                className="btn-secondary"
+              >
+                Cerrar
+              </button>
+            </div>
           </div>
         </div>
       )}

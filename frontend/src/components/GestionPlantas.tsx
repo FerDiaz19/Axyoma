@@ -6,7 +6,6 @@ interface Planta {
   planta_id: number;
   nombre: string;
   direccion: string;
-  fecha_registro: string;
   status: boolean;
   empresa_id: number;
   empresa_nombre: string;
@@ -31,8 +30,10 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
   });
 
   useEffect(() => {
-    cargarPlantas();
-  }, []);
+    if (empresaId) {
+      cargarPlantas();
+    }
+  }, [empresaId]); // Solo dependemos de empresaId para evitar bucles infinitos
 
   useEffect(() => {
     // Aplicar filtros
@@ -51,11 +52,31 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
   const cargarPlantas = async () => {
     try {
       setError(null);
-      const response = await api.get('/plantas/');
+      console.log('🔍 Cargando plantas para empresa:', empresaId);
+      console.log('🔗 URL completa:', `http://localhost:8000/api/plantas/?empresa_id=${empresaId}&incluir_suspendidas=true`);
+      console.log('🔑 Token en localStorage:', localStorage.getItem('authToken') ? 'SÍ' : 'NO');
+      
+      // Filtrar plantas por empresa (incluir suspendidas para poder reactivarlas)
+      const response = await api.get(`/plantas/?empresa_id=${empresaId}&incluir_suspendidas=true`);
+      console.log('📦 Plantas obtenidas:', response.data);
+      console.log('📊 Cantidad de plantas:', response.data.length);
       setPlantas(response.data);
     } catch (error: any) {
-      console.error('Error cargando plantas:', error);
-      setError('Error al cargar las plantas');
+      console.error('❌ Error cargando plantas:', error);
+      console.error('📋 Error response:', error.response?.data);
+      console.error('🔢 Status code:', error.response?.status);
+      
+      if (error.response?.status === 500) {
+        setError(`Error del servidor (500): Problema en el backend al obtener plantas para empresa ${empresaId}. Revisa los logs del servidor Django.`);
+      } else if (error.response?.status === 404) {
+        setError(`No se encontraron plantas para la empresa ${empresaId}`);
+      } else if (error.response?.status === 403) {
+        setError(`Sin permisos para acceder a las plantas de la empresa ${empresaId}`);
+      } else if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        setError('Error de conexión: Verifique que el backend esté ejecutándose en http://localhost:8000');
+      } else {
+        setError(`Error al cargar las plantas: ${error.message}`);
+      }
     } finally {
       setLoading(false);
     }
@@ -103,20 +124,29 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
     setShowForm(true);
   };
 
-  const handleDelete = async (planta: Planta) => {
-    const confirmMessage = `¿Está seguro de eliminar la planta "${planta.nombre}"?\n\nEsta acción también eliminará todos los departamentos, puestos y empleados asociados a esta planta.\n\nEsta acción NO se puede deshacer.`;
+  const handleToggleStatus = async (planta: Planta) => {
+    const accion = planta.status ? 'suspender' : 'activar';
+    const confirmMessage = planta.status 
+      ? `¿Suspender la planta "${planta.nombre}"? Esto también suspenderá todos los departamentos, puestos y empleados asociados.`
+      : `¿Activar la planta "${planta.nombre}"? Esto también activará todos los departamentos, puestos y empleados asociados.`;
     
     if (window.confirm(confirmMessage)) {
       try {
         setError(null);
-        await api.delete(`/plantas/${planta.planta_id}/`);
+        setSaving(true);
+        
+        // Llamar al endpoint de toggle_status
+        await api.post(`/plantas/${planta.planta_id}/toggle_status/`);
+        
         await cargarPlantas();
-        alert('Planta eliminada exitosamente');
+        alert(`Planta ${accion}da exitosamente`);
       } catch (error: any) {
-        console.error('Error eliminando planta:', error);
-        const errorMessage = error.response?.data?.detail || error.response?.data?.message || 'Error al eliminar la planta';
+        console.error(`Error ${accion}ndo planta:`, error);
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || `Error al ${accion} la planta`;
         setError(errorMessage);
-        alert(`Error al eliminar la planta: ${errorMessage}`);
+        alert(`Error al ${accion} la planta: ${errorMessage}`);
+      } finally {
+        setSaving(false);
       }
     }
   };
@@ -135,12 +165,14 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
     <div className="gestion-plantas">
       <div className="header">
         <h2>Gestión de Plantas</h2>
-        <button 
-          className="btn btn-primary"
-          onClick={() => setShowForm(true)}
-        >
-          + Agregar Planta
-        </button>
+        <div className="header-actions">
+          <button 
+            className="btn btn-primary"
+            onClick={() => setShowForm(true)}
+          >
+            + Agregar Planta
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -174,21 +206,23 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
           <div key={planta.planta_id} className="planta-card">
             <h3>{planta.nombre}</h3>
             <p className="direccion">{planta.direccion}</p>
-            <p className="fecha">
-              Registrada: {new Date(planta.fecha_registro).toLocaleDateString()}
+            <p className={`status ${planta.status ? 'activa' : 'inactiva'}`}>
+              Estado: {planta.status ? 'Activa' : 'Inactiva'}
             </p>
             <div className="actions">
               <button 
                 className="btn btn-secondary"
                 onClick={() => handleEdit(planta)}
+                disabled={saving}
               >
                 Editar
               </button>
               <button 
-                className="btn btn-danger"
-                onClick={() => handleDelete(planta)}
+                className={`btn ${planta.status ? 'btn-warning' : 'btn-success'}`}
+                onClick={() => handleToggleStatus(planta)}
+                disabled={saving}
               >
-                Eliminar
+                {planta.status ? 'Suspender' : 'Activar'}
               </button>
             </div>
           </div>

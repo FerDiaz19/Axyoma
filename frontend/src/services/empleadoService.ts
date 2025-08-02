@@ -24,8 +24,6 @@ export interface Empleado {
   puesto_nombre?: string;
   
   // Para compatibilidad con formulario
-  genero?: 'Masculino' | 'Femenino';
-  antiguedad?: number;
   puesto: number;
   departamento?: number;
   planta?: number;
@@ -38,8 +36,6 @@ export interface EmpleadoCreate {
   email?: string;
   telefono?: string;
   fecha_ingreso?: string;
-  genero?: 'Masculino' | 'Femenino';
-  antiguedad?: number;
   puesto: number;
   departamento?: number;
   planta?: number;
@@ -87,10 +83,12 @@ export const getEmpleadoById = async (id: number): Promise<Empleado> => {
 
 export const createEmpleado = async (data: EmpleadoCreate): Promise<Empleado> => {
   const response = await api.post<Empleado>(context, data);
+  console.log('✅ Empleado creado exitosamente:', response.data.nombre);
   return response.data;
 };
 
 export const updateEmpleado = async (id: number, data: EmpleadoCreate): Promise<Empleado> => {
+  console.log('🔄 updateEmpleado - ID:', id, 'Data:', data);
   const response = await api.put<Empleado>(`${context}${id}/`, data);
   return response.data;
 };

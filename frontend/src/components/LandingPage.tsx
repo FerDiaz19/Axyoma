@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const [token, setToken] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [tokenError, setTokenError] = useState('');
 
   const handleLoginClick = () => {
     navigate('/login');
@@ -11,6 +14,39 @@ const LandingPage: React.FC = () => {
 
   const handleRegisterClick = () => {
     navigate('/registro');
+  };
+
+  const handleTokenAccess = async () => {
+    if (!token.trim()) {
+      setTokenError('Por favor ingresa un token válido');
+      return;
+    }
+
+    setIsLoading(true);
+    setTokenError('');
+
+    try {
+      const response = await fetch(`http://localhost:8000/api/evaluaciones/asignacion/validar-token/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: token.trim() }),
+      });
+
+      if (response.ok) {
+        await response.json(); // Validate response
+        // Redirigir a la página de evaluación con el token
+        navigate(`/evaluacion/${token.trim()}`);
+      } else {
+        const errorData = await response.json();
+        setTokenError(errorData.detail || 'Token inválido o expirado');
+      }
+    } catch (error) {
+      setTokenError('Error de conexión. Por favor intenta nuevamente.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -50,6 +86,34 @@ const LandingPage: React.FC = () => {
                 Crear Cuenta
               </button>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Token Access Section */}
+      <section className="token-access">
+        <div className="container">
+          <div className="token-card">
+            <h2>Acceso para Empleados</h2>
+            <p>¿Tienes un token de evaluación? Ingrésalo aquí para acceder a tu evaluación asignada.</p>
+            <div className="token-form">
+              <input
+                type="text"
+                placeholder="Ingresa tu token de 8 caracteres"
+                value={token}
+                onChange={(e) => setToken(e.target.value.toUpperCase())}
+                maxLength={8}
+                className={`token-input ${tokenError ? 'error' : ''}`}
+              />
+              <button 
+                onClick={handleTokenAccess}
+                disabled={isLoading || !token.trim()}
+                className="btn-token"
+              >
+                {isLoading ? 'Verificando...' : 'Acceder'}
+              </button>
+            </div>
+            {tokenError && <div className="token-error">{tokenError}</div>}
           </div>
         </div>
       </section>

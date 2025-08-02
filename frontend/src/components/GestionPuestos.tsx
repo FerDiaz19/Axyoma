@@ -2,7 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { obtenerPuestos, crearPuesto, actualizarPuesto, eliminarPuesto, obtenerDepartamentos, Puesto, Departamento } from '../services/organizacionService';
 import '../css/GestionPuestos.css';
 
-const GestionPuestos: React.FC = () => {
+interface GestionPuestosProps {
+  empresaId?: number;
+}
+
+const GestionPuestos: React.FC<GestionPuestosProps> = ({ empresaId }) => {
   const [puestos, setPuestos] = useState<Puesto[]>([]);
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [loading, setLoading] = useState(true);

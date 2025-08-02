@@ -4,9 +4,12 @@
 		{
 			"label": "Run Django Server",
 			"type": "shell",
-			"command": "python manage.py runserver",
+			"command": "python manage.py runserver 8000",
 			"group": "build",
 			"isBackground": true,
+			"options": {
+				"cwd": "${workspaceFolder}/Backend"
+			},
 			"problemMatcher": []
 		}
 	]

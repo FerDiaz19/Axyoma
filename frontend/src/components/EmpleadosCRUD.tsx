@@ -20,8 +20,6 @@ interface Empleado {
   telefono?: string;
   fecha_ingreso?: string;
   fecha_registro?: string;
-  genero?: 'Masculino' | 'Femenino';
-  antiguedad?: number;
   status?: boolean;
   puesto: number;
   departamento?: number;
@@ -79,8 +77,6 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
     email: '',
     telefono: '',
     fecha_ingreso: '',
-    genero: 'Masculino',
-    antiguedad: 0,
     puesto: 0
   });
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -90,6 +86,9 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
 
   const loadData = useCallback(async () => {
     try {
+      console.log('🔄 Cargando datos de empleados...');
+      console.log('👤 userData:', userData);
+      
       const [empleadosData, plantasData, departamentosData, puestosData] = await Promise.all([
         getEmpleados(),
         getPlantas(),
@@ -97,13 +96,30 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
         getPuestos()
       ]);
       
+      console.log('📊 Datos obtenidos:');
+      console.log('  - Empleados:', empleadosData.length);
+      console.log('  - Plantas:', plantasData.length);
+      console.log('  - Departamentos:', departamentosData.length);
+      console.log('  - Puestos:', puestosData.length);
+      
       // Si es Admin Planta, filtrar solo datos de su planta asignada
       if (userData?.tipo_dashboard === 'admin-planta' && userData?.planta_id) {
-        const empleadosDePlanta = empleadosData.filter(emp => emp.planta === userData.planta_id);
+        console.log('🏭 Filtrando datos para admin-planta:', userData.planta_id);
+        
+        const empleadosDePlanta = empleadosData.filter(emp => {
+          console.log(`  - Empleado ${emp.nombre}: planta=${emp.planta_id}, esperada=${userData.planta_id}`);
+          return emp.planta_id === userData.planta_id;
+        });
+        
         const departamentosDePlanta = departamentosData.filter(dept => dept.planta_id === userData.planta_id);
         const puestosDePlanta = puestosData.filter(puesto => 
           departamentosDePlanta.some(dept => dept.departamento_id === puesto.departamento_id)
         );
+        
+        console.log('📊 Datos filtrados:');
+        console.log('  - Empleados de planta:', empleadosDePlanta.length);
+        console.log('  - Departamentos de planta:', departamentosDePlanta.length);
+        console.log('  - Puestos de planta:', puestosDePlanta.length);
         
         setEmpleados(empleadosDePlanta);
         setPlantas([{ planta_id: userData.planta_id, nombre: userData.nombre_planta }]);
@@ -114,13 +130,14 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
         setFormData(prev => ({ ...prev, planta: userData.planta_id }));
       } else {
         // Admin Empresa puede ver todos los datos de su empresa
+        console.log('🏢 Datos completos para admin-empresa');
         setEmpleados(empleadosData);
         setPlantas(plantasData);
         setDepartamentos(departamentosData);
         setPuestos(puestosData);
       }
     } catch (err: any) {
-      console.error('Error cargando datos:', err);
+      console.error('❌ Error cargando datos:', err);
       setError('Error al cargar datos');
     }
   }, [userData]);
@@ -159,7 +176,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    if (name === 'puesto' || name === 'antiguedad') {
+    if (name === 'puesto' || name === 'departamento') {
       setFormData({
         ...formData,
         [name]: parseInt(value) || 0
@@ -170,6 +187,15 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
         [name]: value
       });
     }
+    
+    // Si cambia el departamento, resetear el puesto
+    if (name === 'departamento') {
+      setFormData(prev => ({
+        ...prev,
+        departamento: parseInt(value) || 0,
+        puesto: 0 // Reset puesto cuando cambia departamento
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -177,23 +203,40 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
     setLoading(true);
     setError('');
 
+    console.log('📝 Datos del formulario a enviar:', formData);
+
     try {
       if (editingId) {
+        console.log('🔄 Actualizando empleado ID:', editingId);
         await updateEmpleado(editingId, formData);
+        console.log('✅ Empleado actualizado exitosamente');
       } else {
-        await createEmpleado(formData);
+        const resultado = await createEmpleado(formData);
+        console.log('✅ Empleado creado exitosamente:', resultado.nombre);
       }
       await loadData();
       resetForm();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Error al guardar empleado');
+      console.error('❌ Error:', err.response?.data?.detail || err.message);
+      console.error('❌ Error completo:', err.response?.data);
+      setError(err.response?.data?.error || err.response?.data?.detail || 'Error al guardar empleado');
     } finally {
       setLoading(false);
     }
   };
 
   const handleEdit = (empleado: Empleado) => {
-    setFormData(empleado);
+    setFormData({
+      nombre: empleado.nombre,
+      apellido_paterno: empleado.apellido_paterno,
+      apellido_materno: empleado.apellido_materno || '',
+      email: empleado.email || '',
+      telefono: empleado.telefono || '',
+      fecha_ingreso: empleado.fecha_ingreso || '',
+      puesto: empleado.puesto_id || empleado.puesto || 0,
+      departamento: empleado.departamento_id || empleado.departamento || 0,
+      planta: empleado.planta_id || empleado.planta || 0
+    });
     setEditingId(empleado.empleado_id || null);
     setShowForm(true);
   };
@@ -224,8 +267,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
       email: '',
       telefono: '',
       fecha_ingreso: '',
-      genero: 'Masculino',
-      antiguedad: 0,
+      departamento: 0,
       puesto: 0
     });
     setEditingId(null);
@@ -354,33 +396,60 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
 
           <div className="form-row">
             <div className="form-group">
-              <label htmlFor="genero">Género:</label>
-              <select
-                id="genero"
-                name="genero"
-                value={formData.genero}
+              <label htmlFor="email">Email:</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email || ''}
                 onChange={handleChange}
-                required
-              >
-                <option value="Masculino">Masculino</option>
-                <option value="Femenino">Femenino</option>
-              </select>
+              />
             </div>
 
             <div className="form-group">
-              <label htmlFor="antiguedad">Antigüedad (años):</label>
+              <label htmlFor="telefono">Teléfono:</label>
               <input
-                type="number"
-                id="antiguedad"
-                name="antiguedad"
-                value={formData.antiguedad || ''}
+                type="tel"
+                id="telefono"
+                name="telefono"
+                value={formData.telefono || ''}
                 onChange={handleChange}
-                min="0"
               />
             </div>
           </div>
 
           <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="fecha_ingreso">Fecha de Ingreso:</label>
+              <input
+                type="date"
+                id="fecha_ingreso"
+                name="fecha_ingreso"
+                value={formData.fecha_ingreso || ''}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="departamento">Departamento:</label>
+              <select
+                id="departamento"
+                name="departamento"
+                value={formData.departamento || ''}
+                onChange={handleChange}
+                required
+              >
+                <option value="">Seleccionar departamento</option>
+                {departamentos.map(departamento => (
+                  <option key={departamento.departamento_id} value={departamento.departamento_id}>
+                    {departamento.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="form-group">
               <label htmlFor="puesto">Puesto:</label>
               <select
@@ -389,13 +458,19 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
                 value={formData.puesto || ''}
                 onChange={handleChange}
                 required
+                disabled={!formData.departamento}
               >
-                <option value="">Seleccionar puesto</option>
-                {puestos.map(puesto => (
-                  <option key={puesto.puesto_id} value={puesto.puesto_id}>
-                    {puesto.nombre}
-                  </option>
-                ))}
+                <option value="">
+                  {!formData.departamento ? 'Primero selecciona un departamento' : 'Seleccionar puesto'}
+                </option>
+                {puestos
+                  .filter(puesto => puesto.departamento_id === formData.departamento)
+                  .map(puesto => (
+                    <option key={puesto.puesto_id} value={puesto.puesto_id}>
+                      {puesto.nombre}
+                    </option>
+                  ))
+                }
               </select>
             </div>
           </div>
@@ -417,8 +492,8 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
             <tr>
               <th>Nombre</th>
               <th>Apellidos</th>
-              <th>Género</th>
-              <th>Antigüedad</th>
+              <th>Email</th>
+              <th>Teléfono</th>
               <th>Planta</th>
               <th>Departamento</th>
               <th>Puesto</th>
@@ -430,8 +505,8 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
               <tr key={empleado.empleado_id}>
                 <td>{empleado.nombre}</td>
                 <td>{`${empleado.apellido_paterno} ${empleado.apellido_materno || ''}`}</td>
-                <td>{empleado.genero || 'N/A'}</td>
-                <td>{empleado.antiguedad || 0} años</td>
+                <td>{empleado.email || 'N/A'}</td>
+                <td>{empleado.telefono || 'N/A'}</td>
                 <td>{empleado.planta_nombre || 'N/A'}</td>
                 <td>{empleado.departamento_nombre || 'N/A'}</td>
                 <td>{empleado.puesto_nombre || 'N/A'}</td>

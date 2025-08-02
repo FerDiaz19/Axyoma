@@ -255,7 +255,7 @@ class PlantaSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Planta
-        fields = ['planta_id', 'nombre', 'direccion', 'fecha_registro', 'status', 'empresa_id', 'empresa_nombre']
+        fields = ['planta_id', 'nombre', 'direccion', 'status', 'empresa_id', 'empresa_nombre']
 
 class DepartamentoSerializer(serializers.ModelSerializer):
     planta_id = serializers.IntegerField(source='planta.planta_id', read_only=True)
@@ -263,8 +263,8 @@ class DepartamentoSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Departamento
-        fields = ['departamento_id', 'nombre', 'descripcion', 'fecha_registro', 'status', 'planta_id', 'planta_nombre']
-        read_only_fields = ['departamento_id', 'fecha_registro']
+        fields = ['departamento_id', 'nombre', 'descripcion', 'status', 'planta_id', 'planta_nombre']
+        read_only_fields = ['departamento_id']
 
 class PuestoSerializer(serializers.ModelSerializer):
     departamento_id = serializers.IntegerField(source='departamento.departamento_id', read_only=True)
@@ -296,7 +296,7 @@ class EmpleadoSerializer(serializers.ModelSerializer):
         model = Empleado
         fields = [
             'empleado_id', 'numero_empleado', 'nombre', 'apellido_paterno', 'apellido_materno',
-            'email', 'telefono', 'fecha_ingreso', 'fecha_registro', 'status',
+            'email', 'telefono', 'fecha_ingreso', 'status',
             'empresa_id', 'empresa_nombre',
             'planta_id', 'planta_nombre',
             'departamento_id', 'departamento_nombre',
@@ -305,14 +305,66 @@ class EmpleadoSerializer(serializers.ModelSerializer):
 
 class EmpleadoCreateSerializer(serializers.ModelSerializer):
     # Campos extra que envía el frontend pero no están en el modelo
-    genero = serializers.CharField(max_length=20, required=False)
-    antiguedad = serializers.IntegerField(required=False)
     departamento = serializers.IntegerField(required=False)
     planta = serializers.IntegerField(required=False)
     
     class Meta:
         model = Empleado
-        fields = ['nombre', 'apellido_paterno', 'apellido_materno', 'email', 'telefono', 'fecha_ingreso', 'puesto', 'genero', 'antiguedad', 'departamento', 'planta']
+        fields = ['nombre', 'apellido_paterno', 'apellido_materno', 'email', 'telefono', 'fecha_ingreso', 'puesto', 'departamento', 'planta']
+    
+    def validate_email(self, value):
+        """Validar email y manejar valores vacíos"""
+        if value == '' or value is None:
+            return None  # Convertir string vacío a None
+        return value
+    
+    def validate_telefono(self, value):
+        """Validar teléfono y manejar valores vacíos"""
+        if value == '' or value is None:
+            return None  # Convertir string vacío a None
+        return value
+    
+    def validate_puesto(self, value):
+        """Validar que el puesto existe y está activo"""
+        try:
+            from apps.users.models import Puesto
+            
+            # Si ya es un objeto Puesto, validar que esté activo
+            if hasattr(value, 'puesto_id'):
+                if not value.status:
+                    raise serializers.ValidationError("El puesto seleccionado está inactivo")
+                return value
+            
+            # Si es un ID (int), buscar el objeto
+            if isinstance(value, (int, str)):
+                puesto_id = int(value) if isinstance(value, str) else value
+                puesto = Puesto.objects.get(puesto_id=puesto_id, status=True)
+                return puesto
+                
+            raise serializers.ValidationError("Valor de puesto inválido")
+            
+        except Puesto.DoesNotExist:
+            raise serializers.ValidationError(f"El puesto con ID {value} no existe o está inactivo")
+        except (ValueError, TypeError) as e:
+            raise serializers.ValidationError(f"ID de puesto inválido: {value}")
+        except Exception as e:
+            raise serializers.ValidationError(f"Error validando puesto: {e}")
+    
+    def validate_email(self, value):
+        """Validar email y manejar valores vacíos"""
+        if value == '' or value is None:
+            return None  # Convertir string vacío a None
+        
+        # Para updates, permitir el mismo email del empleado actual
+        if self.instance and self.instance.email == value:
+            return value
+            
+        # Validar unicidad solo para emails nuevos
+        from apps.users.models import Empleado
+        if Empleado.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Ya existe un empleado con este email")
+        
+        return value
     
     def to_internal_value(self, data):
         """Procesar datos antes de la validación de Django"""
@@ -324,6 +376,16 @@ class EmpleadoCreateSerializer(serializers.ModelSerializer):
         for field in optional_fields:
             if field in data and data[field] == '':
                 data[field] = None
+        
+        # Convertir campos numéricos (IDs) de string a int, solo si son strings
+        numeric_fields = ['puesto', 'departamento', 'planta']
+        for field in numeric_fields:
+            if field in data and isinstance(data[field], str):
+                try:
+                    data[field] = int(data[field]) if data[field] else None
+                except (ValueError, TypeError):
+                    # Si no se puede convertir, dejar el valor original
+                    pass
                 
         # Si fecha_ingreso es None, usar fecha actual
         if data.get('fecha_ingreso') is None:
@@ -333,13 +395,7 @@ class EmpleadoCreateSerializer(serializers.ModelSerializer):
         return super().to_internal_value(data)
     
     def validate(self, data):
-        """Validación personalizada para empleados"""
-        # Si no se proporciona email, generar uno por defecto
-        if not data.get('email'):
-            nombre = data.get('nombre', '').lower().replace(' ', '')
-            apellido = data.get('apellido_paterno', '').lower().replace(' ', '')
-            data['email'] = f"{nombre}.{apellido}@empresa.com"
-        
+        """Validación personalizada para empleados"""        
         # Si no se proporciona fecha_ingreso, usar la fecha actual
         if not data.get('fecha_ingreso'):
             from datetime import date
@@ -349,13 +405,47 @@ class EmpleadoCreateSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         """Crear empleado eliminando campos que no están en el modelo"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.debug(f"EmpleadoCreateSerializer.create - Datos recibidos: {validated_data}")
+        
         # Eliminar campos que no están en el modelo Empleado
         validated_data.pop('genero', None)
-        validated_data.pop('antiguedad', None)
         validated_data.pop('departamento', None)
         validated_data.pop('planta', None)
         
-        return super().create(validated_data)
+        logger.debug(f"EmpleadoCreateSerializer.create - Datos para crear: {validated_data}")
+        
+        try:
+            empleado = super().create(validated_data)
+            logger.debug(f"EmpleadoCreateSerializer.create - Empleado creado exitosamente: {empleado}")
+            return empleado
+        except Exception as e:
+            logger.error(f"EmpleadoCreateSerializer.create - Error creando empleado: {e}")
+            raise
+    
+    def update(self, instance, validated_data):
+        """Actualizar empleado eliminando campos que no están en el modelo"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.debug(f"EmpleadoCreateSerializer.update - Datos recibidos: {validated_data}")
+        logger.debug(f"EmpleadoCreateSerializer.update - Instancia actual: {instance}")
+        
+        # Eliminar campos que no están en el modelo Empleado
+        validated_data.pop('departamento', None)
+        validated_data.pop('planta', None)
+        
+        logger.debug(f"EmpleadoCreateSerializer.update - Datos para actualizar: {validated_data}")
+        
+        try:
+            empleado = super().update(instance, validated_data)
+            logger.debug(f"EmpleadoCreateSerializer.update - Empleado actualizado exitosamente: {empleado}")
+            return empleado
+        except Exception as e:
+            logger.error(f"EmpleadoCreateSerializer.update - Error actualizando empleado: {e}")
+            raise
 
 # Serializers para crear registros (sin campos read-only)
 class PlantaCreateSerializer(serializers.ModelSerializer):

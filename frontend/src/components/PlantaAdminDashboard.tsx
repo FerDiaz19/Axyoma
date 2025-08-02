@@ -4,6 +4,7 @@ import EmpleadosCRUD from './EmpleadosCRUD';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
 import EvaluacionesGestion from './EvaluacionesGestion';
+import AsignacionEvaluaciones from './AsignacionEvaluaciones';
 import { logout } from '../services/authService';
 import '../css/Dashboard.css';
 import '../css/PlantaAdminDashboard.css';
@@ -12,7 +13,7 @@ interface PlantaAdminDashboardProps {
   userData: any;
 }
 
-type ActiveSection = 'departamentos' | 'puestos' | 'empleados' | 'evaluaciones';
+type ActiveSection = 'departamentos' | 'puestos' | 'empleados' | 'evaluaciones' | 'asignaciones';
 
 const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData }) => {
   const [activeSection, setActiveSection] = useState<ActiveSection>('departamentos');
@@ -42,6 +43,12 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData })
       label: 'Evaluaciones',
       icon: '📝',
       description: 'Gestionar evaluaciones'
+    },
+    {
+      id: 'asignaciones' as ActiveSection,
+      label: 'Asignar Evaluaciones',
+      icon: '🎯',
+      description: 'Asignar evaluaciones a empleados'
     }
   ];
 
@@ -76,6 +83,8 @@ const handleLogout = () => {
         return <EmpleadosCRUD userData={userData} />;
       case 'evaluaciones':
         return <EvaluacionesGestion userData={{ nivel_usuario: 'admin_planta' }} />;
+      case 'asignaciones':
+        return <AsignacionEvaluaciones userData={{ nivel_usuario: 'admin_planta' }} />;
       default:
         return <div>Sección no encontrada</div>;
     }

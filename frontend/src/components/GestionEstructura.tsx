@@ -8,7 +8,11 @@ import {
 } from '../services/organizacionService';
 import '../css/GestionEstructura.css';
 
-const GestionEstructura: React.FC = () => {
+interface GestionEstructuraProps {
+  empresaId?: number;
+}
+
+const GestionEstructura: React.FC<GestionEstructuraProps> = ({ empresaId }) => {
   const [plantas, setPlantas] = useState<Planta[]>([]);
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
   const [puestos, setPuestos] = useState<Puesto[]>([]);

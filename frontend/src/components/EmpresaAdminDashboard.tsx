@@ -1,224 +1,256 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmpleadosCRUD from './EmpleadosCRUD';
-import GestionEstructura from './GestionEstructura';
 import GestionPlantas from './GestionPlantas';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
 import EvaluacionesGestion from './EvaluacionesGestion';
+import AsignacionEvaluaciones from './AsignacionEvaluaciones';
 import GestionSuscripcion from './GestionSuscripcion';
+import UsuariosPlantasView from './UsuariosPlantasView';
 import { logout } from '../services/authService';
-import '../css/Dashboard.css';
-import '../css/GestionPlantas.css';
-import '../css/EmpresaAdminDashboard.css';
+import '../css/SuperAdminDashboard.css';
 
 interface EmpresaAdminDashboardProps {
   userData: any;
 }
 
 const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData }) => {
-  console.log('Renderizando EmpresaAdminDashboard', { userData });
-  const [activeSection, setActiveSection] = useState('suscripcion');
-  const [empresaId, setEmpresaId] = useState<number | null>(null);
-  console.log('Sección activa inicial:', activeSection);
+  const [activeSection, setActiveSection] = useState('overview');
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const getEmpresaId = async () => {
-      try {
-        // Intentar extraer empresa_id del userData
-        if (userData?.empresa_id) {
-          console.log('Empresa ID obtenido de userData:', userData.empresa_id);
-          setEmpresaId(userData.empresa_id);
-          return;
-        }
-        
-        // Si no está en userData, intentar obtener de profile_id
-        if (userData?.profile_id) {
-          console.log('Usando profile_id como empresa_id:', userData.profile_id);
-          setEmpresaId(userData.profile_id);
-          return;
-        }
-        
-        // Si todo falla, consultar a la API
-        console.log('Intentando obtener empresa_id desde API...');
-        // Importar dinámicamente para evitar dependencias circulares
-        const { obtenerPerfilUsuario } = await import('../services/userService');
-        const perfil = await obtenerPerfilUsuario(userData?.user_id);
-        if (perfil && perfil.empresa_id) {
-          console.log('Empresa ID obtenido desde API:', perfil.empresa_id);
-          setEmpresaId(perfil.empresa_id);
-          return;
-        }
-        
-        // Como último recurso, intentar obtenerlo desde localStorage
-        const storedEmpresaId = localStorage.getItem('empresaId');
-        if (storedEmpresaId) {
-          console.log('Empresa ID obtenido desde localStorage:', storedEmpresaId);
-          setEmpresaId(parseInt(storedEmpresaId));
-          return;
-        }
-        
-        console.warn('No se pudo determinar el empresa_id. Usando valor predeterminado 1 para pruebas.');
-        setEmpresaId(1); // Valor por defecto para pruebas
-      } catch (error) {
-        console.error('Error al obtener empresa_id:', error);
-        // Como fallback, usar ID 1 para pruebas
-        setEmpresaId(1);
-      }
-    };
-    
-    getEmpresaId();
-  }, [userData]);
+  const empresaId = userData?.empresa_id;
 
-  // Lista de elementos del menú
-  const menuItems = [
-    {
-      id: 'suscripcion',
-      label: 'Plan de Suscripción',
-      icon: '💎',
-      description: 'Gestionar suscripción'
-    },
-    {
-      id: 'plantas',
-      label: 'Gestión de Plantas',
-      icon: '🏭',
-      description: 'Administrar plantas de la empresa'
-    },
-    {
-      id: 'departamentos',
-      label: 'Departamentos',
-      icon: '🏢',
-      description: 'Gestionar departamentos'
-    },
-    {
-      id: 'puestos',
-      label: 'Puestos',
-      icon: '💼',
-      description: 'Administrar puestos de trabajo'
-    },
-    {
-      id: 'estructura',
-      label: 'Estructura Organizacional',
-      icon: '🏗️',
-      description: 'Ver estructura completa'
-    },
-    {
-      id: 'empleados',
-      label: 'Gestión de Empleados',
-      icon: '👥',
-      description: 'Administrar empleados'
-    },
-    {
-      id: 'evaluaciones',
-      label: 'Evaluaciones',
-      icon: '📊',
-      description: 'Gestionar evaluaciones'
-    },
-    {
-      id: 'reportes',
-      label: 'Reportes',
-      icon: '📋',
-      description: 'Ver reportes y estadísticas'
-    }
-  ];
+  // Debug logs
+  console.log('🔍 DEBUG EmpresaAdminDashboard - userData completo:', userData);
+  console.log('🔍 DEBUG EmpresaAdminDashboard - empresaId obtenido:', empresaId);
+  console.log('🔍 DEBUG EmpresaAdminDashboard - empresa_id directo:', userData?.empresa_id);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     try {
-      console.log("🚪 Iniciando cierre de sesión...");
-      
-      logout(); // Limpia el token
-      
-      console.log("✅ Sesión cerrada, redirigiendo a página principal...");
-
-      // Navegamos al inicio
-      navigate('/', { replace: true });
-
-      // Forzamos recarga para reiniciar el estado de la app
-      setTimeout(() => {
-        window.location.reload();
-      }, 50); // Pequeña pausa para asegurar que el navigate se complete
+      await logout();
+      navigate('/login');
     } catch (error) {
-      console.error("❌ Error durante el cierre de sesión:", error);
-      window.location.href = '/';
+      console.error('Error al cerrar sesión:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('userData');
+      navigate('/login');
     }
   };
 
   const renderActiveSection = () => {
-    console.log('Sección activa:', activeSection);
     switch (activeSection) {
-      case 'suscripcion':
-        console.log('Renderizando sección de suscripción con empresaId:', empresaId);
-        return empresaId ? <GestionSuscripcion empresaId={empresaId} /> : <div className="loading">Cargando suscripción...</div>;
-      case 'plantas':
-        return <GestionPlantas empresaId={userData?.empresa_id} />;
-      case 'departamentos':
-        return <GestionDepartamentos />;
-      case 'puestos':
-        return <GestionPuestos />;
-      case 'estructura':
-        return <GestionEstructura />;
-      case 'empleados':
-        return <EmpleadosCRUD userData={userData} />;
-      case 'evaluaciones':
-        return empresaId ? <EvaluacionesGestion userData={{ nivel_usuario: 'admin_empresa', empresa_id: empresaId }} /> : <div className="loading">Cargando evaluaciones...</div>;
-      case 'reportes':
+      case 'overview':
         return (
-          <div className="coming-soon">
-            <h2>Reportes</h2>
-            <p>Módulo de reportes en desarrollo...</p>
+          <div className="welcome-section">
+            <div className="hero-banner">
+              <h2>¡Bienvenido al Panel de Administración!</h2>
+              <p>Gestiona tu empresa de manera integral desde este panel de control</p>
+            </div>
+            
             <div className="stats-grid">
               <div className="stat-card">
-                <h3>Reportes Generados</h3>
-                <p className="stat-number">8</p>
+                <div className="stat-icon">👥</div>
+                <div className="stat-content">
+                  <h3>Empleados Activos</h3>
+                  <p className="stat-number">156</p>
+                  <span className="stat-change positive">+8 este mes</span>
+                </div>
               </div>
               <div className="stat-card">
-                <h3>Descargas</h3>
-                <p className="stat-number">24</p>
+                <div className="stat-icon">🏭</div>
+                <div className="stat-content">
+                  <h3>Plantas Operativas</h3>
+                  <p className="stat-number">12</p>
+                  <span className="stat-change positive">+2 este trimestre</span>
+                </div>
               </div>
               <div className="stat-card">
-                <h3>Usuarios Activos</h3>
-                <p className="stat-number">156</p>
+                <div className="stat-icon">📊</div>
+                <div className="stat-content">
+                  <h3>Evaluaciones Completadas</h3>
+                  <p className="stat-number">89%</p>
+                  <span className="stat-change positive">+5% vs mes anterior</span>
+                </div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-icon">🎯</div>
+                <div className="stat-content">
+                  <h3>Objetivos Alcanzados</h3>
+                  <p className="stat-number">94%</p>
+                  <span className="stat-change positive">Excelente rendimiento</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="quick-actions">
+              <h3>Acciones Rápidas</h3>
+              <div className="action-buttons">
+                <button 
+                  className="action-btn"
+                  onClick={() => setActiveSection('empleados')}
+                >
+                  <span className="action-icon">👤</span>
+                  <span>Gestionar Empleados</span>
+                </button>
+                <button 
+                  className="action-btn"
+                  onClick={() => setActiveSection('plantas')}
+                >
+                  <span className="action-icon">🏭</span>
+                  <span>Ver Plantas</span>
+                </button>
+                <button 
+                  className="action-btn"
+                  onClick={() => setActiveSection('evaluaciones')}
+                >
+                  <span className="action-icon">📋</span>
+                  <span>Crear Evaluación</span>
+                </button>
+                <button 
+                  className="action-btn"
+                  onClick={() => setActiveSection('asignaciones')}
+                >
+                  <span className="action-icon">🎯</span>
+                  <span>Asignar Evaluaciones</span>
+                </button>
               </div>
             </div>
           </div>
         );
+      case 'empleados':
+        return (
+          <EmpleadosCRUD 
+            userData={userData}
+          />
+        );
+      case 'plantas':
+        return (
+          <GestionPlantas 
+            empresaId={empresaId || 1}
+          />
+        );
+      case 'usuarios-plantas':
+        return (
+          <UsuariosPlantasView 
+            empresaId={empresaId || 1}
+          />
+        );
+      case 'departamentos':
+        return (
+          <GestionDepartamentos 
+            empresaId={empresaId || 1}
+          />
+        );
+      case 'puestos':
+        return (
+          <GestionPuestos empresaId={empresaId || 1} />
+        );
+      case 'evaluaciones':
+        return (
+          <EvaluacionesGestion 
+            userData={userData}
+          />
+        );
+      case 'asignaciones':
+        return (
+          <AsignacionEvaluaciones 
+            userData={userData}
+          />
+        );
+      case 'suscripcion':
+        return (
+          <GestionSuscripcion 
+            empresaId={empresaId || 1}
+          />
+        );
       default:
-        return <div>Sección no encontrada</div>;
+        return (
+          <div className="welcome-section">
+            <div className="hero-banner">
+              <h2>¡Bienvenido al Panel de Administración!</h2>
+              <p>Gestiona tu empresa de manera integral desde este panel de control</p>
+            </div>
+          </div>
+        );
     }
   };
 
   return (
-    <div className="dashboard empresa-admin-dashboard">
-      {/* Sidebar - Always visible */}
+    <div className="dashboard superadmin-dashboard">
+      {/* Sidebar */}
       <aside className="dashboard-sidebar">
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <h2>🏢 AXYOMA</h2>
-            <span className="sidebar-subtitle">Admin Empresa</span>
+            <span className="sidebar-subtitle">Panel Empresa</span>
           </div>
         </div>
-
         <nav className="sidebar-nav">
-          {menuItems.map((item) => (
-            <button 
-              key={item.id}
-              className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
-              onClick={() => setActiveSection(item.id as any)}
-              title={item.description}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              <span className="nav-text">{item.label}</span>
-            </button>
-          ))}
-        </nav>
-
-        <div className="sidebar-footer">
-          <button className="logout-btn" onClick={handleLogout}>
-            <span>🚪</span>
-            Cerrar Sesión
+          <button 
+            className={activeSection === 'overview' ? 'active' : ''}
+            onClick={() => setActiveSection('overview')}
+          >
+            <span className="nav-icon">📊</span>
+            <span className="nav-text">Dashboard</span>
           </button>
-        </div>
+          <button 
+            className={activeSection === 'empleados' ? 'active' : ''}
+            onClick={() => setActiveSection('empleados')}
+          >
+            <span className="nav-icon">👥</span>
+            <span className="nav-text">Empleados</span>
+          </button>
+          <button 
+            className={activeSection === 'plantas' ? 'active' : ''}
+            onClick={() => setActiveSection('plantas')}
+          >
+            <span className="nav-icon">🏭</span>
+            <span className="nav-text">Plantas</span>
+          </button>
+          <button 
+            className={activeSection === 'usuarios-plantas' ? 'active' : ''}
+            onClick={() => setActiveSection('usuarios-plantas')}
+          >
+            <span className="nav-icon">👤</span>
+            <span className="nav-text">Usuarios Plantas</span>
+          </button>
+          <button 
+            className={activeSection === 'departamentos' ? 'active' : ''}
+            onClick={() => setActiveSection('departamentos')}
+          >
+            <span className="nav-icon">🏢</span>
+            <span className="nav-text">Departamentos</span>
+          </button>
+          <button 
+            className={activeSection === 'puestos' ? 'active' : ''}
+            onClick={() => setActiveSection('puestos')}
+          >
+            <span className="nav-icon">💼</span>
+            <span className="nav-text">Puestos</span>
+          </button>
+          <button 
+            className={activeSection === 'evaluaciones' ? 'active' : ''}
+            onClick={() => setActiveSection('evaluaciones')}
+          >
+            <span className="nav-icon">📋</span>
+            <span className="nav-text">Evaluaciones</span>
+          </button>
+          <button 
+            className={activeSection === 'asignaciones' ? 'active' : ''}
+            onClick={() => setActiveSection('asignaciones')}
+          >
+            <span className="nav-icon">🎯</span>
+            <span className="nav-text">Asignaciones</span>
+          </button>
+          <button 
+            className={activeSection === 'suscripcion' ? 'active' : ''}
+            onClick={() => setActiveSection('suscripcion')}
+          >
+            <span className="nav-icon">💳</span>
+            <span className="nav-text">Suscripción</span>
+          </button>
+        </nav>
       </aside>
 
       {/* Main content area */}
@@ -230,22 +262,21 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
             <p className="header-subtitle">Gestión integral de la empresa</p>
           </div>
           <div className="header-right">
-            {/* Información del usuario actual */}
-            <div className="user-session-info">
+            <div className="user-info">
+              <div className="user-avatar">
+                <span className="avatar-icon">👤</span>
+              </div>
               <div className="user-details">
-                <span className="user-name">{userData?.nombre_completo || userData?.usuario}</span>
-                <span className="user-email">{userData?.correo || 'Sin correo'}</span>
+                <span className="user-name">
+                  {userData?.perfil_usuario?.nombre || userData?.username}
+                </span>
+                <span className="user-role">Administrador de Empresa</span>
               </div>
             </div>
-            <div className="empresa-info">
-              <div className="empresa-avatar">
-                <span className="avatar-icon">🏢</span>
-              </div>
-              <div className="empresa-details">
-                <span className="empresa-name">{userData?.nombre_empresa || 'Empresa'}</span>
-                <span className="empresa-user">({userData?.usuario})</span>
-              </div>
-            </div>
+            <button onClick={handleLogout} className="logout-btn">
+              <span className="logout-icon">🚪</span>
+              Cerrar Sesión
+            </button>
           </div>
         </header>
 
@@ -257,6 +288,5 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
     </div>
   );
 };
-
 
 export default EmpresaAdminDashboard;

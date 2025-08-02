@@ -119,30 +119,46 @@ class SuscripcionManager:
         """
         Obtiene el estado detallado de la suscripción de una empresa
         """
-        suscripcion = SuscripcionManager.obtener_suscripcion_activa(empresa)
-        
-        if not suscripcion:
+        try:
+            print(f"🔍 Obteniendo estado de suscripción para empresa: {empresa.nombre}")
+            suscripcion = SuscripcionManager.obtener_suscripcion_activa(empresa)
+            print(f"🔍 Suscripción encontrada: {suscripcion}")
+            
+            if not suscripcion:
+                print("❌ No se encontró suscripción activa")
+                return {
+                    'tiene_suscripcion': False,
+                    'estado': 'sin_suscripcion',
+                    'mensaje': 'Tu empresa no tiene una suscripción activa',
+                    'accion_requerida': 'Selecciona un plan para continuar',
+                    'plantas_incluidas': 0
+                }
+            
+            print(f"🔍 Calculando días restantes...")
+            dias_restantes = (suscripcion.fecha_fin - date.today()).days
+            print(f"🔍 Días restantes: {dias_restantes}")
+            
+            print(f"🔍 Contando plantas...")
+            from apps.users.models import Planta
+            plantas_count = Planta.objects.filter(empresa=empresa, status=True).count()
+            print(f"🔍 Plantas incluidas: {plantas_count}")
+            
             return {
-                'tiene_suscripcion': False,
-                'estado': 'sin_suscripcion',
-                'mensaje': 'Tu empresa no tiene una suscripción activa',
-                'accion_requerida': 'Selecciona un plan para continuar',
-                'plantas_incluidas': 0
+                'tiene_suscripcion': True,
+                'estado': 'activa',
+                'plan': suscripcion.plan.nombre,
+                'precio': suscripcion.plan.precio,
+                'fecha_fin': suscripcion.fecha_fin,
+                'dias_restantes': dias_restantes,
+                'plantas_incluidas': plantas_count,
+                'mensaje': f'Plan {suscripcion.plan.nombre} activo' + 
+                          (f' ({dias_restantes} días restantes)' if dias_restantes <= 30 else '')
             }
-        
-        dias_restantes = (suscripcion.fecha_fin - date.today()).days
-        
-        return {
-            'tiene_suscripcion': True,
-            'estado': 'activa',
-            'plan': suscripcion.plan.nombre,
-            'precio': suscripcion.plan.precio,
-            'fecha_fin': suscripcion.fecha_fin,
-            'dias_restantes': dias_restantes,
-            'plantas_incluidas': empresa.plantas.count(),
-            'mensaje': f'Plan {suscripcion.plan.nombre} activo' + 
-                      (f' ({dias_restantes} días restantes)' if dias_restantes <= 30 else '')
-        }
+        except Exception as e:
+            print(f"❌ Error en obtener_estado_suscripcion: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            raise e
 
 # Decorador para vistas que requieren suscripción activa
 def requiere_suscripcion_activa(view_func):

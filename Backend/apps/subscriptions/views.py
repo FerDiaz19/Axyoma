@@ -32,7 +32,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
             # Buscar suscripción activa de la empresa
             suscripcion = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
-                status=True
+                estado='activa'
             ).first()
             
             if not suscripcion:
@@ -254,8 +254,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
             # Verificar si ya existe una suscripción activa
             suscripcion_existente = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
-                status=True,
-                estado='Activa'
+                estado='activa'
             ).first()
             
             if suscripcion_existente:
@@ -274,8 +273,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
                     plan=plan,
                     fecha_inicio=fecha_inicio,
                     fecha_fin=fecha_fin,
-                    estado='Activa',
-                    status=True
+                    estado='activa'
                 )
                 
                 # Crear pago automático
@@ -383,8 +381,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
                     if suscripcion.fecha_fin < timezone.now().date():
                         suscripcion.fecha_inicio = timezone.now().date()
                     suscripcion.fecha_fin = suscripcion.fecha_fin + timedelta(days=plan.duracion)
-                    suscripcion.estado = 'Activa'
-                    suscripcion.status = True
+                    suscripcion.estado = 'activa'
                     suscripcion.save()
                 else:
                     # Crear nueva suscripción
@@ -396,8 +393,7 @@ class SubscriptionViewSet(viewsets.ViewSet):
                         plan=plan,
                         fecha_inicio=fecha_inicio,
                         fecha_fin=fecha_fin,
-                        estado='Activa',
-                        status=True
+                        estado='activa'
                     )
                 
                 # Crear registro de pago

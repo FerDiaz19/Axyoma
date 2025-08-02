@@ -30,4 +30,7 @@ urlpatterns = [
     
     # Sistema oficial de evaluaciones NOM (SuperAdmin)
     path('superadmin/', include('apps.evaluaciones.urls_oficiales')),
+    
+    # Fase 2: Sistema de asignaciones con tokens
+    path('asignacion/', include('apps.evaluaciones.urls_asignaciones')),
 ]
