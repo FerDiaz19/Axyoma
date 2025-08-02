@@ -107,7 +107,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
         console.log('🏭 Filtrando datos para admin-planta:', userData.planta_id);
         
         const empleadosDePlanta = empleadosData.filter(emp => {
-          console.log(`  - Empleado ${emp.nombre}: planta=${emp.planta_id}, esperada=${userData.planta_id}`);
+          console.log(`  - Empleado ${emp.nombre}: planta_id=${emp.planta_id}, esperada=${userData.planta_id}`);
           return emp.planta_id === userData.planta_id;
         });
         
@@ -120,6 +120,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
         console.log('  - Empleados de planta:', empleadosDePlanta.length);
         console.log('  - Departamentos de planta:', departamentosDePlanta.length);
         console.log('  - Puestos de planta:', puestosDePlanta.length);
+        console.log('🔍 Empleados de planta:', empleadosDePlanta);
         
         setEmpleados(empleadosDePlanta);
         setPlantas([{ planta_id: userData.planta_id, nombre: userData.nombre_planta }]);
@@ -141,6 +142,11 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
       setError('Error al cargar datos');
     }
   }, [userData]);
+
+  useEffect(() => {
+    console.log('📋 Lista de empleados actualizada:', empleados.length, 'empleados');
+    console.log('📋 Empleados:', empleados);
+  }, [empleados]);
 
   useEffect(() => {
     loadData();
@@ -212,9 +218,11 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
         console.log('✅ Empleado actualizado exitosamente');
       } else {
         const resultado = await createEmpleado(formData);
-        console.log('✅ Empleado creado exitosamente:', resultado.nombre);
+        console.log('✅ Empleado creado exitosamente:', resultado);
       }
+      console.log('🔄 Recargando datos...');
       await loadData();
+      console.log('✅ Datos recargados');
       resetForm();
     } catch (err: any) {
       console.error('❌ Error:', err.response?.data?.detail || err.message);
