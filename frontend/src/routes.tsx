@@ -6,6 +6,7 @@ import Login from './components/Login';
 import Dashboard from './components/Dashboard';
 import PlanSelection from './components/PlanSelection';
 import RegistroEmpresa from './components/RegistroEmpresa';
+import DiagnosticoAPI from './components/DiagnosticoAPI';
 
 const AppRoutes = () => {
   const handleLogin = (userData: any) => {
@@ -26,6 +27,7 @@ const AppRoutes = () => {
         />
       } />
       <Route path="/plan-selection" element={<PlanSelection onPlanSelected={() => window.location.href = '/dashboard'} />} />
+      <Route path="/diagnostico" element={<DiagnosticoAPI />} />
     </Routes>
   );
 };

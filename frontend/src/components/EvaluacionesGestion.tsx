@@ -1,866 +1,744 @@
-import React, { useState, useEffect } from 'react';
-import evaluacionesAPI, { EvaluacionCompleta, TipoEvaluacion, Pregunta } from '../services/evaluacionesService';
-import '../css/Evaluaciones.css';
+import React, { useState, useEffect, useCallback } from 'react';
+import { evaluacionesOficialesAPI, PreguntaOficial, NormativaResponse } from '../services/evaluacionesOficialesAPI';
+import './EvaluacionesGestion.css';
+
+interface Pregunta {
+  id: number;
+  texto: string;
+  tipo: 'multiple' | 'si_no' | 'escala' | 'texto';
+  opciones: string[];
+  obligatoria: boolean;
+  normativa: string;
+}
+
+interface FormularioPregunta {
+  texto: string;
+  tipo: 'multiple' | 'si_no' | 'escala' | 'texto';
+  opciones: string[];
+  obligatoria: boolean;
+}
 
 interface EvaluacionesGestionProps {
-  userData?: any;
+  userData?: {
+    nivel_usuario: string;
+    empresa_id?: number;
+  };
 }
 
 const EvaluacionesGestion: React.FC<EvaluacionesGestionProps> = ({ userData }) => {
-  const [evaluaciones, setEvaluaciones] = useState<EvaluacionCompleta[]>([]);
-  const [tipos, setTipos] = useState<TipoEvaluacion[]>([]);
+  const [normativaSeleccionada, setNormativaSeleccionada] = useState<string>('nom_035');
   const [preguntas, setPreguntas] = useState<Pregunta[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'evaluaciones'>('evaluaciones');
-  const [preguntasPorNormativa, setPreguntasPorNormativa] = useState<{ [key: string]: number }>({});
-
-  // Estados para crear evaluación
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formData, setFormData] = useState({
-    titulo: '',
-    descripcion: '',
-    tipo_evaluacion: '',
-    fecha_inicio: '',
-    fecha_fin: '',
-    es_anonima: true,
-    preguntas_seleccionadas: [] as number[]
+  const [loading, setLoading] = useState(true);
+  const [mostrarFormulario, setMostrarFormulario] = useState(false);
+  const [editandoPregunta, setEditandoPregunta] = useState<Pregunta | null>(null);
+  
+  const [formulario, setFormulario] = useState<FormularioPregunta>({
+    texto: '',
+    tipo: 'multiple',
+    opciones: ['', ''],
+    obligatoria: true
   });
 
-  // Estados para gestión de normativas
-  const [selectedNormativa, setSelectedNormativa] = useState<string>('');
-  const [showNormativaDetail, setShowNormativaDetail] = useState(false);
-  const [showPreguntaForm, setShowPreguntaForm] = useState(false);
-  const [preguntaForm, setPreguntaForm] = useState({
-    texto_pregunta: '',
-    tipo_respuesta: 'multiple' as 'multiple' | 'si_no' | 'escala' | 'texto',
-    opciones_respuesta: ['', ''],
-    es_obligatoria: true,
-    orden: 1
-  });
+  const cargarPreguntas = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      // Cargar preguntas NOM-030
+      const preguntasNOM030: NormativaResponse = await evaluacionesOficialesAPI.getPreguntasPorNormativa('nom_030');
+      
+      // Cargar preguntas NOM-035  
+      const preguntasNOM035: NormativaResponse = await evaluacionesOficialesAPI.getPreguntasPorNormativa('nom_035');
+      
+      // Fallback a datos de muestra si no hay datos de la API
+      if (!preguntasNOM030.preguntas?.length && !preguntasNOM035.preguntas?.length) {
+        console.log('🔄 Usando datos de muestra - Sin conexión a API');
+        setPreguntas(preguntasMuestra);
+        return;
+      }
 
-  const normativas = [
-    { 
-      id: 'nom-030', 
-      nombre: 'NOM-030', 
-      titulo: 'Servicios Preventivos de Seguridad y Salud en el Trabajo',
-      descripcion: 'Normativa oficial para servicios preventivos de seguridad y salud en el trabajo',
-      icono: '⚠️'
-    },
-    { 
-      id: 'nom-035', 
-      nombre: 'NOM-035', 
-      titulo: 'Factores de Riesgo Psicosocial en el Trabajo',
-      descripcion: 'Normativa oficial para identificación y prevención de factores de riesgo psicosocial',
-      icono: '🧠'
+      // Convertir preguntas oficiales al formato local
+      const todasLasPreguntas: Pregunta[] = [];
+
+      // Agregar preguntas NOM-030
+      preguntasNOM030.preguntas.forEach((p: PreguntaOficial) => {
+        todasLasPreguntas.push({
+          id: p.id,
+          texto: p.texto,
+          tipo: mapearTipoOficial(p.tipo),
+          opciones: p.opciones || [],
+          obligatoria: p.obligatoria,
+          normativa: 'nom_030'
+        });
+      });
+
+      // Agregar preguntas NOM-035
+      preguntasNOM035.preguntas.forEach((p: PreguntaOficial) => {
+        todasLasPreguntas.push({
+          id: p.id,
+          texto: p.texto,
+          tipo: mapearTipoOficial(p.tipo),
+          opciones: p.opciones || [],
+          obligatoria: p.obligatoria,
+          normativa: 'nom_035'
+        });
+      });
+
+      setPreguntas(todasLasPreguntas);
+      
+    } catch (error) {
+      console.error('Error cargando preguntas:', error);
+      console.log('🔄 Usando datos de muestra - Error de conexión');
+      setPreguntas(preguntasMuestra);
+    } finally {
+      setLoading(false);
     }
-    // ,
-    // { 
-    //   id: 'evaluacion-360', 
-    //   nombre: 'Evaluación 360°', 
-    //   titulo: 'Evaluación de Competencias 360 Grados',
-    //   descripcion: 'Evaluación integral de competencias desde múltiples perspectivas',
-    //   icono: '🎯'
-    // }
-  ];
-
-  const isSuperAdmin = userData?.nivel_usuario === 'superadmin';
-  const isAdminEmpresa = userData?.nivel_usuario.replace('-', '_') === 'admin_empresa';
-
-  useEffect(() => {
-    loadData();
   }, []);
 
   useEffect(() => {
-  const fetchPreguntasNormativas = async () => {
-    const resultados: { [key: string]: number } = {};
-    for (const normativa of normativas) {
-      const response = await evaluacionesAPI.getPreguntas({ tipo_evaluacion: normativa.nombre });
-      resultados[normativa.id] = response.data.length;
-    }
-    setPreguntasPorNormativa(resultados);
-  };
-  fetchPreguntasNormativas();
-}, []);
+    cargarPreguntas();
+  }, [cargarPreguntas]);
 
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const [evaluacionesRes, tiposRes] = await Promise.all([
-        evaluacionesAPI.getEvaluaciones(),
-        evaluacionesAPI.getTipos()
-      ]);
-      
-      setEvaluaciones(evaluacionesRes.data);
-      setTipos(tiposRes.data);
-    } catch (err: any) {
-      setError('Error al cargar datos: ' + (err.response?.data?.detail || err.message));
-    } finally {
-      setLoading(false);
+  // Mapear tipos de preguntas oficiales a tipos locales
+  const mapearTipoOficial = (tipoOficial: string): 'multiple' | 'si_no' | 'escala' | 'texto' => {
+    switch (tipoOficial.toLowerCase()) {
+      case 'múltiple':
+      case 'multiple':
+        return 'multiple';
+      case 'si/no':
+      case 'si_no':
+        return 'si_no';
+      case 'escala':
+        return 'escala';
+      case 'abierta':
+      case 'texto':
+        return 'texto';
+      default:
+        return 'texto';
     }
   };
 
-  const loadPreguntas = async (tipoEvaluacion?: string) => {
-    try {
-      const params = tipoEvaluacion ? { tipo_evaluacion: tipoEvaluacion } : undefined;
-      const response = await evaluacionesAPI.getPreguntas(params);
-      setPreguntas(response.data);
-    } catch (err: any) {
-      setError('Error al cargar preguntas: ' + (err.response?.data?.detail || err.message));
+  // Función para detectar automáticamente el tipo basándose en las opciones
+  const detectarTipo = (opciones: string[]): 'multiple' | 'si_no' | 'escala' | 'texto' => {
+    if (!opciones || opciones.length === 0) {
+      return 'texto';
     }
+    
+    // Detectar Si/No
+    if (opciones.length === 2 && 
+        opciones.some(o => o.toLowerCase().includes('sí') || o.toLowerCase().includes('si')) &&
+        opciones.some(o => o.toLowerCase().includes('no'))) {
+      return 'si_no';
+    }
+    
+    // Detectar escala (números o palabras que indican gradación)
+    const esEscala = opciones.every(opcion => {
+      return /^\d/.test(opcion) || // Comienza con número
+             opcion.toLowerCase().includes('acuerdo') ||
+             opcion.toLowerCase().includes('desacuerdo') ||
+             opcion.toLowerCase().includes('nunca') ||
+             opcion.toLowerCase().includes('siempre') ||
+             opcion.toLowerCase().includes('frecuent');
+    });
+    
+    if (esEscala && opciones.length >= 3) {
+      return 'escala';
+    }
+    
+    // Si tiene opciones múltiples pero no es escala ni si/no
+    if (opciones.length >= 2) {
+      return 'multiple';
+    }
+    
+    return 'texto';
   };
 
-  const handleCreateEvaluacion = async (e: React.FormEvent) => {
+  const preguntasFiltradas = preguntas.filter(p => p.normativa === normativaSeleccionada);
+
+  const limpiarFormulario = () => {
+    setFormulario({
+      texto: '',
+      tipo: 'multiple',
+      opciones: ['', ''],
+      obligatoria: true
+    });
+    setEditandoPregunta(null);
+    setMostrarFormulario(false);
+  };
+
+  const manejarSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    
+    console.log('🔄 Iniciando envío de formulario...', {
+      editando: !!editandoPregunta,
+      formulario: formulario,
+      normativa: normativaSeleccionada
+    });
     
     try {
-      const data = {
-        ...formData,
-        tipo_evaluacion: parseInt(formData.tipo_evaluacion),
-        preguntas_seleccionadas: formData.preguntas_seleccionadas.map((id, index) => ({
-          pregunta_id: id,
-          orden: index + 1,
-          es_obligatoria: true
-        }))
-      };
-      
-      await evaluacionesAPI.createEvaluacion(data);
-      setShowCreateForm(false);
-      setFormData({
-        titulo: '',
-        descripcion: '',
-        tipo_evaluacion: '',
-        fecha_inicio: '',
-        fecha_fin: '',
-        es_anonima: true,
-        preguntas_seleccionadas: []
-      });
-      await loadData();
-    } catch (err: any) {
-      setError('Error al crear evaluación: ' + (err.response?.data?.detail || err.message));
-    } finally {
-      setLoading(false);
-    }
-  };
+      // Mapear tipos locales a tipos de backend
+      const tipoBackend = {
+        'multiple': 'multiple',
+        'si_no': 'si_no', 
+        'escala': 'escala',
+        'texto': 'texto'
+      }[formulario.tipo];
 
-  const handleActivarEvaluacion = async (id: number) => {
-    try {
-      await evaluacionesAPI.activarEvaluacion(id);
-      await loadData();
-    } catch (err: any) {
-      setError('Error al activar evaluación: ' + (err.response?.data?.detail || err.message));
-    }
-  };
+      if (editandoPregunta) {
+        console.log('📝 Editando pregunta existente...', editandoPregunta.id);
+        
+        // Editar pregunta existente - usando función personalizada
+        const preguntaActualizada = await actualizarPreguntaBackend(
+          editandoPregunta.id,
+          {
+            texto: formulario.texto,
+            tipo: tipoBackend,
+            opciones: formulario.opciones.filter(o => o.trim()),
+            obligatoria: formulario.obligatoria
+          }
+        );
 
-  const crearPreguntasOficiales = async () => {
-    if (!isSuperAdmin) return;
-    
-    setLoading(true);
-    try {
-      const response = await evaluacionesAPI.crearPreguntasOficiales();
-      alert(`✅ ${response.data.message}`);
-      await loadPreguntas();
-    } catch (err: any) {
-      setError('Error al crear preguntas: ' + (err.response?.data?.detail || err.message));
-    } finally {
-      setLoading(false);
-    }
-  };
+        console.log('✅ Pregunta actualizada:', preguntaActualizada);
 
-  const togglePreguntaSeleccionada = (preguntaId: number) => {
-    const selected = formData.preguntas_seleccionadas;
-    if (selected.includes(preguntaId)) {
-      setFormData({
-        ...formData,
-        preguntas_seleccionadas: selected.filter(id => id !== preguntaId)
-      });
-    } else {
-      setFormData({
-        ...formData,
-        preguntas_seleccionadas: [...selected, preguntaId]
-      });
-    }
-  };
+        // Actualizar en el estado local
+        setPreguntas(prev => prev.map(p => 
+          p.id === editandoPregunta.id 
+            ? {
+                ...p,
+                texto: preguntaActualizada.texto,
+                tipo: mapearTipoOficial(preguntaActualizada.tipo),
+                opciones: preguntaActualizada.opciones || [],
+                obligatoria: preguntaActualizada.obligatoria
+              }
+            : p
+        ));
+        
+        alert('✅ Pregunta actualizada exitosamente');
+        
+      } else {
+        console.log('🆕 Creando nueva pregunta...');
+        
+        // Crear nueva pregunta - usando función personalizada
+        const nuevaPreguntaData = await crearPreguntaBackend({
+          texto: formulario.texto,
+          tipo: tipoBackend,
+          opciones: formulario.opciones.filter(o => o.trim()),
+          obligatoria: formulario.obligatoria,
+          normativa: normativaSeleccionada
+        });
 
-  const handleCreatePregunta = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const data = {
-        ...preguntaForm,
-        opciones_respuesta: preguntaForm.tipo_respuesta === 'multiple' ? preguntaForm.opciones_respuesta.filter((op: string) => op.trim()) : [],
-        tipo_evaluacion: parseInt(selectedNormativa) || 1
-      };
-      
-      await evaluacionesAPI.createPregunta(data);
-      setPreguntaForm({
-        texto_pregunta: '',
-        tipo_respuesta: 'multiple',
-        opciones_respuesta: ['', ''],
-        es_obligatoria: true,
-        orden: 1
-      });
-      setShowPreguntaForm(false);
-      if (selectedNormativa) {
-        loadPreguntas(selectedNormativa);
+        console.log('✅ Nueva pregunta creada:', nuevaPreguntaData);
+
+        const nuevaPregunta: Pregunta = {
+          id: nuevaPreguntaData.id,
+          texto: nuevaPreguntaData.texto,
+          tipo: mapearTipoOficial(nuevaPreguntaData.tipo),
+          opciones: nuevaPreguntaData.opciones || [],
+          obligatoria: nuevaPreguntaData.obligatoria,
+          normativa: normativaSeleccionada
+        };
+        
+        setPreguntas(prev => [...prev, nuevaPregunta]);
+        
+        alert('✅ Pregunta creada exitosamente');
       }
-      setError('');
-    } catch (err: any) {
-      setError('Error al crear pregunta: ' + (err.response?.data?.detail || err.message));
-    } finally {
-      setLoading(false);
+      
+      limpiarFormulario();
+      
+    } catch (error) {
+      console.error('❌ Error al guardar pregunta:', error);
+      
+      // Mostrar detalles del error
+      if (error instanceof Error) {
+        console.error('Detalles del error:', error.message);
+        alert(`❌ Error al guardar la pregunta: ${error.message}`);
+      } else {
+        console.error('Error desconocido:', error);
+        alert('❌ Error desconocido al guardar la pregunta. Revisa la consola para más detalles.');
+      }
     }
   };
 
-  const handleTipoPreguntaChange = (tipo: string) => {
-    setPreguntaForm(prev => ({
-      ...prev,
-      tipo_respuesta: tipo as 'multiple' | 'si_no' | 'escala' | 'texto',
-      opciones_respuesta: tipo === 'multiple' ? ['', ''] : 
-                         tipo === 'si_no' ? ['Sí', 'No'] : 
-                         tipo === 'escala' ? ['1', '2', '3', '4', '5'] : []
-    }));
+  // Funciones auxiliares para llamadas a API
+  const crearPreguntaBackend = async (pregunta: {
+    texto: string;
+    tipo: string;
+    opciones: string[];
+    obligatoria: boolean;
+    normativa: string;
+  }) => {
+    console.log('🔄 crearPreguntaBackend - Iniciando...', pregunta);
+    
+    try {
+      // Preparar datos para la API con los nombres correctos
+      const preguntaData: Partial<PreguntaOficial> = {
+        texto: pregunta.texto,
+        tipo: pregunta.tipo as 'multiple' | 'si_no' | 'escala' | 'texto',
+        opciones: pregunta.opciones,
+        obligatoria: pregunta.obligatoria,
+        numero_orden: preguntas.length + 1, // Asignar siguiente número de orden
+        normativa: pregunta.normativa
+      };
+      
+      console.log('📤 Enviando datos a API:', preguntaData);
+      
+      // Crear pregunta en la base de datos usando la API
+      const nuevaPregunta = await evaluacionesOficialesAPI.crearPregunta(preguntaData);
+      
+      console.log('✅ Respuesta de API:', nuevaPregunta);
+      
+      return {
+        id: nuevaPregunta.id,
+        texto: nuevaPregunta.texto,
+        tipo: nuevaPregunta.tipo,
+        opciones: nuevaPregunta.opciones,
+        obligatoria: nuevaPregunta.obligatoria
+      };
+    } catch (error) {
+      console.error('❌ Error en crearPreguntaBackend:', error);
+      throw error; // Re-throw para que el componente principal pueda manejar el error
+    }
   };
 
-  const addOpcion = () => {
-    setPreguntaForm(prev => ({
-      ...prev,
-      opciones_respuesta: [...prev.opciones_respuesta, '']
-    }));
+  const actualizarPreguntaBackend = async (id: number, pregunta: {
+    texto: string;
+    tipo: string;
+    opciones: string[];
+    obligatoria: boolean;
+  }) => {
+    console.log('🔄 actualizarPreguntaBackend - Iniciando...', { id, pregunta });
+    
+    try {
+      // Preparar datos para la API con los nombres correctos
+      const preguntaData: Partial<PreguntaOficial> = {
+        texto: pregunta.texto,
+        tipo: pregunta.tipo as 'multiple' | 'si_no' | 'escala' | 'texto',
+        opciones: pregunta.opciones,
+        obligatoria: pregunta.obligatoria
+      };
+      
+      console.log('📤 Actualizando pregunta en API:', preguntaData);
+      
+      // Actualizar pregunta en la base de datos usando la API
+      const preguntaActualizada = await evaluacionesOficialesAPI.actualizarPregunta(id, preguntaData);
+      
+      console.log('✅ Pregunta actualizada:', preguntaActualizada);
+      
+      return {
+        id: preguntaActualizada.id,
+        texto: preguntaActualizada.texto,
+        tipo: preguntaActualizada.tipo,
+        opciones: preguntaActualizada.opciones,
+        obligatoria: preguntaActualizada.obligatoria
+      };
+    } catch (error) {
+      console.error('❌ Error en actualizarPreguntaBackend:', error);
+      throw error; // Re-throw para que el componente principal pueda manejar el error
+    }
   };
 
-  const removeOpcion = (index: number) => {
-    setPreguntaForm(prev => ({
-      ...prev,
-      opciones_respuesta: prev.opciones_respuesta.filter((_: string, i: number) => i !== index)
-    }));
+  const editarPregunta = (pregunta: Pregunta) => {
+    setEditandoPregunta(pregunta);
+    
+    // Detectar automáticamente el tipo basándose en las opciones existentes
+    const tipoDetectado = detectarTipo(pregunta.opciones);
+    
+    setFormulario({
+      texto: pregunta.texto,
+      tipo: tipoDetectado,
+      opciones: pregunta.opciones.length > 0 ? [...pregunta.opciones] : (tipoDetectado === 'multiple' ? ['', ''] : []),
+      obligatoria: pregunta.obligatoria
+    });
+    setMostrarFormulario(true);
   };
 
-  const updateOpcion = (index: number, value: string) => {
-    setPreguntaForm(prev => ({
-      ...prev,
-      opciones_respuesta: prev.opciones_respuesta.map((op: string, i: number) => i === index ? value : op)
-    }));
-  };
-
-  const renderEvaluaciones = () => (
-    <div className="evaluaciones-section">
-      <div className="section-header">
-        <h3>📊 Evaluaciones</h3>
-        {isAdminEmpresa && (
-          <button 
-            onClick={() => setShowCreateForm(true)}
-            className="btn-primary"
-          >
-            ➕ Nueva Evaluación
-          </button>
-        )}
-      </div>
-
-      <div className="evaluaciones-grid">
-        {evaluaciones.map(evaluacion => (
-          <div key={evaluacion.id} className="evaluacion-card">
-            <div className="card-header">
-              <h4>{evaluacion.titulo}</h4>
-              <span className={`status-badge ${evaluacion.estado}`}>
-                {evaluacion.estado.toUpperCase()}
-              </span>
-            </div>
-            
-            <div className="card-content">
-              <p><strong>Tipo:</strong> {evaluacion.tipo_evaluacion_nombre}</p>
-              <p><strong>Descripción:</strong> {evaluacion.descripcion}</p>
-              <p><strong>Fecha inicio:</strong> {new Date(evaluacion.fecha_inicio).toLocaleDateString()}</p>
-              <p><strong>Fecha fin:</strong> {new Date(evaluacion.fecha_fin).toLocaleDateString()}</p>
-              <p><strong>Preguntas:</strong> {evaluacion.total_preguntas}</p>
-              <p><strong>Respuestas:</strong> {evaluacion.total_respuestas}</p>
-              <p><strong>Anónima:</strong> {evaluacion.es_anonima ? 'Sí' : 'No'}</p>
-            </div>
-            
-            <div className="card-actions">
-              {evaluacion.estado === 'borrador' && isAdminEmpresa && (
-                <button 
-                  onClick={() => handleActivarEvaluacion(evaluacion.id)}
-                  className="btn-success"
-                >
-                  🚀 Activar
-                </button>
-              )}
-              <button className="btn-info">
-                📈 Ver Resultados
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {evaluaciones.length === 0 && (
-        <div className="empty-state">
-          <p>No hay evaluaciones creadas</p>
-          {isAdminEmpresa && (
-            <button 
-              onClick={() => setShowCreateForm(true)}
-              className="btn-primary"
-            >
-              Crear mi primera evaluación
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
-  const renderPreguntas = () => (
-    <div className="preguntas-section">
-      <div className="section-header">
-        <h3>❓ Banco de Preguntas</h3>
-        <div className="header-actions">
-          <select 
-            onChange={(e) => loadPreguntas(e.target.value || undefined)}
-            className="tipo-filter"
-          >
-            <option value="">Todos los tipos</option>
-            {tipos.map(tipo => (
-              <option key={tipo.id} value={tipo.nombre}>
-                {tipo.nombre}
-              </option>
-            ))}
-          </select>
-          
-          {isSuperAdmin && (
-            <button 
-              onClick={crearPreguntasOficiales}
-              className="btn-secondary"
-              disabled={loading}
-            >
-              🏛️ Crear Preguntas Oficiales
-            </button>
-          )}
-        </div>
-      </div>
-
-      <div className="preguntas-list">
-        {preguntas.map(pregunta => (
-          <div key={pregunta.id} className="pregunta-card">
-            <div className="pregunta-header">
-              <span className="tipo-badge">{pregunta.tipo_evaluacion_nombre}</span>
-              <span className="empresa-badge">
-                {pregunta.empresa_nombre || 'OFICIAL'}
-              </span>
-            </div>
-            
-            <div className="pregunta-content">
-              <p className="pregunta-texto">{pregunta.texto_pregunta}</p>
-              <div className="pregunta-meta">
-                <span>Tipo: {pregunta.tipo_respuesta}</span>
-                <span>Orden: {pregunta.orden}</span>
-                <span>Obligatoria: {pregunta.es_obligatoria ? 'Sí' : 'No'}</span>
-              </div>
-              
-              {pregunta.opciones_respuesta.length > 0 && (
-                <div className="opciones">
-                  <strong>Opciones:</strong>
-                  <ul>
-                    {pregunta.opciones_respuesta.map((opcion, index) => (
-                      <li key={index}>{opcion}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {preguntas.length === 0 && (
-        <div className="empty-state">
-          <p>No hay preguntas disponibles</p>
-          {isSuperAdmin && (
-            <button 
-              onClick={crearPreguntasOficiales}
-              className="btn-primary"
-            >
-              Crear Preguntas Oficiales
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-
-  const renderCreateForm = () => (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h3>➕ Nueva Evaluación</h3>
-          <button 
-            onClick={() => setShowCreateForm(false)}
-            className="close-btn"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleCreateEvaluacion} className="create-form">
-          <div className="form-group">
-            <label>Título:</label>
-            <input
-              type="text"
-              value={formData.titulo}
-              onChange={(e) => setFormData({...formData, titulo: e.target.value})}
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Descripción:</label>
-            <textarea
-              value={formData.descripcion}
-              onChange={(e) => setFormData({...formData, descripcion: e.target.value})}
-              required
-            />
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Tipo de Evaluación:</label>
-              <select
-                value={formData.tipo_evaluacion}
-                onChange={(e) => {
-                  setFormData({...formData, tipo_evaluacion: e.target.value});
-                  if (e.target.value) {
-                    const tipo = tipos.find(t => t.id.toString() === e.target.value);
-                    if (tipo) loadPreguntas(tipo.nombre);
-                  }
-                }}
-                required
-              >
-                <option value="">Seleccionar tipo</option>
-                {tipos.map(tipo => (
-                  <option key={tipo.id} value={tipo.id}>
-                    {tipo.nombre} - {tipo.descripcion}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label>
-                <input
-                  type="checkbox"
-                  checked={formData.es_anonima}
-                  onChange={(e) => setFormData({...formData, es_anonima: e.target.checked})}
-                />
-                Evaluación Anónima
-              </label>
-            </div>
-          </div>
-
-          <div className="form-row">
-            <div className="form-group">
-              <label>Fecha de Inicio:</label>
-              <input
-                type="datetime-local"
-                value={formData.fecha_inicio}
-                onChange={(e) => setFormData({...formData, fecha_inicio: e.target.value})}
-                required
-              />
-            </div>
-
-            <div className="form-group">
-              <label>Fecha de Fin:</label>
-              <input
-                type="datetime-local"
-                value={formData.fecha_fin}
-                onChange={(e) => setFormData({...formData, fecha_fin: e.target.value})}
-                required
-              />
-            </div>
-          </div>
-
-          {preguntas.length > 0 && (
-            <div className="form-group">
-              <label>Seleccionar Preguntas:</label>
-              <div className="preguntas-selector">
-                {preguntas.map(pregunta => (
-                  <div key={pregunta.id} className="pregunta-checkbox">
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={formData.preguntas_seleccionadas.includes(pregunta.id)}
-                        onChange={() => togglePreguntaSeleccionada(pregunta.id)}
-                      />
-                      {pregunta.texto_pregunta}
-                    </label>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="form-actions">
-            <button type="button" onClick={() => setShowCreateForm(false)} className="btn-secondary">
-              Cancelar
-            </button>
-            <button type="submit" disabled={loading} className="btn-primary">
-              {loading ? 'Creando...' : 'Crear Evaluación'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-
-  // Función para manejar selección de normativa
-  const handleSelectNormativa = (normativa: any) => {
-    setSelectedNormativa(normativa.id);
-    setShowNormativaDetail(true);
-    loadPreguntas(normativa.id);
-  };
-
-  const handleBackToEvaluaciones = () => {
-    setShowNormativaDetail(false);
-    setSelectedNormativa('');
-    setShowPreguntaForm(false);
-  };
-
-  // Función principal de render
-  const renderMainContent = () => {
-    if (showNormativaDetail && selectedNormativa) {
-      return renderNormativaDetail();
+  const eliminarPregunta = async (id: number) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar esta pregunta?')) {
+      return;
     }
     
-    return renderEvaluacionesList();
+    try {
+      // Para preguntas reales de la base de datos, usar la API
+      const pregunta = preguntas.find(p => p.id === id);
+      if (pregunta && pregunta.id > 1000) { // IDs reales vs temporales
+        await evaluacionesOficialesAPI.eliminarPregunta(id);
+      }
+      
+      // Actualizar el estado local
+      setPreguntas(prev => prev.filter(p => p.id !== id));
+      
+    } catch (error) {
+      console.error('Error al eliminar pregunta:', error);
+      alert('Error al eliminar la pregunta. Por favor intenta de nuevo.');
+    }
   };
 
-  const renderEvaluacionesList = () => (
-    <div className="evaluaciones-main">
-      <div className="section-header">
-        <h3>📋 Gestión de Evaluaciones</h3>
-        <p className="section-description">
-          Gestiona las evaluaciones oficiales y sus preguntas. Haz clic en "Editar" para gestionar las preguntas de cada evaluación.
-        </p>
-      </div>
+  const cambiarTipo = (tipo: string) => {
+    const nuevoFormulario = { ...formulario, tipo: tipo as any };
+    
+    // Configurar opciones predeterminadas según el tipo
+    if (tipo === 'si_no') {
+      nuevoFormulario.opciones = ['Sí', 'No'];
+    } else if (tipo === 'escala') {
+      nuevoFormulario.opciones = ['1 - Totalmente en desacuerdo', '2 - En desacuerdo', '3 - Neutral', '4 - De acuerdo', '5 - Totalmente de acuerdo'];
+    } else if (tipo === 'multiple') {
+      // Si ya hay opciones, conservarlas, si no crear plantilla
+      if (formulario.opciones.length === 0) {
+        nuevoFormulario.opciones = ['', ''];
+      }
+    } else if (tipo === 'texto') {
+      // Tipo abierta no necesita opciones
+      nuevoFormulario.opciones = [];
+    }
+    
+    setFormulario(nuevoFormulario);
+  };
 
-      <div className="evaluaciones-grid">
-        {normativas.map(normativa => (
-          <div key={normativa.id} className="evaluacion-card">
-            <div className="evaluacion-icon">{normativa.icono}</div>
-            <div className="evaluacion-info">
-              <h4>{normativa.nombre}</h4>
-              <h5>{normativa.titulo}</h5>
-              <p>{normativa.descripcion}</p>
-            </div>
-            <div className="evaluacion-stats">
-              <div className="stat">
-                <span className="stat-number">
-                {preguntasPorNormativa[normativa.id] || 0}
-                </span>
-                <span className="stat-label">Preguntas</span>
-              </div>
-            </div>
-            <div className="evaluacion-actions">
-              <button 
-                onClick={() => handleSelectNormativa(normativa)}
-                className="btn-primary"
-              >
-                ✏️ Editar Preguntas
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
+  const agregarOpcion = () => {
+    setFormulario(prev => ({
+      ...prev,
+      opciones: [...prev.opciones, '']
+    }));
+  };
 
-      {/* Evaluaciones creadas por empresas */}
-      {evaluaciones.length > 0 && (
-        <div className="evaluaciones-empresa-section">
-          <h4>📊 Evaluaciones Creadas</h4>
-          <div className="evaluaciones-empresa-grid">
-            {evaluaciones.map(evaluacion => (
-              <div key={evaluacion.id} className="evaluacion-empresa-card">
-                <div className="evaluacion-empresa-header">
-                  <h5>{evaluacion.titulo}</h5>
-                  <span className={`status ${evaluacion.estado}`}>
-                    {evaluacion.estado}
-                  </span>
-                </div>
-                <p>{evaluacion.descripcion}</p>
-                <div className="evaluacion-empresa-stats">
-                  <span>{evaluacion.total_preguntas} preguntas</span>
-                  <span>{evaluacion.total_respuestas} respuestas</span>
-                </div>
-                <div className="evaluacion-empresa-actions">
-                  <button className="btn-info btn-sm">👁️ Ver</button>
-                  <button className="btn-warning btn-sm">✏️ Editar</button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+  const actualizarOpcion = (index: number, valor: string) => {
+    const nuevasOpciones = [...formulario.opciones];
+    nuevasOpciones[index] = valor;
+    setFormulario(prev => ({
+      ...prev,
+      opciones: nuevasOpciones
+    }));
+  };
 
-      {/* Botón para crear evaluación personalizada solo para AdminEmpresa */}
-      {isAdminEmpresa &&(
-        <div className="add-evaluacion-section">
-          <button 
-            onClick={() => setShowCreateForm(true)}
-            className="btn-secondary add-evaluacion-btn"
-          >
-            ➕ Crear Evaluación Personalizada
-          </button>
-        </div>
-      )}
-    </div>
-  );
+  const eliminarOpcion = (index: number) => {
+    const nuevasOpciones = formulario.opciones.filter((_, i) => i !== index);
+    setFormulario(prev => ({
+      ...prev,
+      opciones: nuevasOpciones
+    }));
+  };
 
-  const renderNormativaDetail = () => {
-    const normativa = normativas.find(n => n.id === selectedNormativa);
-    const preguntasNormativa = preguntas.filter(p => 
-      p.tipo_evaluacion === parseInt(selectedNormativa) || 
-      p.tipo_evaluacion?.toString() === selectedNormativa
-    );
-
+  if (loading) {
     return (
-      <div className="normativa-detail">
-        <div className="detail-header">
-          <button 
-            onClick={handleBackToEvaluaciones}
-            className="btn-back"
-          >
-            ← Volver a Evaluaciones
-          </button>
-          <div className="detail-title">
-            <span className="detail-icon">{normativa?.icono}</span>
-            <div>
-              <h3>{normativa?.nombre}</h3>
-              <p>{normativa?.titulo}</p>
-            </div>
-          </div>
-          <button 
-            onClick={() => setShowPreguntaForm(true)}
-            className="btn-primary"
-          >
-            ➕ Agregar Pregunta
-          </button>
-        </div>
-
-        <div className="preguntas-container">
-          <div className="preguntas-header">
-            <h4>Preguntas de {normativa?.nombre}</h4>
-            <span className="preguntas-count">{preguntasNormativa.length} preguntas</span>
-          </div>
-
-          {preguntasNormativa.length === 0 ? (
-            <div className="empty-preguntas">
-              <div className="empty-icon">📝</div>
-              <h5>No hay preguntas creadas</h5>
-              <p>Comienza creando la primera pregunta para esta normativa</p>
-              <button 
-                onClick={() => setShowPreguntaForm(true)}
-                className="btn-primary"
-              >
-                Crear primera pregunta
-              </button>
-            </div>
-          ) : (
-            <div className="preguntas-list">
-              {preguntasNormativa.map((pregunta, index) => (
-                <div key={pregunta.id} className="pregunta-card">
-                  <div className="pregunta-header">
-                    <span className="pregunta-numero">#{index + 1}</span>
-                    <span className="pregunta-tipo">{pregunta.tipo_respuesta?.toUpperCase()}</span>
-                    {pregunta.es_obligatoria && <span className="pregunta-required">*</span>}
-                  </div>
-                  
-                  <div className="pregunta-content">
-                    <p className="pregunta-texto">{pregunta.texto_pregunta}</p>
-                    
-                    {pregunta.opciones_respuesta && pregunta.opciones_respuesta.length > 0 && (
-                      <div className="pregunta-opciones">
-                        <strong>Opciones:</strong>
-                        <ul>
-                          {pregunta.opciones_respuesta.map((opcion: string, idx: number) => (
-                            <li key={idx}>{opcion}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="pregunta-actions">
-                    <button className="btn-warning btn-sm">✏️ Editar</button>
-                    <button className="btn-danger btn-sm">🗑️ Eliminar</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {showPreguntaForm && renderPreguntaForm()}
+      <div className="evaluaciones-loading">
+        <div className="loading-spinner"></div>
+        <p>Cargando preguntas oficiales...</p>
       </div>
     );
-  };
-
-  const renderPreguntaForm = () => (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h3>➕ Crear Nueva Pregunta</h3>
-          <button 
-            onClick={() => setShowPreguntaForm(false)}
-            className="modal-close"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form onSubmit={handleCreatePregunta} className="pregunta-form">
-          <div className="form-group">
-            <label htmlFor="normativa">Normativa</label>
-            <select
-              id="normativa"
-              value={selectedNormativa}
-              onChange={(e) => setSelectedNormativa(e.target.value)}
-              required
-            >
-              <option value="">Seleccionar normativa</option>
-              {normativas.map(normativa => (
-                <option key={normativa.id} value={normativa.id}>
-                  {normativa.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="texto">Texto de la pregunta</label>
-            <textarea
-              id="texto"
-              value={preguntaForm.texto_pregunta}
-              onChange={(e) => setPreguntaForm(prev => ({...prev, texto_pregunta: e.target.value}))}
-              placeholder="Escriba la pregunta..."
-              required
-              rows={3}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="tipo">Tipo de pregunta</label>
-            <select
-              id="tipo"
-              value={preguntaForm.tipo_respuesta}
-              onChange={(e) => handleTipoPreguntaChange(e.target.value)}
-              required
-            >
-              <option value="multiple">Opción múltiple</option>
-              <option value="si_no">Sí/No</option>
-              <option value="escala">Escala (1-5)</option>
-              <option value="texto">Texto libre</option>
-            </select>
-          </div>
-
-          {preguntaForm.tipo_respuesta === 'multiple' && (
-            <div className="form-group">
-              <label>Opciones de respuesta</label>
-              {preguntaForm.opciones_respuesta.map((opcion: string, index: number) => (
-                <div key={index} className="opcion-input">
-                  <input
-                    type="text"
-                    value={opcion}
-                    onChange={(e) => updateOpcion(index, e.target.value)}
-                    placeholder={`Opción ${index + 1}`}
-                    required
-                  />
-                  {preguntaForm.opciones_respuesta.length > 2 && (
-                    <button 
-                      type="button"
-                      onClick={() => removeOpcion(index)}
-                      className="btn-danger btn-sm"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button 
-                type="button"
-                onClick={addOpcion}
-                className="btn-secondary btn-sm"
-              >
-                ➕ Agregar opción
-              </button>
-            </div>
-          )}
-
-          <div className="form-group">
-            <label htmlFor="orden">Orden</label>
-            <input
-              type="number"
-              id="orden"
-              value={preguntaForm.orden}
-              onChange={(e) => setPreguntaForm(prev => ({...prev, orden: parseInt(e.target.value)}))}
-              min="1"
-              required
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={preguntaForm.es_obligatoria}
-                onChange={(e) => setPreguntaForm(prev => ({...prev, es_obligatoria: e.target.checked}))}
-              />
-              Pregunta requerida
-            </label>
-          </div>
-
-          <div className="form-actions">
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Creando...' : 'Crear Pregunta'}
-            </button>
-            <button 
-              type="button" 
-              onClick={() => setShowPreguntaForm(false)}
-              className="btn-secondary"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+  }
 
   return (
     <div className="evaluaciones-gestion">
-      <div className="page-header">
-        <h2>📊 Sistema de Evaluaciones</h2>
-        <p>Gestión de evaluaciones NOM-035, NOM-030 y 360°</p>
+      {/* Header */}
+      <div className="evaluaciones-header">
+        <h2>🎯 Gestión de Evaluaciones Oficiales</h2>
+        <p>Administra las preguntas de las normativas NOM-030 y NOM-035</p>
       </div>
 
-      {error && (
-        <div className="error-message">
-          {error}
-          <button onClick={() => setError('')} className="close-error">✕</button>
+      {/* Selector de Normativa */}
+      <div className="normativa-selector">
+        <div className="normativa-tabs">
+          <button 
+            className={`normativa-tab ${normativaSeleccionada === 'nom_035' ? 'active' : ''}`}
+            onClick={() => setNormativaSeleccionada('nom_035')}
+          >
+            🧠 NOM-035
+            <span className="tab-count">{preguntas.filter(p => p.normativa === 'nom_035').length}</span>
+          </button>
+          <button 
+            className={`normativa-tab ${normativaSeleccionada === 'nom_030' ? 'active' : ''}`}
+            onClick={() => setNormativaSeleccionada('nom_030')}
+          >
+            🛡️ NOM-030
+            <span className="tab-count">{preguntas.filter(p => p.normativa === 'nom_030').length}</span>
+          </button>
+        </div>
+        
+        <button 
+          onClick={() => setMostrarFormulario(true)}
+          className="btn-nueva-pregunta"
+        >
+          ➕ Nueva Pregunta
+        </button>
+      </div>
+
+      {/* Lista de Preguntas */}
+      <div className="preguntas-lista">
+        {preguntasFiltradas.length === 0 ? (
+          <div className="estado-vacio">
+            <div className="icono-vacio">📝</div>
+            <h3>No hay preguntas para {normativaSeleccionada.toUpperCase()}</h3>
+            <p>Comienza creando la primera pregunta de esta normativa</p>
+            <button 
+              onClick={() => setMostrarFormulario(true)}
+              className="btn-primary"
+            >
+              Crear primera pregunta
+            </button>
+          </div>
+        ) : (
+          preguntasFiltradas.map((pregunta, index) => {
+            const tipoDetectado = detectarTipo(pregunta.opciones);
+            const iconoTipo = {
+              'multiple': '📋',
+              'si_no': '✅',
+              'escala': '📊',
+              'texto': '✏️'
+            }[tipoDetectado];
+            
+            const nombreTipo = {
+              'multiple': 'Opción Múltiple',
+              'si_no': 'Sí/No',
+              'escala': 'Escala Likert',
+              'texto': 'Respuesta Abierta'
+            }[tipoDetectado];
+            
+            return (
+              <div key={pregunta.id} className="pregunta-item">
+                <div className="pregunta-header">
+                  <span className="pregunta-numero">#{index + 1}</span>
+                  <span className="pregunta-tipo">
+                    {iconoTipo} {nombreTipo}
+                  </span>
+                  {pregunta.obligatoria && <span className="pregunta-obligatoria">* OBLIGATORIA</span>}
+                </div>
+                
+                <div className="pregunta-contenido">
+                  <h4>{pregunta.texto}</h4>
+                  
+                  {pregunta.opciones.length > 0 && (
+                    <div className="pregunta-opciones">
+                      <strong>
+                        {tipoDetectado === 'escala' ? 'Niveles de la escala:' : 'Opciones disponibles:'}
+                      </strong>
+                      <ul className={`opciones-list ${tipoDetectado}`}>
+                        {pregunta.opciones.map((opcion, idx) => (
+                          <li key={idx} className={`opcion-item ${tipoDetectado}`}>
+                            {tipoDetectado === 'escala' && <span className="nivel-numero">{idx + 1}</span>}
+                            {opcion}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {tipoDetectado === 'texto' && (
+                    <div className="info-tipo-texto">
+                      <em>💬 Los empleados podrán escribir una respuesta libre</em>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="pregunta-acciones">
+                  <button 
+                    onClick={() => editarPregunta(pregunta)}
+                    className="btn-editar"
+                    title="Editar esta pregunta"
+                  >
+                    ✏️ Editar
+                  </button>
+                  <button 
+                    onClick={() => eliminarPregunta(pregunta.id)}
+                    className="btn-eliminar"
+                    title="Eliminar esta pregunta"
+                  >
+                    🗑️ Eliminar
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Modal de Formulario */}
+      {mostrarFormulario && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h3>{editandoPregunta ? '✏️ Editar Pregunta' : '➕ Nueva Pregunta'}</h3>
+              <button 
+                onClick={limpiarFormulario}
+                className="modal-close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={manejarSubmit} className="pregunta-form">
+              <div className="form-group">
+                <label>Texto de la pregunta *</label>
+                <textarea
+                  value={formulario.texto}
+                  onChange={(e) => setFormulario(prev => ({...prev, texto: e.target.value}))}
+                  placeholder="Escriba la pregunta..."
+                  required
+                  rows={3}
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Tipo de pregunta *</label>
+                <select
+                  value={formulario.tipo}
+                  onChange={(e) => cambiarTipo(e.target.value)}
+                  required
+                >
+                  <option value="multiple">📋 Opción múltiple</option>
+                  <option value="si_no">✅ Sí/No</option>
+                  <option value="escala">📊 Escala Likert (1-5)</option>
+                  <option value="texto">✏️ Respuesta abierta</option>
+                </select>
+                
+                {/* Ayuda contextual para cada tipo */}
+                <div className="tipo-ayuda">
+                  {formulario.tipo === 'multiple' && (
+                    <small>👉 El empleado podrá seleccionar una opción de varias disponibles</small>
+                  )}
+                  {formulario.tipo === 'si_no' && (
+                    <small>👉 Pregunta binaria con respuesta Sí o No</small>
+                  )}
+                  {formulario.tipo === 'escala' && (
+                    <small>👉 Escala de valoración del 1 al 5 (Likert)</small>
+                  )}
+                  {formulario.tipo === 'texto' && (
+                    <small>👉 El empleado podrá escribir una respuesta libre</small>
+                  )}
+                </div>
+              </div>
+
+              {(formulario.tipo === 'multiple' || formulario.tipo === 'escala') && (
+                <div className="form-group">
+                  <label>
+                    {formulario.tipo === 'multiple' ? 'Opciones de respuesta' : 'Escala de valoración'}
+                    {formulario.tipo === 'escala' && <small> (recomendado: mantener 5 opciones)</small>}
+                  </label>
+                  {formulario.opciones.map((opcion, index) => (
+                    <div key={index} className="opcion-input">
+                      <span className="opcion-numero">{index + 1}.</span>
+                      <input
+                        type="text"
+                        value={opcion}
+                        onChange={(e) => actualizarOpcion(index, e.target.value)}
+                        placeholder={
+                          formulario.tipo === 'escala' 
+                            ? `Nivel ${index + 1} (ej: ${index + 1} - Totalmente en desacuerdo)`
+                            : `Opción ${index + 1}`
+                        }
+                        required
+                      />
+                      {formulario.opciones.length > 2 && (
+                        <button 
+                          type="button"
+                          onClick={() => eliminarOpcion(index)}
+                          className="btn-danger btn-sm"
+                          title="Eliminar esta opción"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  
+                  {formulario.tipo === 'multiple' && (
+                    <button 
+                      type="button"
+                      onClick={agregarOpcion}
+                      className="btn-secondary btn-sm"
+                    >
+                      ➕ Agregar opción
+                    </button>
+                  )}
+                  
+                  {formulario.tipo === 'escala' && formulario.opciones.length < 7 && (
+                    <button 
+                      type="button"
+                      onClick={agregarOpcion}
+                      className="btn-secondary btn-sm"
+                    >
+                      ➕ Agregar nivel
+                    </button>
+                  )}
+                </div>
+              )}
+              
+              {formulario.tipo === 'si_no' && (
+                <div className="form-group">
+                  <label>Opciones de respuesta</label>
+                  <div className="opciones-fijas">
+                    <span className="opcion-fija">✅ Sí</span>
+                    <span className="opcion-fija">❌ No</span>
+                  </div>
+                  <small>Las opciones Sí/No son fijas para este tipo de pregunta</small>
+                </div>
+              )}
+              
+              {formulario.tipo === 'texto' && (
+                <div className="form-group">
+                  <label>Tipo de respuesta</label>
+                  <div className="info-respuesta">
+                    <span className="info-icon">✏️</span>
+                    <span>El empleado podrá escribir una respuesta libre de texto</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={formulario.obligatoria}
+                    onChange={(e) => setFormulario(prev => ({...prev, obligatoria: e.target.checked}))}
+                  />
+                  Pregunta obligatoria
+                </label>
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn-primary">
+                  {editandoPregunta ? 'Guardar Cambios' : 'Crear Pregunta'}
+                </button>
+                <button 
+                  type="button" 
+                  onClick={limpiarFormulario}
+                  className="btn-secondary"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
-
-      <div className="evaluaciones-container">
-        <div className="evaluaciones-content">
-          {loading && <div className="loading">Cargando...</div>}
-          
-          {renderMainContent()}
-        </div>
-      </div>
-
-      {showCreateForm && renderCreateForm()}
     </div>
   );
 };
+
+// Datos de muestra para fallback
+const preguntasMuestra: Pregunta[] = [
+  {
+    id: 1,
+    texto: "¿Considera que su carga de trabajo es adecuada?",
+    tipo: "escala",
+    opciones: ["1 - Totalmente en desacuerdo", "2 - En desacuerdo", "3 - Neutral", "4 - De acuerdo", "5 - Totalmente de acuerdo"],
+    obligatoria: true,
+    normativa: "nom_035"
+  },
+  {
+    id: 2,
+    texto: "¿Su jefe inmediato le proporciona información clara sobre sus responsabilidades?",
+    tipo: "si_no",
+    opciones: ["Sí", "No"],
+    obligatoria: true,
+    normativa: "nom_035"
+  },
+  {
+    id: 3,
+    texto: "Describa las medidas de seguridad implementadas en su área de trabajo",
+    tipo: "texto",
+    opciones: [],
+    obligatoria: false,
+    normativa: "nom_030"
+  }
+];
 
 export default EvaluacionesGestion;

@@ -105,6 +105,21 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   // Estado para filtros
   const [filtroTexto, setFiltroTexto] = useState('');
   // Aplicar debounce al filtro de texto
+  const useDebounce = (value: string, delay: number) => {
+    const [debouncedValue, setDebouncedValue] = React.useState(value);
+    
+    React.useEffect(() => {
+      const handler = setTimeout(() => {
+        setDebouncedValue(value);
+      }, delay);
+      
+      return () => {
+        clearTimeout(handler);
+      };
+    }, [value, delay]);
+    
+    return debouncedValue;
+  };
   const debouncedFiltroTexto = useDebounce(filtroTexto, 500);
   const [filtroStatus, setFiltroStatus] = useState<'all' | 'active' | 'inactive'>('all');
   const [filtroNivelUsuario, setFiltroNivelUsuario] = useState('');

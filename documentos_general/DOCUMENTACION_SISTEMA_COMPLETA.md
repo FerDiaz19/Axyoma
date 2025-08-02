@@ -324,4 +324,132 @@ python obtener_tablas.py
 
 ---
 
+## 📊 CONSULTAS SQL PARA EVALUACIONES OFICIALES
+
+### 🗄️ **TABLAS DE EVALUACIONES OFICIALES**
+
+El sistema maneja las preguntas oficiales de NOM-030 y NOM-035 en estas tablas:
+
+- **`evaluaciones_oficiales`** - Evaluaciones NOM-030 y NOM-035
+- **`secciones_oficiales`** - Secciones organizadas por normativa  
+- **`preguntas_oficiales`** - 39 preguntas reales extraídas de documentos oficiales
+
+### 🔍 **CONSULTAS ÚTILES**
+
+#### Ver todas las evaluaciones oficiales
+```sql
+SELECT * FROM evaluaciones_oficiales;
+```
+
+#### Ver todas las secciones con sus evaluaciones
+```sql
+SELECT s.id, s.nombre as seccion, s.numero_orden, 
+       e.tipo_norma, e.nombre as evaluacion
+FROM secciones_oficiales s 
+JOIN evaluaciones_oficiales e ON s.evaluacion_oficial_id = e.id
+ORDER BY e.tipo_norma, s.numero_orden;
+```
+
+#### Ver todas las preguntas de NOM-035
+```sql
+SELECT p.id, p.numero_orden, p.texto_pregunta, p.tipo_pregunta,
+       s.nombre as seccion, e.tipo_norma
+FROM preguntas_oficiales p
+JOIN secciones_oficiales s ON p.seccion_id = s.id
+JOIN evaluaciones_oficiales e ON s.evaluacion_oficial_id = e.id
+WHERE e.tipo_norma = 'NOM-035'
+ORDER BY p.numero_orden;
+```
+
+#### Ver todas las preguntas de NOM-030
+```sql
+SELECT p.id, p.numero_orden, p.texto_pregunta, p.tipo_pregunta,
+       s.nombre as seccion, e.tipo_norma
+FROM preguntas_oficiales p
+JOIN secciones_oficiales s ON p.seccion_id = s.id
+JOIN evaluaciones_oficiales e ON s.evaluacion_oficial_id = e.id
+WHERE e.tipo_norma = 'NOM-030'
+ORDER BY p.numero_orden;
+```
+
+#### Contar preguntas por normativa
+```sql
+SELECT e.tipo_norma, COUNT(p.id) as total_preguntas
+FROM evaluaciones_oficiales e
+JOIN secciones_oficiales s ON e.id = s.evaluacion_oficial_id
+JOIN preguntas_oficiales p ON s.id = p.seccion_id
+GROUP BY e.tipo_norma;
+```
+
+#### Ver estructura completa de una normativa
+```sql
+SELECT 
+    e.tipo_norma,
+    e.nombre as evaluacion,
+    s.numero_orden as orden_seccion,
+    s.nombre as seccion,
+    COUNT(p.id) as total_preguntas
+FROM evaluaciones_oficiales e
+JOIN secciones_oficiales s ON e.id = s.evaluacion_oficial_id
+LEFT JOIN preguntas_oficiales p ON s.id = p.seccion_id
+WHERE e.tipo_norma = 'NOM-035'  -- Cambiar por 'NOM-030' para la otra normativa
+GROUP BY e.tipo_norma, e.nombre, s.numero_orden, s.nombre
+ORDER BY s.numero_orden;
+```
+
+#### Buscar preguntas por texto
+```sql
+SELECT p.texto_pregunta, s.nombre as seccion, e.tipo_norma
+FROM preguntas_oficiales p
+JOIN secciones_oficiales s ON p.seccion_id = s.id
+JOIN evaluaciones_oficiales e ON s.evaluacion_oficial_id = e.id
+WHERE p.texto_pregunta ILIKE '%trabajo%'  -- Buscar preguntas que contengan "trabajo"
+ORDER BY e.tipo_norma, p.numero_orden;
+```
+
+#### Verificar integridad de datos
+```sql
+-- Verificar que no haya registros huérfanos
+SELECT 
+    'Evaluaciones' as tabla, COUNT(*) as total
+FROM evaluaciones_oficiales
+UNION ALL
+SELECT 
+    'Secciones', COUNT(*)
+FROM secciones_oficiales
+UNION ALL
+SELECT 
+    'Preguntas', COUNT(*)
+FROM preguntas_oficiales
+UNION ALL
+SELECT 
+    'Secciones sin evaluación', COUNT(*)
+FROM secciones_oficiales 
+WHERE evaluacion_oficial_id IS NULL
+UNION ALL
+SELECT 
+    'Preguntas sin sección', COUNT(*)
+FROM preguntas_oficiales 
+WHERE seccion_id IS NULL;
+```
+
+### 📈 **ESTADÍSTICAS ACTUALES**
+
+- **2 evaluaciones oficiales** (NOM-030 y NOM-035)
+- **23 secciones oficiales** organizadas por normativa
+- **39 preguntas oficiales** extraídas de documentos reales
+  - 27 preguntas NOM-035 (Factores de Riesgo Psicosocial)
+  - 12 preguntas NOM-030 (Servicios Preventivos)
+
+### 🌐 **ENDPOINTS API DISPONIBLES**
+
+```
+GET /api/evaluaciones/oficial/normativa/nom_030/
+GET /api/evaluaciones/oficial/normativa/nom_035/
+GET /api/evaluaciones/oficial/evaluaciones-oficiales/
+GET /api/evaluaciones/oficial/preguntas-oficiales/
+```
+
+---
+
 *Este documento es la guía completa para entender, configurar y mantener el sistema Axyoma. ¡Úsalo como referencia para respaldos y restauraciones!* 💪

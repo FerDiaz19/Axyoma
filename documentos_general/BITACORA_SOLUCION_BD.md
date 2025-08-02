@@ -774,5 +774,67 @@ Problemas de conexión entre frontend React y backend Django, especialmente en d
 
 ---
 
+## 📊 **NUEVA FUNCIONALIDAD:** Evaluaciones Oficiales NOM-030 y NOM-035
+
+### **Descripción:**
+Se implementó el sistema completo de evaluaciones oficiales con preguntas reales extraídas de documentos oficiales.
+
+### **Tablas creadas:**
+- `evaluaciones_oficiales` - 2 evaluaciones (NOM-030 y NOM-035)
+- `secciones_oficiales` - 23 secciones organizadas
+- `preguntas_oficiales` - 39 preguntas reales
+
+### **Consultas SQL útiles:**
+
+#### Ver todas las evaluaciones
+```sql
+SELECT * FROM evaluaciones_oficiales;
+```
+
+#### Ver preguntas de NOM-035
+```sql
+SELECT p.texto_pregunta, s.nombre as seccion 
+FROM preguntas_oficiales p
+JOIN secciones_oficiales s ON p.seccion_id = s.id
+JOIN evaluaciones_oficiales e ON s.evaluacion_oficial_id = e.id
+WHERE e.tipo_norma = 'NOM-035'
+ORDER BY p.numero_orden;
+```
+
+#### Ver preguntas de NOM-030
+```sql
+SELECT p.texto_pregunta, s.nombre as seccion 
+FROM preguntas_oficiales p
+JOIN secciones_oficiales s ON p.seccion_id = s.id
+JOIN evaluaciones_oficiales e ON s.evaluacion_oficial_id = e.id
+WHERE e.tipo_norma = 'NOM-030'
+ORDER BY p.numero_orden;
+```
+
+#### Estadísticas por normativa
+```sql
+SELECT e.tipo_norma, COUNT(p.id) as total_preguntas
+FROM evaluaciones_oficiales e
+JOIN secciones_oficiales s ON e.id = s.evaluacion_oficial_id
+JOIN preguntas_oficiales p ON s.id = p.seccion_id
+GROUP BY e.tipo_norma;
+```
+
+### **Endpoints API disponibles:**
+- `GET /api/evaluaciones/oficial/normativa/nom_030/`
+- `GET /api/evaluaciones/oficial/normativa/nom_035/`
+- `GET /api/evaluaciones/oficial/evaluaciones-oficiales/`
+- `GET /api/evaluaciones/oficial/preguntas-oficiales/`
+
+### **Scripts de mantenimiento:**
+- `cargar_preguntas_oficiales.py` - Cargar preguntas desde documentos
+- `verificar_preguntas_oficiales.py` - Verificar preguntas en BD
+- `verificar_tablas_bd.py` - Ver estructura de tablas
+- `resumen_integracion_final.py` - Resumen completo
+
+### **Estado:** ✅ **COMPLETADO**
+
+---
+
 ## ⚠️ **PROBLEMA FECHA:** Error 404 en evaluaciones
 ### **Descripción del error:**

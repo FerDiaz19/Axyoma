@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 from rest_framework import viewsets, permissions, status
-from rest_framework.decorators import action, api_view
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Q, Count
+from django.db.models import Q, Count, Max
+from django.db import models
 from django.utils import timezone
 from .models import (
     TipoEvaluacion, Pregunta, EvaluacionCompleta, EvaluacionPregunta,
@@ -20,6 +21,12 @@ from .serializers import (
 from .models import (
     TipoEvaluacion, Pregunta, EvaluacionCompleta, EvaluacionPregunta,
     RespuestaEvaluacion, DetalleRespuesta, ResultadoEvaluacion, SeccionPregunta
+)
+
+# Importar modelos oficiales para las normas NOM
+from .models_oficiales import (
+    EvaluacionOficial, SeccionOficial, PreguntaOficial,
+    AsignacionEvaluacion, EmpleadoAsignado, RespuestaEmpleado
 )
 
 @method_decorator(csrf_exempt, name='dispatch')
@@ -374,4 +381,263 @@ def preguntas_nom035(request):
             # ...otros campos que quieras mostrar...
         })
     return Response({'total': len(data), 'preguntas': data})
+
+
+# ===== EVALUACIONES OFICIALES =====
+from .models_oficiales import EvaluacionOficial, SeccionOficial, PreguntaOficial
+
+@method_decorator(csrf_exempt, name='dispatch')
+class EvaluacionOficialViewSet(viewsets.ModelViewSet):
+    """ViewSet para evaluaciones oficiales NOM-030 y NOM-035"""
+    queryset = EvaluacionOficial.objects.filter(activa=True)
+    permission_classes = [permissions.AllowAny]  # Permitir acceso sin autenticación temporalmente
+    
+    def get_serializer_class(self):
+        from .serializers_oficiales import EvaluacionOficialSerializer
+        return EvaluacionOficialSerializer
+    
+    @action(detail=True, methods=['get'])
+    def preguntas(self, request, pk=None):
+        """Obtener todas las preguntas de una evaluación oficial"""
+        evaluacion = self.get_object()
+        secciones = evaluacion.secciones.all().order_by('numero_orden')
+        
+        data = []
+        for seccion in secciones:
+            preguntas = seccion.preguntas.all().order_by('numero_orden')
+            for pregunta in preguntas:
+                data.append({
+                    'id': pregunta.id,
+                    'numero_orden': pregunta.numero_orden,
+                    'texto': pregunta.texto_pregunta,
+                    'tipo': pregunta.tipo_pregunta.lower(),
+                    'opciones': pregunta.opciones_respuesta,
+                    'obligatoria': pregunta.es_obligatoria,
+                    'normativa': evaluacion.tipo_norma.lower().replace('-', '_'),
+                    'seccion': {
+                        'id': seccion.id,
+                        'nombre': seccion.nombre,
+                        'numero_orden': seccion.numero_orden
+                    }
+                })
+        
+        return Response({
+            'evaluacion': {
+                'id': evaluacion.id,
+                'tipo_norma': evaluacion.tipo_norma,
+                'nombre': evaluacion.nombre,
+                'descripcion': evaluacion.descripcion
+            },
+            'total_preguntas': len(data),
+            'preguntas': data
+        })
+
+@method_decorator(csrf_exempt, name='dispatch')  
+class PreguntaOficialViewSet(viewsets.ModelViewSet):
+    """ViewSet para preguntas oficiales"""
+    serializer_class = PreguntaSerializer  # Usamos el serializer existente temporalmente
+    permission_classes = [permissions.AllowAny]  # Permitir acceso sin autenticación temporalmente
+    
+    def get_queryset(self):
+        queryset = PreguntaOficial.objects.all()
+        
+        # Filtrar por normativa si se especifica
+        normativa = self.request.query_params.get('normativa')
+        if normativa:
+            # Convertir nom_030 -> NOM-030
+            tipo_norma = normativa.upper().replace('_', '-')
+            queryset = queryset.filter(seccion__evaluacion_oficial__tipo_norma=tipo_norma)
+        
+        return queryset.order_by('seccion__numero_orden', 'numero_orden')
+    
+    def create(self, request, *args, **kwargs):
+        """Crear nueva pregunta oficial"""
+        try:
+            data = request.data
+            
+            # Determinar la normativa (del request o parámetro)
+            normativa = data.get('normativa', 'nom_035')  # Por defecto NOM-035
+            tipo_norma = normativa.upper().replace('_', '-')
+            
+            # Buscar la evaluación oficial correspondiente
+            evaluacion = EvaluacionOficial.objects.get(tipo_norma=tipo_norma, activa=True)
+            
+            # Buscar una sección apropiada o usar la primera disponible
+            seccion = evaluacion.secciones.first()
+            if not seccion:
+                return Response(
+                    {'error': f'No hay secciones disponibles para {tipo_norma}'}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Determinar el próximo número de orden
+            ultimo_numero = PreguntaOficial.objects.filter(
+                seccion__evaluacion_oficial=evaluacion
+            ).aggregate(max_orden=Max('numero_orden'))['max_orden'] or 0
+            
+            # Crear la pregunta
+            pregunta = PreguntaOficial.objects.create(
+                texto_pregunta=data.get('texto', ''),
+                tipo_pregunta=data.get('tipo', 'multiple').capitalize(),
+                opciones_respuesta=data.get('opciones', []),
+                es_obligatoria=data.get('obligatoria', True),
+                numero_orden=data.get('numero_orden', ultimo_numero + 1),
+                seccion=seccion
+            )
+            
+            # Respuesta en formato esperado por el frontend
+            return Response({
+                'id': pregunta.id,
+                'numero_orden': pregunta.numero_orden,
+                'texto': pregunta.texto_pregunta,
+                'tipo': pregunta.tipo_pregunta.lower(),
+                'opciones': pregunta.opciones_respuesta,
+                'obligatoria': pregunta.es_obligatoria,
+                'normativa': normativa,
+                'seccion': {
+                    'id': seccion.id,
+                    'nombre': seccion.nombre,
+                    'numero_orden': seccion.numero_orden
+                }
+            }, status=status.HTTP_201_CREATED)
+            
+        except EvaluacionOficial.DoesNotExist:
+            return Response(
+                {'error': f'No se encontró la evaluación oficial para {normativa}'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {'error': f'Error al crear pregunta: {str(e)}'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def update(self, request, *args, **kwargs):
+        """Actualizar pregunta oficial existente"""
+        try:
+            pregunta = self.get_object()
+            data = request.data
+            
+            # Actualizar campos
+            if 'texto' in data:
+                pregunta.texto_pregunta = data['texto']
+            if 'tipo' in data:
+                pregunta.tipo_pregunta = data['tipo'].capitalize()
+            if 'opciones' in data:
+                pregunta.opciones_respuesta = data['opciones']
+            if 'obligatoria' in data:
+                pregunta.es_obligatoria = data['obligatoria']
+            if 'numero_orden' in data:
+                pregunta.numero_orden = data['numero_orden']
+            
+            pregunta.save()
+            
+            # Respuesta en formato esperado por el frontend
+            normativa = pregunta.seccion.evaluacion_oficial.tipo_norma.lower().replace('-', '_')
+            return Response({
+                'id': pregunta.id,
+                'numero_orden': pregunta.numero_orden,
+                'texto': pregunta.texto_pregunta,
+                'tipo': pregunta.tipo_pregunta.lower(),
+                'opciones': pregunta.opciones_respuesta,
+                'obligatoria': pregunta.es_obligatoria,
+                'normativa': normativa,
+                'seccion': {
+                    'id': pregunta.seccion.id,
+                    'nombre': pregunta.seccion.nombre,
+                    'numero_orden': pregunta.seccion.numero_orden
+                }
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': f'Error al actualizar pregunta: {str(e)}'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    
+    def list(self, request, *args, **kwargs):
+        """Listar preguntas oficiales con formato específico"""
+        queryset = self.get_queryset()
+        
+        # Agrupar por normativa
+        data = {}
+        for pregunta in queryset:
+            normativa = pregunta.seccion.evaluacion_oficial.tipo_norma.lower().replace('-', '_')
+            
+            if normativa not in data:
+                data[normativa] = {
+                    'id': pregunta.seccion.evaluacion_oficial.id,
+                    'tipo_norma': pregunta.seccion.evaluacion_oficial.tipo_norma,
+                    'nombre': pregunta.seccion.evaluacion_oficial.nombre,
+                    'descripcion': pregunta.seccion.evaluacion_oficial.descripcion,
+                    'preguntas': []
+                }
+            
+            data[normativa]['preguntas'].append({
+                'id': pregunta.id,
+                'numero_orden': pregunta.numero_orden,
+                'texto': pregunta.texto_pregunta,
+                'tipo': pregunta.tipo_pregunta.lower(),
+                'opciones': pregunta.opciones_respuesta,
+                'obligatoria': pregunta.es_obligatoria,
+                'normativa': normativa,
+                'seccion': {
+                    'id': pregunta.seccion.id,
+                    'nombre': pregunta.seccion.nombre,
+                    'numero_orden': pregunta.seccion.numero_orden
+                }
+            })
+        
+        return Response({
+            'total_normativas': len(data),
+            'normativas': data
+        })
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])  # Permitir acceso sin autenticación temporalmente
+def preguntas_por_normativa(request, normativa):
+    """Endpoint específico para obtener preguntas por normativa - SuperAdmin y usuarios autenticados"""
+    try:
+        # Convertir nom_030 -> NOM-030
+        tipo_norma = normativa.upper().replace('_', '-')
+        
+        evaluacion = EvaluacionOficial.objects.get(tipo_norma=tipo_norma, activa=True)
+        secciones = evaluacion.secciones.all().order_by('numero_orden')
+        
+        preguntas = []
+        for seccion in secciones:
+            preguntas_seccion = seccion.preguntas.all().order_by('numero_orden')
+            for pregunta in preguntas_seccion:
+                preguntas.append({
+                    'id': pregunta.id,
+                    'numero_orden': pregunta.numero_orden,
+                    'texto': pregunta.texto_pregunta,
+                    'tipo': pregunta.tipo_pregunta.lower(),
+                    'opciones': pregunta.opciones_respuesta,
+                    'obligatoria': pregunta.es_obligatoria,
+                    'normativa': normativa,
+                    'seccion': {
+                        'id': seccion.id,
+                        'nombre': seccion.nombre,
+                        'numero_orden': seccion.numero_orden
+                    }
+                })
+        
+        return Response({
+            'evaluacion': {
+                'id': evaluacion.id,
+                'tipo_norma': evaluacion.tipo_norma,
+                'nombre': evaluacion.nombre,
+                'descripcion': evaluacion.descripcion,
+                'tiempo_limite': evaluacion.tiempo_limite
+            },
+            'total_preguntas': len(preguntas),
+            'preguntas': preguntas
+        })
+        
+    except EvaluacionOficial.DoesNotExist:
+        return Response(
+            {'error': f'No se encontró la evaluación oficial para {normativa}'}, 
+            status=status.HTTP_404_NOT_FOUND
+        )
 

@@ -3,7 +3,8 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     TipoEvaluacionViewSet, PreguntaViewSet, 
-    EvaluacionViewSet, RespuestaEvaluacionViewSet, preguntas_nom035
+    EvaluacionViewSet, RespuestaEvaluacionViewSet, preguntas_nom035,
+    EvaluacionOficialViewSet, PreguntaOficialViewSet, preguntas_por_normativa
 )
 
 # Router para el sistema existente de evaluaciones
@@ -13,11 +14,20 @@ router.register(r'preguntas', PreguntaViewSet, basename='pregunta')
 router.register(r'evaluaciones', EvaluacionViewSet, basename='evaluacion')
 router.register(r'respuestas', RespuestaEvaluacionViewSet, basename='respuesta')
 
+# Router para evaluaciones oficiales (accesible por frontend)
+router_oficial = DefaultRouter()
+router_oficial.register(r'evaluaciones-oficiales', EvaluacionOficialViewSet, basename='evaluacion-oficial')
+router_oficial.register(r'preguntas-oficiales', PreguntaOficialViewSet, basename='pregunta-oficial')
+
 urlpatterns = [
     # Sistema existente de evaluaciones
     path('', include(router.urls)),
     path('preguntas-nom035/', preguntas_nom035),
     
+    # Evaluaciones oficiales para frontend
+    path('oficial/', include(router_oficial.urls)),
+    path('oficial/normativa/<str:normativa>/', preguntas_por_normativa, name='preguntas-por-normativa'),
+    
     # Sistema oficial de evaluaciones NOM (SuperAdmin)
-    path('oficial/', include('apps.evaluaciones.urls_oficiales')),
+    path('superadmin/', include('apps.evaluaciones.urls_oficiales')),
 ]
