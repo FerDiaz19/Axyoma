@@ -1,31 +1,36 @@
-from rest_framework import viewsets, status
-from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.exceptions import ValidationError
-from rest_framework.authtoken.models import Token
-from django.contrib.auth import authenticate
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
-from django.utils import timezone
-from datetime import timedelta
-import traceback
+
+# ---------------------------------------------------------------------------- #
+
+import csv
 import string
 import random
-import csv
-from django.http import HttpResponse
+import logging
+
 from django.utils import timezone
-from apps.users.models import PerfilUsuario, Empresa, Planta, AdminPlanta, Departamento, Puesto, Empleado
+from django.http import HttpResponse
+from rest_framework import viewsets, status
+from django.contrib.auth import authenticate
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from rest_framework.exceptions import ValidationError
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.decorators import action, api_view, permission_classes
+
+
+from apps.users.models import *
 from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion
+
 from .serializers import (
     LoginSerializer, EmpresaRegistroSerializer,
     PlantaSerializer, PlantaCreateSerializer,
     DepartamentoSerializer, DepartamentoCreateSerializer,
     PuestoSerializer, PuestoCreateSerializer,
     EmpleadoSerializer, EmpleadoCreateSerializer, PlanSuscripcionSerializer
-    # REMOVIDO: ListarPlanesView - no existe en serializers
 )
 
+# ---------------------------------------------------------------------------- #
 
 class SuscripcionBasicaViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -71,7 +76,6 @@ class SuscripcionBasicaViewSet(viewsets.ViewSet):
     def planes(self, request):
         """Listar planes disponibles"""
         try:
-            from apps.subscriptions.models import PlanSuscripcion
             planes = PlanSuscripcion.objects.filter(status=True)
             return Response([{
                 "plan_id": plan.id,
@@ -85,22 +89,21 @@ class SuscripcionBasicaViewSet(viewsets.ViewSet):
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# ---------------------------------------------------------------------------- #
+
 @method_decorator(csrf_exempt, name='dispatch')
 class AuthViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
-    
+
     def get_subscription_info(self, empresa):
         """Obtiene información de suscripción - NUEVA LÓGICA"""
         try:
-            from apps.subscriptions.models import SuscripcionEmpresa
-            from django.utils import timezone
-            
             # Buscar suscripción activa de la empresa
             suscripcion = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
                 estado='activa'
             ).first()
-            
+
             if not suscripcion:
                 return {
                     'tiene_suscripcion': False,
@@ -110,13 +113,13 @@ class AuthViewSet(viewsets.ViewSet):
                     'dias_restantes': 0,
                     'acceso_reportes': False
                 }
-            
+
             # Verificar si está vencida
             if suscripcion.fecha_fin < timezone.now().date():
                 # Marcar como vencida
                 suscripcion.estado = 'Vencida'
                 suscripcion.save()
-                
+
                 return {
                     'tiene_suscripcion': False,
                     'estado': 'vencida',
@@ -125,10 +128,10 @@ class AuthViewSet(viewsets.ViewSet):
                     'dias_restantes': 0,
                     'acceso_reportes': False
                 }
-            
+
             # Suscripción activa
             dias_restantes = (suscripcion.fecha_fin - timezone.now().date()).days
-            
+
             return {
                 'tiene_suscripcion': True,
                 'estado': 'activa',
@@ -137,12 +140,12 @@ class AuthViewSet(viewsets.ViewSet):
                 'fecha_fin': suscripcion.fecha_fin.isoformat(),
                 'dias_restantes': dias_restantes,
                 'esta_por_vencer': dias_restantes <= 7,
-                'precio': float(suscripcion.plan_suscripcion.precio),
-                'duracion': suscripcion.plan_suscripcion.duracion,
+                'precio': float(suscripcion.plan.precio),
+                'duracion': int(suscripcion.plan.duracion),
                 'requiere_pago': False,
                 'acceso_reportes': True
             }
-            
+
         except Exception as e:
             print(f"Error getting subscription info: {str(e)}")
             return {
@@ -153,7 +156,7 @@ class AuthViewSet(viewsets.ViewSet):
                 'dias_restantes': 0,
                 'acceso_reportes': False
             }
-    
+
     @action(detail=False, methods=['get'], url_path='planes')
     def listar_planes(self, request):
         planes = PlanSuscripcion.objects.all()
@@ -166,14 +169,14 @@ class AuthViewSet(viewsets.ViewSet):
         if serializer.is_valid():
             username = serializer.validated_data['username']
             password = serializer.validated_data['password']
-            
+
             user = authenticate(username=username, password=password)
             if user and hasattr(user, 'perfil'):
                 profile = user.perfil
-                
+
                 # Obtener o crear token para el usuario
                 token, created = Token.objects.get_or_create(user=user)
-                
+
                 # Respuesta base
                 response_data = {
                     'message': 'Login exitoso',
@@ -185,7 +188,7 @@ class AuthViewSet(viewsets.ViewSet):
                     'nivel_usuario': profile.nivel_usuario,
                     'correo': profile.correo
                 }
-                
+
                 # Datos específicos según el tipo de usuario
                 if profile.nivel_usuario == 'superadmin':
                     # SuperAdmin: acceso a todo el sistema
@@ -193,16 +196,16 @@ class AuthViewSet(viewsets.ViewSet):
                         'tipo_dashboard': 'superadmin',
                         'permisos': ['ver_todas_empresas', 'gestionar_usuarios', 'configuracion_sistema']
                     })
-                    
+
                 elif profile.nivel_usuario == 'admin-empresa':
                     # Admin de Empresa: gestión de su empresa
                     try:
                         # Usar el id del perfil para evitar problemas de instancia
-                        empresa = Empresa.objects.filter(administrador_id=profile.id).first()
-                        
+                        empresa = Empresa.objects.filter(administrador=profile.id).first()
+
                         # Obtener información de suscripción
                         suscripcion_info = self.get_subscription_info(empresa)
-                        
+
                         response_data.update({
                             'tipo_dashboard': 'admin-empresa',
                             'empresa_id': empresa.empresa_id,
@@ -211,7 +214,7 @@ class AuthViewSet(viewsets.ViewSet):
                             'suscripcion': suscripcion_info,
                             'permisos': ['gestionar_estructura', 'gestionar_empleados', 'ver_evaluaciones']
                         })
-                        
+
                         # Configurar advertencias según el estado de suscripción
                         if not empresa.status:
                             response_data['advertencia'] = {
@@ -241,21 +244,21 @@ class AuthViewSet(viewsets.ViewSet):
                                 'detalles': 'Renueve su suscripción antes de que venza.',
                                 'requiere_accion': False
                             }
-                            
+
                     except Empresa.DoesNotExist:
-                        return Response({'error': 'Usuario sin empresa asignada'}, 
-                                      status=status.HTTP_400_BAD_REQUEST)
-                        
+                        return Response({'error': 'Usuario sin empresa asignada'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
                 elif profile.nivel_usuario == 'admin-planta':
                     # Admin de Planta: gestión de plantas específicas
                     try:
                         admin_planta = AdminPlanta.objects.get(usuario=profile, status=True)
                         planta = admin_planta.planta
                         empresa_suspendida = not planta.empresa.status
-                        
+
                         # Obtener información de suscripción de la empresa
                         suscripcion_info = self.get_subscription_info(planta.empresa)
-                        
+
                         response_data.update({
                             'tipo_dashboard': 'admin-planta',
                             'planta_id': planta.planta_id,
@@ -266,7 +269,7 @@ class AuthViewSet(viewsets.ViewSet):
                             'suscripcion': suscripcion_info,
                             'permisos': ['gestionar_empleados_planta', 'ver_evaluaciones_planta']
                         })
-                        
+
                         # Configurar advertencias
                         if empresa_suspendida:
                             response_data['advertencia'] = {
@@ -280,21 +283,23 @@ class AuthViewSet(viewsets.ViewSet):
                                 'mensaje': suscripcion_info['mensaje'],
                                 'detalles': 'Contacte al administrador de su empresa para activar la suscripción.'
                             }
-                            
+
                     except AdminPlanta.DoesNotExist:
-                        return Response({'error': 'Usuario sin planta asignada'}, 
-                                      status=status.HTTP_400_BAD_REQUEST)
-                    
+                        return Response({'error': 'Usuario sin planta asignada'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
                 return Response(response_data)
             else:
-                return Response({'error': 'Credenciales inválidas'}, 
-                              status=status.HTTP_401_UNAUTHORIZED)
+                return Response({'error': 'Credenciales inválidas'},
+                    status=status.HTTP_401_UNAUTHORIZED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# ---------------------------------------------------------------------------- #
 
 @method_decorator(csrf_exempt, name='dispatch')
 class EmpresaViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
-    
+
     @action(detail=False, methods=['post'])
     def registro(self, request):
         serializer = EmpresaRegistroSerializer(data=request.data)
@@ -310,12 +315,14 @@ class EmpresaViewSet(viewsets.ViewSet):
             }, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+# ---------------------------------------------------------------------------- #
+
 @method_decorator(csrf_exempt, name='dispatch')
 class EmpleadoViewSet(viewsets.ModelViewSet):
     queryset = Empleado.objects.all()
     serializer_class = EmpleadoSerializer
     permission_classes = [IsAuthenticated]
-    
+
     def get_queryset(self):
         # Filtrar empleados por empresa del usuario logueado (adaptado a estructura real BD)
         user = self.request.user
@@ -323,7 +330,8 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
                     # Usar el id del perfil para evitar problemas de instancia
-                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                    empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
+
                     # Obtener empleados a través de puesto->departamento->planta->empresa
                     return Empleado.objects.filter(
                         puesto__departamento__planta__empresa=empresa,
@@ -340,37 +348,37 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
                 plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
                 return Empleado.objects.filter(
-                    puesto__departamento__planta__planta_id__in=plantas_ids,
+                    puesto__departamento__planta__planta__in=plantas_ids,
                     status=True
                 ).select_related('puesto', 'puesto__departamento', 'puesto__departamento__planta')
-        
+
         return Empleado.objects.none()
-    
+
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return EmpleadoCreateSerializer
         return EmpleadoSerializer
-    
+
     def create(self, request, *args, **kwargs):
         """Override create para mejor debugging y response personalizada"""
         import logging
         from rest_framework import status
         from rest_framework.response import Response
-        
+
         logger = logging.getLogger(__name__)
-        
+
         logger.debug(f"EmpleadoViewSet.create - Datos recibidos: {request.data}")
         logger.debug(f"EmpleadoViewSet.create - Usuario: {request.user}")
         logger.debug(f"EmpleadoViewSet.create - Nivel usuario: {getattr(request.user, 'perfil', None)}")
-        
+
         try:
             # Usar el serializer de creación para validar y crear
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             empleado = serializer.save()
-            
+
             logger.debug(f"EmpleadoViewSet.create - Empleado creado: {empleado.empleado_id}")
-            
+
             # Respuesta simplificada sin campos complejos
             response_data = {
                 'empleado_id': empleado.empleado_id,
@@ -385,56 +393,51 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 'numero_empleado': f"EMP-{empleado.empleado_id:06d}",
                 'message': 'Empleado creado exitosamente'
             }
-            
+
             return Response(response_data, status=status.HTTP_201_CREATED)
-            
+
         except Exception as e:
             logger.error(f"EmpleadoViewSet.create - Error: {e}")
             logger.error(f"EmpleadoViewSet.create - Error type: {type(e)}")
             import traceback
             logger.error(f"EmpleadoViewSet.create - Traceback: {traceback.format_exc()}")
             raise
-    
+
     def update(self, request, *args, **kwargs):
-        """Override update para mejor debugging"""
-        import logging
-        from rest_framework import status
-        from rest_framework.response import Response
-        
         logger = logging.getLogger(__name__)
-        
+
         logger.debug(f"EmpleadoViewSet.update - Datos recibidos: {request.data}")
         logger.debug(f"EmpleadoViewSet.update - Usuario: {request.user}")
         logger.debug(f"EmpleadoViewSet.update - kwargs: {kwargs}")
-        
+
         try:
             partial = kwargs.pop('partial', False)
             instance = self.get_object()
             logger.debug(f"EmpleadoViewSet.update - Instancia encontrada: {instance.empleado_id} - {instance.nombre}")
-            
+
             serializer = self.get_serializer(instance, data=request.data, partial=partial)
             logger.debug(f"EmpleadoViewSet.update - Serializer creado")
-            
+
             serializer.is_valid(raise_exception=True)
             logger.debug(f"EmpleadoViewSet.update - Datos validados exitosamente")
-            
+
             empleado = serializer.save()
             logger.debug(f"EmpleadoViewSet.update - Empleado actualizado: {empleado.empleado_id}")
-            
+
             if getattr(instance, '_prefetched_objects_cache', None):
                 instance._prefetched_objects_cache = {}
-            
+
             # Usar el serializer de lectura para la respuesta
             response_serializer = EmpleadoSerializer(empleado)
             return Response(response_serializer.data)
-            
+
         except Exception as e:
             logger.error(f"EmpleadoViewSet.update - Error: {e}")
             logger.error(f"EmpleadoViewSet.update - Error type: {type(e)}")
             import traceback
             logger.error(f"EmpleadoViewSet.update - Traceback: {traceback.format_exc()}")
             raise
-    
+
     @action(detail=False, methods=['get'])
     def plantas_disponibles(self, request):
         # Filtrar plantas por empresa del usuario logueado
@@ -443,7 +446,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
                     # Usar el id del perfil para evitar problemas de instancia
-                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                    empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
                     plantas = Planta.objects.filter(empresa=empresa, status=True)
                 except Empresa.DoesNotExist:
                     plantas = Planta.objects.none()
@@ -458,10 +461,10 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 plantas = Planta.objects.none()
         else:
             plantas = Planta.objects.none()
-            
+
         serializer = PlantaSerializer(plantas, many=True)
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['get'])
     def departamentos_disponibles(self, request):
         # Filtrar departamentos por empresa del usuario logueado
@@ -470,7 +473,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
                     # Usar el id del perfil para evitar problemas de instancia
-                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                    empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
                     plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
                     departamentos = Departamento.objects.filter(planta__in=plantas_empresa, status=True)
                 except Empresa.DoesNotExist:
@@ -486,10 +489,10 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 departamentos = Departamento.objects.none()
         else:
             departamentos = Departamento.objects.none()
-            
+
         serializer = DepartamentoSerializer(departamentos, many=True)
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['get'])
     def puestos_disponibles(self, request):
         # Filtrar puestos por empresa del usuario logueado
@@ -498,7 +501,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
                     # Usar el id del perfil para evitar problemas de instancia
-                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                    empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
                     plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
                     departamentos_empresa = Departamento.objects.filter(planta__in=plantas_empresa, status=True)
                     puestos = Puesto.objects.filter(departamento__in=departamentos_empresa, status=True)
@@ -516,10 +519,10 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 puestos = Puesto.objects.none()
         else:
             puestos = Puesto.objects.none()
-            
+
         serializer = PuestoSerializer(puestos, many=True)
         return Response(serializer.data)
-    
+
     @action(detail=False, methods=['get'])
     def departamentos_por_planta(self, request):
         planta_id = request.query_params.get('planta_id')
@@ -548,11 +551,11 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                     return Response([])
             else:
                 return Response([])
-                
+
             serializer = DepartamentoSerializer(departamentos, many=True)
             return Response(serializer.data)
         return Response([])
-    
+
     @action(detail=False, methods=['get'])
     def puestos_por_departamento(self, request):
         departamento_id = request.query_params.get('departamento_id')
@@ -583,11 +586,11 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                     return Response([])
             else:
                 return Response([])
-                
+
             serializer = PuestoSerializer(puestos, many=True)
             return Response(serializer.data)
         return Response([])
-    
+
     @action(detail=True, methods=['post'])
     def toggle_status(self, request, pk=None):
         """Suspender/activar un empleado específico"""
@@ -595,14 +598,14 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
             # Obtener empleado sin filtrar por status para poder encontrar suspendidos
             empleado = Empleado.objects.get(empleado_id=pk)
             user = request.user
-            
+
             # Verificar permisos
             if not hasattr(user, 'perfil'):
                 return Response({'error': 'Usuario sin perfil'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # Verificar permisos según tipo de usuario
             if user.perfil.nivel_usuario == 'admin-empresa':
-                empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
                 if not empresa or empleado.puesto.departamento.planta.empresa != empresa:
                     return Response({'error': 'Sin permisos para este empleado'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario == 'admin-planta':
@@ -611,42 +614,44 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                     return Response({'error': 'Sin permisos para este empleado'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario != 'superadmin':
                 return Response({'error': 'Sin permisos'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # Cambiar status del empleado
             nuevo_status = not empleado.status
             empleado.status = nuevo_status
             empleado.save()
-            
+
             return Response({
                 'message': f'Empleado {"activado" if nuevo_status else "suspendido"} exitosamente',
                 'empleado_id': empleado.empleado_id,
                 'nuevo_status': nuevo_status,
                 'nombre_empleado': f"{empleado.nombre} {empleado.apellido_paterno}"
             })
-            
+
         except Empleado.DoesNotExist:
             return Response({'error': 'Empleado no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# ---------------------------------------------------------------------------- #
+
 @method_decorator(csrf_exempt, name='dispatch')
 class PlantaViewSet(viewsets.ModelViewSet):
     queryset = Planta.objects.all()
     permission_classes = [IsAuthenticated]
-    
+
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return PlantaCreateSerializer
         return PlantaSerializer
-    
+
     def get_queryset(self):
         # Filtrar plantas por empresa del usuario logueado (INCLUIR PLANTAS SUSPENDIDAS)
         user = self.request.user
         empresa_id_param = self.request.query_params.get('empresa_id')
         incluir_suspendidas = self.request.query_params.get('incluir_suspendidas', 'true').lower() == 'true'
-        
+
         print(f"[DEBUG] get_queryset PlantaViewSet: user_id={user.id}, empresa_id_param={empresa_id_param}, incluir_suspendidas={incluir_suspendidas}")
-        
+
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
@@ -661,9 +666,9 @@ class PlantaViewSet(viewsets.ModelViewSet):
                                 plantas = Planta.objects.filter(empresa=empresa, status=True)  # Solo activas
                             print(f"[DEBUG] get_queryset PlantaViewSet: plantas por parámetro={[{'id': p.planta_id, 'nombre': p.nombre, 'status': p.status} for p in plantas]}")
                             return plantas
-                    
+
                     # Si no, usar la búsqueda tradicional
-                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                    empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
                     print(f"[DEBUG] get_queryset PlantaViewSet: user_id={user.id}, perfil_id={user.perfil.id}, empresa_id={empresa.empresa_id if empresa else None}")
                     if incluir_suspendidas:
                         plantas = Planta.objects.filter(empresa=empresa)  # Todas las plantas
@@ -694,30 +699,30 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 return plantas
         print("[DEBUG] get_queryset PlantaViewSet: No perfil o tipo de usuario no soportado")
         return Planta.objects.none()
-    
+
     def perform_create(self, serializer):
         # Asignar automáticamente la empresa del admin logueado
         user = self.request.user
         if not hasattr(user, 'perfil'):
             raise ValidationError("Usuario sin perfil")
-            
+
         if user.perfil.nivel_usuario == 'admin-empresa':
             try:
                 empresa = Empresa.objects.get(administrador=user.perfil)
-                
+
                 # Verificar que no se excedan las 5 plantas por empresa
                 plantas_existentes = Planta.objects.filter(empresa=empresa, status=True).count()
                 if plantas_existentes >= 5:
                     raise ValidationError("No se pueden crear más de 5 plantas por empresa")
-                
+
                 # Crear la planta
                 planta = serializer.save(empresa=empresa)
-                
+
                 # Crear automáticamente el usuario administrador de planta
                 self._crear_usuario_planta(planta, empresa)
-                
+
                 print(f"✅ Planta '{planta.nombre}' creada exitosamente con usuario automático para empresa {empresa.nombre}")
-                
+
             except Empresa.DoesNotExist:
                 raise ValidationError("Usuario sin empresa asignada")
         elif user.perfil.nivel_usuario == 'superadmin':
@@ -726,14 +731,10 @@ class PlantaViewSet(viewsets.ModelViewSet):
             raise ValidationError("Funcionalidad de superadmin pendiente")
         else:
             raise ValidationError("Usuario sin permisos para crear plantas")
-    
+
     def _crear_usuario_planta(self, planta, empresa):
         """Crear automáticamente un usuario administrador para la planta"""
-        from django.contrib.auth.models import User
-        from rest_framework.authtoken.models import Token
-        import random
-        import string
-        
+
         try:
             # Generar username único
             base_username = f"admin_{planta.nombre.lower().replace(' ', '_').replace('-', '_')}"
@@ -742,10 +743,10 @@ class PlantaViewSet(viewsets.ModelViewSet):
             while User.objects.filter(username=username).exists():
                 username = f"{base_username}_{contador}"
                 contador += 1
-            
+
             # Generar contraseña segura
             password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
-            
+
             # Crear usuario
             user = User.objects.create_user(
                 username=username,
@@ -754,36 +755,35 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 first_name=f"Admin {planta.nombre}",
                 last_name="Plant Manager"
             )
-            
+
             # Crear perfil de usuario
             perfil = PerfilUsuario.objects.create(
                 user=user,
-                nombre=f"Admin {planta.nombre}",
-                apellido_paterno="Plant",
-                apellido_materno="Manager",
+                nombre=f"Administrador de {planta.nombre}",
+                apellido_paterno="Nuevo usuario",
+                apellido_materno="",
                 correo=user.email,
                 nivel_usuario='admin-planta',
                 admin_empresa=empresa.administrador
             )
-            
+
             # Crear relación AdminPlanta
             AdminPlanta.objects.create(
                 usuario=perfil,
                 planta=planta,
                 status=True
             )
-            
+
             # Crear token
             Token.objects.create(user=user)
-            
+
             print(f"👤 Usuario automático creado: {username} (contraseña: {password})")
-            
+
         except Exception as e:
             print(f"❌ Error creando usuario automático: {str(e)}")
             # No fallar la creación de planta si falla la creación del usuario
             pass
-    
-    
+
     @action(detail=True, methods=['post'])
     def toggle_status(self, request, pk=None):
         """Suspender/activar una planta y todas sus entidades relacionadas"""
@@ -791,36 +791,36 @@ class PlantaViewSet(viewsets.ModelViewSet):
             # Obtener planta sin filtrar por status para poder encontrar suspendidas
             planta = Planta.objects.get(planta_id=pk)
             user = request.user
-            
+
             # Verificar permisos
             if not hasattr(user, 'perfil'):
                 return Response({'error': 'Usuario sin perfil'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # Solo superadmin y admin-empresa pueden suspender plantas
             if user.perfil.nivel_usuario == 'admin-empresa':
-                empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
                 if not empresa or planta.empresa != empresa:
                     return Response({'error': 'Sin permisos para esta planta'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario != 'superadmin':
                 return Response({'error': 'Sin permisos'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # Cambiar status de la planta
             nuevo_status = not planta.status
             planta.status = nuevo_status
             planta.save()
-            
+
             # Cambiar status de todos los departamentos de la planta
             departamentos = Departamento.objects.filter(planta=planta)
             departamentos.update(status=nuevo_status)
-            
+
             # Cambiar status de todos los puestos de los departamentos
             puestos = Puesto.objects.filter(departamento__planta=planta)
             puestos.update(status=nuevo_status)
-            
+
             # Cambiar status de todos los empleados de la planta (a través de puesto->departamento->planta)
             empleados = Empleado.objects.filter(puesto__departamento__planta=planta)
             empleados.update(status=nuevo_status)
-            
+
             # Activar/desactivar cuenta del administrador de planta
             try:
                 admin_planta = AdminPlanta.objects.get(planta=planta)
@@ -830,14 +830,14 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 admin_planta.save()
             except AdminPlanta.DoesNotExist:
                 pass
-            
+
             return Response({
                 'message': f'Planta {"activada" if nuevo_status else "suspendida"} exitosamente',
                 'planta_id': planta.planta_id,
                 'nuevo_status': nuevo_status,
                 'nombre_planta': planta.nombre
             })
-            
+
         except Planta.DoesNotExist:
             return Response({'error': 'Planta no encontrada'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
@@ -849,20 +849,20 @@ class PlantaViewSet(viewsets.ModelViewSet):
         try:
             empresa_id = request.query_params.get('empresa_id')
             user = request.user
-            
+
             if not hasattr(user, 'perfil'):
                 return Response({'error': 'Usuario sin perfil'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # Verificar permisos
             if user.perfil.nivel_usuario == 'admin-empresa':
                 if empresa_id:
                     empresa = Empresa.objects.filter(empresa_id=empresa_id, administrador_id=user.perfil.id).first()
                 else:
-                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
-                
+                    empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
+
                 if not empresa:
                     return Response({'error': 'Sin permisos para esta empresa'}, status=status.HTTP_403_FORBIDDEN)
-                    
+
             elif user.perfil.nivel_usuario == 'superadmin':
                 if empresa_id:
                     empresa = Empresa.objects.filter(empresa_id=empresa_id).first()
@@ -872,13 +872,13 @@ class PlantaViewSet(viewsets.ModelViewSet):
                     return Response({'error': 'empresa_id requerido para superadmin'}, status=status.HTTP_400_BAD_REQUEST)
             else:
                 return Response({'error': 'Sin permisos'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # Obtener plantas de la empresa
             plantas = Planta.objects.filter(empresa=empresa, status=True)
-            
+
             # Obtener usuarios administradores de estas plantas
             admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user', 'planta')
-            
+
             usuarios_data = []
             for admin_planta in admin_plantas:
                 usuario_data = {
@@ -893,9 +893,9 @@ class PlantaViewSet(viewsets.ModelViewSet):
                     'fecha_creacion': admin_planta.usuario.user.date_joined.isoformat() if admin_planta.usuario.user.date_joined else None
                 }
                 usuarios_data.append(usuario_data)
-            
+
             return Response(usuarios_data)
-            
+
         except Exception as e:
             import traceback
             return Response({
@@ -910,22 +910,22 @@ class PlantaViewSet(viewsets.ModelViewSet):
             user = request.user
             if not hasattr(user, 'perfil'):
                 return Response({'error': 'Usuario sin perfil'}, status=status.HTTP_403_FORBIDDEN)
-            
-            # Solo admin-empresa puede ver las credenciales
+
+            # Solamente un administrador de empresa puede ver las credenciales
             if user.perfil.nivel_usuario != 'admin-empresa':
-                return Response({'error': 'Solo admin-empresa puede ver credenciales'}, status=status.HTTP_403_FORBIDDEN)
-            
+                return Response({'error': 'Solamente un administrador de empresa puede ver credenciales'}, status=status.HTTP_403_FORBIDDEN)
+
             # Obtener empresa del admin
-            empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+            empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
             if not empresa:
                 return Response({'error': 'Admin sin empresa asignada'}, status=status.HTTP_404_NOT_FOUND)
-            
+
             # Obtener plantas de la empresa
             plantas = Planta.objects.filter(empresa=empresa, status=True)
-            
+
             # Obtener usuarios administradores de estas plantas
             admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user', 'planta')
-            
+
             credenciales_data = []
             for admin_planta in admin_plantas:
                 # NOTA: Las contraseñas que se guardan al crear automáticamente están en los logs
@@ -943,14 +943,14 @@ class PlantaViewSet(viewsets.ModelViewSet):
                     'instrucciones': 'Las contraseñas se generan automáticamente al crear la planta y aparecen en los logs del servidor Django'
                 }
                 credenciales_data.append(credencial_data)
-            
+
             return Response({
                 'empresa': empresa.nombre,
                 'total_usuarios': len(credenciales_data),
                 'credenciales': credenciales_data,
                 'nota': 'Las contraseñas se muestran una sola vez en los logs del servidor al crear cada planta'
             })
-            
+
         except Exception as e:
             return Response({
                 'error': f'Error: {str(e)}'
@@ -962,37 +962,37 @@ class PlantaViewSet(viewsets.ModelViewSet):
         try:
             user = request.user
             if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'admin-empresa':
-                return Response({'error': 'Solo admin-empresa puede resetear contraseñas'}, status=status.HTTP_403_FORBIDDEN)
-            
+                return Response({'error': 'Solamente un administrador de empresa puede resetear contraseñas'}, status=status.HTTP_403_FORBIDDEN)
+
             usuario_id = request.data.get('usuario_id')
             if not usuario_id:
                 return Response({'error': 'usuario_id requerido'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
             # Obtener empresa del admin
-            empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+            empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
             if not empresa:
                 return Response({'error': 'Admin sin empresa asignada'}, status=status.HTTP_404_NOT_FOUND)
-            
+
             # Verificar que el usuario pertenece a una planta de esta empresa
             from django.contrib.auth.models import User
             try:
                 usuario_target = User.objects.get(id=usuario_id)
                 perfil_target = PerfilUsuario.objects.get(user=usuario_target)
                 admin_planta = AdminPlanta.objects.get(usuario=perfil_target)
-                
+
                 if admin_planta.planta.empresa != empresa:
                     return Response({'error': 'Usuario no pertenece a su empresa'}, status=status.HTTP_403_FORBIDDEN)
-                    
+
             except (User.DoesNotExist, PerfilUsuario.DoesNotExist, AdminPlanta.DoesNotExist):
                 return Response({'error': 'Usuario no encontrado o no es admin-planta'}, status=status.HTTP_404_NOT_FOUND)
-            
+
             # Generar nueva contraseña
             nueva_password = ''.join(random.choices(string.ascii_letters + string.digits, k=12))
-            
+
             # Actualizar contraseña
             usuario_target.set_password(nueva_password)
             usuario_target.save()
-            
+
             return Response({
                 'message': 'Contraseña reseteada exitosamente',
                 'usuario_id': usuario_id,
@@ -1001,7 +1001,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 'planta': admin_planta.planta.nombre,
                 'instrucciones': 'Proporcione esta nueva contraseña al usuario de la planta'
             })
-            
+
         except Exception as e:
             return Response({
                 'error': f'Error: {str(e)}'
@@ -1013,49 +1013,49 @@ class PlantaViewSet(viewsets.ModelViewSet):
         try:
             usuario_id = request.data.get('usuario_id')
             accion = request.data.get('accion')  # 'activar' o 'suspender'
-            
+
             if not usuario_id or not accion:
-                return Response({'error': 'Faltan parámetros usuario_id o accion'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': 'Faltan parámetros usuario_id o accion'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             user = request.user
             if not hasattr(user, 'perfil'):
                 return Response({'error': 'Usuario sin perfil'}, status=status.HTTP_403_FORBIDDEN)
-            
-            # Solo admin-empresa y superadmin pueden cambiar status
+
+            # Solamente un administrador de empresa y superadmin pueden cambiar status
             if user.perfil.nivel_usuario not in ['admin-empresa', 'superadmin']:
                 return Response({'error': 'Sin permisos'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             from django.contrib.auth.models import User
             usuario_planta = User.objects.get(id=usuario_id)
-            
+
             # Verificar que es un usuario de planta de la empresa correcta
             if user.perfil.nivel_usuario == 'admin-empresa':
                 perfil_planta = PerfilUsuario.objects.get(user=usuario_planta)
                 admin_planta = AdminPlanta.objects.get(usuario=perfil_planta)
-                empresa_admin = Empresa.objects.filter(administrador_id=user.perfil.id).first()
-                
+                empresa_admin = Empresa.objects.filter(administrador=user.perfil.id).first()
+
                 if admin_planta.planta.empresa != empresa_admin:
-                    return Response({'error': 'Sin permisos para este usuario'}, 
-                                  status=status.HTTP_403_FORBIDDEN)
-            
-            nuevo_status = accion == 'activar'
+                    return Response({'error': 'Sin permisos para este usuario'},
+                        status=status.HTTP_403_FORBIDDEN)
+
+            nuevo_status = accion == 'activar' # ! Podría ser un error. :/
             usuario_planta.is_active = nuevo_status
             usuario_planta.save()
-            
+
             return Response({
                 'message': f'Usuario {accion} exitosamente',
                 'usuario_id': usuario_id,
                 'username': usuario_planta.username,
                 'nuevo_status': nuevo_status
             })
-            
+
         except User.DoesNotExist:
-            return Response({'error': 'Usuario no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Usuario no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'], url_path='crear-usuario-planta')
     def crear_usuario_planta(self, request):
@@ -1063,9 +1063,9 @@ class PlantaViewSet(viewsets.ModelViewSet):
         try:
             user = request.user
             if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'admin-empresa':
-                return Response({'error': 'Solo admin-empresa puede crear usuarios de planta'}, 
-                              status=status.HTTP_403_FORBIDDEN)
-            
+                return Response({'error': 'Solamente un administrador de planta puede crear nuevos usuarios para esta planta.'},
+                    status=status.HTTP_403_FORBIDDEN)
+
             # Obtener datos del request
             username = request.data.get('username')
             nombre = request.data.get('nombre')
@@ -1073,28 +1073,28 @@ class PlantaViewSet(viewsets.ModelViewSet):
             apellido_materno = request.data.get('apellido_materno', '')
             email = request.data.get('email')
             password = request.data.get('password')
-            
+
             if not all([username, nombre, apellido_paterno, email, password]):
-                return Response({'error': 'Faltan datos requeridos: username, nombre, apellido_paterno, email, password'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': 'Faltan datos requeridos: username, nombre, apellido_paterno, email, password'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Verificar que el username no existe
             from django.contrib.auth.models import User
             if User.objects.filter(username=username).exists():
-                return Response({'error': f'El usuario {username} ya existe'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': f'El usuario {username} ya existe'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Verificar que el email no existe
             if User.objects.filter(email=email).exists():
-                return Response({'error': f'El email {email} ya está registrado'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': f'El email {email} ya está registrado'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Obtener empresa del admin
-            empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+            empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
             if not empresa:
-                return Response({'error': 'Usuario sin empresa asignada'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': 'Usuario sin empresa asignada'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Crear usuario
             nuevo_user = User.objects.create_user(
                 username=username,
@@ -1103,7 +1103,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 first_name=nombre,
                 last_name=f"{apellido_paterno} {apellido_materno}".strip()
             )
-            
+
             # Crear perfil
             perfil = PerfilUsuario.objects.create(
                 user=nuevo_user,
@@ -1114,11 +1114,11 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 nivel_usuario='admin-planta',
                 admin_empresa=empresa.administrador
             )
-            
+
             # Crear token
             from rest_framework.authtoken.models import Token
             token = Token.objects.create(user=nuevo_user)
-            
+
             return Response({
                 'message': 'Usuario de planta creado exitosamente',
                 'usuario_id': nuevo_user.id,
@@ -1129,10 +1129,10 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 'token': token.key,
                 'empresa': empresa.nombre
             }, status=status.HTTP_201_CREATED)
-            
+
         except Exception as e:
-            return Response({'error': f'Error creando usuario: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error creando usuario: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'], url_path='asignar-usuario-planta')
     def asignar_usuario_planta(self, request):
@@ -1140,70 +1140,70 @@ class PlantaViewSet(viewsets.ModelViewSet):
         try:
             user = request.user
             if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'admin-empresa':
-                return Response({'error': 'Solo admin-empresa puede asignar usuarios a plantas'}, 
-                              status=status.HTTP_403_FORBIDDEN)
-            
+                return Response({'error': 'Solamente un administrador de empresa puede asignar usuarios a plantas'},
+                    status=status.HTTP_403_FORBIDDEN)
+
             usuario_id = request.data.get('usuario_id')
             planta_id = request.data.get('planta_id')
-            
+
             if not usuario_id or not planta_id:
-                return Response({'error': 'Se requiere usuario_id y planta_id'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': 'Se requiere usuario_id y planta_id'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Verificar que la planta pertenece a la empresa del admin
-            empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+            empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
             planta = Planta.objects.filter(planta_id=planta_id, empresa=empresa).first()
-            
+
             if not planta:
-                return Response({'error': 'Planta no encontrada o sin permisos'}, 
-                              status=status.HTTP_404_NOT_FOUND)
-            
+                return Response({'error': 'Planta no encontrada o sin permisos'},
+                    status=status.HTTP_404_NOT_FOUND)
+
             # Verificar que el usuario existe y es admin-planta
             from django.contrib.auth.models import User
             try:
                 usuario_target = User.objects.get(id=usuario_id)
                 perfil_target = PerfilUsuario.objects.get(user=usuario_target)
             except (User.DoesNotExist, PerfilUsuario.DoesNotExist):
-                return Response({'error': 'Usuario no encontrado'}, 
-                              status=status.HTTP_404_NOT_FOUND)
-            
+                return Response({'error': 'Usuario no encontrado'},
+                    status=status.HTTP_404_NOT_FOUND)
+
             if perfil_target.nivel_usuario != 'admin-planta':
-                return Response({'error': 'El usuario debe ser de nivel admin-planta'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': 'El usuario debe ser de nivel admin-planta'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Verificar que el usuario pertenece a la empresa
             if perfil_target.admin_empresa != empresa.administrador:
-                return Response({'error': 'El usuario no pertenece a esta empresa'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': 'El usuario no pertenece a esta empresa'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Verificar que la planta no tenga ya un usuario asignado
             if AdminPlanta.objects.filter(planta=planta).exists():
-                return Response({'error': f'La planta {planta.nombre} ya tiene un usuario asignado'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': f'La planta {planta.nombre} ya tiene un usuario asignado'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Verificar que el usuario no esté ya asignado a otra planta
             if AdminPlanta.objects.filter(usuario=perfil_target).exists():
                 admin_planta_existente = AdminPlanta.objects.get(usuario=perfil_target)
-                return Response({'error': f'El usuario ya está asignado a la planta {admin_planta_existente.planta.nombre}'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': f'El usuario ya está asignado a la planta {admin_planta_existente.planta.nombre}'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Crear la asignación
             admin_planta = AdminPlanta.objects.create(
                 usuario=perfil_target,
                 planta=planta,
                 status=True
             )
-            
+
             return Response({
                 'message': 'Usuario asignado a planta exitosamente',
                 'usuario': perfil_target.nombre_completo,
                 'planta': planta.nombre,
                 'empresa': empresa.nombre
             })
-            
+
         except Exception as e:
-            return Response({'error': f'Error asignando usuario: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error asignando usuario: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'], url_path='usuarios-disponibles')
     def usuarios_disponibles(self, request):
@@ -1211,21 +1211,21 @@ class PlantaViewSet(viewsets.ModelViewSet):
         try:
             user = request.user
             if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'admin-empresa':
-                return Response({'error': 'Solo admin-empresa puede ver usuarios disponibles'}, 
-                              status=status.HTTP_403_FORBIDDEN)
-            
+                return Response({'error': 'Solamente un administrador de empresa puede ver usuarios disponibles'},
+                    status=status.HTTP_403_FORBIDDEN)
+
             # Obtener empresa del admin
-            empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+            empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
             if not empresa:
-                return Response({'error': 'Usuario sin empresa asignada'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': 'Usuario sin empresa asignada'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Obtener usuarios admin-planta de la empresa que NO tienen planta asignada
             usuarios_empresa = PerfilUsuario.objects.filter(
                 nivel_usuario='admin-planta',
                 admin_empresa=empresa.administrador
             )
-            
+
             # Filtrar solo los que NO tienen AdminPlanta
             usuarios_disponibles = []
             for perfil in usuarios_empresa:
@@ -1237,15 +1237,15 @@ class PlantaViewSet(viewsets.ModelViewSet):
                         'email': perfil.user.email,
                         'fecha_creacion': perfil.user.date_joined.isoformat() if perfil.user.date_joined else None
                     })
-            
+
             return Response({
                 'usuarios_disponibles': usuarios_disponibles,
                 'total': len(usuarios_disponibles)
             })
-            
+
         except Exception as e:
-            return Response({'error': f'Error obteniendo usuarios: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error obteniendo usuarios: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'], url_path='plantas-sin-usuario')
     def plantas_sin_usuario(self, request):
@@ -1253,18 +1253,18 @@ class PlantaViewSet(viewsets.ModelViewSet):
         try:
             user = request.user
             if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'admin-empresa':
-                return Response({'error': 'Solo admin-empresa puede ver plantas sin usuario'}, 
-                              status=status.HTTP_403_FORBIDDEN)
-            
+                return Response({'error': 'Solamente un administrador de empresa puede ver plantas sin usuario'},
+                        status=status.HTTP_403_FORBIDDEN)
+
             # Obtener empresa del admin
-            empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+            empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
             if not empresa:
-                return Response({'error': 'Usuario sin empresa asignada'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-            
+                return Response({'error': 'Usuario sin empresa asignada'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
             # Obtener plantas de la empresa que NO tienen usuario asignado
             plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
-            
+
             plantas_sin_usuario = []
             for planta in plantas_empresa:
                 if not AdminPlanta.objects.filter(planta=planta).exists():
@@ -1273,15 +1273,15 @@ class PlantaViewSet(viewsets.ModelViewSet):
                         'nombre': planta.nombre,
                         'direccion': planta.direccion
                     })
-            
+
             return Response({
                 'plantas_sin_usuario': plantas_sin_usuario,
                 'total': len(plantas_sin_usuario)
             })
-            
+
         except Exception as e:
-            return Response({'error': f'Error obteniendo plantas: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error obteniendo plantas: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def destroy(self, request, pk=None):
         """
@@ -1289,7 +1289,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
         En su lugar, usamos suspensión (toggle_status) para cambiar el status a False.
         """
         print(f"🚫 DESTROY LLAMADO pero DESHABILITADO: pk={pk}, user={request.user}")
-        
+
         return Response({
             'error': 'Eliminación de plantas deshabilitada por seguridad',
             'mensaje': 'Use la función de suspender/activar para cambiar el estado de la planta',
@@ -1298,18 +1298,20 @@ class PlantaViewSet(viewsets.ModelViewSet):
             'razon': 'Eliminar plantas causa problemas en la jerarquía de departamentos, puestos y empleados'
         }, status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
+# ---------------------------------------------------------------------------- #
+
 @method_decorator(csrf_exempt, name='dispatch')
 class DepartamentoViewSet(viewsets.ModelViewSet):
     queryset = Departamento.objects.all()
     permission_classes = [IsAuthenticated]
-    
+
     def get_serializer_class(self):
         if self.action == 'create':
             return DepartamentoCreateSerializer
         elif self.action in ['update', 'partial_update']:
             return DepartamentoSerializer  # Usar el serializador básico para updates
         return DepartamentoSerializer
-    
+
     def get_queryset(self):
         # Filtrar departamentos por plantas del usuario
         user = self.request.user
@@ -1317,7 +1319,7 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
                     # Usar el id del perfil para evitar problemas de instancia
-                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                    empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
                     plantas = Planta.objects.filter(empresa=empresa, status=True)
                     return Departamento.objects.filter(planta__in=plantas, status=True)
                 except Empresa.DoesNotExist:
@@ -1329,20 +1331,20 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
                 plantas = [ap.planta for ap in admin_plantas]
                 return Departamento.objects.filter(planta__in=plantas, status=True)
         return Departamento.objects.none()
-    
+
     def perform_create(self, serializer):
         # Validar que el usuario tenga acceso a la planta especificada
         user = self.request.user
         planta_id = serializer.validated_data.get('planta_id')
-        
+
         if not planta_id:
             raise ValidationError("Debe especificar planta_id")
-        
+
         try:
             planta = Planta.objects.get(planta_id=planta_id)
         except Planta.DoesNotExist:
             raise ValidationError("Planta no encontrada")
-        
+
         # Verificar que el usuario tenga acceso a este planta
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
@@ -1356,20 +1358,20 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta=planta)
                 if not admin_plantas.exists():
                     raise ValidationError("No tiene acceso a esta planta")
-        
+
         # Crear el departamento y asegurar que se guarde correctamente
         departamento = serializer.save()
         return departamento
-    
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         departamento = self.perform_create(serializer)
-        
+
         # Usar el serializer de lectura para la respuesta
         response_serializer = DepartamentoSerializer(departamento)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-    
+
     @action(detail=True, methods=['post'])
     def toggle_status(self, request, pk=None):
         """Suspender/activar un departamento y todas sus entidades relacionadas"""
@@ -1377,14 +1379,14 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
             # Obtener departamento sin filtrar por status para poder encontrar suspendidos
             departamento = Departamento.objects.get(departamento_id=pk)
             user = request.user
-            
+
             # Verificar permisos
             if not hasattr(user, 'perfil'):
                 return Response({'error': 'Usuario sin perfil'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # Verificar permisos según tipo de usuario
             if user.perfil.nivel_usuario == 'admin-empresa':
-                empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
                 if not empresa or departamento.planta.empresa != empresa:
                     return Response({'error': 'Sin permisos para este departamento'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario == 'admin-planta':
@@ -1393,42 +1395,44 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
                     return Response({'error': 'Sin permisos para este departamento'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario != 'superadmin':
                 return Response({'error': 'Sin permisos'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # Cambiar status del departamento
             nuevo_status = not departamento.status
             departamento.status = nuevo_status
             departamento.save()
-            
+
             # Cambiar status de todos los puestos del departamento
             puestos = Puesto.objects.filter(departamento=departamento)
             puestos.update(status=nuevo_status)
-            
+
             # Cambiar status de todos los empleados del departamento (a través de puesto->departamento)
             empleados = Empleado.objects.filter(puesto__departamento=departamento)
             empleados.update(status=nuevo_status)
-            
+
             return Response({
                 'message': f'Departamento {"activado" if nuevo_status else "suspendido"} exitosamente',
                 'departamento_id': departamento.departamento_id,
                 'nuevo_status': nuevo_status,
                 'nombre_departamento': departamento.nombre
             })
-            
+
         except Departamento.DoesNotExist:
             return Response({'error': 'Departamento no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# ---------------------------------------------------------------------------- #
+
 @method_decorator(csrf_exempt, name='dispatch')
 class PuestoViewSet(viewsets.ModelViewSet):
     queryset = Puesto.objects.all()
     permission_classes = [IsAuthenticated]
-    
+
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
             return PuestoCreateSerializer
         return PuestoSerializer
-    
+
     def get_queryset(self):
         # Filtrar puestos por departamentos del usuario
         user = self.request.user
@@ -1436,7 +1440,7 @@ class PuestoViewSet(viewsets.ModelViewSet):
             if user.perfil.nivel_usuario == 'admin-empresa':
                 try:
                     # Usar el id del perfil para evitar problemas de instancia
-                    empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                    empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
                     plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
                     departamentos_empresa = Departamento.objects.filter(planta__in=plantas_empresa, status=True)
                     return Puesto.objects.filter(departamento__in=departamentos_empresa, status=True)
@@ -1450,20 +1454,20 @@ class PuestoViewSet(viewsets.ModelViewSet):
                 departamentos = Departamento.objects.filter(planta__in=plantas, status=True)
                 return Puesto.objects.filter(departamento__in=departamentos, status=True)
         return Puesto.objects.none()
-    
+
     def perform_create(self, serializer):
         # Validar que el usuario tenga acceso al departamento especificado
         user = self.request.user
         departamento_id = serializer.validated_data.get('departamento_id')
-        
+
         if not departamento_id:
             raise ValidationError("Debe especificar departamento_id")
-        
+
         try:
             departamento = Departamento.objects.get(departamento_id=departamento_id)
         except Departamento.DoesNotExist:
             raise ValidationError("Departamento no encontrado")
-        
+
         # Verificar que el usuario tenga acceso a este departamento
         if hasattr(user, 'perfil'):
             if user.perfil.nivel_usuario == 'admin-empresa':
@@ -1477,20 +1481,20 @@ class PuestoViewSet(viewsets.ModelViewSet):
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta=departamento.planta)
                 if not admin_plantas.exists():
                     raise ValidationError("No tiene acceso a este departamento")
-        
+
         # Crear el puesto y asegurar que se guarde correctamente
         puesto = serializer.save()
         return puesto
-    
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         puesto = self.perform_create(serializer)
-        
+
         # Usar el serializer de lectura para la respuesta
         response_serializer = PuestoSerializer(puesto)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-    
+
     @action(detail=True, methods=['post'])
     def toggle_status(self, request, pk=None):
         """Suspender/activar un puesto y todos sus empleados"""
@@ -1498,14 +1502,14 @@ class PuestoViewSet(viewsets.ModelViewSet):
             # Obtener puesto sin filtrar por status para poder encontrar suspendidos
             puesto = Puesto.objects.get(puesto_id=pk)
             user = request.user
-            
+
             # Verificar permisos
             if not hasattr(user, 'perfil'):
                 return Response({'error': 'Usuario sin perfil'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # Verificar permisos según tipo de usuario
             if user.perfil.nivel_usuario == 'admin-empresa':
-                empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                empresa = Empresa.objects.filter(administrador=user.perfil.id).first()
                 if not empresa or puesto.departamento.planta.empresa != empresa:
                     return Response({'error': 'Sin permisos para este puesto'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario == 'admin-planta':
@@ -1514,47 +1518,49 @@ class PuestoViewSet(viewsets.ModelViewSet):
                     return Response({'error': 'Sin permisos para este puesto'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario != 'superadmin':
                 return Response({'error': 'Sin permisos'}, status=status.HTTP_403_FORBIDDEN)
-            
+
             # Cambiar status del puesto
             nuevo_status = not puesto.status
             puesto.status = nuevo_status
             puesto.save()
-            
+
             # Cambiar status de todos los empleados del puesto
             empleados = Empleado.objects.filter(puesto=puesto)
             empleados.update(status=nuevo_status)
-            
+
             return Response({
                 'message': f'Puesto {"activado" if nuevo_status else "suspendido"} exitosamente',
                 'puesto_id': puesto.puesto_id,
                 'nuevo_status': nuevo_status,
                 'nombre_puesto': puesto.nombre
             })
-            
+
         except Puesto.DoesNotExist:
             return Response({'error': 'Puesto no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-@method_decorator(csrf_exempt, name='dispatch')  
+# ---------------------------------------------------------------------------- #
+
+@method_decorator(csrf_exempt, name='dispatch')
 class EstructuraViewSet(viewsets.ViewSet):
     """ViewSet para obtener la estructura organizacional completa"""
     permission_classes = [AllowAny]
-    
+
     @action(detail=False, methods=['get'])
     def mi_estructura(self, request):
         """Obtiene la estructura organizacional del usuario autenticado"""
         user = request.user
         if not hasattr(user, 'perfil'):
             return Response({'error': 'Usuario sin perfil'}, status=400)
-        
+
         perfil = user.perfil
-        
+
         if perfil.nivel_usuario == 'admin-empresa':
             try:
                 empresa = Empresa.objects.get(administrador=perfil)
                 plantas = Planta.objects.filter(empresa=empresa)
-                
+
                 estructura = {
                     'empresa': {
                         'id': empresa.empresa_id,
@@ -1563,7 +1569,7 @@ class EstructuraViewSet(viewsets.ViewSet):
                     },
                     'plantas': []
                 }
-                
+
                 for planta in plantas:
                     departamentos = Departamento.objects.filter(planta=planta)
                     planta_data = {
@@ -1572,11 +1578,11 @@ class EstructuraViewSet(viewsets.ViewSet):
                         'direccion': planta.direccion,
                         'departamentos': []
                     }
-                    
+
                     for depto in departamentos:
                         puestos = Puesto.objects.filter(departamento=depto)
                         empleados = Empleado.objects.filter(departamento=depto)
-                        
+
                         depto_data = {
                             'id': depto.departamento_id,
                             'nombre': depto.nombre,
@@ -1585,28 +1591,28 @@ class EstructuraViewSet(viewsets.ViewSet):
                             'empleados_count': empleados.count()
                         }
                         planta_data['departamentos'].append(depto_data)
-                    
+
                     estructura['plantas'].append(planta_data)
-                
+
                 return Response(estructura)
-                
+
             except Empresa.DoesNotExist:
                 return Response({'error': 'Usuario sin empresa asignada'}, status=400)
-        
+
         return Response({'error': 'Tipo de usuario no soportado'}, status=400)
-    
+
     @action(detail=False, methods=['get'])
     def usuarios_planta(self, request):
         """Obtener usuarios de planta para la empresa del admin logueado"""
         user = self.request.user
         if not hasattr(user, 'perfil'):
             return Response({'error': 'Usuario sin perfil'}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         if user.perfil.nivel_usuario == 'admin-empresa':
             try:
                 empresa = Empresa.objects.get(administrador=user.perfil)
                 plantas = Planta.objects.filter(empresa=empresa, status=True)
-                
+
                 usuarios_planta = []
                 for planta in plantas:
                     admin_planta = AdminPlanta.objects.filter(planta=planta).first()
@@ -1619,7 +1625,6 @@ class EstructuraViewSet(viewsets.ViewSet):
                             'username': usuario.username,
                             'email': usuario.email,
                             'nombre_completo': f"{usuario.first_name} {usuario.last_name}",
-                            'fecha_creacion': admin_planta.fecha_asignacion,
                             'status': admin_planta.status,
                             'password_temporal': getattr(admin_planta, 'password_temporal', f'temp{planta.planta_id}Pass123')  # Temporal
                         })
@@ -1635,37 +1640,40 @@ class EstructuraViewSet(viewsets.ViewSet):
                             'status': False,
                             'password_temporal': None
                         })
-                
-                return Response(usuarios_planta, status=status.HTTP_200_OK)
-                
-            except Empresa.DoesNotExist:
-                return Response({'error': 'Usuario sin empresa asignada'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response({'error': 'Usuario sin permisos'}, 
-                          status=status.HTTP_403_FORBIDDEN)
 
-@method_decorator(csrf_exempt, name='dispatch')  
+                return Response(usuarios_planta, status=status.HTTP_200_OK)
+
+            except Empresa.DoesNotExist:
+                return Response({'error': 'Usuario sin empresa asignada'},
+                    status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'Usuario sin permisos'},
+                status=status.HTTP_403_FORBIDDEN)
+
+# ---------------------------------------------------------------------------- #
+
+@method_decorator(csrf_exempt, name='dispatch')
 class SuperAdminViewSet(viewsets.ViewSet):
     """ViewSet para funcionalidades exclusivas del SuperAdmin"""
     permission_classes = [IsAuthenticated]
-    
+
     def _verify_superadmin(self, user):
         """Verificar que el usuario es SuperAdmin"""
         if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'superadmin':
             raise ValidationError("Usuario sin permisos de SuperAdmin")
-    
+
     # ===================================================================
     # FUNCIONES DE ESTADÍSTICAS - REACTIVADAS
     # ===================================================================
+
     @action(detail=False, methods=['get'])
     def estadisticas_sistema(self, request):
         """Estadísticas completas del sistema para SuperAdmin"""
         self._verify_superadmin(request.user)
-        
+
         # Registro de tiempo inicial para performance
         inicio_tiempo = timezone.now()
-        
+
         try:
             # Estadísticas principales con mejor estructura
             estadisticas = {
@@ -1744,26 +1752,26 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'tiempo_generacion': None
                 }
             }
-            
+
             inicio_tiempo = timezone.now()
-            
+
             # === ESTADÍSTICAS DE EMPRESAS ===
             try:
                 total_empresas = Empresa.objects.count()
                 empresas_activas = Empresa.objects.filter(status=True).count()
                 empresas_inactivas = total_empresas - empresas_activas
-                
+
                 estadisticas['dashboard']['tarjetas_principales']['empresas'].update({
                     'total': total_empresas,
                     'activas': empresas_activas,
                     'inactivas': empresas_inactivas,
                     'porcentaje_activas': round((empresas_activas / total_empresas * 100), 1) if total_empresas > 0 else 0
                 })
-                
+
                 # Calcular empresas con plantas
                 empresas_con_plantas = Empresa.objects.filter(planta__isnull=False).distinct().count()
                 estadisticas['dashboard']['estadisticas_detalladas']['estructura']['empresas_con_plantas'] = empresas_con_plantas
-                
+
             except Exception as e:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'error',
@@ -1771,20 +1779,20 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': f"Error calculando empresas: {str(e)}",
                     'prioridad': 'alta'
                 })
-            
+
             # === ESTADÍSTICAS DE USUARIOS ===
             try:
                 total_usuarios = PerfilUsuario.objects.filter(user__isnull=False).count()
                 usuarios_activos = PerfilUsuario.objects.filter(user__isnull=False, user__is_active=True).count()
                 usuarios_inactivos = total_usuarios - usuarios_activos
-                
+
                 estadisticas['dashboard']['tarjetas_principales']['usuarios'].update({
                     'total': total_usuarios,
                     'activos': usuarios_activos,
                     'inactivos': usuarios_inactivos,
                     'porcentaje_activos': round((usuarios_activos / total_usuarios * 100), 1) if total_usuarios > 0 else 0
                 })
-                
+
                 # Distribución por tipo de usuario
                 tipos_usuario = ['superadmin', 'admin-empresa', 'admin-planta', 'empleado']
                 for tipo in tipos_usuario:
@@ -1795,7 +1803,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                         'cantidad': cantidad,
                         'porcentaje': porcentaje
                     })
-                
+
             except Exception as e:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'error',
@@ -1803,29 +1811,29 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': f"Error calculando usuarios: {str(e)}",
                     'prioridad': 'alta'
                 })
-            
+
             # === ESTADÍSTICAS DE PLANTAS ===
             try:
                 total_plantas = Planta.objects.count()
                 plantas_activas = Planta.objects.filter(status=True).count()
                 plantas_inactivas = total_plantas - plantas_activas
-                
+
                 estadisticas['dashboard']['tarjetas_principales']['plantas'].update({
                     'total': total_plantas,
                     'activas': plantas_activas,
                     'inactivas': plantas_inactivas,
                     'porcentaje_activas': round((plantas_activas / total_plantas * 100), 1) if total_plantas > 0 else 0
                 })
-                
+
                 # Plantas con departamentos
                 plantas_con_departamentos = Planta.objects.filter(departamento__isnull=False).distinct().count()
                 estadisticas['dashboard']['estadisticas_detalladas']['estructura']['plantas_con_departamentos'] = plantas_con_departamentos
-                
+
                 # Promedio plantas por empresa
                 if total_empresas > 0:
                     promedio_plantas = round(total_plantas / total_empresas, 1)
                     estadisticas['dashboard']['estadisticas_detalladas']['estructura']['promedio_plantas_por_empresa'] = promedio_plantas
-                
+
             except Exception as e:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'error',
@@ -1833,28 +1841,28 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': f"Error calculando plantas: {str(e)}",
                     'prioridad': 'media'
                 })
-            
+
             # === ESTADÍSTICAS DE DEPARTAMENTOS ===
             try:
                 total_departamentos = Departamento.objects.count()
                 departamentos_activos = Departamento.objects.filter(status=True).count()
                 departamentos_inactivos = total_departamentos - departamentos_activos
-                
+
                 estadisticas['dashboard']['estadisticas_detalladas']['departamentos'].update({
                     'total': total_departamentos,
                     'activos': departamentos_activos,
                     'inactivos': departamentos_inactivos
                 })
-                
+
                 # Departamentos con puestos
                 departamentos_con_puestos = Departamento.objects.filter(puesto__isnull=False).distinct().count()
                 estadisticas['dashboard']['estadisticas_detalladas']['estructura']['departamentos_con_puestos'] = departamentos_con_puestos
-                
+
                 # Promedio departamentos por planta
                 if total_plantas > 0:
                     promedio_departamentos = round(total_departamentos / total_plantas, 1)
                     estadisticas['dashboard']['estadisticas_detalladas']['estructura']['promedio_departamentos_por_planta'] = promedio_departamentos
-                
+
             except Exception as e:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'error',
@@ -1862,19 +1870,19 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': f"Error calculando departamentos: {str(e)}",
                     'prioridad': 'media'
                 })
-            
+
             # === ESTADÍSTICAS DE PUESTOS ===
             try:
                 total_puestos = Puesto.objects.count()
                 puestos_activos = Puesto.objects.filter(status=True).count()
                 puestos_inactivos = total_puestos - puestos_activos
-                
+
                 estadisticas['dashboard']['estadisticas_detalladas']['puestos'].update({
                     'total': total_puestos,
                     'activos': puestos_activos,
                     'inactivos': puestos_inactivos
                 })
-                
+
             except Exception as e:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'error',
@@ -1882,25 +1890,25 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': f"Error calculando puestos: {str(e)}",
                     'prioridad': 'baja'
                 })
-            
+
             # === ESTADÍSTICAS DE EMPLEADOS ===
             try:
                 total_empleados = Empleado.objects.count()
                 empleados_activos = Empleado.objects.filter(status=True).count()
                 empleados_inactivos = total_empleados - empleados_activos
-                
+
                 estadisticas['dashboard']['tarjetas_principales']['empleados'].update({
                     'total': total_empleados,
                     'activos': empleados_activos,
                     'inactivos': empleados_inactivos,
                     'porcentaje_activos': round((empleados_activos / total_empleados * 100), 1) if total_empleados > 0 else 0
                 })
-                
+
                 # Promedio empleados por departamento
                 if total_departamentos > 0:
                     promedio_empleados = round(total_empleados / total_departamentos, 1)
                     estadisticas['dashboard']['estadisticas_detalladas']['estructura']['promedio_empleados_por_departamento'] = promedio_empleados
-                
+
             except Exception as e:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'error',
@@ -1908,34 +1916,34 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': f"Error calculando empleados: {str(e)}",
                     'prioridad': 'media'
                 })
-            
+
             # === CALCULAR SALUD DEL SISTEMA ===
             try:
                 factores_salud = estadisticas['dashboard']['salud_sistema']['factores']
-                
+
                 # Factor 1: Empresas activas
                 porcentaje_empresas_activas = estadisticas['dashboard']['tarjetas_principales']['empresas']['porcentaje_activas']
                 factores_salud['empresas_activas'] = porcentaje_empresas_activas >= 80
-                
+
                 # Factor 2: Usuarios activos
                 porcentaje_usuarios_activos = estadisticas['dashboard']['tarjetas_principales']['usuarios']['porcentaje_activos']
                 factores_salud['usuarios_activos'] = porcentaje_usuarios_activos >= 90
-                
+
                 # Factor 3: Estructura completa
                 estructura_completa = (
                     estadisticas['dashboard']['estadisticas_detalladas']['estructura']['empresas_con_plantas'] > 0 and
                     estadisticas['dashboard']['estadisticas_detalladas']['estructura']['plantas_con_departamentos'] > 0
                 )
                 factores_salud['estructura_completa'] = estructura_completa
-                
+
                 # Factor 4: Sin errores críticos
                 errores_criticos = len([a for a in estadisticas['dashboard']['alertas_sistema'] if a['prioridad'] == 'alta'])
                 factores_salud['sin_errores_criticos'] = errores_criticos == 0
-                
+
                 # Calcular puntuación
                 puntos_positivos = sum([1 for factor in factores_salud.values() if factor])
                 puntuacion = round((puntos_positivos / len(factores_salud)) * 100)
-                
+
                 # Determinar estado
                 if puntuacion >= 85:
                     estado_general = 'excelente'
@@ -1945,12 +1953,12 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     estado_general = 'regular'
                 else:
                     estado_general = 'critico'
-                
+
                 estadisticas['dashboard']['salud_sistema'].update({
                     'estado_general': estado_general,
                     'puntuacion': puntuacion
                 })
-                
+
             except Exception as e:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'error',
@@ -1958,11 +1966,11 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': f"Error calculando salud del sistema: {str(e)}",
                     'prioridad': 'media'
                 })
-            
+
             # === ALERTAS DEL SISTEMA ===
             # Agregar alertas basadas en los datos
             tarjetas = estadisticas['dashboard']['tarjetas_principales']
-            
+
             if tarjetas['empresas']['total'] == 0:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'advertencia',
@@ -1970,7 +1978,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': 'No hay empresas registradas en el sistema',
                     'prioridad': 'alta'
                 })
-            
+
             if estadisticas['dashboard']['distribucion_usuarios']['superadmin']['cantidad'] == 0:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'advertencia',
@@ -1978,7 +1986,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': 'No hay usuarios SuperAdmin activos',
                     'prioridad': 'alta'
                 })
-            
+
             if tarjetas['empresas']['porcentaje_activas'] < 50:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'advertencia',
@@ -1986,7 +1994,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': f'Solo {tarjetas["empresas"]["porcentaje_activas"]}% de empresas están activas',
                     'prioridad': 'media'
                 })
-            
+
             if tarjetas['usuarios']['porcentaje_activos'] < 80:
                 estadisticas['dashboard']['alertas_sistema'].append({
                     'tipo': 'advertencia',
@@ -1994,7 +2002,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': f'Solo {tarjetas["usuarios"]["porcentaje_activos"]}% de usuarios están activos',
                     'prioridad': 'media'
                 })
-            
+
             # Agregar mensaje de éxito si no hay alertas críticas
             if not estadisticas['dashboard']['alertas_sistema']:
                 estadisticas['dashboard']['alertas_sistema'].append({
@@ -2003,14 +2011,14 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'mensaje': 'Todos los sistemas funcionan correctamente',
                     'prioridad': 'informativa'
                 })
-            
+
             # Calcular tiempo de generación
             tiempo_fin = timezone.now()
             tiempo_generacion = round((tiempo_fin - inicio_tiempo).total_seconds() * 1000, 2)
             estadisticas['metadatos']['tiempo_generacion'] = f"{tiempo_generacion}ms"
-            
+
             return Response(estadisticas)
-            
+
         except Exception as e:
             import traceback
             return Response({
@@ -2036,12 +2044,12 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'version': '2.0'
                 }
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @action(detail=False, methods=['get'])
     def estadisticas_simple(self, request):
         """Estadísticas en formato simple para compatibilidad con frontend actual"""
         self._verify_superadmin(request.user)
-        
+
         try:
             # Estructura simple compatible con el frontend actual
             estadisticas = {
@@ -2074,7 +2082,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'alertas': [],
                 'ultima_actualizacion': timezone.now().isoformat()
             }
-            
+
             # Agregar alertas básicas
             if estadisticas['resumen_general']['total_empresas'] == 0:
                 estadisticas['alertas'].append("⚠️ No hay empresas registradas en el sistema")
@@ -2082,12 +2090,12 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 estadisticas['alertas'].append("⚠️ No hay usuarios SuperAdmin activos")
             if estadisticas['estado_sistema']['porcentaje_empresas_activas'] < 50:
                 estadisticas['alertas'].append("⚠️ Menos del 50% de empresas están activas")
-            
+
             if not estadisticas['alertas']:
                 estadisticas['alertas'].append("✅ Todos los sistemas funcionan correctamente")
-            
+
             return Response(estadisticas)
-            
+
         except Exception as e:
             return Response({
                 'error': f'Error obteniendo estadísticas: {str(e)}',
@@ -2097,26 +2105,26 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'alertas': ['Error general del sistema'],
                 'ultima_actualizacion': timezone.now().isoformat()
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @action(detail=False, methods=['get'])
     def listar_empresas(self, request):
         """Listar todas las empresas - VERSIÓN SIMPLIFICADA PARA DEBUG"""
         self._verify_superadmin(request.user)
-        
+
         print("🔥 INICIANDO listar_empresas")
-        
+
         try:
             empresas = Empresa.objects.all()
             print(f"� Empresas encontradas: {empresas.count()}")
-            
+
             empresas_data = []
-            
+
             for empresa in empresas:
                 print(f"🔥 Procesando empresa: {empresa.nombre}")
                 print(f"� email_contacto raw: '{empresa.email_contacto}'")
                 print(f"� telefono_contacto raw: '{empresa.telefono_contacto}'")
                 print(f"� direccion raw: '{empresa.direccion}'")
-                
+
                 # Simplificamos al máximo
                 data = {
                     'empresa_id': empresa.empresa_id,
@@ -2131,19 +2139,19 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'empleados_count': 0,
                     'fecha_registro': None,
                 }
-                
+
                 empresas_data.append(data)
                 print(f"🔥 Datos procesados: correo='{data['correo']}', telefono='{data['telefono']}', direccion='{data['direccion']}'")
-            
+
             result = {
                 'empresas': empresas_data,
                 'total': len(empresas_data),
                 'mensaje': 'Lista completa de empresas'
             }
-            
+
             print(f"🔥 Respuesta final: {result}")
             return Response(result)
-            
+
         except Exception as e:
             print(f"🔥 ERROR GENERAL: {e}")
             import traceback
@@ -2153,27 +2161,27 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'empresas': [],
                 'total': 0
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @action(detail=False, methods=['post'])
     def suspender_empresa(self, request):
         """Suspender/activar una empresa - VERSIÓN SIMPLIFICADA"""
         self._verify_superadmin(request.user)
-        
+
         empresa_id = request.data.get('empresa_id')
         accion = request.data.get('accion')  # 'suspender' o 'activar'
-        
+
         if not empresa_id or not accion:
-            return Response({'error': 'Faltan parámetros empresa_id o accion'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Faltan parámetros empresa_id o accion'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             empresa = Empresa.objects.get(empresa_id=empresa_id)
             nuevo_status = accion == 'activar'
-            
+
             # Cambiar status de la empresa
             empresa.status = nuevo_status
             empresa.save()
-            
+
             # Cambiar status del administrador de empresa de forma segura
             if empresa.administrador:
                 try:
@@ -2182,43 +2190,43 @@ class SuperAdminViewSet(viewsets.ViewSet):
                         empresa.administrador.user.save()
                 except:
                     pass  # Continúa si hay error con el usuario
-            
+
             return Response({
                 'message': f'Empresa {accion} exitosamente',
                 'empresa_id': empresa_id,
                 'nuevo_status': nuevo_status,
                 'nombre_empresa': empresa.nombre
             })
-            
+
         except Empresa.DoesNotExist:
-            return Response({'error': 'Empresa no encontrada'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Empresa no encontrada'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     # ENDPOINT DESHABILITADO: eliminar_empresa
     # Se removió para evitar eliminaciones accidentales
     # @action(detail=False, methods=['delete'])
     # def eliminar_empresa(self, request):
     #     """DESHABILITADO - Eliminar empresa"""
-    #     return Response({'error': 'Función deshabilitada por seguridad'}, 
+    #     return Response({'error': 'Función deshabilitada por seguridad'},
     #                   status=status.HTTP_501_NOT_IMPLEMENTED)
-    
+
     @action(detail=False, methods=['get'])
     def listar_usuarios(self, request):
         """Listar todos los usuarios del sistema - VERSIÓN SIMPLIFICADA"""
         self._verify_superadmin(request.user)
-        
+
         try:
             # Filtros opcionales
             buscar = request.query_params.get('buscar', '')
             nivel_usuario = request.query_params.get('nivel_usuario', '')
             activo = request.query_params.get('activo', '')
-            
+
             # Solo obtener usuarios que tienen user asociado
             usuarios = PerfilUsuario.objects.filter(user__isnull=False)
-            
+
             if buscar:
                 usuarios = usuarios.filter(
                     nombre__icontains=buscar
@@ -2227,14 +2235,14 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 ) | usuarios.filter(
                     correo__icontains=buscar
                 )
-            
+
             if nivel_usuario:
                 usuarios = usuarios.filter(nivel_usuario=nivel_usuario)
-            
+
             if activo:
                 activo_bool = activo.lower() == 'true'
                 usuarios = usuarios.filter(user__is_active=activo_bool)
-            
+
             usuarios_data = []
             for usuario in usuarios:
                 try:
@@ -2256,9 +2264,9 @@ class SuperAdminViewSet(viewsets.ViewSet):
                         'empresa': None,
                         'planta': None,
                     }
-                    
+
                     print(f"🔍 DEBUG: Usuario {usuario.user.username} - nivel_usuario: '{usuario.nivel_usuario}'")
-                    
+
                     # Información de empresa/planta según el rol (de forma segura)
                     if usuario.nivel_usuario == 'admin-empresa':
                         try:
@@ -2270,7 +2278,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                             }
                         except:
                             pass
-                    
+
                     elif usuario.nivel_usuario == 'admin-planta':
                         try:
                             from apps.users.models import AdminPlanta
@@ -2284,19 +2292,19 @@ class SuperAdminViewSet(viewsets.ViewSet):
                             }
                         except:
                             pass
-                    
+
                     usuarios_data.append(usuario_info)
-                    
+
                 except Exception as e:
                     # Si hay error con un usuario específico, saltar
                     continue
-            
+
             return Response({
                 'usuarios': usuarios_data,
                 'total': len(usuarios_data),
                 'mensaje': 'Lista de usuarios válidos'
             })
-            
+
         except Exception as e:
             import traceback
             return Response({
@@ -2305,64 +2313,64 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'usuarios': [],
                 'total': 0
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @action(detail=False, methods=['post'])
     def suspender_usuario(self, request):
         """Suspender/activar un usuario específico"""
         self._verify_superadmin(request.user)
-        
+
         user_id = request.data.get('user_id')
         accion = request.data.get('accion')  # 'suspender' o 'activar'
-        
+
         print(f"🔧 DEBUG: user_id={user_id}, accion={accion}")
-        
+
         if not user_id or not accion:
-            return Response({'error': 'Faltan parámetros user_id o accion'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Faltan parámetros user_id o accion'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             from django.contrib.auth.models import User
             user = User.objects.get(id=user_id)
-            
+
             print(f"🔧 DEBUG: Usuario encontrado: {user.username}, is_active actual: {user.is_active}")
-            
+
             nuevo_status = accion == 'activar'
             user.is_active = nuevo_status
             user.save()
-            
+
             print(f"🔧 DEBUG: Nuevo status guardado: {user.is_active}")
-            
+
             return Response({
                 'message': f'Usuario {accion} exitosamente',
                 'user_id': user_id,
                 'username': user.username,
                 'nuevo_status': nuevo_status
             })
-            
+
         except User.DoesNotExist:
-            return Response({'error': 'Usuario no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Usuario no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             print(f"🔧 DEBUG: Error: {str(e)}")
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=False, methods=['delete'])
     def eliminar_usuario(self, request):
         """Eliminar completamente un usuario del sistema"""
         self._verify_superadmin(request.user)
-        
+
         user_id = request.data.get('user_id')
-        
+
         if not user_id:
-            return Response({'error': 'Falta parámetro user_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro user_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             from django.contrib.auth.models import User
             user = User.objects.get(id=user_id)
             username = user.username;
-            
+
             # Verificar si es admin de empresa
             try:
                 perfil = PerfilUsuario.objects.get(user=user)
@@ -2371,54 +2379,54 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     return Response({
                         'error': f'No se puede eliminar el administrador de la empresa "{empresa.nombre}". Elimine la empresa primero.'
                     }, status=status.HTTP_400_BAD_REQUEST)
-                
+
                 # Si es admin de planta, actualizar la relación
                 if perfil.nivel_usuario == 'admin-planta':
                     AdminPlanta.objects.filter(usuario=perfil).delete()
-                
+
                 # Eliminar perfil
                 perfil.delete()
-                
+
             except PerfilUsuario.DoesNotExist:
                 pass
-            
+
             # Eliminar usuario
             user.delete()
-            
+
             return Response({
                 'message': f'Usuario "{username}" eliminado exitosamente',
                 'user_id': user_id
             })
-            
+
         except User.DoesNotExist:
-            return Response({'error': 'Usuario no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Usuario no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error eliminando usuario: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+            return Response({'error': f'Error eliminando usuario: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=False, methods=['get'])
     def listar_todas_plantas(self, request):
         """Listar todas las plantas del sistema con filtros"""
         self._verify_superadmin(request.user)
-        
+
         # Filtros opcionales
         buscar = request.query_params.get('buscar', '')
         empresa_id = request.query_params.get('empresa_id', '')
         status_filter = request.query_params.get('status', '')
-        
+
         plantas = Planta.objects.all()
-        
+
         if buscar:
             plantas = plantas.filter(nombre__icontains=buscar)
-        
+
         if empresa_id:
             plantas = plantas.filter(empresa_id=empresa_id)
-        
+
         if status_filter:
             status_bool = status_filter.lower() == 'true'
             plantas = plantas.filter(status=status_bool)
-        
+
         plantas_data = []
         for planta in plantas:
             # Obtener admin de planta
@@ -2435,16 +2443,16 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 }
             except AdminPlanta.DoesNotExist:
                 pass
-            
+
             # Contar entidades relacionadas
             departamentos_count = Departamento.objects.filter(planta=planta).count()
             empleados_count = Empleado.objects.filter(puesto__departamento__planta=planta).count()
-            
+
             plantas_data.append({
                 'planta_id': planta.planta_id,
                 'nombre': planta.nombre,
                 'direccion': planta.direccion,
-                'telefono': None,  # El modelo Planta no tiene campo telefono
+                # 'telefono': None, # ! Rarillo el asunto...
                 'status': planta.status,
                 'empresa': {
                     'id': planta.empresa.empresa_id,
@@ -2455,49 +2463,56 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'departamentos_count': departamentos_count,
                 'empleados_count': empleados_count,
             })
-        
+
         return Response({
             'plantas': plantas_data,
             'total': len(plantas_data)
         })
-    
+
     @action(detail=False, methods=['get'])
     def listar_todos_departamentos(self, request):
         """Listar todos los departamentos - VERSIÓN SIMPLIFICADA"""
         self._verify_superadmin(request.user)
-        
+
         try:
             # Filtros opcionales
             buscar = request.query_params.get('buscar', '')
             planta_id = request.query_params.get('planta_id', '')
             empresa_id = request.query_params.get('empresa_id', '')
             status_filter = request.query_params.get('status', '')
-            
+
             departamentos = Departamento.objects.all()
-            
+
             if buscar:
                 departamentos = departamentos.filter(nombre__icontains=buscar)
-            
+
             if planta_id:
                 departamentos = departamentos.filter(planta_id=planta_id)
-            
+
             if empresa_id:
-                departamentos = departamentos.filter(planta__empresa_id=empresa_id)
-            
+                departamentos = departamentos.filter(planta__empreesa=empresa_id)
+
             if status_filter:
                 status_bool = status_filter.lower() == 'true'
                 departamentos = departamentos.filter(status=status_bool)
-            
+
             departamentos_data = []
             for depto in departamentos:
                 try:
-                    # Contar puestos de forma segura
                     puestos_count = 0
+                    empleados_depto = 0
+
+                    try: # Conteo de empleados por departamento.
+                        empleados_depto = sum(puesto.total_empleados for puesto in depto.puestos.filter(status=True))
+                    except:
+                        pass
+
+                    # Conteo de puestos por departamento.
                     try:
                         puestos_count = Puesto.objects.filter(departamento=depto).count()
                     except:
                         pass
-                    
+
                     departamentos_data.append({
                         'departamento_id': depto.departamento_id,
                         'nombre': depto.nombre,
@@ -2514,8 +2529,9 @@ class SuperAdminViewSet(viewsets.ViewSet):
                             'status': depto.planta.empresa.status
                         },
                         'puestos_count': puestos_count,
-                        'empleados_count': 0,  # Simplificado por problemas de migración
+                        'empleados_count': empleados_depto,
                     })
+
                 except Exception as e:
                     # Si hay error con un departamento específico, agregar datos básicos
                     departamentos_data.append({
@@ -2528,13 +2544,13 @@ class SuperAdminViewSet(viewsets.ViewSet):
                         'puestos_count': 0,
                         'empleados_count': 0,
                     })
-            
+
             return Response({
                 'departamentos': departamentos_data,
                 'total': len(departamentos_data),
                 'mensaje': 'Lista de departamentos simplificada'
             })
-            
+
         except Exception as e:
             import traceback
             return Response({
@@ -2543,42 +2559,42 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'departamentos': [],
                 'total': 0
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @action(detail=False, methods=['get'])
     def listar_todos_puestos(self, request):
         """Listar todos los puestos del sistema con filtros"""
         self._verify_superadmin(request.user)
-        
+
         # Filtros opcionales
         buscar = request.query_params.get('buscar', '')
         departamento_id = request.query_params.get('departamento_id', '')
         planta_id = request.query_params.get('planta_id', '')
         empresa_id = request.query_params.get('empresa_id', '')
         status_filter = request.query_params.get('status', '')
-        
+
         puestos = Puesto.objects.all()
-        
+
         if buscar:
             puestos = puestos.filter(nombre__icontains=buscar)
-        
+
         if departamento_id:
             puestos = puestos.filter(departamento_id=departamento_id)
-        
+
         if planta_id:
-            puestos = puestos.filter(departamento__planta_id=planta_id)
-        
+            puestos = puestos.filter(departamento__planta=planta_id)
+
         if empresa_id:
             puestos = puestos.filter(departamento__planta__empresa_id=empresa_id)
-        
+
         if status_filter:
             status_bool = status_filter.lower() == 'true'
             puestos = puestos.filter(status=status_bool)
-        
+
         puestos_data = []
         for puesto in puestos:
             # Contar empleados en este puesto
             empleados_count = Empleado.objects.filter(puesto=puesto).count()
-            
+
             puestos_data.append({
                 'puesto_id': puesto.puesto_id,
                 'nombre': puesto.nombre,
@@ -2592,7 +2608,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'planta': {
                     'id': puesto.departamento.planta.planta_id,
                     'nombre': puesto.departamento.planta.nombre,
-                    'status': puesto.departamento.planta.status
+                    'status': puesto.departamento.planta.statuss
                 },
                 'empresa': {
                     'id': puesto.departamento.planta.empresa.empresa_id,
@@ -2601,22 +2617,22 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 },
                 'empleados_count': empleados_count,
             })
-        
+
         return Response({
             'puestos': puestos_data,
             'total': len(puestos_data)
         })
-    
+
     @action(detail=False, methods=['get'])
     def listar_todos_empleados(self, request):
         """Listar todos los empleados con información completa mejorada (adaptado a BD real)"""
         self._verify_superadmin(request.user)
-        
+
         try:
             # Filtros opcionales
             buscar = request.query_params.get('buscar', '')
             activo = request.query_params.get('activo', '')
-            
+
             # Obtener empleados SOLO con los campos que sabemos que existen
             empleados = Empleado.objects.select_related('puesto', 'puesto__departamento', 'puesto__departamento__planta', 'puesto__departamento__planta__empresa').only(
                 'empleado_id', 'nombre', 'apellido_paterno', 'status',
@@ -2625,7 +2641,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'puesto__departamento__planta__planta_id', 'puesto__departamento__planta__nombre', 'puesto__departamento__planta__status',
                 'puesto__departamento__planta__empresa__empresa_id', 'puesto__departamento__planta__empresa__nombre', 'puesto__departamento__planta__empresa__status'
             ).all()
-            
+
             # Aplicar filtros
             if buscar:
                 empleados = empleados.filter(
@@ -2633,11 +2649,11 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 ) | empleados.filter(
                     apellido_paterno__icontains=buscar
                 )
-            
+
             if activo:
                 activo_bool = activo.lower() == 'true'
                 empleados = empleados.filter(status=activo_bool)
-            
+
             empleados_data = []
             for empleado in empleados:
                 try:
@@ -2672,9 +2688,9 @@ class SuperAdminViewSet(viewsets.ViewSet):
                             'status': empleado.puesto.departamento.planta.empresa.status if empleado.puesto and empleado.puesto.departamento and empleado.puesto.departamento.planta and empleado.puesto.departamento.planta.empresa else False
                         }
                     }
-                    
+
                     empleados_data.append(empleado_info)
-                    
+
                 except Exception as e:
                     # Si hay error con un empleado específico, usar datos básicos
                     empleados_data.append({
@@ -2692,12 +2708,12 @@ class SuperAdminViewSet(viewsets.ViewSet):
                         'empresa': {'id': None, 'nombre': 'Error al cargar', 'status': False},
                         'error_info': str(e)
                     })
-            
+
             # Estadísticas rápidas
             total_empleados = len(empleados_data)
             empleados_activos = len([e for e in empleados_data if e['status']])
             empleados_inactivos = total_empleados - empleados_activos
-            
+
             # Estadísticas por empresa
             empresas_stats = {}
             for empleado in empleados_data:
@@ -2707,7 +2723,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 empresas_stats[empresa_nombre]['total'] += 1
                 if empleado['status']:
                     empresas_stats[empresa_nombre]['activos'] += 1
-            
+
             return Response({
                 'empleados': empleados_data,
                 'estadisticas': {
@@ -2728,7 +2744,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 },
                 'mensaje': '📋 Lista completa de empleados con información detallada (estructura real BD)'
             })
-            
+
         except Exception as e:
             import traceback
             return Response({
@@ -2738,39 +2754,40 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'estadisticas': {'total': 0, 'activos': 0, 'inactivos': 0, 'porcentaje_activos': 0}
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
     # ======== ENDPOINTS PARA PLANTAS ========
     @action(detail=False, methods=['post'])
     def suspender_planta(self, request):
         """Suspender/activar una planta y todas sus entidades relacionadas"""
         self._verify_superadmin(request.user)
-        
+
         planta_id = request.data.get('planta_id')
         accion = request.data.get('accion')  # 'suspender' o 'activar'
-        
+
         if not planta_id or not accion:
-            return Response({'error': 'Faltan parámetros planta_id o accion'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Faltan parámetros planta_id o accion'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             planta = Planta.objects.get(planta_id=planta_id)
             nuevo_status = accion == 'activar'
-            
+
             # Cambiar status de la planta
             planta.status = nuevo_status
             planta.save()
-            
+
             # Cambiar status de todos los departamentos de la planta
             departamentos = Departamento.objects.filter(planta=planta)
             departamentos.update(status=nuevo_status)
-            
+
             # Cambiar status de todos los puestos de los departamentos
             puestos = Puesto.objects.filter(departamento__planta=planta)
             puestos.update(status=nuevo_status)
-            
+
             # Cambiar status de todos los empleados de la planta (a través de puesto->departamento->planta)
             empleados = Empleado.objects.filter(puesto__departamento__planta=planta)
             empleados.update(status=nuevo_status)
-            
+
             # Activar/desactivar cuenta del administrador de planta
             try:
                 admin_planta = AdminPlanta.objects.get(planta=planta)
@@ -2780,52 +2797,52 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 admin_planta.save()
             except AdminPlanta.DoesNotExist:
                 pass
-            
+
             return Response({
                 'message': f'Planta {accion} exitosamente',
                 'planta_id': planta_id,
                 'nuevo_status': nuevo_status
             })
-            
+
         except Planta.DoesNotExist:
-            return Response({'error': 'Planta no encontrada'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Planta no encontrada'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['delete'])
     def eliminar_planta(self, request):
         """Eliminar completamente una planta y todas sus entidades relacionadas"""
         self._verify_superadmin(request.user)
-        
+
         planta_id = request.data.get('planta_id')
-        
+
         if not planta_id:
-            return Response({'error': 'Falta parámetro planta_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro planta_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             planta = Planta.objects.get(planta_id=planta_id)
             nombre_planta = planta.nombre
-            
+
             # Eliminar en orden inverso para respetar las foreign keys
-            
+
             # 1. Eliminar empleados
             empleados = Empleado.objects.filter(planta=planta)
             empleados_count = empleados.count()
             empleados.delete()
-            
+
             # 2. Eliminar puestos
             puestos = Puesto.objects.filter(departamento__planta=planta)
             puestos_count = puestos.count()
             puestos.delete()
-            
+
             # 3. Eliminar departamentos
             departamentos = Departamento.objects.filter(planta=planta)
             departamentos_count = departamentos.count()
             departamentos.delete()
-            
+
             # 4. Eliminar administrador de planta y su usuario
             admin_planta = None
             try:
@@ -2836,10 +2853,10 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 admin_planta.delete()
             except AdminPlanta.DoesNotExist:
                 pass
-            
+
             # 5. Eliminar planta
             planta.delete()
-            
+
             return Response({
                 'message': f'Planta "{nombre_planta}" eliminada exitosamente',
                 'entidades_eliminadas': {
@@ -2850,86 +2867,87 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'admin_planta': 1 if admin_planta else 0
                 }
             })
-            
+
         except Planta.DoesNotExist:
-            return Response({'error': 'Planta no encontrada'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Planta no encontrada'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error eliminando planta: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error eliminando planta: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     # ======== ENDPOINTS PARA DEPARTAMENTOS ========
     @action(detail=False, methods=['post'])
     def suspender_departamento(self, request):
         """Suspender/activar un departamento y todas sus entidades relacionadas"""
         self._verify_superadmin(request.user)
-        
+
         departamento_id = request.data.get('departamento_id')
         accion = request.data.get('accion')  # 'suspender' o 'activar'
-        
+
         if not departamento_id or not accion:
-            return Response({'error': 'Faltan parámetros departamento_id o accion'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Faltan parámetros departamento_id o accion'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             departamento = Departamento.objects.get(departamento_id=departamento_id)
             nuevo_status = accion == 'activar'
-            
+
             # Cambiar status del departamento
             departamento.status = nuevo_status
             departamento.save()
-            
+
             # Cambiar status de todos los puestos del departamento
             puestos = Puesto.objects.filter(departamento=departamento)
             puestos.update(status=nuevo_status)
-            
+
             # Cambiar status de todos los empleados del departamento (a través de puesto->departamento)
             empleados = Empleado.objects.filter(puesto__departamento=departamento)
             empleados.update(status=nuevo_status)
-            
+
             return Response({
                 'message': f'Departamento {accion} exitosamente',
                 'departamento_id': departamento_id,
                 'nuevo_status': nuevo_status
             })
-            
+
         except Departamento.DoesNotExist:
-            return Response({'error': 'Departamento no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Departamento no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['delete'])
     def eliminar_departamento(self, request):
         """Eliminar completamente un departamento y todas sus entidades relacionadas"""
         self._verify_superadmin(request.user)
-        
+
         departamento_id = request.data.get('departamento_id')
-        
+
         if not departamento_id:
-            return Response({'error': 'Falta parámetro departamento_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro departamento_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             departamento = Departamento.objects.get(departamento_id=departamento_id)
             nombre_departamento = departamento.nombre
-            
+
             # Eliminar en orden inverso para respetar las foreign keys
-            
+
             # 1. Eliminar empleados
             empleados = Empleado.objects.filter(departamento=departamento)
             empleados_count = empleados.count()
             empleados.delete()
-            
+
             # 2. Eliminar puestos
             puestos = Puesto.objects.filter(departamento=departamento)
             puestos_count = puestos.count()
             puestos.delete()
-            
+
             # 3. Eliminar departamento
             departamento.delete()
-            
+
             return Response({
                 'message': f'Departamento "{nombre_departamento}" eliminado exitosamente',
                 'entidades_eliminadas': {
@@ -2938,75 +2956,77 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'empleados': empleados_count
                 }
             })
-            
+
         except Departamento.DoesNotExist:
-            return Response({'error': 'Departamento no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Departamento no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
+
         except Exception as e:
-            return Response({'error': f'Error eliminando departamento: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error eliminando departamento: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     # ======== ENDPOINTS PARA PUESTOS ========
     @action(detail=False, methods=['post'])
     def suspender_puesto(self, request):
         """Suspender/activar un puesto y todos sus empleados"""
         self._verify_superadmin(request.user)
-        
+
         puesto_id = request.data.get('puesto_id')
         accion = request.data.get('accion')  # 'suspender' o 'activar'
-        
+
         if not puesto_id or not accion:
-            return Response({'error': 'Faltan parámetros puesto_id o accion'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Faltan parámetros puesto_id o accion'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             puesto = Puesto.objects.get(puesto_id=puesto_id)
             nuevo_status = accion == 'activar'
-            
+
             # Cambiar status del puesto
             puesto.status = nuevo_status
             puesto.save()
-            
+
             # Cambiar status de todos los empleados del puesto
             empleados = Empleado.objects.filter(puesto=puesto)
             empleados.update(status=nuevo_status)
-            
+
             return Response({
                 'message': f'Puesto {accion} exitosamente',
                 'puesto_id': puesto_id,
                 'nuevo_status': nuevo_status
             })
-            
+
         except Puesto.DoesNotExist:
-            return Response({'error': 'Puesto no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Puesto no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['delete'])
     def eliminar_puesto(self, request):
         """Eliminar completamente un puesto y todos sus empleados"""
         self._verify_superadmin(request.user)
-        
+
         puesto_id = request.data.get('puesto_id')
-        
+
         if not puesto_id:
-            return Response({'error': 'Falta parámetro puesto_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro puesto_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             puesto = Puesto.objects.get(puesto_id=puesto_id)
             nombre_puesto = puesto.nombre
-            
+
             # 1. Eliminar empleados
             empleados = Empleado.objects.filter(puesto=puesto)
             empleados_count = empleados.count()
             empleados.delete()
-            
+
             # 2. Eliminar puesto
             puesto.delete()
-            
+
             return Response({
                 'message': f'Puesto "{nombre_puesto}" eliminado exitosamente',
                 'entidades_eliminadas': {
@@ -3014,93 +3034,95 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'empleados': empleados_count
                 }
             })
-            
+
         except Puesto.DoesNotExist:
-            return Response({'error': 'Puesto no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Puesto no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error eliminando puesto: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error eliminando puesto: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     # ======== ENDPOINTS PARA EMPLEADOS ========
     @action(detail=False, methods=['post'])
     def suspender_empleado(self, request):
         """Suspender/activar un empleado específico"""
         self._verify_superadmin(request.user)
-        
+
         empleado_id = request.data.get('empleado_id')
         accion = request.data.get('accion')  # 'suspender' o 'activar'
-        
+
         if not empleado_id or not accion:
-            return Response({'error': 'Faltan parámetros empleado_id o accion'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Faltan parámetros empleado_id o accion'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             empleado = Empleado.objects.get(empleado_id=empleado_id)
             nuevo_status = accion == 'activar'
-            
+
             # Cambiar status del empleado
             empleado.status = nuevo_status
             empleado.save()
-            
+
             return Response({
                 'message': f'Empleado {accion} exitosamente',
                 'empleado_id': empleado_id,
                 'nuevo_status': nuevo_status
             })
-            
+
         except Empleado.DoesNotExist:
-            return Response({'error': 'Empleado no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Empleado no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['delete'])
     def eliminar_empleado(self, request):
         """Eliminar completamente un empleado del sistema"""
         self._verify_superadmin(request.user)
-        
+
         empleado_id = request.data.get('empleado_id')
-        
+
         if not empleado_id:
-            return Response({'error': 'Falta parámetro empleado_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro empleado_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             empleado = Empleado.objects.get(empleado_id=empleado_id)
             nombre_empleado = f"{empleado.nombre} {empleado.apellido_paterno}"
-            
+
             # Eliminar empleado
             empleado.delete()
-            
+
             return Response({
                 'message': f'Empleado "{nombre_empleado}" eliminado exitosamente',
                 'empleado_id': empleado_id
             })
-            
+
         except Empleado.DoesNotExist:
-            return Response({'error': 'Empleado no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Empleado no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error eliminando empleado: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error eliminando empleado: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     # ======== ENDPOINTS PARA EDICIÓN ========
     @action(detail=False, methods=['put'])
     def editar_empresa(self, request):
         """Editar datos de una empresa"""
         self._verify_superadmin(request.user)
-        
+
         empresa_id = request.data.get('empresa_id')
-        
+
         if not empresa_id:
-            return Response({'error': 'Falta parámetro empresa_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro empresa_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             empresa = Empresa.objects.get(empresa_id=empresa_id)
-            
+
             # Actualizar campos permitidos
             if 'nombre' in request.data:
                 empresa.nombre = request.data['nombre']
@@ -3114,50 +3136,50 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 empresa.direccion = request.data.get('direccion', '')
             if 'status' in request.data:
                 empresa.status = request.data['status']
-            
+
             empresa.save()
-            
+
             return Response({
                 'message': f'Empresa "{empresa.nombre}" actualizada exitosamente',
                 'empresa_id': empresa_id
             })
-            
+
         except Empresa.DoesNotExist:
-            return Response({'error': 'Empresa no encontrada'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Empresa no encontrada'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error actualizando empresa: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error actualizando empresa: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['put'])
     def editar_usuario(self, request):
         """Editar datos de un usuario"""
         self._verify_superadmin(request.user)
-        
+
         user_id = request.data.get('user_id')
-        
+
         print(f"🔧 DEBUG: Editando usuario ID={user_id}")
         print(f"🔧 DEBUG: Datos recibidos: {request.data}")
-        
+
         if not user_id:
-            return Response({'error': 'Falta parámetro user_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro user_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             from django.contrib.auth.models import User
             user = User.objects.get(id=user_id)
             perfil = PerfilUsuario.objects.get(user=user)
-            
+
             print(f"🔧 DEBUG: Usuario encontrado: {user.username}")
             print(f"🔧 DEBUG: Datos originales - nombre: {perfil.nombre}, apellido_paterno: {perfil.apellido_paterno}, apellido_materno: {perfil.apellido_materno}")
-            
+
             # Actualizar campos básicos del usuario
             if 'username' in request.data:
                 user.username = request.data['username']
             if 'email' in request.data:
                 user.email = request.data['email']
                 perfil.correo = request.data['email']  # Actualizar también en perfil
-            
+
             # Manejar nombre_completo (para compatibilidad hacia atrás)
             if 'nombre_completo' in request.data:
                 print(f"🔧 DEBUG: Procesando nombre_completo: {request.data['nombre_completo']}")
@@ -3171,7 +3193,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     perfil.apellido_materno = ' '.join(nombres[2:])
                 else:
                     perfil.apellido_materno = ''
-            
+
             # Manejar campos separados (preferir estos si están presentes)
             if 'nombre' in request.data:
                 print(f"🔧 DEBUG: Actualizando nombre: {request.data['nombre']}")
@@ -3182,36 +3204,36 @@ class SuperAdminViewSet(viewsets.ViewSet):
             if 'apellido_materno' in request.data:
                 print(f"🔧 DEBUG: Actualizando apellido_materno: {request.data['apellido_materno']}")
                 perfil.apellido_materno = request.data['apellido_materno']
-            
+
             if 'is_active' in request.data:
                 user.is_active = request.data['is_active']
-            
+
             print(f"🔧 DEBUG: Guardando cambios...")
             user.save()
             perfil.save()
-            
+
             print(f"🔧 DEBUG: Datos después del guardado - nombre: {perfil.nombre}, apellido_paterno: {perfil.apellido_paterno}, apellido_materno: {perfil.apellido_materno}")
-            
+
             return Response({
                 'message': f'Usuario "{user.username}" actualizado exitosamente',
                 'user_id': user_id
             })
-            
+
         except User.DoesNotExist:
-            return Response({'error': 'Usuario no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Usuario no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except PerfilUsuario.DoesNotExist:
-            return Response({'error': 'Perfil de usuario no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Perfil de usuario no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error actualizando usuario: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error actualizando usuario: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'])
     def crear_usuario(self, request):
         """Crear un nuevo usuario (solo SuperAdmin)"""
         self._verify_superadmin(request.user)
-        
+
         # Datos requeridos
         username = request.data.get('username')
         email = request.data.get('email')
@@ -3220,30 +3242,30 @@ class SuperAdminViewSet(viewsets.ViewSet):
         apellido_materno = request.data.get('apellido_materno', '')
         nivel_usuario = request.data.get('nivel_usuario', 'superadmin')
         password = request.data.get('password', '1234')   # Password por defecto
-        
+
         if not all([username, email, nombre, apellido_paterno]):
-            return Response({'error': 'Faltan campos requeridos: username, email, nombre, apellido_paterno'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Faltan campos requeridos: username, email, nombre, apellido_paterno'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         # Solo permitir crear usuarios superadmin desde SuperAdmin
         if nivel_usuario != 'superadmin':
-            return Response({'error': 'Solo se pueden crear usuarios SuperAdmin desde esta interfaz'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Solo se pueden crear usuarios SuperAdmin desde esta interfaz'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             from django.contrib.auth.models import User
             from django.db import transaction
-            
+
             with transaction.atomic():
                 # Verificar que no exista el username o email
                 if User.objects.filter(username=username).exists():
-                    return Response({'error': 'El nombre de usuario ya existe'}, 
-                                  status=status.HTTP_400_BAD_REQUEST)
-                
+                    return Response({'error': 'El nombre de usuario ya existe'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
                 if User.objects.filter(email=email).exists():
-                    return Response({'error': 'El email ya está registrado'}, 
-                                  status=status.HTTP_400_BAD_REQUEST)
-                
+                    return Response({'error': 'El email ya está registrado'},
+                        status=status.HTTP_400_BAD_REQUEST)
+
                 # Crear usuario
                 user = User.objects.create_user(
                     username=username,
@@ -3251,7 +3273,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     password=password,
                     is_active=request.data.get('is_active', True)
                 )
-                
+
                 # Crear perfil
                 perfil = PerfilUsuario.objects.create(
                     user=user,
@@ -3261,31 +3283,32 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     correo=email,
                     nivel_usuario=nivel_usuario
                 )
-                
+
                 return Response({
                     'message': f'Usuario SuperAdmin "{username}" creado exitosamente',
                     'user_id': user.id,
                     'password_temporal': password
                 })
-                
+
         except Exception as e:
-            return Response({'error': f'Error creando usuario: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error creando usuario: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
     # ======== ENDPOINTS PARA EDITAR ========
     @action(detail=False, methods=['put'])
     def editar_empresa(self, request):
         """Editar una empresa existente"""
         self._verify_superadmin(request.user)
-        
+
         empresa_id = request.data.get('empresa_id')
         if not empresa_id:
-            return Response({'error': 'Falta parámetro empresa_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro empresa_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             empresa = Empresa.objects.get(empresa_id=empresa_id)
-            
+
             # Actualizar campos si se proporcionan
             if 'nombre' in request.data:
                 empresa.nombre = request.data['nombre']
@@ -3299,34 +3322,34 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 empresa.direccion = request.data['direccion']
             if 'status' in request.data:
                 empresa.status = request.data['status']
-            
+
             empresa.save()
-            
+
             return Response({
                 'message': 'Empresa actualizada exitosamente',
                 'empresa_id': empresa_id
             })
-            
+
         except Empresa.DoesNotExist:
-            return Response({'error': 'Empresa no encontrada'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Empresa no encontrada'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['put'])
     def editar_planta(self, request):
         """Editar una planta existente"""
         self._verify_superadmin(request.user)
-        
+
         planta_id = request.data.get('planta_id')
         if not planta_id:
-            return Response({'error': 'Falta parámetro planta_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro planta_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             planta = Planta.objects.get(planta_id=planta_id)
-            
+
             # Actualizar campos si se proporcionan
             if 'nombre' in request.data:
                 planta.nombre = request.data['nombre']
@@ -3336,34 +3359,34 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 planta.telefono = request.data['telefono']
             if 'status' in request.data:
                 planta.status = request.data['status']
-            
+
             planta.save()
-            
+
             return Response({
                 'message': 'Planta actualizada exitosamente',
                 'planta_id': planta_id
             })
-            
+
         except Planta.DoesNotExist:
-            return Response({'error': 'Planta no encontrada'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Planta no encontrada'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['put'])
     def editar_departamento(self, request):
         """Editar un departamento existente"""
         self._verify_superadmin(request.user)
-        
+
         departamento_id = request.data.get('departamento_id')
         if not departamento_id:
-            return Response({'error': 'Falta parámetro departamento_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro departamento_id'},
+            status=status.HTTP_400_BAD_REQUEST)
+
         try:
             departamento = Departamento.objects.get(departamento_id=departamento_id)
-            
+
             # Actualizar campos si se proporcionan
             if 'nombre' in request.data:
                 departamento.nombre = request.data['nombre']
@@ -3371,34 +3394,34 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 departamento.descripcion = request.data['descripcion']
             if 'status' in request.data:
                 departamento.status = request.data['status']
-            
+
             departamento.save()
-            
+
             return Response({
                 'message': 'Departamento actualizado exitosamente',
                 'departamento_id': departamento_id
             })
-            
+
         except Departamento.DoesNotExist:
-            return Response({'error': 'Departamento no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Departamento no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['put'])
     def editar_puesto(self, request):
         """Editar un puesto existente"""
         self._verify_superadmin(request.user)
-        
+
         puesto_id = request.data.get('puesto_id')
         if not puesto_id:
-            return Response({'error': 'Falta parámetro puesto_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro puesto_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             puesto = Puesto.objects.get(puesto_id=puesto_id)
-            
+
             # Actualizar campos si se proporcionan
             if 'nombre' in request.data:
                 puesto.nombre = request.data['nombre']
@@ -3406,34 +3429,34 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 puesto.descripcion = request.data['descripcion']
             if 'status' in request.data:
                 puesto.status = request.data['status']
-            
+
             puesto.save()
-            
+
             return Response({
                 'message': 'Puesto actualizado exitosamente',
                 'puesto_id': puesto_id
             })
-            
+
         except Puesto.DoesNotExist:
-            return Response({'error': 'Puesto no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Puesto no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['put'])
     def editar_empleado(self, request):
         """Editar un empleado existente"""
         self._verify_superadmin(request.user)
-        
+
         empleado_id = request.data.get('empleado_id')
         if not empleado_id:
-            return Response({'error': 'Falta parámetro empleado_id'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
-        
+            return Response({'error': 'Falta parámetro empleado_id'},
+                status=status.HTTP_400_BAD_REQUEST)
+
         try:
             empleado = Empleado.objects.get(empleado_id=empleado_id)
-            
+
             # Actualizar campos si se proporcionan
             if 'nombre' in request.data:
                 empleado.nombre = request.data['nombre']
@@ -3449,82 +3472,83 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 empleado.fecha_ingreso = request.data['fecha_ingreso']
             if 'status' in request.data:
                 empleado.status = request.data['status']
-            
+
             empleado.save()
-            
+
             return Response({
                 'message': 'Empleado actualizado exitosamente',
                 'empleado_id': empleado_id
             })
-            
+
         except Empleado.DoesNotExist:
-            return Response({'error': 'Empleado no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Empleado no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
     def suspender_plan(self, request, plan_id=None):
         """Suspender o activar un plan de suscripción"""
         self._verify_superadmin(request.user)
-        
+
         try:
             from apps.subscriptions.models import PlanSuscripcion
-            
+
             plan = PlanSuscripcion.objects.get(plan_id=plan_id)
             action = request.data.get('action', 'suspender')
-            
+
             if action == 'suspender':
-                plan.status = False
+                bool(plan.status) == False
                 mensaje = f'Plan "{plan.nombre}" suspendido exitosamente'
             else:  # activar
-                plan.status = True
+                bool(plan.status) == True
                 mensaje = f'Plan "{plan.nombre}" activado exitosamente'
-            
+
             plan.save()
-            
+
             return Response({
                 'success': True,
                 'message': mensaje,
                 'plan_id': plan.plan_id,
-                'nuevo_status': plan.status
+                'nuevo_status': bool(plan.status)
             })
-            
+
         except PlanSuscripcion.DoesNotExist:
-            return Response({'error': 'Plan no encontrado'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Plan no encontrado'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])
     def listar_planes_admin(self, request):
         """Listar TODOS los planes para SuperAdmin (incluye inactivos y campo status)"""
         self._verify_superadmin(request.user)
-        
+
         try:
             from apps.subscriptions.models import PlanSuscripcion
-            
+
             planes = PlanSuscripcion.objects.all().order_by('plan_id')
-            
+
             planes_data = []
             for plan in planes:
                 planes_data.append({
                     'plan_id': plan.plan_id,
                     'nombre': plan.nombre,
                     'descripcion': plan.descripcion,
-                    'duracion': plan.duracion,
+                    'duracion': int(plan.duracion),
                     'precio': float(plan.precio),
-                    'status': plan.status  # ← INCLUIMOS EL CAMPO STATUS
+                    'status': bool(plan.status)  # ← INCLUIMOS EL CAMPO STATUS
                 })
-            
-            return Response(planes_data)
-            
-        except Exception as e:
-            return Response({'error': f'Error: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+            return Response(planes_data)
+
+        except Exception as e:
+            return Response({'error': f'Error: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+# ---------------------------------------------------------------------------- #
 
 # ============================================================================
 # VISTAS PARA SUSCRIPCIONES - RF-001, RF-003
@@ -3533,7 +3557,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
 @method_decorator(csrf_exempt, name='dispatch')
 class SuscripcionViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
-    
+
     @action(detail=False, methods=['get'])
     def planes(self, request):
         """Listar planes disponibles - COMPATIBILIDAD"""
@@ -3544,70 +3568,70 @@ class SuscripcionViewSet(viewsets.ViewSet):
                 "plan_id": plan.plan_id,
                 "nombre": plan.nombre,
                 "descripcion": plan.descripcion,
-                "duracion": plan.duracion,
+                "duracion": int(plan.duracion),
                 "precio": float(plan.precio)
             } for plan in planes])
         except Exception as e:
             return Response({
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+
     @action(detail=False, methods=['get'], permission_classes=[])
     def listar_planes(self, request):
         """Lista todos los planes de suscripción disponibles"""
         try:
             from django.db import connection
-            
+
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT 
+                    SELECT
                         plan_id,
                         nombre,
                         descripcion,
                         precio,
                         duracion,
                         status
-                    FROM planes 
+                    FROM planes
                     WHERE status = true
                     ORDER BY precio
                 """)
-                
+
                 columns = [col[0] for col in cursor.description]
                 results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-                
+
                 # Formatear precios
                 for result in results:
                     if result['precio']:
                         result['precio'] = float(result['precio'])
-                
+
                 return Response(results)
-            
+
         except Exception as e:
             return Response(
-                {'error': f'Error obteniendo planes: {str(e)}'}, 
+                {'error': f'Error obteniendo planes: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     @action(detail=False, methods=['post'])
     def crear_plan(self, request):
         """Crear un nuevo plan de suscripción (Solo SuperAdmin)"""
         try:
             from apps.subscriptions.models import PlanSuscripcion
             from django.db import transaction
-            
+
 
             data = request.data
             nombre = data.get('nombre')
             descripcion = data.get('descripcion', '')
             precio = data.get('precio')
             duracion = data.get('duracion')
-            
+
             if not nombre or not precio or not duracion:
                 return Response(
-                    {'error': 'nombre, precio y duracion son requeridos'}, 
+                    {'error': 'nombre, precio y duracion son requeridos'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             with transaction.atomic():
                 plan = PlanSuscripcion.objects.create(
                     nombre=nombre,
@@ -3616,7 +3640,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     duracion=int(duracion),
                     status=True
                 )
-            
+
             return Response({
                 'message': f'Plan "{plan.nombre}" creado exitosamente',
                 'plan': {
@@ -3627,28 +3651,28 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     'duracion': plan.duracion
                 }
             })
-            
+
         except Exception as e:
             return Response(
-                {'error': f'Error creando plan: {str(e)}'}, 
+                {'error': f'Error creando plan: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     @action(detail=False, methods=['put'], permission_classes=[])
     def editar_plan(self, request):
         """Editar un plan de suscripción"""
         try:
             from apps.subscriptions.models import PlanSuscripcion
-            
+
             plan_id = request.data.get('plan_id')
             if not plan_id:
                 return Response(
-                    {'error': 'plan_id es requerido'}, 
+                    {'error': 'plan_id es requerido'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             plan = PlanSuscripcion.objects.get(plan_id=plan_id)
-            
+
             # Actualizar campos si se proporcionan
             if 'nombre' in request.data:
                 plan.nombre = request.data['nombre']
@@ -3659,10 +3683,10 @@ class SuscripcionViewSet(viewsets.ViewSet):
             if 'duracion' in request.data:
                 plan.duracion = int(request.data['duracion'])
             if 'status' in request.data:
-                plan.status = bool(request.data['status'])
-            
+                bool(plan.status) == bool(request.data['status'])
+
             plan.save()
-            
+
             return Response({
                 'message': f'Plan "{plan.nombre}" actualizado exitosamente',
                 'plan': {
@@ -3670,34 +3694,34 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     'nombre': plan.nombre,
                     'descripcion': plan.descripcion,
                     'precio': float(plan.precio),
-                    'duracion': plan.duracion,
-                    'status': plan.status
+                    'duracion': int(plan.duracion),
+                    'status': bool(plan.status)
                 }
             })
-            
+
         except PlanSuscripcion.DoesNotExist:
             return Response(
-                {'error': 'Plan no encontrado'}, 
+                {'error': 'Plan no encontrado'},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
-                {'error': f'Error actualizando plan: {str(e)}'}, 
+                {'error': f'Error actualizando plan: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     @action(detail=False, methods=['get'], permission_classes=[])
     def listar_suscripciones(self, request):
         """Lista todas las suscripciones de empresas"""
         try:
             from django.db import connection
-            
+
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT 
+                    SELECT
                         s.suscripcion_id,
-                        e.nombre as empresa_nombre,
                         e.empresa_id,
+                        e.nombre as empresa_nombre,
                         p.nombre as plan_nombre,
                         p.precio,
                         p.duracion,
@@ -3709,25 +3733,25 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     JOIN planes p ON s.plan = p.plan_id
                     ORDER BY s.fecha_registro DESC
                 """)
-                
+
                 columns = [col[0] for col in cursor.description]
                 results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-                
+
                 # Formatear fechas
                 for result in results:
                     if result['fecha_inicio']:
                         result['fecha_inicio'] = result['fecha_inicio'].strftime('%Y-%m-%d')
                     if result['fecha_fin']:
                         result['fecha_fin'] = result['fecha_fin'].strftime('%Y-%m-%d')
-                
+
                 return Response(results)
-            
+
         except Exception as e:
             return Response(
-                {'error': f'Error obteniendo suscripciones: {str(e)}'}, 
+                {'error': f'Error obteniendo suscripciones: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     @action(detail=False, methods=['post'], permission_classes=[])
     def crear_suscripcion(self, request):
         """Crear una nueva suscripción para una empresa"""
@@ -3735,50 +3759,50 @@ class SuscripcionViewSet(viewsets.ViewSet):
             from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion, Pago
             from django.db import transaction
             from datetime import timedelta
-            
+
             data = request.data
             empresa_id = data.get('empresa_id')
             plan_id = data.get('plan_id')
-            
+
             if not empresa_id or not plan_id:
                 return Response(
-                    {'error': 'empresa_id y plan_id son requeridos'}, 
+                    {'error': 'empresa_id y plan_id son requeridos'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             try:
                 empresa = Empresa.objects.get(empresa_id=empresa_id)
             except Empresa.DoesNotExist:
                 return Response(
-                    {'error': f'Empresa con ID {empresa_id} no encontrada'}, 
+                    {'error': f'Empresa con ID {empresa_id} no encontrada'},
                     status=status.HTTP_404_NOT_FOUND
                 )
-            
+
             try:
                 plan = PlanSuscripcion.objects.get(plan_id=plan_id)
             except PlanSuscripcion.DoesNotExist:
                 return Response(
-                    {'error': f'Plan con ID {plan_id} no encontrado'}, 
+                    {'error': f'Plan con ID {plan_id} no encontrado'},
                     status=status.HTTP_404_NOT_FOUND
                 )
-            
+
             # Verificar si ya existe una suscripción activa
             suscripcion_existente = SuscripcionEmpresa.objects.filter(
                 empresa=empresa,
                 estado='activa'
             ).first()
-            
+
             if suscripcion_existente:
                 return Response(
-                    {'error': 'La empresa ya tiene una suscripción activa'}, 
+                    {'error': 'La empresa ya tiene una suscripción activa'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             with transaction.atomic():
                 # Crear nueva suscripción
                 fecha_inicio = timezone.now().date()
                 fecha_fin = fecha_inicio + timedelta(days=plan.duracion)
-                
+
                 suscripcion = SuscripcionEmpresa.objects.create(
                     empresa=empresa,
                     plan_suscripcion=plan,
@@ -3787,7 +3811,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     estado='Activa',
                     status=True
                 )
-                
+
                 # Crear pago completado
                 pago = Pago.objects.create(
                     suscripcion=suscripcion,
@@ -3796,7 +3820,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     estado_pago='Completado',
                     fecha_pago=timezone.now()
                 )
-            
+
             return Response({
                 'message': f'Suscripción creada exitosamente para {empresa.nombre}',
                 'suscripcion': {
@@ -3808,40 +3832,40 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     'precio': float(plan.precio)
                 }
             })
-            
+
         except Empresa.DoesNotExist:
             return Response(
-                {'error': 'Empresa no encontrada'}, 
+                {'error': 'Empresa no encontrada'},
                 status=status.HTTP_404_NOT_FOUND
             )
         except PlanSuscripcion.DoesNotExist:
             return Response(
-                {'error': 'Plan no encontrado'}, 
+                {'error': 'Plan no encontrado'},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
-                {'error': f'Error creando suscripción: {str(e)}'}, 
+                {'error': f'Error creando suscripción: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     @action(detail=False, methods=['post'])
     def renovar_suscripcion(self, request):
         """Renovar una suscripción existente"""
         try:
             from apps.subscriptions.models import SuscripcionEmpresa, Pago
             from django.utils import timezone
-            
+
             data = request.data
             suscripcion_id = data.get('suscripcion_id')
             meses = data.get('meses', 1)
             metodo_pago = data.get('metodo_pago', 'tarjeta_credito')
-            
+
             suscripcion = SuscripcionEmpresa.objects.get(id=suscripcion_id)
-            
+
             # Renovar la suscripción
             suscripcion.renovar_suscripcion(meses)
-            
+
             # Crear el registro de pago
             monto = suscripcion.plan.precio_mensual * meses
             pago = Pago.objects.create(
@@ -3851,29 +3875,29 @@ class SuscripcionViewSet(viewsets.ViewSet):
                 estado_pago='completado',
                 referencia_pago=f"REN-{suscripcion.id}-{timezone.now().strftime('%Y%m%d%H%M%S')}"
             )
-            
+
             return Response({
                 'message': f'Suscripción renovada por {meses} mes(es)',
                 'nueva_fecha_fin': suscripcion.fecha_fin.strftime('%Y-%m-%d'),
                 'monto_pagado': str(monto)
             })
-            
+
         except SuscripcionEmpresa.DoesNotExist:
-            return Response({'error': 'Suscripción no encontrada'}, 
-                          status=status.HTTP_404_NOT_FOUND)
+            return Response({'error': 'Suscripción no encontrada'},
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': f'Error renovando suscripción: {str(e)}'}, 
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+            return Response({'error': f'Error renovando suscripción: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     @action(detail=False, methods=['get'], permission_classes=[])
     def listar_pagos(self, request):
         """Listar todos los pagos del sistema con información de suscripción"""
         try:
             from django.db import connection
-            
+
             with connection.cursor() as cursor:
                 cursor.execute("""
-                    SELECT 
+                    SELECT
                         p.pago_id,
                         e.nombre as empresa_nombre,
                         pl.nombre as plan_nombre,
@@ -3888,51 +3912,51 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     JOIN planes pl ON s.plan = pl.plan_id
                     ORDER BY p.fecha_pago DESC
                 """)
-                
+
                 columns = [col[0] for col in cursor.description]
                 results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-                
+
                 # Formatear fechas y montos
                 for result in results:
                     if result['fecha_pago']:
                         result['fecha_pago'] = result['fecha_pago'].strftime('%Y-%m-%d %H:%M:%S')
                     if result['monto']:
                         result['monto'] = float(result['monto'])
-                
+
                 return Response(results)
-            
+
         except Exception as e:
             return Response(
-                {'error': f'Error obteniendo pagos: {str(e)}'}, 
+                {'error': f'Error obteniendo pagos: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     @action(detail=False, methods=['post'], permission_classes=[])
     def procesar_pago(self, request):
         """Procesar un pago para una suscripción"""
         try:
             from apps.subscriptions.models import SuscripcionEmpresa, Pago
             from django.db import transaction
-            
+
             data = request.data
             suscripcion_id = data.get('suscripcion_id')
             monto_pago = data.get('monto_pago')
             transaccion_id = data.get('transaccion_id', '')
-            
+
             if not suscripcion_id or not monto_pago:
                 return Response(
-                    {'error': 'suscripcion_id y monto_pago son requeridos'}, 
+                    {'error': 'suscripcion_id y monto_pago son requeridos'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             try:
                 suscripcion = SuscripcionEmpresa.objects.get(suscripcion_id=suscripcion_id)
             except SuscripcionEmpresa.DoesNotExist:
                 return Response(
-                    {'error': f'Suscripción con ID {suscripcion_id} no encontrada'}, 
+                    {'error': f'Suscripción con ID {suscripcion_id} no encontrada'},
                     status=status.HTTP_404_NOT_FOUND
                 )
-            
+
             with transaction.atomic():
                 pago = Pago.objects.create(
                     suscripcion=suscripcion,
@@ -3941,13 +3965,13 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     estado_pago='Completado',
                     transaccion_id=transaccion_id
                 )
-                
+
                 # Activar suscripción si estaba suspendida
                 if suscripcion.estado != 'Activa':
                     suscripcion.estado = 'Activa'
                     suscripcion.status = True
                     suscripcion.save()
-            
+
             return Response({
                 'message': 'Pago procesado exitosamente',
                 'pago': {
@@ -3957,18 +3981,18 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     'estado': pago.estado_pago
                 }
             })
-            
+
         except SuscripcionEmpresa.DoesNotExist:
             return Response(
-                {'error': 'Suscripción no encontrada'}, 
+                {'error': 'Suscripción no encontrada'},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
-                {'error': f'Error procesando pago: {str(e)}'}, 
+                {'error': f'Error procesando pago: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    
+
     @action(detail=False, methods=['get'], permission_classes=[])
     def info_suscripcion_empresa(self, request):
         """Obtener información de suscripción de una empresa específica"""
@@ -3976,64 +4000,64 @@ class SuscripcionViewSet(viewsets.ViewSet):
             empresa_id = request.GET.get('empresa_id')
             if not empresa_id:
                 return Response(
-                    {'error': 'empresa_id es requerido'}, 
+                    {'error': 'empresa_id es requerido'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             empresa = Empresa.objects.get(empresa_id=empresa_id)
             info_suscripcion = self.get_subscription_info(empresa)
             return Response(info_suscripcion)
-            
+
         except Empresa.DoesNotExist:
             return Response(
-                {'error': 'Empresa no encontrada'}, 
+                {'error': 'Empresa no encontrada'},
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
             return Response(
-                {'error': f'Error obteniendo información de suscripción: {str(e)}'}, 
+                {'error': f'Error obteniendo información de suscripción: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-# Agregar al final del archivo, antes de las vistas de suscripciones
+# ---------------------------------------------------------------------------- #
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AdminBDViewSet(viewsets.ViewSet):
     """ViewSet para gestión de base de datos y exportación CSV"""
     permission_classes = [IsAuthenticated]
-    
+
     def _verify_superadmin(self, user):
         """Verificar que el usuario es SuperAdmin"""
         if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'superadmin':
             raise ValidationError("Usuario sin permisos de SuperAdmin")
-    
+
     @action(detail=False, methods=['get'], url_path='exportar/(?P<tabla>[^/.]+)')
     def exportar_tabla(self, request, tabla=None):
         """Exportar tabla a CSV"""
         self._verify_superadmin(request.user)
-        
+
         try:
             # Crear respuesta CSV
             response = HttpResponse(content_type='text/csv')
             response['Content-Disposition'] = f'attachment; filename="{tabla}_{timezone.now().strftime("%Y%m%d_%H%M%S")}.csv"'
-            
+
             writer = csv.writer(response)
-            
+
             if tabla == 'empresas':
                 # Exportar empresas
                 empresas = Empresa.objects.all().select_related('administrador__user')
-                
+
                 # Escribir encabezados
                 writer.writerow([
-                    'ID', 'Nombre', 'RFC', 'Teléfono', 'Email', 'Dirección', 
+                    'ID', 'Nombre', 'RFC', 'Teléfono', 'Email', 'Dirección',
                     'Fecha Registro', 'Estado', 'Admin Username', 'Admin Email'
                 ])
-                
+
                 # Escribir datos
                 for empresa in empresas:
                     admin_username = empresa.administrador.user.username if empresa.administrador else 'N/A'
                     admin_email = empresa.administrador.user.email if empresa.administrador else 'N/A'
-                    
+
                     writer.writerow([
                         empresa.empresa_id,
                         empresa.nombre,
@@ -4046,16 +4070,16 @@ class AdminBDViewSet(viewsets.ViewSet):
                         admin_username,
                         admin_email
                     ])
-                    
+
             elif tabla == 'plantas':
                 # Exportar plantas
                 plantas = Planta.objects.all().select_related('empresa')
-                
+
                 writer.writerow([
-                    'ID', 'Nombre', 'Dirección', 'Empresa', 'Empresa ID', 
+                    'ID', 'Nombre', 'Dirección', 'Empresa', 'Empresa ID',
                     'Fecha Registro', 'Estado'
                 ])
-                
+
                 for planta in plantas:
                     writer.writerow([
                         planta.planta_id,
@@ -4066,16 +4090,16 @@ class AdminBDViewSet(viewsets.ViewSet):
                         planta.fecha_registro.strftime('%Y-%m-%d %H:%M:%S'),
                         'Activa' if planta.status else 'Suspendida'
                     ])
-                    
+
             elif tabla == 'departamentos':
                 # Exportar departamentos
                 departamentos = Departamento.objects.all().select_related('planta__empresa')
-                
+
                 writer.writerow([
-                    'ID', 'Nombre', 'Descripción', 'Planta', 'Empresa', 
+                    'ID', 'Nombre', 'Descripción', 'Planta', 'Empresa',
                     'Fecha Registro', 'Estado'
                 ])
-                
+
                 for dept in departamentos:
                     writer.writerow([
                         dept.departamento_id,
@@ -4086,16 +4110,16 @@ class AdminBDViewSet(viewsets.ViewSet):
                         dept.fecha_registro.strftime('%Y-%m-%d %H:%M:%S'),
                         'Activo' if dept.status else 'Suspendido'
                     ])
-                    
+
             elif tabla == 'puestos':
                 # Exportar puestos
                 puestos = Puesto.objects.all().select_related('departamento__planta__empresa')
-                
+
                 writer.writerow([
-                    'ID', 'Nombre', 'Descripción', 'Departamento', 'Planta', 
+                    'ID', 'Nombre', 'Descripción', 'Departamento', 'Planta',
                     'Empresa', 'Estado'
                 ])
-                
+
                 for puesto in puestos:
                     writer.writerow([
                         puesto.puesto_id,
@@ -4106,19 +4130,19 @@ class AdminBDViewSet(viewsets.ViewSet):
                         puesto.departamento.planta.empresa.nombre,
                         'Activo' if puesto.status else 'Suspendido'
                     ])
-                    
+
             elif tabla == 'empleados':
                 # Exportar empleados con estructura correcta de BD
                 empleados = Empleado.objects.all().select_related(
                     'puesto__departamento__planta__empresa'
                 )
-                
+
                 writer.writerow([
-                    'ID', 'Nombre', 'Apellido Paterno', 'Apellido Materno', 
-                    'Email', 'Telefono', 'Fecha Ingreso', 'Puesto', 'Departamento', 
+                    'ID', 'Nombre', 'Apellido Paterno', 'Apellido Materno',
+                    'Email', 'Telefono', 'Fecha Ingreso', 'Puesto', 'Departamento',
                     'Planta', 'Empresa', 'Estado'
                 ])
-                
+
                 for empleado in empleados:
                     try:
                         writer.writerow([
@@ -4127,7 +4151,7 @@ class AdminBDViewSet(viewsets.ViewSet):
                             empleado.apellido_paterno,
                             empleado.apellido_materno or 'N/A',
                             empleado.email or 'N/A',
-                            empleado.telefono or 'N/A', 
+                            empleado.telefono or 'N/A',
                             empleado.fecha_ingreso.strftime('%Y-%m-%d') if empleado.fecha_ingreso else 'N/A',
                             empleado.puesto.nombre if empleado.puesto else 'Sin asignar',
                             empleado.puesto.departamento.nombre if empleado.puesto and empleado.puesto.departamento else 'Sin asignar',
@@ -4151,17 +4175,17 @@ class AdminBDViewSet(viewsets.ViewSet):
                             'Error al cargar',
                             'Activo' if empleado.status else 'Inactivo'
                         ])
-                    
+
             elif tabla == 'usuarios':
                 # Exportar usuarios
                 usuarios = PerfilUsuario.objects.all().select_related('user')
-                
+
                 writer.writerow([
-                    'ID', 'Username', 'Email', 'Nombre', 'Apellido Paterno', 
-                    'Apellido Materno', 'Nivel Usuario', 'Fecha Registro', 
+                    'ID', 'Username', 'Email', 'Nombre', 'Apellido Paterno',
+                    'Apellido Materno', 'Nivel Usuario', 'Fecha Registro',
                     'Último Login', 'Estado'
                 ])
-                
+
                 for usuario in usuarios:
                     writer.writerow([
                         usuario.user.id,
@@ -4175,24 +4199,24 @@ class AdminBDViewSet(viewsets.ViewSet):
                         usuario.user.last_login.strftime('%Y-%m-%d %H:%M:%S') if usuario.user.last_login else 'Nunca',
                         'Activo' if usuario.user.is_active else 'Suspendido'
                     ])
-                    
+
             else:
                 return Response({'error': 'Tabla no válida'}, status=400)
-            
+
             return response
-            
+
         except Exception as e:
             print(f"❌ Error exportando tabla {tabla}: {str(e)}")
             return Response(
-                {'error': f'Error al exportar tabla: {str(e)}'}, 
+                {'error': f'Error al exportar tabla: {str(e)}'},
                 status=500
             )
-    
+
     @action(detail=False, methods=['get'])
     def estadisticas_bd(self, request):
         """Obtener estadísticas de la base de datos"""
         self._verify_superadmin(request.user)
-        
+
         try:
             estadisticas = {
                 'empresas': Empresa.objects.count(),
@@ -4202,7 +4226,7 @@ class AdminBDViewSet(viewsets.ViewSet):
                 'empleados': Empleado.objects.count(),
                 'usuarios': PerfilUsuario.objects.count(),
             }
-            
+
             # Agregar estadísticas de suscripciones si existen
             try:
                 from apps.subscriptions.models import SuscripcionEmpresa, Pago
@@ -4211,15 +4235,16 @@ class AdminBDViewSet(viewsets.ViewSet):
             except:
                 estadisticas['suscripciones'] = 0
                 estadisticas['pagos'] = 0
-            
+
             return Response(estadisticas)
-            
+
         except Exception as e:
             return Response(
-                {'error': f'Error obteniendo estadísticas: {str(e)}'}, 
+                {'error': f'Error obteniendo estadísticas: {str(e)}'},
                 status=500
             )
 
+# ---------------------------------------------------------------------------- #
 
 # =============================================================================
 # VISTAS PÚBLICAS PARA SUSCRIPCIONES (SIN AUTENTICACIÓN)
@@ -4234,55 +4259,55 @@ def crear_suscripcion_publica(request):
         from django.db import transaction
         from datetime import timedelta
         from django.utils import timezone
-        
+
         data = request.data
         empresa_id = data.get('empresa_id')
         plan_id = data.get('plan_id')
-        
+
         print(f"🔄 CREAR SUSCRIPCIÓN PÚBLICA: empresa_id={empresa_id}, plan_id={plan_id}")
-        
+
         if not empresa_id or not plan_id:
             return Response(
-                {'error': 'empresa_id y plan_id son requeridos'}, 
+                {'error': 'empresa_id y plan_id son requeridos'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         try:
             empresa = Empresa.objects.get(empresa_id=empresa_id)
             print(f"✅ Empresa encontrada: {empresa.nombre}")
         except Empresa.DoesNotExist:
             return Response(
-                {'error': f'Empresa con ID {empresa_id} no encontrada'}, 
+                {'error': f'Empresa con ID {empresa_id} no encontrada'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         try:
             plan = PlanSuscripcion.objects.get(plan_id=plan_id)
             print(f"✅ Plan encontrado: {plan.nombre}")
         except PlanSuscripcion.DoesNotExist:
             return Response(
-                {'error': f'Plan con ID {plan_id} no encontrado'}, 
+                {'error': f'Plan con ID {plan_id} no encontrado'},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         # Verificar si ya existe una suscripción activa
         suscripcion_existente = SuscripcionEmpresa.objects.filter(
             empresa=empresa,
             estado='activa'
         ).first()
-        
+
         if suscripcion_existente:
             print(f"⚠️ Ya existe suscripción activa: {suscripcion_existente.suscripcion_id}")
             return Response(
-                {'message': 'La empresa ya tiene una suscripción activa', 'suscripcion_id': suscripcion_existente.suscripcion_id}, 
+                {'message': 'La empresa ya tiene una suscripción activa', 'suscripcion_id': suscripcion_existente.suscripcion_id},
                 status=status.HTTP_200_OK
             )
-        
+
         with transaction.atomic():
             # Crear la suscripción
             fecha_inicio = timezone.now()
             fecha_fin = fecha_inicio + timedelta(days=plan.duracion)
-            
+
             suscripcion = SuscripcionEmpresa.objects.create(
                 empresa=empresa,
                 plan=plan,
@@ -4290,9 +4315,9 @@ def crear_suscripcion_publica(request):
                 fecha_fin=fecha_fin,
                 estado='activa'
             )
-            
+
             print(f"✅ Suscripción creada: ID={suscripcion.suscripcion_id}")
-            
+
             return Response({
                 'message': f'Suscripción creada exitosamente para {empresa.nombre}',
                 'suscripcion_id': suscripcion.suscripcion_id,
@@ -4302,10 +4327,12 @@ def crear_suscripcion_publica(request):
                 'fecha_fin': fecha_fin.isoformat(),
                 'precio': float(plan.precio)
             })
-        
+
     except Exception as e:
         print(f"❌ Error creando suscripción pública: {str(e)}")
         return Response(
-            {'error': f'Error creando suscripción: {str(e)}'}, 
+            {'error': f'Error creando suscripción: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+# ---------------------------------------------------------------------------- #
