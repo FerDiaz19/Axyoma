@@ -1,53 +1,43 @@
 
-from rest_framework.routers import DefaultRouter
+# ---------------------------------------------------------------------------- #
+
+''' Endpoints para las entidades relacionadas a las evaluaciones (Ed Rubio) '''
+
+from .views import *
 
 from django.urls import path, include
+from rest_framework.routers import DefaultRouter
 
-
+# ---------------------------------------------------------------------------- #
 
 router = DefaultRouter()
+
+router.register(r'tipos-evaluacion', TipoEvaluacionViewSet)
+router.register(r'evaluaciones', EvaluacionViewSet)
+router.register(r'preguntas', PreguntaViewSet)
+router.register(r'conjuntos-respuestas', ConjuntoRespuestasViewSet)
+router.register(r'asignaciones', AsignacionViewSet)
+router.register(r'respuestas-empleado', RespuestaEmpleadoViewSet)
+router.register(r'resultados-evaluacion', ResultadoEvaluacionViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
 ]
 
+# ---------------------------------------------------------------------------- #
 
+# http://localhost:8000/api/appraisal/tipos-evaluacion/
 
+# http://localhost:8000/api/appraisal/evaluaciones/
 
+# http://localhost:8000/api/appraisal/preguntas/
 
-# # -*- coding: utf-8 -*-
-# from django.urls import path, include
+# http://localhost:8000/api/appraisal/conjuntos-respuestas/
 
-# from .views import (
-#     TipoEvaluacionViewSet, PreguntaViewSet,
-#     EvaluacionViewSet, RespuestaEvaluacionViewSet, preguntas_nom035,
-#     EvaluacionOficialViewSet, PreguntaOficialViewSet, preguntas_por_normativa
-# )
+# http://localhost:8000/api/appraisal/asignaciones/
 
-# # Router para el sistema existente de evaluaciones
-# router = DefaultRouter()
-# router.register(r'tipos', TipoEvaluacionViewSet)
-# router.register(r'preguntas', PreguntaViewSet, basename='pregunta')
-# router.register(r'evaluaciones', EvaluacionViewSet, basename='evaluacion')
-# router.register(r'respuestas', RespuestaEvaluacionViewSet, basename='respuesta')
+# http://localhost:8000/api/appraisal/respuestas-empleado/
 
-# # Router para evaluaciones oficiales (accesible por frontend)
-# router_oficial = DefaultRouter()
-# router_oficial.register(r'evaluaciones-oficiales', EvaluacionOficialViewSet, basename='evaluacion-oficial')
-# router_oficial.register(r'preguntas-oficiales', PreguntaOficialViewSet, basename='pregunta-oficial')
+# http://localhost:8000/api/appraisal/resultados-evaluacion/
 
-# urlpatterns = [
-#     # Sistema existente de evaluaciones
-
-#     path('preguntas-nom035/', preguntas_nom035),
-
-#     # Evaluaciones oficiales para frontend
-#     path('oficial/', include(router_oficial.urls)),
-#     path('oficial/normativa/<str:normativa>/', preguntas_por_normativa, name='preguntas-por-normativa'),
-
-#     # Sistema oficial de evaluaciones NOM (SuperAdmin)
-#     path('superadmin/', include('apps.evaluaciones.urls_oficiales')),
-
-#     # Fase 2: Sistema de asignaciones con tokens
-#     path('asignacion/', include('apps.evaluaciones.urls_asignaciones')),
-# ]
+# ---------------------------------------------------------------------------- #

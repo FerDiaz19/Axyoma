@@ -6,6 +6,7 @@ import string
 import random
 import logging
 
+from django.db.models import Q, Count
 from django.utils import timezone
 from django.http import HttpResponse
 from rest_framework import viewsets, status
@@ -2111,10 +2112,23 @@ class SuperAdminViewSet(viewsets.ViewSet):
         """Listar todas las empresas - VERSIÓN SIMPLIFICADA PARA DEBUG"""
         self._verify_superadmin(request.user)
 
-        print("🔥 INICIANDO listar_empresas")
+        # Filtros opcionales
+        buscar = request.query_params.get('buscar', '')
+        status_filter = request.query_params.get('status', '')
 
         try:
             empresas = Empresa.objects.all()
+
+            searchFilters = Q()
+            if buscar:
+                searchFilters |= Q(nombre__icontains=buscar)
+            empresas = empresas.filter(searchFilters)
+
+            if status_filter:
+                status_bool = status_filter.lower() == 'true'
+                empleados = empresas.filter(status=status_bool)
+
+            print("🔥 INICIANDO listar_empresas")
             print(f"� Empresas encontradas: {empresas.count()}")
 
             empresas_data = []
@@ -2218,59 +2232,56 @@ class SuperAdminViewSet(viewsets.ViewSet):
         """Listar todos los usuarios del sistema - VERSIÓN SIMPLIFICADA"""
         self._verify_superadmin(request.user)
 
-        try:
-            # Filtros opcionales
+        try: # Filtros opcionales:
             buscar = request.query_params.get('buscar', '')
             nivel_usuario = request.query_params.get('nivel_usuario', '')
             activo = request.query_params.get('activo', '')
 
-            # Solo obtener usuarios que tienen user asociado
-            usuarios = PerfilUsuario.objects.filter(user__isnull=False)
+            # Obtiene todos los usuarios con perfil asociado:
+            usuarios = PerfilUsuario.objects.filter(user_id__isnull=False)
 
+            # Filtros de búsqueda:
+            searchFilters = Q()
             if buscar:
-                usuarios = usuarios.filter(
-                    nombre__icontains=buscar
-                ) | usuarios.filter(
-                    apellido_paterno__icontains=buscar
-                ) | usuarios.filter(
-                    correo__icontains=buscar
-                )
+                searchFilters |= Q(nombre__icontains=buscar)
+                searchFilters |= Q(apellido_paterno__icontains=buscar)
+                searchFilters |= Q(correo__icontains=buscar)
+            usuarios = usuarios.filter(searchFilters)
 
             if nivel_usuario:
                 usuarios = usuarios.filter(nivel_usuario=nivel_usuario)
 
             if activo:
-                activo_bool = activo.lower() == 'true'
-                usuarios = usuarios.filter(user__is_active=activo_bool)
+                status_bool = activo.lower() == 'true'
+                usuarios = usuarios.filter(status=status_bool)
 
             usuarios_data = []
             for usuario in usuarios:
-                try:
-                    # Información básica del usuario
+                try: # Información básica del usuario
                     usuario_info = {
-                        'user_id': usuario.user.id,
+                        'user_id': usuario.user_id_id,
                         'profile_id': usuario.id,
-                        'username': usuario.user.username,
-                        'email': usuario.user.email,
+                        'username': usuario.user_id.username,
+                        'email': usuario.user_id.email,
                         'nombre': usuario.nombre,
                         'apellido_paterno': usuario.apellido_paterno,
                         'apellido_materno': getattr(usuario, 'apellido_materno', '') or '',
                         'nombre_completo': f"{usuario.nombre} {usuario.apellido_paterno} {getattr(usuario, 'apellido_materno', '') or ''}".strip(),
                         'correo': usuario.correo,
                         'nivel_usuario': usuario.nivel_usuario,
-                        'fecha_registro': usuario.user.date_joined,
-                        'ultimo_login': usuario.user.last_login,
-                        'is_active': usuario.user.is_active,
+                        'fecha_registro': usuario.user_id.date_joined,
+                        'ultimo_login': usuario.user_id.last_login,
+                        'is_active': usuario.user_id.is_active,
                         'empresa': None,
                         'planta': None,
                     }
 
-                    print(f"🔍 DEBUG: Usuario {usuario.user.username} - nivel_usuario: '{usuario.nivel_usuario}'")
+                    print(f"🔍 DEBUG: Usuario {usuario.user_id.username} - nivel_usuario: '{usuario.nivel_usuario}'")
 
                     # Información de empresa/planta según el rol (de forma segura)
                     if usuario.nivel_usuario == 'admin-empresa':
                         try:
-                            empresa = Empresa.objects.get(administrador=usuario)
+                            empresa = Empresa.objects.get(administrador=usuario.id)
                             usuario_info['empresa'] = {
                                 'id': empresa.empresa_id,
                                 'nombre': empresa.nombre,
@@ -2282,7 +2293,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     elif usuario.nivel_usuario == 'admin-planta':
                         try:
                             from apps.users.models import AdminPlanta
-                            admin_planta = AdminPlanta.objects.get(usuario=usuario)
+                            admin_planta = AdminPlanta.objects.get(user_id=usuario.user_id)
                             planta = admin_planta.planta
                             usuario_info['planta'] = {
                                 'id': planta.planta_id,
@@ -2331,11 +2342,14 @@ class SuperAdminViewSet(viewsets.ViewSet):
         try:
             from django.contrib.auth.models import User
             user = User.objects.get(id=user_id)
+            userAxyoma = PerfilUsuario.objects.get(user_id=user_id)
 
             print(f"🔧 DEBUG: Usuario encontrado: {user.username}, is_active actual: {user.is_active}")
 
             nuevo_status = accion == 'activar'
+            userAxyoma.status = nuevo_status
             user.is_active = nuevo_status
+            userAxyoma.save()
             user.save()
 
             print(f"🔧 DEBUG: Nuevo status guardado: {user.is_active}")
@@ -2410,64 +2424,72 @@ class SuperAdminViewSet(viewsets.ViewSet):
         """Listar todas las plantas del sistema con filtros"""
         self._verify_superadmin(request.user)
 
-        # Filtros opcionales
+        # Filtros opcionales.
         buscar = request.query_params.get('buscar', '')
         empresa_id = request.query_params.get('empresa_id', '')
         status_filter = request.query_params.get('status', '')
 
-        plantas = Planta.objects.all()
+        plantas = Planta.objects.all().select_related('empresa').prefetch_related('adminplanta_set__usuario__user_id')
 
+        # Filtros de búsqueda:
+        searchFilters = Q()
         if buscar:
-            plantas = plantas.filter(nombre__icontains=buscar)
+            searchFilters |= Q(nombre__icontains=buscar)
+        plantas = plantas.filter(searchFilters)
 
         if empresa_id:
-            plantas = plantas.filter(empresa_id=empresa_id)
+            plantas = plantas.filter(empresa=empresa_id)
 
         if status_filter:
             status_bool = status_filter.lower() == 'true'
             plantas = plantas.filter(status=status_bool)
 
+        # Agregamos los conteos de forma eficiente
+        plantas = plantas.annotate(
+            departamentos_count=Count('departamentos', distinct=True),
+            empleados_count=Count('departamentos__puestos__empleados', distinct=True)
+        )
+
         plantas_data = []
         for planta in plantas:
-            # Obtener admin de planta
             admin_info = None
-            try:
-                admin_planta = AdminPlanta.objects.get(planta=planta)
-                admin_user = admin_planta.usuario.user
-                admin_info = {
-                    'id': admin_user.id,
-                    'username': admin_user.username,
-                    'email': admin_user.email,
-                    'nombre_completo': f"{admin_planta.usuario.nombre} {admin_planta.usuario.apellido_paterno}",
-                    'activo': admin_user.is_active
-                }
-            except AdminPlanta.DoesNotExist:
-                pass
 
-            # Contar entidades relacionadas
-            departamentos_count = Departamento.objects.filter(planta=planta).count()
-            empleados_count = Empleado.objects.filter(puesto__departamento__planta=planta).count()
+            for planta in plantas:
+                admin_info = None
 
-            plantas_data.append({
-                'planta_id': planta.planta_id,
-                'nombre': planta.nombre,
-                'direccion': planta.direccion,
-                # 'telefono': None, # ! Rarillo el asunto...
-                'status': planta.status,
-                'empresa': {
-                    'id': planta.empresa.empresa_id,
-                    'nombre': planta.empresa.nombre,
-                    'status': planta.empresa.status
-                },
-                'administrador': admin_info,
-                'departamentos_count': departamentos_count,
-                'empleados_count': empleados_count,
+                # Obtenemos todos los administradores (si hay varios)
+                admins = planta.adminplanta_set.all()
+
+                if admins:
+                    admin_planta = admins[0]
+                    admin_user = admin_planta.usuario
+                    admin_info = {
+                        'id': admin_user.id,
+                        'username': admin_user.user_id.username,
+                        'email': admin_user.correo,
+                        'nombre_completo': admin_user.nombre_completo,
+                        'activo': admin_user.status
+                    }
+
+                plantas_data.append({
+                    'planta_id': planta.planta_id,
+                    'nombre': planta.nombre,
+                    'direccion': planta.direccion,
+                    'status': planta.status,
+                    'empresa': {
+                        'id': planta.empresa.empresa_id,
+                        'nombre': planta.empresa.nombre,
+                        'status': planta.empresa.status
+                    },
+                    'administrador': admin_info,
+                    'departamentos_count': planta.departamentos_count,
+                    'empleados_count': planta.empleados_count,
+                })
+
+            return Response({
+                'plantas': plantas_data,
+                'total': len(plantas_data)
             })
-
-        return Response({
-            'plantas': plantas_data,
-            'total': len(plantas_data)
-        })
 
     @action(detail=False, methods=['get'])
     def listar_todos_departamentos(self, request):
@@ -2475,7 +2497,6 @@ class SuperAdminViewSet(viewsets.ViewSet):
         self._verify_superadmin(request.user)
 
         try:
-            # Filtros opcionales
             buscar = request.query_params.get('buscar', '')
             planta_id = request.query_params.get('planta_id', '')
             empresa_id = request.query_params.get('empresa_id', '')
@@ -2483,14 +2504,16 @@ class SuperAdminViewSet(viewsets.ViewSet):
 
             departamentos = Departamento.objects.all()
 
+            searchFilters = Q()
             if buscar:
-                departamentos = departamentos.filter(nombre__icontains=buscar)
+                searchFilters |= Q(nombre__icontains=buscar)
+            departamentos = departamentos.filter(searchFilters)
 
             if planta_id:
-                departamentos = departamentos.filter(planta_id=planta_id)
+                departamentos = departamentos.filter(planta__planta_id=planta_id)
 
             if empresa_id:
-                departamentos = departamentos.filter(planta__empreesa=empresa_id)
+                departamentos = departamentos.filter(planta__empresa__empresa_id=empresa_id)
 
             if status_filter:
                 status_bool = status_filter.lower() == 'true'
@@ -2574,17 +2597,19 @@ class SuperAdminViewSet(viewsets.ViewSet):
 
         puestos = Puesto.objects.all()
 
+        searchFilters = Q()
         if buscar:
-            puestos = puestos.filter(nombre__icontains=buscar)
+            searchFilters |= Q(nombre__icontains=buscar)
+        puestos = puestos.filter(searchFilters)
 
         if departamento_id:
-            puestos = puestos.filter(departamento_id=departamento_id)
+            puestos = puestos.filter(departamento__departamento_id=departamento_id)
 
         if planta_id:
-            puestos = puestos.filter(departamento__planta=planta_id)
+            puestos = puestos.filter(departamento__planta__planta_id=planta_id)
 
         if empresa_id:
-            puestos = puestos.filter(departamento__planta__empresa_id=empresa_id)
+            puestos = puestos.filter(departamento__planta__empresa__empresa_id=empresa_id)
 
         if status_filter:
             status_bool = status_filter.lower() == 'true'
@@ -2608,7 +2633,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'planta': {
                     'id': puesto.departamento.planta.planta_id,
                     'nombre': puesto.departamento.planta.nombre,
-                    'status': puesto.departamento.planta.statuss
+                    'status': puesto.departamento.planta.status
                 },
                 'empresa': {
                     'id': puesto.departamento.planta.empresa.empresa_id,
@@ -2631,6 +2656,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
         try:
             # Filtros opcionales
             buscar = request.query_params.get('buscar', '')
+            empresa_id = request.query_params.get('empresa_id', '')
             activo = request.query_params.get('activo', '')
 
             # Obtener empleados SOLO con los campos que sabemos que existen
@@ -2642,17 +2668,17 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 'puesto__departamento__planta__empresa__empresa_id', 'puesto__departamento__planta__empresa__nombre', 'puesto__departamento__planta__empresa__status'
             ).all()
 
-            # Aplicar filtros
+            searchFilters = Q()
             if buscar:
-                empleados = empleados.filter(
-                    nombre__icontains=buscar
-                ) | empleados.filter(
-                    apellido_paterno__icontains=buscar
-                )
+                searchFilters |= Q(nombre__icontains=buscar)
+            empleados = empleados.filter(searchFilters)
+
+            if empresa_id:
+                empleados = empleados.filter(puesto__departamento__planta__empresa__empresa_id=empresa_id)
 
             if activo:
-                activo_bool = activo.lower() == 'true'
-                empleados = empleados.filter(status=activo_bool)
+                status_bool = activo.lower() == 'true'
+                empleados = empleados.filter(status=status_bool)
 
             empleados_data = []
             for empleado in empleados:
@@ -2663,7 +2689,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                         'numero_empleado': f"EMP-{empleado.empleado_id:06d}",  # Generado automáticamente
                         'nombre': empleado.nombre,
                         'apellido_paterno': empleado.apellido_paterno,
-                        'apellido_materno': '',  # No existe en BD
+                        'apellido_materno': empleado.apellido_materno,
                         'nombre_completo': f"{empleado.nombre} {empleado.apellido_paterno}".strip(),
                         'status': empleado.status,
                         'status_texto': '✅ Activo' if empleado.status else '❌ Inactivo',
@@ -2692,22 +2718,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     empleados_data.append(empleado_info)
 
                 except Exception as e:
-                    # Si hay error con un empleado específico, usar datos básicos
-                    empleados_data.append({
-                        'empleado_id': empleado.empleado_id,
-                        'numero_empleado': f"EMP-{empleado.empleado_id:06d}",
-                        'nombre': empleado.nombre,
-                        'apellido_paterno': empleado.apellido_paterno,
-                        'apellido_materno': '',
-                        'nombre_completo': f"{empleado.nombre} {empleado.apellido_paterno}".strip(),
-                        'status': empleado.status,
-                        'status_texto': '✅ Activo' if empleado.status else '❌ Inactivo',
-                        'puesto': {'id': None, 'nombre': 'Error al cargar', 'status': False},
-                        'departamento': {'id': None, 'nombre': 'Error al cargar', 'status': False},
-                        'planta': {'id': None, 'nombre': 'Error al cargar', 'status': False},
-                        'empresa': {'id': None, 'nombre': 'Error al cargar', 'status': False},
-                        'error_info': str(e)
-                    })
+                    pass
 
             # Estadísticas rápidas
             total_empleados = len(empleados_data)

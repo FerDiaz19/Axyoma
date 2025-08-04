@@ -1,181 +1,205 @@
-# # -*- coding: utf-8 -*-
-# from rest_framework import serializers
-# from .models import (
-#     TipoEvaluacion, Pregunta, EvaluacionCompleta, EvaluacionPregunta,
-#     RespuestaEvaluacion, DetalleRespuesta, ResultadoEvaluacion
-# )
-# from apps.users.models import Empresa, Empleado, Departamento, Planta
 
-# class TipoEvaluacionSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = TipoEvaluacion
-#         fields = '__all__'
+# ---------------------------------------------------------------------------- #
 
-# class PreguntaSerializer(serializers.ModelSerializer):
-#     tipo_evaluacion_nombre = serializers.CharField(source='tipo_evaluacion.nombre', read_only=True)
-#     empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
-#     creada_por_nombre = serializers.CharField(source='creada_por.get_full_name', read_only=True)
-    
-#     class Meta:
-#         model = Pregunta
-#         fields = '__all__'
-        
-#     def validate_opciones_respuesta(self, value):
-#         """Validar que las opciones sean requeridas para ciertos tipos"""
-#         tipo_respuesta = self.initial_data.get('tipo_respuesta')
-#         if tipo_respuesta in ['multiple', 'escala'] and not value:
-#             raise serializers.ValidationError("Las opciones de respuesta son requeridas para este tipo de pregunta")
-#         return value
+''' Serializadores para las entidades relacionadas a las evaluaciones (Ed Rubio) '''
 
-# class PreguntaCreateSerializer(serializers.ModelSerializer):
-#     """Serializer para crear preguntas"""
-#     class Meta:
-#         model = Pregunta
-#         fields = [
-#             'tipo_evaluacion', 'empresa', 'texto_pregunta', 'tipo_respuesta',
-#             'opciones_respuesta', 'es_obligatoria', 'orden'
-#         ]
-        
-#     def create(self, validated_data):
-#         preguntas_data = validated_data.pop('preguntas_seleccionadas', [])
-#         plantas = validated_data.pop('plantas', [])
-#         departamentos = validated_data.pop('departamentos', [])
-#         empleados = validated_data.pop('empleados_objetivo', [])
 
-#         user = self.context['request'].user
-#         if not hasattr(user, 'perfil') or not getattr(user.perfil, 'empresa', None):
-#             raise serializers.ValidationError("El usuario no tiene una empresa asociada en su perfil.")
+from .models import *
+from rest_framework import serializers
 
-#         validated_data['empresa'] = user.perfil.empresa
-#         validated_data['creada_por'] = user
-#         return super().create(validated_data)
+# ---------------------------------------------------------------------------- #
 
-# class EvaluacionPreguntaSerializer(serializers.ModelSerializer):
-#     pregunta_texto = serializers.CharField(source='pregunta.texto_pregunta', read_only=True)
-#     tipo_respuesta = serializers.CharField(source='pregunta.tipo_respuesta', read_only=True)
-#     opciones_respuesta = serializers.JSONField(source='pregunta.opciones_respuesta', read_only=True)
-    
-#     class Meta:
-#         model = EvaluacionPregunta
-#         fields = ['pregunta', 'orden', 'es_obligatoria', 'pregunta_texto', 'tipo_respuesta', 'opciones_respuesta']
+class PosiblesRespuestasSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PosiblesRespuestas
+        fields = [
+            'opcion_conjunto_id', 'texto_opcion', 'valor_booleano',
+            'valor_numerico', 'valor_decimal', 'numero_orden' ]
 
-# class EvaluacionSerializer(serializers.ModelSerializer):
-#     tipo_evaluacion_nombre = serializers.CharField(source='tipo_evaluacion.nombre', read_only=True)
-#     empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True)
-#     creada_por_nombre = serializers.CharField(source='creada_por.get_full_name', read_only=True)
-#     preguntas_evaluacion = EvaluacionPreguntaSerializer(source='evaluacionpregunta_set', many=True, read_only=True)
-#     total_preguntas = serializers.SerializerMethodField()
-#     total_respuestas = serializers.SerializerMethodField()
-    
-#     class Meta:
-#         model = EvaluacionCompleta
-#         fields = '__all__'
-        
-#     def get_total_preguntas(self, obj):
-#         return obj.preguntas.count()
-        
-#     def get_total_respuestas(self, obj):
-#         return obj.respuestaevaluacion_set.count()
+        read_only_fields = [ 'opcion_conjunto_id' ]
 
-# class EvaluacionCreateSerializer(serializers.ModelSerializer):
-#     """Serializer para crear evaluaciones"""
-#     preguntas_seleccionadas = serializers.ListField(
-#         child=serializers.DictField(),
-#         write_only=True,
-#         required=False
-#     )
-    
-#     class Meta:
-#         model = EvaluacionCompleta
-#         fields = [
-#             'titulo', 'descripcion', 'tipo_evaluacion', 'plantas', 'departamentos',
-#             'empleados_objetivo', 'fecha_inicio', 'fecha_fin', 'es_anonima',
-#             'preguntas_seleccionadas'
-#         ]
-        
-#     def create(self, validated_data):
-#         preguntas_data = validated_data.pop('preguntas_seleccionadas', [])
-#         plantas = validated_data.pop('plantas', [])
-#         departamentos = validated_data.pop('departamentos', [])
-#         empleados = validated_data.pop('empleados_objetivo', [])
-        
-#         # Obtener empresa del usuario
-#         user = self.context['request'].user
-#         if hasattr(user, 'perfil') and user.perfil.empresa:
-#             validated_data['empresa'] = user.perfil.empresa
-        
-#         validated_data['creada_por'] = user
-        
-#         evaluacion = EvaluacionCompleta.objects.create(**validated_data)
-        
-#         # Agregar relaciones ManyToMany
-#         evaluacion.plantas.set(plantas)
-#         evaluacion.departamentos.set(departamentos)
-#         evaluacion.empleados_objetivo.set(empleados)
-        
-#         # Agregar preguntas
-#         for pregunta_data in preguntas_data:
-#             EvaluacionPregunta.objects.create(
-#                 evaluacion=evaluacion,
-#                 pregunta_id=pregunta_data['pregunta_id'],
-#                 orden=pregunta_data.get('orden', 1),
-#                 es_obligatoria=pregunta_data.get('es_obligatoria', True)
-#             )
-        
-#         return evaluacion
+# ---------------------------------------------------------------------------- #
 
-# class DetalleRespuestaSerializer(serializers.ModelSerializer):
-#     pregunta_texto = serializers.CharField(source='pregunta.texto_pregunta', read_only=True)
-#     tipo_respuesta = serializers.CharField(source='pregunta.tipo_respuesta', read_only=True)
-    
-#     class Meta:
-#         model = DetalleRespuesta
-#         fields = '__all__'
+class ConjuntoRespuestasSerializer(serializers.ModelSerializer):
+    opciones = PosiblesRespuestasSerializer(many=True, required=False)
 
-# class RespuestaEvaluacionSerializer(serializers.ModelSerializer):
-#     empleado_nombre = serializers.CharField(source='empleado.nombre_completo', read_only=True)
-#     evaluacion_titulo = serializers.CharField(source='evaluacion.titulo', read_only=True)
-#     detalles = DetalleRespuestaSerializer(many=True, read_only=True)
-    
-#     class Meta:
-#         model = RespuestaEvaluacion
-#         fields = '__all__'
+    class Meta:
+        model = ConjuntoRespuestas
+        fields = [ 'conjunto_id', 'nombre', 'descripcion', 'predefinido', 'opciones' ]
+        read_only_fields = [ 'conjunto_id', 'predefinido' ]
 
-# class RespuestaEvaluacionCreateSerializer(serializers.ModelSerializer):
-#     """Serializer para crear respuestas a evaluaciones"""
-#     respuestas = serializers.ListField(
-#         child=serializers.DictField(),
-#         write_only=True
-#     )
-    
-#     class Meta:
-#         model = RespuestaEvaluacion
-#         fields = ['evaluacion', 'empleado', 'respuestas']
-        
-#     def create(self, validated_data):
-#         respuestas_data = validated_data.pop('respuestas')
-        
-#         respuesta_evaluacion = RespuestaEvaluacion.objects.create(**validated_data)
-        
-#         # Crear detalles de respuesta
-#         for respuesta_data in respuestas_data:
-#             DetalleRespuesta.objects.create(
-#                 respuesta_evaluacion=respuesta_evaluacion,
-#                 pregunta_id=respuesta_data['pregunta_id'],
-#                 respuesta_texto=respuesta_data.get('respuesta_texto', ''),
-#                 respuesta_numerica=respuesta_data.get('respuesta_numerica'),
-#                 respuesta_multiple=respuesta_data.get('respuesta_multiple', [])
-#             )
-        
-#         # Marcar como completada
-#         respuesta_evaluacion.completada = True
-#         respuesta_evaluacion.save()
-        
-#         return respuesta_evaluacion
+    def create(self, validated_data):
+        opciones_data = validated_data.pop('opciones', [])
+        conjunto = ConjuntoRespuestas.objects.create(**validated_data)
 
-# class ResultadoEvaluacionSerializer(serializers.ModelSerializer):
-#     evaluacion_titulo = serializers.CharField(source='evaluacion.titulo', read_only=True)
-    
-#     class Meta:
-#         model = ResultadoEvaluacion
-#         fields = '__all__'
+        for opcion_data in opciones_data:
+            PosiblesRespuestas.objects.create(conjunto_respuestas=conjunto, **opcion_data)
+        return conjunto
+
+    def update(self, instance, validated_data):
+        opciones_data = validated_data.pop('opciones', None)
+        instance = super().update(instance, validated_data)
+
+        if opciones_data is not None:
+            instance.opciones.all().delete()
+
+            for opcion_data in opciones_data:
+                PosiblesRespuestas.objects.create(conjunto_respuestas=instance, **opcion_data)
+        return instance
+
+# ---------------------------------------------------------------------------- #
+
+class PreguntaSerializer(serializers.ModelSerializer):
+    conjunto_respuestas = ConjuntoRespuestasSerializer(read_only=True)
+
+    class Meta:
+        model = Pregunta
+        fields = [ 'pregunta_id', 'texto_pregunta', 'tipo_pregunta', 'es_obligatoria',
+            'pregunta_padre', 'activador_padre', 'conjunto_respuestas' ]
+
+        read_only_fields = [ 'pregunta_id' ]
+
+# ---------------------------------------------------------------------------- #
+
+class SeccionPreguntaSerializer(serializers.ModelSerializer):
+    pregunta = PreguntaSerializer(read_only=True)
+    conjunto_respuestas = ConjuntoRespuestasSerializer(read_only=True)
+    pregunta_id = serializers.PrimaryKeyRelatedField(
+        queryset=Pregunta.objects.all(), source='pregunta')
+    conjunto_respuestas_id = serializers.PrimaryKeyRelatedField(
+        queryset=ConjuntoRespuestas.objects.all(), source='conjunto_respuestas', required=False, allow_null=True)
+
+    class Meta:
+        model = SeccionPregunta
+        fields = [ 'seccion_pregunta_id', 'pregunta', 'pregunta_id', 'numero_orden',
+            'conjunto_respuestas', 'conjunto_respuestas_id', 'respuesta_correcta' ]
+
+        read_only_fields = [ 'seccion_pregunta_id' ]
+
+# ---------------------------------------------------------------------------- #
+
+class SeccionEvalSerializer(serializers.ModelSerializer):
+    preguntas_seccion = SeccionPreguntaSerializer(many=True, required=False)
+
+    class Meta:
+        model = SeccionEval
+        fields = [ 'seccion_id', 'nombre', 'descripcion',
+            'numero_orden', 'es_evaluable', 'preguntas_seccion' ]
+
+        read_only_fields = [ 'seccion_id' ]
+
+    def create(self, validated_data):
+        preguntas_data = validated_data.pop('preguntas_seccion', [])
+        seccion = SeccionEval.objects.create(**validated_data)
+
+        for pregunta_data in preguntas_data:
+            SeccionPregunta.objects.create(seccion=seccion, **pregunta_data)
+        return seccion
+
+# ---------------------------------------------------------------------------- #
+
+class EvaluacionSerializer(serializers.ModelSerializer):
+    secciones = SeccionEvalSerializer(many=True, required=False)
+    tipo_evaluacion = serializers.CharField(source='tipo_evaluacion.nombre', read_only=True)
+    tipo_evaluacion_id = serializers.PrimaryKeyRelatedField(
+        queryset=TipoEvaluacion.objects.all(), source='tipo_evaluacion'
+    )
+
+    class Meta:
+        model = Evaluacion
+        fields = [ 'evaluacion_id', 'titulo', 'descripcion', 'instrucciones', 'tiempo_limite',
+            'umbral_aprobacion', 'estado', 'tipo_evaluacion', 'tipo_evaluacion_id', 'secciones' ]
+
+        read_only_fields = [ 'evaluacion_id' ]
+
+    def create(self, validated_data):
+        secciones_data = validated_data.pop('secciones', [])
+        evaluacion = Evaluacion.objects.create(**validated_data)
+
+        for seccion_data in secciones_data:
+            preguntas_data = seccion_data.pop('preguntas_seccion', [])
+            seccion = SeccionEval.objects.create(evaluacion=evaluacion, **seccion_data)
+
+            for pregunta_data in preguntas_data:
+                pregunta_id = pregunta_data.pop('pregunta').id
+
+                SeccionPregunta.objects.create(
+                    seccion=seccion,
+                    pregunta_id=pregunta_id,
+                    numero_orden=pregunta_data['numero_orden'],
+                    conjunto_respuestas_id=pregunta_data.get('conjunto_respuestas_id')
+                )
+
+        return evaluacion
+
+    def update(self, instance, validated_data):
+        secciones_data = validated_data.pop('secciones', None)
+        instance = super().update(instance, validated_data)
+
+        if secciones_data is not None:
+            instance.secciones.all().delete()
+
+            for seccion_data in secciones_data:
+                preguntas_data = seccion_data.pop('preguntas_seccion', [])
+                seccion = SeccionEval.objects.create(evaluacion=instance, **seccion_data)
+
+                for pregunta_data in preguntas_data:
+                    pregunta_id = pregunta_data.pop('pregunta').id
+
+                    SeccionPregunta.objects.create(
+                        seccion=seccion,
+                        pregunta_id=pregunta_id,
+                        numero_orden=pregunta_data['numero_orden'],
+                        conjunto_respuestas_id=pregunta_data.get('conjunto_respuestas_id')
+                    )
+
+        return instance
+
+# ---------------------------------------------------------------------------- #
+
+class AsignacionEmpleadoSerializer(serializers.ModelSerializer):
+    empleado_nombre = serializers.CharField(source='empleado.nombre_completo', read_only=True)
+
+    class Meta:
+        model = AsignacionEmpleado
+        fields = [ 'asignacion_empleado_id', 'empleado', 'empleado_nombre', 'status' ]
+        read_only_fields = [ 'asignacion_empleado_id', 'status', 'empleado_nombre' ]
+
+# ---------------------------------------------------------------------------- #
+
+class AsignacionSerializer(serializers.ModelSerializer):
+    asignaciones_empleado = AsignacionEmpleadoSerializer(many=True, required=False)
+
+    class Meta:
+        model = Asignacion
+        fields = [
+            'asignacion_id', 'evaluacion', 'fecha_inicio', 'fecha_fin',
+            'status', 'empleado_evaluado', 'asignaciones_empleado' ]
+
+        read_only_fields = [ 'asignacion_id' ]
+
+# ---------------------------------------------------------------------------- #
+
+class TipoEvaluacionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = TipoEvaluacion
+        fields = [ 'tipo_evaluacion_id', 'nombre', 'descripcion' ]
+
+# ---------------------------------------------------------------------------- #
+
+class RespuestaEmpleadoSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = RespuestaEmpleado
+        fields = '__all__'
+
+# ---------------------------------------------------------------------------- #
+
+class ResultadoEvaluacionSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ResultadoEvaluacion
+        fields = '__all__'
+
+# ---------------------------------------------------------------------------- #

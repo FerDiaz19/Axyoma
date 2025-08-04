@@ -1,0 +1,125 @@
+
+/* -------------------------------- MAIN CSS -------------------------------- */
+
+@font-face {
+    font-family: 'GemunuLibre';
+    src: url('../fonts/GemunuLibre/GemunuLibre.ttf') format('truetype-variations');
+    font-weight: 100 900; font-display: swap;
+}
+
+@view-transition {
+    navigation: auto;
+}
+
+/* -------------------------------------------------------------------------- */
+
+:root {
+    --color-text: #F1EFF2;
+    --color-subtitle: #D9D0DE;
+
+    --color-canvas: #22212D;
+    --color-accent: #4E4B5C;
+    --color-alt-accent: #9ea2b7;
+    --color-background: #181721;
+
+    --color-hover: #7B6D8D;
+    --color-active: #9684A1;
+
+    --color-info: #81A4CD;
+    --color-alert: #EE6352;
+    --color-danger: #A22522;
+    --color-success: #798478;
+
+    --sidebar-width-min: 5rem;
+    --sidebar-width-max: 20rem;
+}
+
+
+.justifiEd-text {
+    hyphens: auto;
+    text-wrap: pretty;
+    text-align: justify;
+    hyphenate-limit-chars: 7;
+}
+
+/* -------------------------------------------------------------------------- */
+
+* {
+    box-sizing: border-box;
+    transition: all .24s ease-in-out;
+
+    font-weight: 400;
+    color: var(--color-text);
+    font-family: 'GemunuLibre', sans-serif;
+}
+
+html, body {
+    scrollbar-width: none;
+    margin: 0; padding: 0;
+    scroll-behavior: smooth;
+    overscroll-behavior: none;
+    background-color: var(--color-canvas);
+}
+
+body {
+    min-width: 100dvw; min-height: 100dvh;
+    display: flex; flex-direction: column;
+}
+
+img {
+    user-select: none;
+    pointer-events: none;
+}
+
+a {
+    cursor: pointer;
+    text-decoration: none;
+}
+
+button {
+    cursor: pointer;
+    border: none; outline: none;
+    box-shadow: none; background: none;
+}
+
+button:hover, a:hover {
+    color: var(--color-hover);
+}
+
+button:active, a:active {
+    color: var(--color-active);
+}
+
+/* -------------------------------------------------------------------------- */
+
+.main-modal {
+    z-index: 1500;
+    user-select: none;
+    text-align: center;
+    border: none; border-radius: .5rem;
+    padding: 2.5rem 5rem; max-width: 80%;
+    background-color: var(--color-background);
+    box-shadow: var(--color-alt-soft) 0 .25rem .75rem;
+}
+
+.main-modal strong {
+    color: var(--color-text);
+}
+
+.main-modal::backdrop {
+    backdrop-filter: blur(.3rem);
+    /* background-color: var(--color-canvas); */
+}
+
+/* -------------------------------------------------------------------------- */
+
+.base-content {
+    view-transition-name: base-content-transition;
+
+    user-select: none;
+    align-items: center;
+    flex-grow: 1; min-height: auto;
+    display: flex; flex-direction: column;
+}
+
+/* -------------------------------------------------------------------------- */
