@@ -1,0 +1,13 @@
+{
+  "tipo": "tablas",
+  "tablas": [
+    "plantas"
+  ],
+  "incluir_datos": true,
+  "descripcion": "PRUEBA",
+  "fecha_creacion": "2025-08-04T03:57:23.271992",
+  "usuario": "superadmin",
+  "archivo": "backup_tablas_plantas_20250804_035723.sql",
+  "tamaño_bytes": 2557,
+  "base_datos": "axyomadb"
+}

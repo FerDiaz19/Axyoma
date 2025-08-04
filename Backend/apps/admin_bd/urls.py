@@ -16,7 +16,7 @@ Incluye endpoints para SuperAdmin y gestión de respaldos.
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import AdminBDViewSet
-from . import views_directo, views_respaldos
+from . import views_directo, views_respaldos, views_restauracion
 
 router = DefaultRouter()
 router.register(r'', AdminBDViewSet, basename='admin_bd')
@@ -42,10 +42,14 @@ urlpatterns = [
     # 🚀 NUEVAS RUTAS OPTIMIZADAS PARA BD GRANDES
     path('respaldos/monitorear/', views_respaldos.monitorear_backup_progreso, name='monitorear_backup'),
     path('respaldos/emergencia/', views_respaldos.backup_emergencia_optimizado, name='backup_emergencia'),
-    
-    # NUEVAS FUNCIONES SUPERADMIN
+      # NUEVAS FUNCIONES SUPERADMIN
     path('respaldos/pgadmin/', views_respaldos.respaldo_limpio_pgadmin, name='respaldo_pgadmin'),
     path('sistema/resetear-bd/', views_respaldos.resetear_bd_completa, name='resetear_bd'),
     path('sistema/datos-iniciales/', views_respaldos.cargar_datos_iniciales, name='cargar_datos_iniciales'),
     path('sistema/estado-inicial/', views_respaldos.restaurar_estado_inicial, name='restaurar_estado_inicial'),
+      # 🔧 RUTAS DE RESTAURACIÓN AVANZADA
+    path('restauracion/reiniciar-bd/', views_restauracion.reiniciar_bd_cero, name='reiniciar_bd_cero'),
+    path('restauracion/cargar-demo/', views_restauracion.cargar_datos_demo, name='cargar_datos_demo'),
+    path('restauracion/estado-bd/', views_restauracion.estado_bd_restauracion, name='estado_bd_restauracion'),
+    path('restauracion/debug/', views_restauracion.debug_reiniciar_bd, name='debug_reiniciar_bd'),
 ]

@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { obtenerEstadisticasBD, tablas, type EstadisticasBD } from '../services/adminBDService';
 import ExportacionCSV from './ExportacionCSV';
 import GestionRespaldos from './GestionRespaldos';
+import RestauracionBD from './RestauracionBD';
 import '../css/GestionBD.css';
 
 const GestionBD: React.FC = () => {
   const [estadisticas, setEstadisticas] = useState<EstadisticasBD | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'exportacion' | 'respaldos'>('exportacion');
+  const [activeTab, setActiveTab] = useState<'exportacion' | 'respaldos' | 'restauracion'>('exportacion');
 
   // Filtrar tablas - remover evaluaciones y encuestas
   const tablasDisponibles = tablas.filter(tabla => 
@@ -85,9 +86,7 @@ const GestionBD: React.FC = () => {
             </>
           )}
         </button>
-      </div>
-
-      {/* Sistema de Pestañas */}
+      </div>      {/* Sistema de Pestañas */}
       <div className="tabs-container">
         <div className="tabs-header">
           <button 
@@ -102,12 +101,17 @@ const GestionBD: React.FC = () => {
             onClick={() => setActiveTab('respaldos')}
           >
             <span className="tab-icon">💾</span>
-            Respaldos de BD
+            Respaldos BD
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'restauracion' ? 'active' : ''}`}
+            onClick={() => setActiveTab('restauracion')}
+          >
+            <span className="tab-icon">🔧</span>
+            Restauración
           </button>
         </div>
-      </div>
-
-      {/* Contenido de las pestañas */}
+      </div>      {/* Contenido de las pestañas */}
       {activeTab === 'exportacion' ? (
         // Contenido de Exportación CSV
         loading ? (
@@ -191,10 +195,12 @@ const GestionBD: React.FC = () => {
               🔄 Reintentar
             </button>
           </div>
-        )
-      ) : (
+        )      ) : activeTab === 'respaldos' ? (
         // Contenido de Respaldos de BD
         <GestionRespaldos />
+      ) : (
+        // Contenido de Restauración
+        <RestauracionBD />
       )}
     </div>
   );

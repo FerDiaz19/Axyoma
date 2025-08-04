@@ -257,16 +257,14 @@ def respaldar_bd_completa(request):
             print("🛠️ Aplicando optimizaciones para base de datos grande...")
             optimizaciones = aplicar_optimizaciones_postgresql_grandes(db_config)
             print(f"✅ Optimizaciones aplicadas: {len(optimizaciones)}")
-          
-        # Crear nombre del archivo de respaldo
+            # Crear nombre del archivo de respaldo
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        # Usar formato .backup para pg_restore ultra-rápido
-        nombre_archivo = f"backup_completo_{timestamp}.backup"
+        # Usar formato .sql estándar
+        nombre_archivo = f"backup_completo_{timestamp}.sql"
         ruta_backup = os.path.join(BACKUP_DIR, nombre_archivo)
-        
-        # 🚀 Construir comando pg_dump con configuración optimizada automática
+          # 🚀 Construir comando pg_dump con configuración optimizada automática
         cmd = construir_comando_pg_dump_optimizado_bd_grande(
-            db_config, ruta_backup, None, incluir_datos, 'custom', config_bd
+            db_config, ruta_backup, None, incluir_datos, 'plain', config_bd
         )
         
         # Configurar variables de entorno para PostgreSQL
@@ -347,9 +345,8 @@ def respaldar_bd_completa(request):
                 'formato_optimizado': 'custom_parallel'
             }
         }
-        
-        # Guardar metadatos
-        metadata_file = ruta_backup.replace('.backup', '_metadata.json')
+          # Guardar metadatos
+        metadata_file = ruta_backup.replace('.sql', '_metadata.json')
         with open(metadata_file, 'w', encoding='utf-8') as f:
             json.dump(metadata, f, indent=2, ensure_ascii=False)
 
@@ -393,9 +390,11 @@ def listar_respaldos(request):
             return error_response
         
         respaldos = []
+        archivos_procesados = set()
         
         # Buscar archivos de respaldo
         if os.path.exists(BACKUP_DIR):
+            # 1. Primero procesar archivos con metadata
             for archivo in os.listdir(BACKUP_DIR):
                 if archivo.endswith('_metadata.json'):
                     metadata_path = os.path.join(BACKUP_DIR, archivo)
@@ -405,16 +404,46 @@ def listar_respaldos(request):
                         
                         # Verificar que el archivo SQL exista
                         sql_file = metadata_path.replace('_metadata.json', '.sql')
+                        sql_filename = os.path.basename(sql_file)
+                        
                         if os.path.exists(sql_file):
                             metadata['existe_archivo'] = True
                             metadata['tamaño_mb'] = round(metadata.get('tamaño_bytes', 0) / (1024*1024), 2)
                             respaldos.append(metadata)
+                            archivos_procesados.add(sql_filename)
                         else:
+                            # Metadata sin archivo SQL (archivo huérfano)
                             metadata['existe_archivo'] = False
+                            metadata['tamaño_mb'] = 0
                             respaldos.append(metadata)
                             
                     except Exception as e:
                         print(f"Error al leer metadata {archivo}: {str(e)}")
+            
+            # 2. Después procesar archivos SQL sin metadata
+            for archivo in os.listdir(BACKUP_DIR):
+                if archivo.endswith('.sql') and archivo not in archivos_procesados:
+                    sql_path = os.path.join(BACKUP_DIR, archivo)
+                    try:
+                        # Crear metadata básica para archivos sin metadata
+                        stat = os.stat(sql_path)
+                        metadata = {
+                            'archivo': archivo,
+                            'tipo': 'bd_completa' if 'completo' in archivo else 'desconocido',
+                            'incluir_datos': True,
+                            'descripcion': 'Archivo sin metadata',
+                            'fecha_creacion': datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                            'usuario': 'desconocido',
+                            'tamaño_bytes': stat.st_size,
+                            'tamaño_mb': round(stat.st_size / (1024*1024), 2),
+                            'base_datos': 'axyomadb',
+                            'existe_archivo': True,
+                            'sin_metadata': True
+                        }
+                        respaldos.append(metadata)
+                        
+                    except Exception as e:
+                        print(f"Error al procesar archivo sin metadata {archivo}: {str(e)}")
         
         # Ordenar por fecha de creación (más recientes primero)
         respaldos.sort(key=lambda x: x.get('fecha_creacion', ''), reverse=True)
@@ -1190,11 +1219,9 @@ def construir_comando_pg_restore_ultra_rapido(db_config, archivo_backup, tablas=
         # 🚀 PARALELIZACIÓN AUTOMÁTICA OPTIMIZADA
         '--jobs=6',                  # Usar 6 cores en paralelo (AUMENTADO)
         
-        # 🚀 OPTIMIZACIONES DE MEMORIA MEJORADAS
-        '--no-tablespaces',          # Sin tablespaces
+        # 🚀 OPTIMIZACIONES DE MEMORIA MEJORADAS        '--no-tablespaces',          # Sin tablespaces
         '--single-transaction',      # Una sola transacción (más rápido)
-        '--no-security-labels',      # Sin etiquetas de seguridad (NUEVO)
-        '--no-synchronized-snapshots', # Mejor rendimiento (NUEVO)
+        '--no-security-labels',      # Sin etiquetas de seguridad
         
         # MANEJO DE ERRORES OPTIMIZADO
         '--exit-on-error',          # Salir en errores críticos
@@ -1230,8 +1257,7 @@ def construir_comando_pg_dump_seguro(db_config, archivo_destino, tablas=None, in
         '--no-owner',
         '--no-privileges'
     ]
-    
-    # Configurar formato de salida
+      # Configurar formato de salida
     if formato == 'custom':
         # Formato custom para pg_restore ultra-rápido
         cmd.extend([
@@ -1239,11 +1265,11 @@ def construir_comando_pg_dump_seguro(db_config, archivo_destino, tablas=None, in
             '--compress=9',     # Máxima compresión
             
             # 🚀 OPTIMIZACIONES PARA BASES DE DATOS GRANDES
-            '--jobs=4',         # Paralelización en 4 cores (NUEVO)
-            '--no-tablespaces', # Evitar dependencias de tablespace (NUEVO)
-            '--no-comments',    # Reducir tamaño del archivo (NUEVO)
-            '--no-security-labels',  # Omitir etiquetas de seguridad (NUEVO)
-            '--exclude-table-data=django_session',  # Excluir datos temporales (NUEVO)
+            # NOTA: --jobs no es compatible con --format=custom en pg_dump
+            '--no-tablespaces', # Evitar dependencias de tablespace
+            '--no-comments',    # Reducir tamaño del archivo
+            '--no-security-labels',  # Omitir etiquetas de seguridad
+            '--exclude-table-data=django_session',  # Excluir datos temporales
             
             '--file', archivo_destino
         ])
@@ -1292,17 +1318,11 @@ def construir_comando_pg_dump_optimizado_bd_grande(db_config, archivo_destino, t
         '--no-owner',
         '--no-privileges'
     ]
-    
-    # Configurar formato custom con optimizaciones automáticas
+      # Configurar formato custom con optimizaciones automáticas
     if formato == 'custom':
-        jobs = config_bd.get('jobs', 4) if config_bd else 4
-        
         cmd.extend([
             '--format=custom',  # Formato binario comprimido
             '--compress=9',     # Máxima compresión
-            
-            # 🚀 OPTIMIZACIONES ADAPTATIVAS SEGÚN TAMAÑO DE BD
-            f'--jobs={jobs}',   # Paralelización automática
             '--no-tablespaces', # Evitar dependencias de tablespace
             '--no-comments',    # Reducir tamaño del archivo
             '--no-security-labels',  # Omitir etiquetas de seguridad
@@ -1310,8 +1330,24 @@ def construir_comando_pg_dump_optimizado_bd_grande(db_config, archivo_destino, t
             '--exclude-table-data=auth_session',    # Excluir sesiones
             
             # Optimizaciones específicas para BD grandes
-            '--no-synchronized-snapshots',  # Mejorar rendimiento en BD grandes
             '--quote-all-identifiers',      # Evitar problemas de naming
+            
+            '--file', archivo_destino
+        ])
+        
+        # NOTA: --jobs no es compatible con --format=custom, solo con --format=directory
+    elif formato == 'directory':
+        # Para formato directory podemos usar paralelización
+        jobs = config_bd.get('jobs', 4) if config_bd else 4
+        cmd.extend([
+            '--format=directory',
+            f'--jobs={jobs}',   # Paralelización solo disponible con formato directory
+            '--no-tablespaces',
+            '--no-comments',
+            '--no-security-labels',
+            '--exclude-table-data=django_session',
+            '--exclude-table-data=auth_session',
+            '--quote-all-identifiers',
             
             '--file', archivo_destino
         ])
@@ -1319,6 +1355,29 @@ def construir_comando_pg_dump_optimizado_bd_grande(db_config, archivo_destino, t
         # Optimizaciones adicionales para BD muy grandes (>500MB)
         if config_bd and config_bd.get('es_bd_muy_grande', False):
             print("🔥 Aplicando optimizaciones EXTREMAS para BD muy grande (>500MB)")
+            # Para BD muy grandes, excluir más datos temporales
+            cmd.extend([
+                '--exclude-table-data=django_admin_log',  # Logs de admin
+                '--exclude-table-data=django_migrations', # Migraciones (se regeneran)
+            ])
+            
+    elif formato == 'plain':
+        # Para formato plain SQL - archivos .sql
+        cmd.extend([
+            '--format=plain',   # Formato SQL plano
+            '--no-tablespaces',
+            '--no-comments',
+            '--no-security-labels',
+            '--exclude-table-data=django_session',
+            '--exclude-table-data=auth_session',
+            '--quote-all-identifiers',
+            
+            '--file', archivo_destino
+        ])
+        
+        # Optimizaciones adicionales para BD muy grandes (>500MB)
+        if config_bd and config_bd.get('es_bd_muy_grande', False):
+            print("🔥 Aplicando optimizaciones EXTREMAS para BD muy grande (>500MB) - formato SQL")
             # Para BD muy grandes, excluir más datos temporales
             cmd.extend([
                 '--exclude-table-data=django_admin_log',  # Logs de admin
@@ -1608,18 +1667,16 @@ def backup_emergencia_optimizado(request):
             f"--port={db_config['port']}",
             f"--username={db_config['user']}",
             f"--dbname={db_config['name']}",
-            '--no-password',
-            '--format=custom',
+            '--no-password',            '--format=custom',
             '--compress=9',
             
             # 🚨 MÁXIMAS OPTIMIZACIONES DE EMERGENCIA
-            '--jobs=8',                 # Máximo paralelismo
+            # NOTA: --jobs no es compatible con --format=custom en pg_dump
             '--no-owner',
             '--no-privileges', 
             '--no-tablespaces',
             '--no-comments',
             '--no-security-labels',
-            '--no-synchronized-snapshots',
             
             # Excluir datos no críticos para velocidad máxima
             '--exclude-table-data=django_session',

@@ -1,0 +1,26 @@
+{
+  "tipo": "bd_completa",
+  "incluir_datos": true,
+  "descripcion": "UNO MASSSSSSSSSSSSSSSSSSSSSSS",
+  "fecha_creacion": "2025-08-04T04:02:59.478808",
+  "usuario": "superadmin",
+  "archivo": "backup_completo_20250804_040259.sql",
+  "tamaño_bytes": 182368,
+  "base_datos": "axyomadb",
+  "optimizaciones": {
+    "analisis_automatico": {
+      "size_pretty": "11 MB",
+      "size_bytes": 11283603,
+      "tabla_count": 36,
+      "es_bd_grande": false,
+      "timeout_minutos": 15,
+      "jobs": 2,
+      "es_bd_muy_grande": false
+    },
+    "configuracion_aplicada": [],
+    "tiempo_backup": "0:00:00.220754",
+    "jobs_paralelos": 2,
+    "timeout_configurado": "15 minutos",
+    "formato_optimizado": "custom_parallel"
+  }
+}

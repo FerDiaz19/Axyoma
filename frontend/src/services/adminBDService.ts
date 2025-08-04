@@ -65,6 +65,35 @@ export interface EstadisticasBD {
   usuarios: number;
 }
 
+export interface EstadoBDRestauracion {
+  total_registros: number;
+  empresas: number;
+  empleados: number;
+  usuarios: number;
+  plantas: number;
+  departamentos: number;
+  puestos: number;
+  fecha_ultimo_respaldo?: string;
+  bd_vacia: boolean;
+}
+
+export interface ResultadoReiniciarBD {
+  mensaje: string;
+  tablas_limpiadas: string[];
+  secuencias_reiniciadas: string[];
+  usuario_conservado: string;
+}
+
+export interface ResultadoCargarDemo {
+  mensaje: string;
+  usuarios_creados: number;
+  empresas_creadas: number;
+  plantas_creadas: number;
+  departamentos_creados: number;
+  puestos_creados: number;
+  empleados_creados: number;
+}
+
 class AdminBDService {
   // Obtener tablas que el usuario puede exportar
   async listarTablasExportables(): Promise<{
@@ -242,6 +271,49 @@ class AdminBDService {
     }
   }
 
+  // 🔧 NUEVAS FUNCIONES DE RESTAURACIÓN
+
+  // Obtener estado actual de la BD para restauración
+  async obtenerEstadoBDRestauracion(): Promise<EstadoBDRestauracion> {
+    try {
+      console.log('🔍 AdminBD: Obteniendo estado de BD para restauración...');
+      const response = await adminBDApi.get('/restauracion/estado-bd/');
+      console.log('✅ AdminBD: Estado de BD obtenido');
+      return response.data;
+    } catch (error) {
+      console.error('❌ AdminBD: Error obteniendo estado de BD:', error);
+      throw error;
+    }
+  }
+
+  // Reiniciar BD a cero (solo estructura)
+  async reiniciarBDCero(confirmacion: string): Promise<ResultadoReiniciarBD> {
+    try {
+      console.log('🗑️ AdminBD: Reiniciando BD a cero...');
+      const response = await adminBDApi.post('/restauracion/reiniciar-bd/', {
+        confirmacion
+      });
+      console.log('✅ AdminBD: BD reiniciada exitosamente');
+      return response.data;
+    } catch (error) {
+      console.error('❌ AdminBD: Error reiniciando BD:', error);
+      throw error;
+    }
+  }
+
+  // Cargar datos de demostración
+  async cargarDatosDemo(): Promise<ResultadoCargarDemo> {
+    try {
+      console.log('📊 AdminBD: Cargando datos demo...');
+      const response = await adminBDApi.post('/restauracion/cargar-demo/');
+      console.log('✅ AdminBD: Datos demo cargados exitosamente');
+      return response.data;
+    } catch (error) {
+      console.error('❌ AdminBD: Error cargando datos demo:', error);
+      throw error;
+    }
+  }
+
   // Función helper para descargar archivo
   descargarArchivo(blob: Blob, nombreArchivo: string): void {
     const url = window.URL.createObjectURL(blob);
@@ -332,3 +404,8 @@ export const crearRespaldoPgAdmin = adminBDService.crearRespaldoPgAdmin.bind(adm
 export const resetearBD = adminBDService.resetearBD.bind(adminBDService);
 export const cargarDatosIniciales = adminBDService.cargarDatosIniciales.bind(adminBDService);
 export const restaurarEstadoInicial = adminBDService.restaurarEstadoInicial.bind(adminBDService);
+
+// 🔧 NUEVAS FUNCIONES DE RESTAURACIÓN AVANZADA
+export const obtenerEstadoBDRestauracion = adminBDService.obtenerEstadoBDRestauracion.bind(adminBDService);
+export const reiniciarBDCero = adminBDService.reiniciarBDCero.bind(adminBDService);
+export const cargarDatosDemo = adminBDService.cargarDatosDemo.bind(adminBDService);

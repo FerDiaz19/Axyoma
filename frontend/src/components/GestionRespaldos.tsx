@@ -1,13 +1,13 @@
 /**
- * 🗄️ GESTIÓN DE RESPALDOS Y RESTAURACIÓN - FRONTEND
+ * 🗄️ GESTIÓN import React, { useState, useEffect } from 'react';
+import respaldosService, { type RespaldoMetadata, type InfoSistemaRespaldos } from '../services/respaldosService';
+import { resetearBD, cargarDatosIniciales, restaurarEstadoInicial } from '../services/adminBDService';
+import '../css/GestionRespaldos.css';RESPALDOS Y RESTAURACIÓN - FRONTEND
  * ==================================================
  * 
  * Componente React para la gestión completa de respaldos de base de datos.
  * Interfaz de usuario para SuperAdmin con funciones avanzadas de BD.
  * 
- * 📋 Responsable: Yael Contreras
- * 📅 Fecha: Enero 2025
- * 🔢 Versión: 2.0
  * 
  * 🚀 Funcionalidades:
  * - Crear respaldos (tablas específicas o BD completa)
@@ -405,18 +405,17 @@ const GestionRespaldos: React.FC<GestionRespaldosProps> = ({ className = '' }) =
                   <p><strong>🏷️ Tablas:</strong> {respaldo.tablas.join(', ')}</p>
                 )}
               </div>
-              
-              <div className="respaldo-acciones">
+                <div className="respaldo-acciones">
                 <button 
                   onClick={() => handleDescargar(respaldo.archivo)}
-                  className="btn btn-sm btn-secondary"
+                  className="btn btn-descargar btn-sm"
                   title="Descargar respaldo"
                 >
                   ⬇️ Descargar
                 </button>
                 <button 
                   onClick={() => handleRestaurar(respaldo.archivo)}
-                  className="btn btn-sm btn-warning"
+                  className="btn btn-restaurar btn-sm"
                   title="Restaurar respaldo"
                   disabled={loading}
                 >
@@ -424,7 +423,7 @@ const GestionRespaldos: React.FC<GestionRespaldosProps> = ({ className = '' }) =
                 </button>
                 <button 
                   onClick={() => handleEliminar(respaldo.archivo)}
-                  className="btn btn-sm btn-danger"
+                  className="btn btn-eliminar btn-sm"
                   title="Eliminar respaldo"
                 >
                   🗑️ Eliminar

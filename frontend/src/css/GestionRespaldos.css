@@ -1,0 +1,717 @@
+/**
+ * 🗄️ ESTILOS PARA GESTIÓN DE RESPALDOS - DISEÑO MEJORADO
+ * =======================================================
+ * 
+ * Estilos CSS modernos para el componente GestionRespaldos.tsx
+ * Diseño con cards elegantes y botones bien organizados.
+ * 
+ * 📋 Responsable: Yael Contreras
+ * 📅 Fecha: Agosto 2025
+ * 🎨 Diseño: Cards modernas con efectos hover y organización visual mejorada
+ */
+
+.gestion-respaldos {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* ========== HEADER PRINCIPAL ========== */
+.respaldos-container {
+  background: white;
+  border-radius: 16px;
+  padding: 0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.respaldos-container h2 {
+  margin: 0;
+  padding: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 600;
+  border-radius: 16px 16px 0 0;
+}
+
+/* ========== MENSAJES ========== */
+.mensaje {
+  margin: 20px 30px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  border-left: 4px solid;
+  font-weight: 500;
+  animation: slideInDown 0.3s ease-out;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mensaje.success {
+  background: #d4edda;
+  border-left-color: #28a745;
+  color: #155724;
+}
+
+.mensaje.error {
+  background: #f8d7da;
+  border-left-color: #dc3545;
+  color: #721c24;
+}
+
+.mensaje.warning {
+  background: #fff3cd;
+  border-left-color: #ffc107;
+  color: #856404;
+}
+
+/* ========== HEADER DE LISTA ========== */
+.respaldos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 30px;
+  border-bottom: 2px solid #e9ecef;
+  background: #f8f9fa;
+}
+
+.respaldos-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.respaldos-acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ========== BOTONES MEJORADOS ========== */
+.btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0, 123, 255, 0.3);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+  color: white;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(108, 117, 125, 0.3);
+}
+
+.btn-warning {
+  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+  color: #212529;
+}
+
+.btn-warning:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+}
+
+.btn-info {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  color: white;
+}
+
+.btn-info:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(23, 162, 184, 0.3);
+}
+
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+/* ========== ESTADO VACÍO ========== */
+.respaldos-vacio {
+  text-align: center;
+  padding: 80px 30px;
+  color: #6c757d;
+}
+
+.respaldos-vacio p {
+  font-size: 20px;
+  margin-bottom: 25px;
+  color: #495057;
+}
+
+/* ========== GRID DE RESPALDOS - DISEÑO MEJORADO ========== */
+.respaldos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 25px;
+  padding: 30px;
+}
+
+/* ========== TARJETAS DE RESPALDO - DISEÑO PREMIUM ========== */
+.respaldo-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e9ecef;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.respaldo-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.respaldo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border-color: #667eea;
+}
+
+/* Header de la tarjeta */
+.respaldo-header {
+  padding: 24px 24px 16px 24px;
+  border-bottom: 1px solid #f1f3f4;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.respaldo-header h4 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 600;
+  word-break: break-word;
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Etiquetas de tipo */
+.respaldo-tipo {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.respaldo-tipo.bd_completa {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
+
+.respaldo-tipo.tablas {
+  background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+  color: #7b1fa2;
+  border: 1px solid #ce93d8;
+}
+
+/* Información del respaldo */
+.respaldo-info {
+  padding: 16px 24px;
+}
+
+.respaldo-info p {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.respaldo-info p:last-child {
+  margin-bottom: 0;
+}
+
+.respaldo-info strong {
+  color: #2c3e50;
+  font-weight: 600;
+  min-width: 80px;
+}
+
+/* ========== ACCIONES - DISEÑO MEJORADO ========== */
+.respaldo-acciones {
+  padding: 20px 24px 24px 24px;
+  background: #f8f9fa;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.respaldo-acciones .btn {
+  flex: 1;
+  min-width: 100px;
+  justify-content: center;
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
+/* Botones específicos de acciones */
+.btn-descargar {
+  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  color: white;
+}
+
+.btn-descargar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(40, 167, 69, 0.3);
+}
+
+.btn-restaurar {
+  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+  color: #212529;
+}
+
+.btn-restaurar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 193, 7, 0.3);
+}
+
+.btn-eliminar {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.btn-eliminar:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(220, 53, 69, 0.3);
+}
+
+/* ========== LOADING OVERLAY ========== */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border-radius: 16px;
+}
+
+.loading-spinner {
+  background: white;
+  padding: 25px 40px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  font-size: 16px;
+  font-weight: 600;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.loading-spinner::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  border: 2px solid #e9ecef;
+  border-top: 2px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* ========== VISTAS CREAR E INFO ========== */
+.crear-respaldo,
+.sistema-info {
+  padding: 30px;
+  background: white;
+}
+
+.crear-header,
+.info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.crear-header h3,
+.info-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+/* Formulario de creación */
+.crear-form {
+  max-width: 700px;
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 25px;
+  margin-top: 12px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+
+.radio-group label:hover {
+  background: #f8f9fa;
+}
+
+.radio-group input[type="radio"] {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+}
+
+/* Selección de tablas */
+.seleccion-tablas {
+  margin-bottom: 25px;
+}
+
+.seleccion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.seleccion-header h4 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.btn-toggle-all {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.btn-toggle-all:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-toggle-all:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Grid de tablas mejorado */
+.tablas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.tabla-item {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.tabla-item:hover {
+  border-color: #667eea;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.tabla-item.seleccionada {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #f7faff 0%, #eef4ff 100%);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+}
+
+.tabla-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: 12px;
+}
+
+.tabla-checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #667eea;
+}
+
+.tabla-info h5 {
+  margin: 0 0 4px 0;
+  color: #2c3e50;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.tabla-info p {
+  margin: 0;
+  color: #6c757d;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Área de texto */
+textarea {
+  width: 100%;
+  padding: 15px;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 100px;
+  transition: border-color 0.3s ease;
+}
+
+textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Acciones del formulario */
+.form-actions {
+  padding-top: 25px;
+  border-top: 1px solid #e9ecef;
+}
+
+/* Información del sistema */
+.info-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 25px;
+}
+
+.info-section {
+  background: #f8f9fa;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.info-section h4 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.info-section p {
+  margin: 8px 0;
+  font-size: 14px;
+  color: #495057;
+}
+
+.info-section p strong {
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+/* ========== ANIMACIONES ========== */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========== RESPONSIVE DESIGN ========== */
+@media (max-width: 768px) {
+  .gestion-respaldos {
+    padding: 15px;
+  }
+  
+  .respaldos-container h2 {
+    font-size: 24px;
+    padding: 25px 20px;
+  }
+  
+  .respaldos-header {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
+  }
+  
+  .respaldos-acciones {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  
+  .respaldos-grid {
+    grid-template-columns: 1fr;
+    padding: 20px;
+    gap: 20px;
+  }
+  
+  .respaldo-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  
+  .respaldo-tipo {
+    align-self: flex-start;
+  }
+  
+  .respaldo-acciones {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .respaldo-acciones .btn {
+    flex: none;
+    width: 100%;
+  }
+  
+  .crear-header,
+  .info-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: stretch;
+  }
+  
+  .radio-group {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .tablas-grid {
+    grid-template-columns: 1fr;
+    padding: 15px;
+  }
+  
+  .info-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .respaldo-card {
+    margin: 0 5px;
+  }
+  
+  .respaldo-header,
+  .respaldo-info,
+  .respaldo-acciones {
+    padding: 16px;
+  }
+  
+  .respaldo-header h4 {
+    font-size: 15px;
+  }
+  
+  .respaldo-info p {
+    font-size: 13px;
+  }
+  
+  .btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
