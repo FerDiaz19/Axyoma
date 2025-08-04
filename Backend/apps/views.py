@@ -4026,7 +4026,7 @@ class AdminBDViewSet(viewsets.ViewSet):
                 # Escribir encabezados
                 writer.writerow([
                     'ID', 'Nombre', 'RFC', 'Teléfono', 'Email', 'Dirección', 
-                    'Fecha Registro', 'Estado', 'Admin Username', 'Admin Email'
+                    'Estado', 'Admin Username', 'Admin Email'
                 ])
                 
                 # Escribir datos
@@ -4041,7 +4041,6 @@ class AdminBDViewSet(viewsets.ViewSet):
                         empresa.telefono_contacto or 'N/A',
                         empresa.email_contacto or 'N/A',
                         empresa.direccion or 'N/A',
-                        empresa.fecha_registro.strftime('%Y-%m-%d %H:%M:%S'),
                         'Activa' if empresa.status else 'Suspendida',
                         admin_username,
                         admin_email
@@ -4053,7 +4052,7 @@ class AdminBDViewSet(viewsets.ViewSet):
                 
                 writer.writerow([
                     'ID', 'Nombre', 'Dirección', 'Empresa', 'Empresa ID', 
-                    'Fecha Registro', 'Estado'
+                    'Estado'
                 ])
                 
                 for planta in plantas:
@@ -4063,7 +4062,6 @@ class AdminBDViewSet(viewsets.ViewSet):
                         planta.direccion or 'N/A',
                         planta.empresa.nombre,
                         planta.empresa.empresa_id,
-                        planta.fecha_registro.strftime('%Y-%m-%d %H:%M:%S'),
                         'Activa' if planta.status else 'Suspendida'
                     ])
                     
@@ -4073,7 +4071,7 @@ class AdminBDViewSet(viewsets.ViewSet):
                 
                 writer.writerow([
                     'ID', 'Nombre', 'Descripción', 'Planta', 'Empresa', 
-                    'Fecha Registro', 'Estado'
+                    'Estado'
                 ])
                 
                 for dept in departamentos:
@@ -4083,7 +4081,6 @@ class AdminBDViewSet(viewsets.ViewSet):
                         dept.descripcion or 'N/A',
                         dept.planta.nombre,
                         dept.planta.empresa.nombre,
-                        dept.fecha_registro.strftime('%Y-%m-%d %H:%M:%S'),
                         'Activo' if dept.status else 'Suspendido'
                     ])
                     

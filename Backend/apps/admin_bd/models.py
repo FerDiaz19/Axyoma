@@ -6,10 +6,6 @@
 Modelos Django para gestión de logs y configuración de respaldos.
 Sistema de auditoría y configuración para funciones de SuperAdmin.
 
-📋 Responsable: Yael Contreras
-📅 Fecha: Enero 2025
-🔢 Versión: 2.0
-
 🚀 Modelos incluidos:
 - LogRespaldo: Registro de todas las operaciones de respaldo
 - ConfiguracionBD: Configuración del sistema de respaldos

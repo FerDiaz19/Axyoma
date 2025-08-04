@@ -1,0 +1,13 @@
+{
+  "tipo": "tablas",
+  "tablas": [
+    "empresas"
+  ],
+  "incluir_datos": true,
+  "descripcion": "EMPRESAS",
+  "fecha_creacion": "2025-08-03T14:35:16.583433",
+  "usuario": "superadmin",
+  "archivo": "backup_tablas_empresas_20250803_143516.sql",
+  "tamaño_bytes": 5398,
+  "base_datos": "axyomadb"
+}
