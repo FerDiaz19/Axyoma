@@ -46,7 +46,7 @@ class SuscripcionEmpresa(models.Model):
     )
     plan = models.ForeignKey(
         PlanSuscripcion, on_delete=models.PROTECT,
-        verbose_name="Plan de suscripción"
+        verbose_name="Plan de suscripción", db_column='plan'
     )
 
     fecha_inicio = models.DateField(auto_now_add=True, verbose_name="Fecha de inicio")

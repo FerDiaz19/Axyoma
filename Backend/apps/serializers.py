@@ -3,6 +3,7 @@
 
 import traceback
 from rest_framework import serializers
+from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
 
@@ -87,7 +88,7 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
 
                 # Crear perfil de usuario
                 user_profile = PerfilUsuario.objects.create(
-                    user=user,
+                    user_id=user,
                     nombre=nombre,
                     apellido_paterno=apellido_paterno,
                     apellido_materno=apellido_materno,
@@ -95,6 +96,10 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                     nivel_usuario='admin-empresa'
                 )
                 print(f"✅ PASO 4: Perfil creado - ID: {user_profile.id}")
+
+                # Crear token para el usuario
+                token, created = Token.objects.get_or_create(user=user)
+                print(f"✅ PASO 4.1: Token creado - {token.key[:10]}...")
 
                 # Crear empresa
                 empresa = Empresa.objects.create(
@@ -210,10 +215,10 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
 
                     suscripcion = SuscripcionEmpresa.objects.create(
                         empresa=empresa,
-                        plan_suscripcion=plan_basico,
+                        plan=plan_basico,
                         fecha_inicio=fecha_inicio,
                         fecha_fin=fecha_fin,
-                        estado='Activa',
+                        estado='activa',
                         status=True
                     )
                     print(f"✅ PASO 9.2: Suscripción de prueba creada - ID: {suscripcion.suscripcion_id}")

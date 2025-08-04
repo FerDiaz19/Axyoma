@@ -92,6 +92,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
     try {
       console.log('🔄 Cargando datos de empleados...');
       console.log('👤 userData:', userData);
+      console.log('🔑 Token actual:', localStorage.getItem('authToken')?.substring(0, 20) + '...');
 
       const [empleadosData, plantasData, departamentosData, puestosData] = await Promise.all([
         getEmpleados(),

@@ -136,7 +136,7 @@ class AuthViewSet(viewsets.ViewSet):
             return {
                 'tiene_suscripcion': True,
                 'estado': 'activa',
-                'plan_nombre': suscripcion.plan_suscripcion.nombre,
+                'plan_nombre': suscripcion.plan.nombre,
                 'fecha_inicio': suscripcion.fecha_inicio.isoformat(),
                 'fecha_fin': suscripcion.fecha_fin.isoformat(),
                 'dias_restantes': dias_restantes,
@@ -301,20 +301,62 @@ class AuthViewSet(viewsets.ViewSet):
 class EmpresaViewSet(viewsets.ViewSet):
     permission_classes = [AllowAny]
 
+    @action(detail=False, methods=['post'], url_path='debug-registro')
+    def debug_registro(self, request):
+        """Endpoint de debug para ver exactamente qué datos llegan del frontend"""
+        import json
+        
+        debug_info = {
+            'timestamp': timezone.now().isoformat(),
+            'method': request.method,
+            'path': request.path,
+            'headers': dict(request.headers),
+            'content_type': request.content_type,
+            'body_raw': request.body.decode('utf-8') if request.body else None,
+            'data': request.data,
+            'POST': dict(request.POST),
+            'user': str(request.user),
+            'is_ajax': request.headers.get('X-Requested-With') == 'XMLHttpRequest',
+        }
+        
+        print("🔍 DEBUG REGISTRO FRONTEND:")
+        print("=" * 60)
+        print(json.dumps(debug_info, indent=2, default=str))
+        print("=" * 60)
+        
+        return Response({
+            'message': 'Debug info captured',
+            'debug': debug_info
+        })
+
     @action(detail=False, methods=['post'])
     def registro(self, request):
+        print(f"🔄 REGISTRO EMPRESA - Inicio con datos: {request.data}")
+        print(f"🔄 Headers: {dict(request.headers)}")
+        
         serializer = EmpresaRegistroSerializer(data=request.data)
         if serializer.is_valid():
-            empresa = serializer.save()
-            return Response({
-                'message': 'Empresa registrada exitosamente',
-                'empresa_id': empresa.empresa_id,
-                'nombre': empresa.nombre,
-                'siguiente_paso': 'seleccionar_plan',
-                'mensaje_siguiente': 'Para completar el registro, selecciona un plan de suscripción.',
-                'requiere_suscripcion': True
-            }, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                empresa = serializer.save()
+                return Response({
+                    'message': 'Empresa registrada exitosamente',
+                    'empresa_id': empresa.empresa_id,
+                    'nombre': empresa.nombre,
+                    'siguiente_paso': 'seleccionar_plan',
+                    'mensaje_siguiente': 'Para completar el registro, selecciona un plan de suscripción.',
+                    'requiere_suscripcion': True
+                }, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                print(f"❌ ERROR EN SERIALIZER.SAVE(): {str(e)}")
+                import traceback
+                traceback.print_exc()
+                return Response({
+                    'error': 'Error interno al procesar el registro',
+                    'detalle': str(e)
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        else:
+            print(f"❌ ERRORES DE VALIDACIÓN: {serializer.errors}")
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # ---------------------------------------------------------------------------- #
 
@@ -349,7 +391,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil)
                 plantas_ids = [ap.planta.planta_id for ap in admin_plantas]
                 return Empleado.objects.filter(
-                    puesto__departamento__planta__planta__in=plantas_ids,
+                    puesto__departamento__planta__planta_id__in=plantas_ids,
                     status=True
                 ).select_related('puesto', 'puesto__departamento', 'puesto__departamento__planta')
 
@@ -878,20 +920,20 @@ class PlantaViewSet(viewsets.ModelViewSet):
             plantas = Planta.objects.filter(empresa=empresa, status=True)
 
             # Obtener usuarios administradores de estas plantas
-            admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user', 'planta')
+            admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario', 'planta')
 
             usuarios_data = []
             for admin_planta in admin_plantas:
                 usuario_data = {
-                    'usuario_id': admin_planta.usuario.user.id,
-                    'username': admin_planta.usuario.user.username,
-                    'email': admin_planta.usuario.user.email,
-                    'first_name': admin_planta.usuario.user.first_name,
-                    'last_name': admin_planta.usuario.user.last_name,
-                    'is_active': admin_planta.usuario.user.is_active,
+                    'usuario_id': admin_planta.usuario.user_id.id,
+                    'username': admin_planta.usuario.user_id.username,
+                    'email': admin_planta.usuario.user_id.email,
+                    'first_name': admin_planta.usuario.user_id.first_name,
+                    'last_name': admin_planta.usuario.user_id.last_name,
+                    'is_active': admin_planta.usuario.user_id.is_active,
                     'planta_id': admin_planta.planta.planta_id,
                     'planta_nombre': admin_planta.planta.nombre,
-                    'fecha_creacion': admin_planta.usuario.user.date_joined.isoformat() if admin_planta.usuario.user.date_joined else None
+                    'fecha_creacion': admin_planta.usuario.user_id.date_joined.isoformat() if admin_planta.usuario.user_id.date_joined else None
                 }
                 usuarios_data.append(usuario_data)
 
@@ -978,7 +1020,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
             from django.contrib.auth.models import User
             try:
                 usuario_target = User.objects.get(id=usuario_id)
-                perfil_target = PerfilUsuario.objects.get(user=usuario_target)
+                perfil_target = PerfilUsuario.objects.get(user_id=usuario_target)
                 admin_planta = AdminPlanta.objects.get(usuario=perfil_target)
 
                 if admin_planta.planta.empresa != empresa:
@@ -3816,7 +3858,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
 
                 suscripcion = SuscripcionEmpresa.objects.create(
                     empresa=empresa,
-                    plan_suscripcion=plan,
+                    plan=plan,
                     fecha_inicio=fecha_inicio,
                     fecha_fin=fecha_fin,
                     estado='Activa',
@@ -3971,7 +4013,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
             with transaction.atomic():
                 pago = Pago.objects.create(
                     suscripcion=suscripcion,
-                    costo=suscripcion.plan_suscripcion.precio,
+                    costo=suscripcion.plan.precio,
                     monto_pago=float(monto_pago),
                     estado_pago='Completado',
                     transaccion_id=transaccion_id

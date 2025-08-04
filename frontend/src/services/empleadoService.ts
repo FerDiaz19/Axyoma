@@ -72,8 +72,15 @@ export interface Puesto {
 const context = "empleados/";
 
 export const getEmpleados = async (): Promise<Empleado[]> => {
-  const response = await api.get<Empleado[]>(context);
-  return response.data;
+  try {
+    console.log('🔍 empleadoService: Obteniendo empleados...');
+    const response = await api.get<Empleado[]>(context);
+    console.log('✅ empleadoService: Empleados obtenidos:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ empleadoService ERROR:', error.response?.status, error.response?.data);
+    throw error;
+  }
 };
 
 export const getEmpleadoById = async (id: number): Promise<Empleado> => {
