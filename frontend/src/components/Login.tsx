@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { login } from '../services/authService';
 import { findBackendServer } from '../utils/serverCheck';
@@ -13,7 +14,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [serverStatus, setServerStatus] = useState<string>('checking');
-  
+
   useEffect(() => {
     // Verificar estado del servidor al cargar el componente
     const checkServer = async () => {
@@ -24,7 +25,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         setServerStatus('inactive');
       }
     };
-    
+
     checkServer();
   }, []);
 
@@ -34,25 +35,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     setError('');
 
     try {
-      // Sanitizar username - eliminar espacios y convertir a minúsculas
-      const sanitizedUsername = username.trim().toLowerCase();
-      
-      // Normalizar nombres de usuario conocidos
-      let normalizedUsername = sanitizedUsername;
-      if (sanitizedUsername === 'admin planta' || sanitizedUsername === 'admin-planta') {
-        normalizedUsername = 'admin_planta';
-      } else if (sanitizedUsername === 'admin empresa' || sanitizedUsername === 'admin-empresa') {
-        normalizedUsername = 'admin_empresa';
-      } else if (sanitizedUsername === 'super admin' || sanitizedUsername === 'superadmin') {
-        normalizedUsername = 'superadmin';
-      }
-      
-      console.log(`🔑 Intentando login con usuario normalizado: ${normalizedUsername}`);
-      
-      const userData = await login({ 
-        username: normalizedUsername,
-        password 
-      });
+      const userData = await login({ username, password });
       onLogin(userData);
     } catch (error: any) {
       setError(error.message || 'Error al iniciar sesión');
@@ -78,7 +61,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <li>Comprueba que el puerto 8000 esté disponible</li>
             <li>Verifica la consola de Django por posibles errores</li>
           </ul>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="retry-button"
           >
@@ -95,14 +78,6 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       );
     }
     return null;
-  };
-
-  // Función auxiliar para establecer credenciales (renombrada para evitar error de ESLint)
-  const applyTestCredential = (testUser: string, testPassword: string) => {
-    setUsername(testUser);
-    setPassword(testPassword);
-    // Opcionalmente, hacer submit automáticamente
-    // handleSubmit(new Event('submit') as any);
   };
 
   return (
@@ -136,7 +111,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </div>
         </div>
       </div>
-      
+
       {/* Lado derecho - Formulario */}
       <div className="login-right">
         <div className="login-form-container">
@@ -185,8 +160,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
             )}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="login-button"
               disabled={loading}
             >
@@ -209,48 +184,9 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               <span>o</span>
             </div>
 
-            {/* Credenciales de prueba - CREDENCIALES REALES DEL SISTEMA */}
-            <div className="test-credentials">
-              <h4>🧪 Usuarios del Sistema</h4>
-              <div className="credentials-list">
-                <div 
-                  className="credential-item clickable"
-                  onClick={() => applyTestCredential('superadmin', 'admin123')}
-                >
-                  <strong>🔧 SuperAdmin:</strong> superadmin / admin123
-                </div>
-                <div 
-                  className="credential-item clickable"
-                  onClick={() => applyTestCredential('admin_technomex', 'admin123')}
-                >
-                  <strong>🏢 TechnoMex Industries:</strong> admin_technomex / admin123
-                </div>
-                <div 
-                  className="credential-item clickable"
-                  onClick={() => applyTestCredential('admin_manu_gonzalez', 'admin123')}
-                >
-                  <strong>🏢 Manufactura González:</strong> admin_manu_gonzalez / admin123
-                </div>
-                <div 
-                  className="credential-item clickable"
-                  onClick={() => applyTestCredential('admin_axis', 'admin123')}
-                >
-                  <strong>🏢 Industrias AXIS:</strong> admin_axis / admin123
-                </div>
-                <div 
-                  className="credential-item clickable"
-                  onClick={() => applyTestCredential('admin_planta_1_1', 'admin123')}
-                >
-                  <strong>📍 Admin Planta:</strong> admin_planta_1_1 / admin123
-                </div>
-              </div>
-              <div className="note">
-                <small>💡 <strong>Nota:</strong> Los 3 tipos de usuarios están funcionando correctamente</small>
-              </div>
-            </div>
 
             <p className="register-link">
-              ¿No tienes cuenta? 
+              ¿No tienes cuenta?
               <a href="/registro" className="link-button">
                 <span>✨</span>
                 Crear cuenta nueva

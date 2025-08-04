@@ -1,13 +1,53 @@
+
+@font-face {
+    font-family: 'GemunuLibre';
+    src: url('./fonts/GemunuLibre/GemunuLibre.ttf') format('truetype-variations');
+    font-weight: 100 900; font-display: swap;
+}
+
+@view-transition {
+    navigation: auto;
+}
+
+:root {
+    --color-text: #F1EFF2;
+    --color-subtitle: #D9D0DE;
+
+    --color-canvas: #22212D;
+    --color-accent: #4E4B5C;
+    --color-alt-accent: #9ea2b7;
+    --color-background: #181721;
+
+    --color-hover: #7B6D8D;
+    --color-active: #9684A1;
+
+    --color-info: #81A4CD;
+    --color-alert: #EE6352;
+    --color-danger: #A22522;
+    --color-success: #798478;
+
+    --sidebar-width-min: 5rem;
+    --sidebar-width-max: 20rem;
+}
+
+* {
+    font-family: 'GemunuLibre', sans-serif;
+}
+
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    scrollbar-width: none;
+    margin: 0; padding: 0;
+    scroll-behavior: smooth;
+    overscroll-behavior: none;
+    background-color: var(--color-canvas);
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    view-transition-name: base-content-transition;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }

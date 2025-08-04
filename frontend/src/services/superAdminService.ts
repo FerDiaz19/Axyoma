@@ -273,11 +273,11 @@ export const getEmpresas = async (buscar = '', status = ''): Promise<Empresa[]> 
     const params = new URLSearchParams();
     if (buscar) params.append('buscar', buscar);
     if (status) params.append('status', status);
-    
+
     // Make API call with detailed logging
     console.log(`🔍 SuperAdmin: Llamando a API: /superadmin/listar_empresas/?${params.toString()}`);
     const response = await api.get(`/superadmin/listar_empresas/?${params.toString()}`);
-    
+
     // Check if response has the expected structure
     if (response.data && response.data.empresas) {
       console.log(`✅ SuperAdmin: Obtenidas ${response.data.empresas.length} empresas`);
@@ -343,7 +343,7 @@ export const getUsuarios = async (buscar = '', nivel_usuario = '', activo = ''):
     if (buscar) params.append('buscar', buscar);
     if (nivel_usuario) params.append('nivel_usuario', nivel_usuario);
     if (activo) params.append('activo', activo);
-    
+
     const response = await api.get(`${BASE_URL}/listar_usuarios/?${params.toString()}`);
     return response.data?.usuarios || [];
   } catch (error) {
@@ -580,16 +580,16 @@ export const editarEmpleado = async (id: number, data: Partial<SuperAdminEmplead
 export const getPlantas = async (params: any = {}): Promise<SuperAdminPlanta[]> => {
   try {
     console.log('� SuperAdmin: Obteniendo plantas...');
-    
+
     // Construir parámetros
     let queryParams = new URLSearchParams();
     if (params.buscar) queryParams.append('buscar', params.buscar);
     if (params.empresa_id) queryParams.append('empresa_id', params.empresa_id);
     if (params.status) queryParams.append('status', params.status);
-    
+
     const response = await api.get(`${BASE_URL}/listar_todas_plantas/?${queryParams.toString()}`);
     console.log(`✅ SuperAdmin: Obtenidas ${response.data?.plantas?.length || 0} plantas`);
-    
+
     return response.data?.plantas || [];
   } catch (error) {
     console.error('❌ SuperAdmin: Error cargando plantas:', error);
@@ -600,15 +600,16 @@ export const getPlantas = async (params: any = {}): Promise<SuperAdminPlanta[]> 
 export const getDepartamentos = async (params: any = {}): Promise<SuperAdminDepartamento[]> => {
   try {
     console.log('� SuperAdmin: Obteniendo departamentos...');
-    
+
     let queryParams = new URLSearchParams();
     if (params.buscar) queryParams.append('buscar', params.buscar);
     if (params.planta_id) queryParams.append('planta_id', params.planta_id);
+    if (params.empresa_id) queryParams.append('empresa_id', params.empresa_id);
     if (params.status) queryParams.append('status', params.status);
-    
+
     const response = await api.get(`${BASE_URL}/listar_todos_departamentos/?${queryParams.toString()}`);
     console.log(`✅ SuperAdmin: Obtenidos ${response.data?.departamentos?.length || 0} departamentos`);
-    
+
     return response.data?.departamentos || [];
   } catch (error) {
     console.error('❌ SuperAdmin: Error cargando departamentos:', error);
@@ -619,15 +620,15 @@ export const getDepartamentos = async (params: any = {}): Promise<SuperAdminDepa
 export const getPuestos = async (params: any = {}): Promise<SuperAdminPuesto[]> => {
   try {
     console.log('� SuperAdmin: Obteniendo puestos...');
-    
+
     let queryParams = new URLSearchParams();
     if (params.buscar) queryParams.append('buscar', params.buscar);
     if (params.departamento_id) queryParams.append('departamento_id', params.departamento_id);
     if (params.status) queryParams.append('status', params.status);
-    
+
     const response = await api.get(`${BASE_URL}/listar_todos_puestos/?${queryParams.toString()}`);
     console.log(`✅ SuperAdmin: Obtenidos ${response.data?.puestos?.length || 0} puestos`);
-    
+
     return response.data?.puestos || [];
   } catch (error) {
     console.error('❌ SuperAdmin: Error cargando puestos:', error);
@@ -638,15 +639,15 @@ export const getPuestos = async (params: any = {}): Promise<SuperAdminPuesto[]> 
 export const getEmpleados = async (params: any = {}): Promise<SuperAdminEmpleado[]> => {
   try {
     console.log('� SuperAdmin: Obteniendo empleados...');
-    
+
     let queryParams = new URLSearchParams();
     if (params.buscar) queryParams.append('buscar', params.buscar);
-    if (params.puesto_id) queryParams.append('puesto_id', params.puesto_id);
+    if (params.empresa_id) queryParams.append('empresa_id', params.puesto_id);
     if (params.activo) queryParams.append('activo', params.activo);
-    
+
     const response = await api.get(`${BASE_URL}/listar_todos_empleados/?${queryParams.toString()}`);
     console.log(`✅ SuperAdmin: Obtenidos ${response.data?.empleados?.length || 0} empleados`);
-    
+
     return response.data?.empleados || [];
   } catch (error) {
     console.error('❌ SuperAdmin: Error cargando empleados:', error);
@@ -660,7 +661,7 @@ export const listarSuscripciones = async (): Promise<any[]> => {
     console.log('🔄 SuperAdmin: Cargando suscripciones...');
     const response = await api.get('/suscripciones/listar_suscripciones/');
     console.log('📊 SuperAdmin: Respuesta suscripciones:', response.data);
-    
+
     if (response.data && Array.isArray(response.data.suscripciones)) {
       return response.data.suscripciones;
     } else if (Array.isArray(response.data)) {
@@ -732,7 +733,7 @@ export const listarPagos = async (): Promise<any[]> => {
     console.log('🔄 SuperAdmin: Cargando pagos...');
     const response = await api.get('/suscripciones/listar_pagos/');
     console.log('📊 SuperAdmin: Respuesta pagos:', response.data);
-    
+
     if (response.data && Array.isArray(response.data.pagos)) {
       return response.data.pagos;
     } else if (Array.isArray(response.data)) {
@@ -752,7 +753,7 @@ export const listarPlanes = async (): Promise<any[]> => {
     console.log('🔄 SuperAdmin: Cargando planes...');
     const response = await api.get('/suscripciones/listar_planes/');
     console.log('📊 SuperAdmin: Respuesta planes:', response.data);
-    
+
     if (response.data && Array.isArray(response.data.planes)) {
       return response.data.planes;
     } else if (Array.isArray(response.data)) {

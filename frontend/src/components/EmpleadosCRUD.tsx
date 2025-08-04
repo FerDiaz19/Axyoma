@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  getEmpleados, 
-  createEmpleado, 
-  updateEmpleado, 
+import {
+  getEmpleados,
+  createEmpleado,
+  updateEmpleado,
   deleteEmpleado,
   getPlantas,
   getDepartamentos,
-  getPuestos 
+  getPuestos
 } from '../services/empleadoService';
 import '../css/EmpleadosCRUD.css';
 
@@ -24,7 +24,7 @@ interface Empleado {
   puesto: number;
   departamento?: number;
   planta?: number;
-  
+
   // Datos relacionados del backend
   empresa_id?: number;
   empresa_nombre?: string;
@@ -44,14 +44,14 @@ interface Planta {
 interface Departamento {
   departamento_id: number;
   nombre: string;
-  planta_id: number; // El backend devuelve planta_id, no planta
+  planta_id: number;
   planta_nombre?: string;
 }
 
 interface Puesto {
   puesto_id: number;
   nombre: string;
-  departamento_id: number; // Cambiado para coincidir con el backend
+  departamento_id: number;
 }
 
 interface EmpleadosCRUDProps {
@@ -60,16 +60,20 @@ interface EmpleadosCRUDProps {
 
 const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
   const [empleados, setEmpleados] = useState<Empleado[]>([]);
+
+
   const [plantas, setPlantas] = useState<Planta[]>([]);
+
   const [departamentos, setDepartamentos] = useState<Departamento[]>([]);
+
   const [puestos, setPuestos] = useState<Puesto[]>([]);
-  
+
   // Estados para filtros
   const [filtroNombre, setFiltroNombre] = useState('');
   const [filtroDepartamento, setFiltroDepartamento] = useState('');
   const [filtroPuesto, setFiltroPuesto] = useState('');
   const [empleadosFiltrados, setEmpleadosFiltrados] = useState<Empleado[]>([]);
-  
+
   const [formData, setFormData] = useState<Empleado>({
     nombre: '',
     apellido_paterno: '',
@@ -88,45 +92,45 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
     try {
       console.log('🔄 Cargando datos de empleados...');
       console.log('👤 userData:', userData);
-      
+
       const [empleadosData, plantasData, departamentosData, puestosData] = await Promise.all([
         getEmpleados(),
         getPlantas(),
         getDepartamentos(),
         getPuestos()
       ]);
-      
+
       console.log('📊 Datos obtenidos:');
       console.log('  - Empleados:', empleadosData.length);
       console.log('  - Plantas:', plantasData.length);
       console.log('  - Departamentos:', departamentosData.length);
       console.log('  - Puestos:', puestosData.length);
-      
+
       // Si es Admin Planta, filtrar solo datos de su planta asignada
       if (userData?.tipo_dashboard === 'admin-planta' && userData?.planta_id) {
         console.log('🏭 Filtrando datos para admin-planta:', userData.planta_id);
-        
+
         const empleadosDePlanta = empleadosData.filter(emp => {
           console.log(`  - Empleado ${emp.nombre}: planta_id=${emp.planta_id}, esperada=${userData.planta_id}`);
           return emp.planta_id === userData.planta_id;
         });
-        
+
         const departamentosDePlanta = departamentosData.filter(dept => dept.planta_id === userData.planta_id);
-        const puestosDePlanta = puestosData.filter(puesto => 
+        const puestosDePlanta = puestosData.filter(puesto =>
           departamentosDePlanta.some(dept => dept.departamento_id === puesto.departamento_id)
         );
-        
+
         console.log('📊 Datos filtrados:');
         console.log('  - Empleados de planta:', empleadosDePlanta.length);
         console.log('  - Departamentos de planta:', departamentosDePlanta.length);
         console.log('  - Puestos de planta:', puestosDePlanta.length);
         console.log('🔍 Empleados de planta:', empleadosDePlanta);
-        
+
         setEmpleados(empleadosDePlanta);
         setPlantas([{ planta_id: userData.planta_id, nombre: userData.nombre_planta }]);
         setDepartamentos(departamentosDePlanta);
         setPuestos(puestosDePlanta);
-        
+
         // Pre-seleccionar la planta para nuevos empleados
         setFormData(prev => ({ ...prev, planta: userData.planta_id }));
       } else {
@@ -155,7 +159,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
   useEffect(() => {
     // Filtrar empleados cuando cambian los filtros o empleados
     let filtrados = empleados;
-    
+
     if (filtroNombre.trim()) {
       filtrados = filtrados.filter(empleado =>
         empleado.nombre.toLowerCase().includes(filtroNombre.toLowerCase()) ||
@@ -163,25 +167,25 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
         (empleado.apellido_materno && empleado.apellido_materno.toLowerCase().includes(filtroNombre.toLowerCase()))
       );
     }
-    
+
     if (filtroDepartamento) {
-      filtrados = filtrados.filter(empleado => 
+      filtrados = filtrados.filter(empleado =>
         empleado.departamento_id === parseInt(filtroDepartamento)
       );
     }
-    
+
     if (filtroPuesto) {
-      filtrados = filtrados.filter(empleado => 
+      filtrados = filtrados.filter(empleado =>
         empleado.puesto === parseInt(filtroPuesto)
       );
     }
-    
+
     setEmpleadosFiltrados(filtrados);
   }, [empleados, filtroNombre, filtroDepartamento, filtroPuesto]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
+
     if (name === 'puesto' || name === 'departamento') {
       setFormData({
         ...formData,
@@ -193,7 +197,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
         [name]: value
       });
     }
-    
+
     // Si cambia el departamento, resetear el puesto
     if (name === 'departamento') {
       setFormData(prev => ({
@@ -252,9 +256,9 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
   const handleDelete = async (id: number) => {
     const empleado = empleados.find(emp => emp.empleado_id === id);
     const nombreCompleto = empleado ? `${empleado.nombre} ${empleado.apellido_paterno} ${empleado.apellido_materno || ''}`.trim() : 'este empleado';
-    
+
     const confirmMessage = `¿Está seguro de eliminar al empleado "${nombreCompleto}"?\n\nEsta acción NO se puede deshacer.`;
-    
+
     if (window.confirm(confirmMessage)) {
       try {
         await deleteEmpleado(id);
@@ -285,9 +289,9 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
   return (
     <div className="empleados-crud">
       <h2>Gestión de Empleados</h2>
-      
+
       {error && <div className="error-message">{error}</div>}
-      
+
       {/* Filtros */}
       <div className="filtros">
         <div className="filtros-row">
@@ -301,7 +305,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
               className="filtro-input"
             />
           </div>
-          
+
           <div className="filtro-group">
             <label>Departamento:</label>
             <select
@@ -317,7 +321,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
               ))}
             </select>
           </div>
-          
+
           <div className="filtro-group">
             <label>Puesto:</label>
             <select
@@ -334,11 +338,11 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
             </select>
           </div>
         </div>
-        
+
         {(filtroNombre || filtroDepartamento || filtroPuesto) && (
           <div className="filtros-info">
             Mostrando {empleadosFiltrados.length} de {empleados.length} empleados
-            <button 
+            <button
               onClick={() => {
                 setFiltroNombre('');
                 setFiltroDepartamento('');
@@ -351,9 +355,9 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
           </div>
         )}
       </div>
-      
+
       <div className="crud-actions">
-        <button 
+        <button
           onClick={() => setShowForm(!showForm)}
           className="btn-primary"
         >
@@ -364,7 +368,7 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
       {showForm && (
         <form onSubmit={handleSubmit} className="empleado-form">
           <h3>{editingId ? 'Editar Empleado' : 'Agregar Empleado'}</h3>
-          
+
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="nombre">Nombre:</label>
@@ -520,14 +524,14 @@ const EmpleadosCRUD: React.FC<EmpleadosCRUDProps> = ({ userData }) => {
                 <td>{empleado.puesto_nombre || 'N/A'}</td>
                 <td>
                   <div className="action-buttons">
-                    <button 
+                    <button
                       onClick={() => handleEdit(empleado)}
                       className="btn-edit"
                       title="Editar empleado"
                     >
                       ✏️ Editar
                     </button>
-                    <button 
+                    <button
                       onClick={() => handleDelete(empleado.empleado_id!)}
                       className="btn-delete"
                       title="Eliminar empleado"
