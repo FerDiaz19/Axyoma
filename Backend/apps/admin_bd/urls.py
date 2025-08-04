@@ -46,10 +46,9 @@ urlpatterns = [
     path('respaldos/pgadmin/', views_respaldos.respaldo_limpio_pgadmin, name='respaldo_pgadmin'),
     path('sistema/resetear-bd/', views_respaldos.resetear_bd_completa, name='resetear_bd'),
     path('sistema/datos-iniciales/', views_respaldos.cargar_datos_iniciales, name='cargar_datos_iniciales'),
-    path('sistema/estado-inicial/', views_respaldos.restaurar_estado_inicial, name='restaurar_estado_inicial'),
-      # 🔧 RUTAS DE RESTAURACIÓN AVANZADA
+    path('sistema/estado-inicial/', views_respaldos.restaurar_estado_inicial, name='restaurar_estado_inicial'),    # 🔧 RUTAS DE RESTAURACIÓN AVANZADA
     path('restauracion/reiniciar-bd/', views_restauracion.reiniciar_bd_cero, name='reiniciar_bd_cero'),
     path('restauracion/cargar-demo/', views_restauracion.cargar_datos_demo, name='cargar_datos_demo'),
     path('restauracion/estado-bd/', views_restauracion.estado_bd_restauracion, name='estado_bd_restauracion'),
-    path('restauracion/debug/', views_restauracion.debug_reiniciar_bd, name='debug_reiniciar_bd'),
+    path('restauracion/debug-cargar/', views_restauracion.debug_cargar_datos_simple, name='debug_cargar_datos'),
 ]
