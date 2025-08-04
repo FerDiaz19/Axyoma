@@ -176,8 +176,8 @@ class EvaluacionActiva(generic.View):
 
                     try: # * Ahora sí, toca hacer las inserciones.
                         seccion_pregunta = SeccionPregunta.objects.get(
-                            seccion__evaluacion=asignacion_empleado.asignacion.evaluacion,
-                            pregunta__pregunta_id=pregunta_id
+                            seccion__evaluacion__pk=asignacion_empleado.asignacion.evaluacion.pk,
+                            pregunta__pk=pregunta_id
                         )
 
                         pregunta = seccion_pregunta.pregunta
@@ -188,6 +188,8 @@ class EvaluacionActiva(generic.View):
                             asignacion_empleado=asignacion_empleado,
                             seccion_pregunta=seccion_pregunta
                         )
+
+                        respuesta.es_correcta = False
 
                         # ? Para preguntas de tipo 'Abierta', guardamos el texto introducido.
                         if pregunta.tipo_pregunta == 'Abierta':
@@ -200,9 +202,9 @@ class EvaluacionActiva(generic.View):
                                 opcion_seleccionada = PosiblesRespuestas.objects.get(pk=int(value))
                                 respuesta.opcion_seleccionada = opcion_seleccionada
 
-                                # Dependiendo del tipo de valor, veremos qué guardamos. :)
-                                if opcion_seleccionada.valor_int is not None:
-                                    respuesta.respuesta_valor_numerico = opcion_seleccionada.valor_int
+                                # Dependiendo del tipo de valor, veremos qué guardamos.
+                                if opcion_seleccionada.valor_numerico is not None:
+                                    respuesta.respuesta_valor_numerico = opcion_seleccionada.valor_numerico
                                 if opcion_seleccionada.valor_booleano is not None:
                                     respuesta.respuesta_valor_booleano = opcion_seleccionada.valor_booleano
                                 if opcion_seleccionada.valor_decimal is not None:
@@ -228,10 +230,10 @@ class EvaluacionActiva(generic.View):
                         pass # Ignoramos las preguntas que no se encuentren.
 
                     except Exception as error:
+                        print('ERROR: ', error)
                         messages.error(request, f'Ha ocurrido un error inesperado al procesar las respuestas. :(')
                         transaction.set_rollback(True)
                         return redirect(reverse('AnorLondo:EvaluacionActiva'))
-
 
             # Tras guardar cada una de las respuestas, procedemos a cambiar el estado de la asignación.
             asignacion_empleado.status = 'Completada'
@@ -253,18 +255,17 @@ class EvaluacionActiva(generic.View):
             # Por si acaso, eliminamos cualquier resultado previamente guardado para esta asignación.
             ResultadoEvaluacion.objects.filter(asignacion_empleado=asignacion_empleado).delete()
 
-            ResultadoEvaluacion.objects.create(
+            ResultadoEval = ResultadoEvaluacion.objects.create(
                 puntaje_total=porcentaje_correctas,
                 num_respuestas_correctas=respuestas_correctas_dadas,
                 num_preguntas_evaluables=preguntas_evaluables_con_respuesta_correcta,
                 porcentaje_correctas=porcentaje_correctas,
-                fecha_calculo=timezone.now(),
                 aprobado=aprobado,
-                asignacion_empleado=asignacion_empleado,
-                evaluacion=asignacion_empleado.asignacion.evaluacion,
+                asignacion_empleado=asignacion_empleado
             )
 
-            resultadoEvaluacionID = ResultadoEvaluacion.pk
+
+            resultadoEvaluacionID = ResultadoEval.pk
             cache.set(f'resultado', resultadoEvaluacionID)
 
         # Dado que hemos concluido con la toma de la evaluación, limpiamos la sesión.
@@ -281,8 +282,10 @@ class EvaluacionCompletada(generic.View):
     context = { }
 
     def get(self, request, *args, **kwargs):
-        certificado = cache.get(f'resultado_evaluacion')
-        print("ID: ", certificado);
+        resultado = cache.get(f'resultado') # ID de la entidad: ResultadoEvaluacion
+
+        if not resultado:
+            return redirect(reverse('AnorLondo:AccesoEvaluacion'))
 
         return render(request, self.template_name, self.context)
 

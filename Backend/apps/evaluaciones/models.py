@@ -616,15 +616,6 @@ class RespuestaEmpleado(models.Model):
         if not any(respuesta for respuesta in respuestas):
             raise ValidationError("Debe proporcionar al menos una respuesta")
 
-    def save(self, *args, **kwargs):
-        # Verificar si es correcta automáticamente
-        if (self.seccion_pregunta.respuesta_correcta and
-            self.opcion_seleccionada == self.seccion_pregunta.respuesta_correcta):
-            self.es_correcta = True
-
-        self.full_clean()
-        super().save(*args, **kwargs)
-
     def __str__(self):
         pregunta_corta = self.seccion_pregunta.pregunta.texto_pregunta[:30]
         if len(self.seccion_pregunta.pregunta.texto_pregunta) > 30:

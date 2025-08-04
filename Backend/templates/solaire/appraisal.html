@@ -100,7 +100,7 @@
                                         <div class='scale-item'><input type='radio'
                                             id='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}' name='pregunta_{{ pregunta.pregunta_id }}'
                                                 value='{{ opcion.opcion_conjunto_id }}' {% if pregunta.es_obligatoria %}required{% endif %}>
-                                            <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.valor_int }}</label>
+                                            <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.valor_numerico }}</label>
                                         </div>
                                     {% endfor %}
                                 </div>
@@ -164,7 +164,7 @@
                                         <div class='scale-item'><input type='radio'
                                             id='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}' name='pregunta_{{ pregunta.pregunta_id }}'
                                                 value='{{ opcion.opcion_conjunto_id }}' {% if pregunta.es_obligatoria %}required{% endif %}>
-                                            <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.valor_int }}</label>
+                                            <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.valor_numerico }}</label>
                                         </div>
                                     {% endfor %}
                                 </div>
