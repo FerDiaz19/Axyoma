@@ -5,11 +5,6 @@
 
 Configuración de rutas para el sistema de gestión de BD y respaldos.
 Incluye endpoints para SuperAdmin y gestión de respaldos.
-
-📋 Responsable: Yael Contreras
-📅 Fecha: Enero 2025
-🔢 Versión: 2.0
-
 🚀 Rutas incluidas:
 - Sistema de respaldos y restauración
 - Exportación directa de tablas
@@ -32,16 +27,21 @@ urlpatterns = [
     # URLs directas (consultas SQL directas) - SOLUCIÓN GARANTIZADA para tablas problemáticas
     path('directo/exportar/<str:tabla_nombre>/', views_directo.exportar_tabla_csv_directo, name='exportar_tabla_directo'),
     path('directo/tablas/', views_directo.listar_tablas_directas, name='listar_tablas_directas'),
-    
-    # URLs para sistema de respaldos y restauración - SOLO SUPERADMIN
+      # URLs para sistema de respaldos y restauración - SOLO SUPERADMIN
     path('respaldos/tablas/', views_respaldos.respaldar_tablas, name='respaldar_tablas'),
     path('respaldos/bd-completa/', views_respaldos.respaldar_bd_completa, name='respaldar_bd_completa'),
-    path('respaldos/listar/', views_respaldos.listar_respaldos, name='listar_respaldos'),
-    path('respaldos/restaurar/', views_respaldos.restaurar_respaldo, name='restaurar_respaldo'),
+    path('respaldos/listar/', views_respaldos.listar_respaldos, name='listar_respaldos'),    path('respaldos/restaurar/', views_respaldos.restaurar_respaldo, name='restaurar_respaldo'),
+    path('respaldos/restaurar-forzado/', views_respaldos.restaurar_respaldo_forzado, name='restaurar_respaldo_forzado'),
+    path('respaldos/diagnosticar/', views_respaldos.diagnosticar_restauracion, name='diagnosticar_restauracion'),
+    path('respaldos/limpiar-tabla/', views_respaldos.limpiar_tabla_para_restaurar, name='limpiar_tabla_restaurar'),
     path('respaldos/eliminar/<str:archivo>/', views_respaldos.eliminar_respaldo, name='eliminar_respaldo'),
     path('respaldos/descargar/<str:archivo>/', views_respaldos.descargar_respaldo, name='descargar_respaldo'),
     path('respaldos/info/', views_respaldos.info_sistema_respaldos, name='info_sistema_respaldos'),
     path('respaldos/verificar/', views_respaldos.verificar_sistema_respaldos, name='verificar_sistema_respaldos'),
+    
+    # 🚀 NUEVAS RUTAS OPTIMIZADAS PARA BD GRANDES
+    path('respaldos/monitorear/', views_respaldos.monitorear_backup_progreso, name='monitorear_backup'),
+    path('respaldos/emergencia/', views_respaldos.backup_emergencia_optimizado, name='backup_emergencia'),
     
     # NUEVAS FUNCIONES SUPERADMIN
     path('respaldos/pgadmin/', views_respaldos.respaldo_limpio_pgadmin, name='respaldo_pgadmin'),
