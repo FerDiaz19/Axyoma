@@ -96,7 +96,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'axyomadb',
         'USER': 'postgres',
-        'PASSWORD': '12345678',
+        'PASSWORD': 'SQL',
         'HOST': 'localhost',
         'PORT': '5432',
     }
