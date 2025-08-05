@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Endpoint Simple - AXYOMA</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .btn { background: #28a745; color: white; padding: 12px 24px; border: none; border-radius: 5px; cursor: pointer; margin: 10px 5px; font-size: 16px; }
+        .btn:hover { background: #218838; }
+        .btn.primary { background: #007bff; }
+        .btn.primary:hover { background: #0056b3; }
+        .result { margin: 20px 0; padding: 15px; border-radius: 5px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 12px; }
+        .step { margin: 15px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+        .loading { color: #6c757d; font-style: italic; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test Endpoint Datos Demo Simple</h1>
+        <p>Este endpoint se salta las validaciones complejas y solo crea datos básicos.</p>
+        
+        <div class="step">
+            <h3>1. Login Admin</h3>
+            <button class="btn primary" onclick="login()">🔑 Login como Admin</button>
+            <div id="loginResult"></div>
+        </div>
+
+        <div class="step">
+            <h3>2. Probar Endpoint Simplificado</h3>
+            <button class="btn" onclick="testCargarDatosSimple()">📊 Cargar Datos Demo Simple</button>
+            <div id="cargarResult"></div>
+        </div>
+
+        <div class="step">
+            <h3>3. Comparar con Endpoint Original</h3>
+            <button class="btn" onclick="testCargarDatosOriginal()">📋 Cargar Datos Demo Original</button>
+            <div id="originalResult"></div>
+        </div>
+
+        <div class="step">
+            <h3>4. Ver Estado Final</h3>
+            <button class="btn primary" onclick="verEstado()">📊 Ver Estado BD</button>
+            <div id="estadoResult"></div>
+        </div>
+    </div>
+
+    <script>
+        let token = '';
+
+        async function login() {
+            const resultDiv = document.getElementById('loginResult');
+            resultDiv.innerHTML = '<div class="loading">🔄 Conectando...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/login/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        password: 'admin123'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    token = data.token;
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h4>✅ Login exitoso</h4>
+                            <p><strong>Usuario:</strong> ${data.usuario}</p>
+                            <p><strong>Nivel:</strong> ${data.nivel_usuario}</p>
+                            <p><strong>Token:</strong> ${token.substring(0, 20)}...</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ Error en login</h4>
+                            <p>${data.error || 'Error desconocido'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ Error de conexión</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testCargarDatosSimple() {
+            if (!token) {
+                alert('Primero debes hacer login');
+                return;
+            }
+
+            const resultDiv = document.getElementById('cargarResult');
+            resultDiv.innerHTML = '<div class="loading">🔄 Cargando datos demo simple...</div>';
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch('http://localhost:8000/api/admin-bd/restauracion/cargar-demo-simple/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Token ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h4>✅ Datos demo simple cargados exitosamente</h4>
+                            <p><strong>Tiempo:</strong> ${duration}ms</p>
+                            <p><strong>Total creados:</strong> ${data.total_creados}</p>
+                            <p><strong>Empresa:</strong> ${data.empresa_demo?.nombre}</p>
+                            <p><strong>RFC:</strong> ${data.empresa_demo?.rfc}</p>
+                            <h5>📊 Desglose:</h5>
+                            <ul>
+                                <li>Empresas: ${data.datos_creados?.empresas || 0}</li>
+                                <li>Plantas: ${data.datos_creados?.plantas || 0}</li>
+                                <li>Departamentos: ${data.datos_creados?.departamentos || 0}</li>
+                                <li>Puestos: ${data.datos_creados?.puestos || 0}</li>
+                                <li>Empleados: ${data.datos_creados?.empleados || 0}</li>
+                            </ul>
+                            <details>
+                                <summary>Ver respuesta completa</summary>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ Error cargando datos simple</h4>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Error:</strong> ${data.error || 'Error desconocido'}</p>
+                            <details>
+                                <summary>Ver detalles del error</summary>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ Error de conexión</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function testCargarDatosOriginal() {
+            if (!token) {
+                alert('Primero debes hacer login');
+                return;
+            }
+
+            const resultDiv = document.getElementById('originalResult');
+            resultDiv.innerHTML = '<div class="loading">🔄 Cargando datos demo original...</div>';
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch('http://localhost:8000/api/admin-bd/restauracion/cargar-demo/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Token ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h4>✅ Datos demo original cargados exitosamente</h4>
+                            <p><strong>Tiempo:</strong> ${duration}ms</p>
+                            <p><strong>Total creados:</strong> ${data.total_creados}</p>
+                            <p><strong>Usuarios disponibles:</strong></p>
+                            <ul>
+                                <li>SuperAdmin: admin / admin123</li>
+                                <li>Admin Empresa: admin_empresa / 1234</li>
+                                <li>Admin Planta: admin_planta / 1234</li>
+                            </ul>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ Error cargando datos original</h4>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Error:</strong> ${data.error || 'Error desconocido'}</p>
+                            <details>
+                                <summary>Ver detalles del error</summary>
+                                <pre>${JSON.stringify(data, null, 2)}</pre>
+                            </details>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ Error de conexión</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function verEstado() {
+            if (!token) {
+                alert('Primero debes hacer login');
+                return;
+            }
+
+            const resultDiv = document.getElementById('estadoResult');
+            resultDiv.innerHTML = '<div class="loading">🔄 Obteniendo estado...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/admin-bd/restauracion/estado-bd/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Token ${token}`
+                    }
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result info">
+                            <h4>📊 Estado actual de BD</h4>
+                            <p><strong>Estado:</strong> ${data.estado_bd}</p>
+                            <p><strong>Total registros:</strong> ${data.total_registros}</p>
+                            <p><strong>Recomendación:</strong> ${data.recomendacion}</p>
+                            
+                            <h5>📋 Contadores detallados:</h5>
+                            <table style="width: 100%; border-collapse: collapse;">
+                                <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Empresas:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${data.empresas}</td></tr>
+                                <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Plantas:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${data.plantas}</td></tr>
+                                <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Departamentos:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${data.departamentos}</td></tr>
+                                <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Puestos:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${data.puestos}</td></tr>
+                                <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Empleados:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${data.empleados}</td></tr>
+                                <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Usuarios:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${data.usuarios}</td></tr>
+                                <tr><td style="padding: 5px; border: 1px solid #ddd;"><strong>Planes:</strong></td><td style="padding: 5px; border: 1px solid #ddd;">${data.planes}</td></tr>
+                            </table>
+
+                            <p><strong>Usuarios actuales:</strong> ${data.usuarios_actuales?.join(', ')}</p>
+                            <p><strong>Empresas actuales:</strong> ${data.empresas_actuales?.join(', ')}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h4>❌ Error obteniendo estado</h4>
+                            <p>${data.error || 'Error desconocido'}</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h4>❌ Error de conexión</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

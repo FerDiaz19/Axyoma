@@ -49,6 +49,7 @@ urlpatterns = [
     path('sistema/estado-inicial/', views_respaldos.restaurar_estado_inicial, name='restaurar_estado_inicial'),    # 🔧 RUTAS DE RESTAURACIÓN AVANZADA
     path('restauracion/reiniciar-bd/', views_restauracion.reiniciar_bd_cero, name='reiniciar_bd_cero'),
     path('restauracion/cargar-demo/', views_restauracion.cargar_datos_demo, name='cargar_datos_demo'),
+    path('restauracion/cargar-demo-simple/', views_restauracion.cargar_datos_demo_simple, name='cargar_datos_demo_simple'),
     path('restauracion/estado-bd/', views_restauracion.estado_bd_restauracion, name='estado_bd_restauracion'),
     path('restauracion/debug-cargar/', views_restauracion.debug_cargar_datos_simple, name='debug_cargar_datos'),
 ]

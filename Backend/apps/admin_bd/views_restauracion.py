@@ -30,6 +30,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.utils import timezone
 
 from apps.users.models import (
     PerfilUsuario, Empresa, Planta, Departamento, 
@@ -336,63 +337,89 @@ def reiniciar_bd_cero(request):
 @permission_classes([IsAuthenticated])
 def cargar_datos_demo(request):
     """
-    📊 CARGAR DATOS DEMO - Datos mínimos para funcionalidad del sistema
+    📊 CARGAR DATOS DEMO - Solo usuario admin y planes básicos
     
-    Crea:
-    - 3 usuarios (superadmin, admin_empresa, admin_planta)  
-    - 1 empresa demo
-    - 1 planta demo
-    - 3 departamentos básicos    - 3 puestos esenciales
-    - 3 planes de suscripción
-    - 1 suscripción activa
+    Crea únicamente:
+    - Usuario admin (si no existe)
+    - 3 planes de suscripción básicos
+    
+    Sin empresas, plantas, departamentos, empleados ni otras complejidades.
     """
-    # Auto-crear perfil para usuario admin si no existe
-    if request.user.username == 'admin':
-        try:
-            perfil = request.user.perfil
-            print(f"🔍 Perfil admin existe: {perfil.nombre_completo}")
-        except:
-            print("🔧 Creando perfil para usuario admin...")
-            PerfilUsuario.objects.create(
-                user=request.user,
-                nombre="Administrador",
-                apellido_paterno="Sistema", 
-                correo="admin@axyoma.com",
-                nivel_usuario="superadmin",
-                status=True
-            )
-            print("✅ Perfil admin creado exitosamente")
-    
-    is_superadmin, error_response = verificar_superadmin(request)
-    if not is_superadmin:
-        return error_response
-    
     try:
         datos_creados = {}
         
         with transaction.atomic():
-            print("📊 CARGANDO DATOS DEMO...")
+            print("📊 CARGANDO DATOS DEMO SIMPLIFICADOS...")
             
-            # 1. CREAR PLANES DE SUSCRIPCIÓN
+            # 1. VERIFICAR/CREAR USUARIO ADMIN
+            print("Verificando usuario admin...")
+            admin_user = None
+            try:
+                admin_user = User.objects.get(username='admin')
+                print(f"✅ Usuario admin ya existe (ID: {admin_user.id})")
+                
+                # Verificar si tiene perfil
+                try:
+                    perfil_admin = admin_user.perfil
+                    print(f"✅ Perfil admin existe: {perfil_admin.nombre_completo}")
+                except:
+                    print("🔧 Creando perfil para usuario admin existente...")
+                    PerfilUsuario.objects.create(
+                        user=admin_user,
+                        nombre="Administrador",
+                        apellido_paterno="Sistema",
+                        correo="admin@axyoma.com",
+                        nivel_usuario="superadmin",
+                        status=True
+                    )
+                    print("✅ Perfil admin creado")
+                    
+            except User.DoesNotExist:
+                print("🔧 Creando usuario admin...")
+                admin_user = User.objects.create_user(
+                    username='admin',
+                    email='admin@axyoma.com',
+                    password='admin123',
+                    first_name='Super',
+                    last_name='Admin',
+                    is_staff=True,
+                    is_superuser=True
+                )
+                
+                # Crear perfil asociado
+                PerfilUsuario.objects.create(
+                    user=admin_user,
+                    nombre='Super',
+                    apellido_paterno='Admin',
+                    correo='admin@axyoma.com',
+                    nivel_usuario='superadmin',
+                    status=True
+                )
+                print(f"✅ Usuario admin creado con ID: {admin_user.id}")
+            
+            datos_creados['usuario_admin'] = 1
+            
+            # 2. CREAR PLANES DE SUSCRIPCIÓN
             print("Creando planes de suscripción...")
             planes_data = [
                 {
-                    'nombre': 'Plan Básico Demo',
-                    'descripcion': 'Plan básico para demostración con funcionalidades esenciales',
-                    'precio': 499.00,
+                    'nombre': 'Plan Básico',
+                    'descripcion': 'Plan básico para pequeñas empresas con funcionalidades esenciales',
+                    'precio': 299.00,
                     'duracion': 30,
                     'status': True
                 },
                 {
-                    'nombre': 'Plan Profesional Demo',
-                    'descripcion': 'Plan profesional con todas las funcionalidades',
-                    'precio': 999.00,
+                    'nombre': 'Plan Profesional',
+                    'descripcion': 'Plan profesional para empresas medianas con funcionalidades avanzadas',
+                    'precio': 599.00,
                     'duracion': 30,
                     'status': True
-                },                {
-                    'nombre': 'Plan Empresarial Demo',
-                    'descripcion': 'Plan empresarial para grandes organizaciones',
-                    'precio': 1999.00,
+                },
+                {
+                    'nombre': 'Plan Empresarial',
+                    'descripcion': 'Plan empresarial para grandes organizaciones con todas las funcionalidades',
+                    'precio': 999.00,
                     'duracion': 30,
                     'status': True
                 }
@@ -406,264 +433,43 @@ def cargar_datos_demo(request):
                 )
                 planes_creados.append(plan)
                 if created:
-                    print(f"✅ Plan creado: {plan.nombre}")
+                    print(f"✅ Plan creado: {plan.nombre} - ${plan.precio}")
                 else:
-                    print(f"⚠️ Plan ya existe: {plan.nombre}")
+                    print(f"⚠️ Plan ya existe: {plan.nombre} - ${plan.precio}")
             
             datos_creados['planes'] = len(planes_creados)
             
-            # 2. CREAR USUARIOS DEMO
-            print("Creando usuarios demo...")
-            
-            # Usuario Admin Empresa
-            try:
-                user_empresa = User.objects.create_user(
-                    username='admin_empresa',
-                    email='admin_empresa@demo.com',
-                    password='1234',
-                    first_name='Admin',
-                    last_name='Empresa'
-                )
-                perfil_empresa = PerfilUsuario.objects.create(
-                    user=user_empresa,
-                    nombre='Admin',
-                    apellido_paterno='Empresa',
-                    apellido_materno='Demo',
-                    correo='admin_empresa@demo.com',
-                    nivel_usuario='admin-empresa',
-                    status=True
-                )
-                print(f"✅ Usuario admin_empresa creado")            
-            except Exception as e:
-                print(f"⚠️ Usuario admin_empresa ya existe o error: {e}")
-                try:
-                    user_empresa = User.objects.get(username='admin_empresa')
-                    perfil_empresa = user_empresa.perfil
-                except:
-                    # Si no existe el perfil, crearlo
-                    user_empresa = User.objects.get(username='admin_empresa')
-                    perfil_empresa = PerfilUsuario.objects.create(
-                        user=user_empresa,
-                        nombre='Admin',
-                        apellido_paterno='Empresa',
-                        apellido_materno='Demo', 
-                        correo='admin_empresa@demo.com',
-                        nivel_usuario='admin-empresa',
-                        status=True
-                    )
-            
-            # Usuario Admin Planta
-            try:
-                user_planta = User.objects.create_user(
-                    username='admin_planta',
-                    email='admin_planta@demo.com',
-                    password='1234',
-                    first_name='Admin',
-                    last_name='Planta'
-                )
-                perfil_planta = PerfilUsuario.objects.create(
-                    user=user_planta,
-                    nombre='Admin',
-                    apellido_paterno='Planta',
-                    apellido_materno='Demo',
-                    correo='admin_planta@demo.com',
-                    nivel_usuario='admin-planta',
-                    status=True                )
-                print(f"✅ Usuario admin_planta creado")
-            except Exception as e:
-                print(f"⚠️ Usuario admin_planta ya existe o error: {e}")
-                user_planta = User.objects.get(username='admin_planta')
-                perfil_planta = user_planta.perfil
-            
-            datos_creados['usuarios'] = 2  # admin ya existe
-            
-            # 3. CREAR EMPRESA DEMO
-            print("Creando empresa demo...")
-            empresa, created = Empresa.objects.get_or_create(
-                rfc='DEMO123456789',
-                defaults={
-                    'nombre': 'Empresa Demo AXYOMA',
-                    'direccion': 'Av. Demostración #123, Ciudad Demo',
-                    'email_contacto': 'contacto@empresademo.com',
-                    'telefono_contacto': '555-DEMO-123',
-                    'status': True,
-                    'administrador': perfil_empresa
-                }
-            )
-            if created:
-                print(f"✅ Empresa creada: {empresa.nombre}")
-            else:
-                print(f"⚠️ Empresa ya existe: {empresa.nombre}")
-            datos_creados['empresas'] = 1
-            
-            # 4. CREAR PLANTA DEMO
-            print("Creando planta demo...")
-            planta, created = Planta.objects.get_or_create(
-                nombre='Planta Principal Demo',
-                empresa=empresa,
-                defaults={
-                    'direccion': 'Zona Industrial Demo, Sector A',
-                    'status': True
-                }
-            )
-            if created:
-                print(f"✅ Planta creada: {planta.nombre}")
-            else:
-                print(f"⚠️ Planta ya existe: {planta.nombre}")
-            datos_creados['plantas'] = 1
-            
-            # 5. CREAR ADMIN PLANTA
-            admin_planta = AdminPlanta.objects.create(
-                usuario=perfil_planta,
-                planta=planta,
-                status=True
-            )
-            print(f"✅ Admin de planta asignado")
-            
-            # 6. CREAR DEPARTAMENTOS DEMO
-            print("Creando departamentos demo...")
-            departamentos_data = [
-                {
-                    'nombre': 'Recursos Humanos',
-                    'descripcion': 'Gestión de personal y administración de RRHH',
-                    'planta': planta
-                },
-                {
-                    'nombre': 'Producción',
-                    'descripcion': 'Operaciones de manufactura y producción',
-                    'planta': planta
-                },                {
-                    'nombre': 'Administración',
-                    'descripcion': 'Gestión administrativa y financiera',
-                    'planta': planta
-                }
-            ]
-            
-            departamentos_creados = []
-            for dept_data in departamentos_data:
-                dept, created = Departamento.objects.get_or_create(
-                    nombre=dept_data['nombre'],
-                    planta=dept_data['planta'],
-                    defaults={
-                        'descripcion': dept_data['descripcion'],
-                        'status': True
-                    }
-                )
-                departamentos_creados.append(dept)
-                if created:
-                    print(f"✅ Departamento creado: {dept.nombre}")
-                else:
-                    print(f"⚠️ Departamento ya existe: {dept.nombre}")
-            
-            datos_creados['departamentos'] = len(departamentos_creados)
-            
-            # 7. CREAR PUESTOS DEMO
-            print("Creando puestos demo...")
-            puestos_data = [
-                {
-                    'nombre': 'Analista de RRHH',
-                    'descripcion': 'Responsable de análisis y gestión de recursos humanos',
-                    'departamento': departamentos_creados[0]  # RRHH
-                },                {
-                    'nombre': 'Operador de Producción',
-                    'descripcion': 'Operador de línea de producción y maquinaria',
-                    'departamento': departamentos_creados[1]  # Producción
-                },
-                {
-                    'nombre': 'Asistente Administrativo',
-                    'descripcion': 'Apoyo en gestión administrativa y documentación',
-                    'departamento': departamentos_creados[2]  # Administración
-                }
-            ]
-            
-            puestos_creados = []
-            for puesto_data in puestos_data:
-                puesto, created = Puesto.objects.get_or_create(
-                    nombre=puesto_data['nombre'],
-                    departamento=puesto_data['departamento'],
-                    defaults={
-                        'descripcion': puesto_data['descripcion'],
-                        'status': True
-                    }
-                )
-                puestos_creados.append(puesto)
-                if created:
-                    print(f"✅ Puesto creado: {puesto.nombre}")
-                else:
-                    print(f"⚠️ Puesto ya existe: {puesto.nombre}")
-            
-            datos_creados['puestos'] = len(puestos_creados)
-              # 8. CREAR SUSCRIPCIÓN DEMO
-            print("Creando suscripción demo...")
-            from datetime import date, timedelta
-            
-            suscripcion, created = SuscripcionEmpresa.objects.get_or_create(
-                empresa=empresa,
-                plan=planes_creados[1],  # Plan Profesional
-                defaults={
-                    'fecha_inicio': date.today(),
-                    'fecha_fin': date.today() + timedelta(days=30),
-                    'estado': 'activa',
-                    'auto_renovacion': True
-                }
-            )
-            if created:
-                print(f"✅ Suscripción creada: {suscripcion.plan.nombre}")
-            else:
-                print(f"⚠️ Suscripción ya existe: {suscripcion.plan.nombre}")
-            datos_creados['suscripciones'] = 1
-            
-            # 9. CREAR EMPLEADO DEMO (Opcional)
-            print("Creando empleado demo...")
-            empleado, created = Empleado.objects.get_or_create(
-                nombre='Juan Carlos',
-                apellido_paterno='Empleado',
-                puesto=puestos_creados[0],  # Analista RRHH
-                defaults={
-                    'status': True
-                }
-            )
-            if created:
-                print(f"✅ Empleado creado: {empleado.nombre} {empleado.apellido_paterno}")
-            else:
-                print(f"⚠️ Empleado ya existe: {empleado.nombre} {empleado.apellido_paterno}")
-            datos_creados['empleados'] = 1
-            
         total_creados = sum(datos_creados.values())
         
-        print(f"✅ DATOS DEMO CARGADOS - {total_creados} registros creados")
+        print(f"✅ DATOS DEMO CARGADOS - {total_creados} elementos procesados")
         
         return Response({
-            'message': 'Datos demo cargados exitosamente',
+            'message': 'Datos demo cargados exitosamente (versión simplificada)',
             'datos_creados': datos_creados,
             'total_creados': total_creados,
             'fecha_operacion': datetime.now().isoformat(),
-            'usuario_operacion': request.user.username,
-            'usuarios_disponibles': {
-                'superadmin': 'admin / admin (ya existía)',
-                'admin_empresa': 'admin_empresa / 1234',
-                'admin_planta': 'admin_planta / 1234'
+            'usuario_operacion': request.user.username if request.user.is_authenticated else 'Anónimo',
+            'admin_usuario': {
+                'username': 'admin',
+                'password': 'admin123',
+                'email': 'admin@axyoma.com',
+                'mensaje': 'Usuario admin listo para acceder al sistema'
             },
-            'empresa_demo': {
-                'nombre': empresa.nombre,
-                'plantas': 1,
-                'departamentos': len(departamentos_creados),
-                'puestos': len(puestos_creados),
-                'empleados': 1
-            },
-            'suscripcion': {
-                'plan': suscripcion.plan.nombre,
-                'estado': suscripcion.estado,
-                'vigencia_dias': 30
-            },
-            'estado': 'datos_demo_listos'
+            'planes_disponibles': [
+                {'nombre': plan.nombre, 'precio': f'${plan.precio}', 'duracion': f'{plan.duracion} días'}
+                for plan in planes_creados
+            ],
+            'estado': 'datos_basicos_listos'
         })
         
     except Exception as e:
         print(f"❌ ERROR cargando datos demo: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return Response({
             'error': f'Error cargando datos demo: {str(e)}',
-            'datos_creados': datos_creados if 'datos_creados' in locals() else {}
+            'datos_creados': datos_creados if 'datos_creados' in locals() else {},
+            'tipo_error': type(e).__name__
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -850,6 +656,174 @@ def debug_cargar_datos_simple(request):
         return Response({
             'error': 'Error en debug',
             'debug_info': debug_info
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def cargar_datos_demo_simple(request):
+    """
+    🌱 CARGAR DATOS DEMO SIMPLIFICADO
+    
+    Versión simplificada que evita validaciones complejas de usuarios y suscripciones.
+    Solo crea la estructura organizacional básica usando el usuario actual como administrador.
+    """
+    is_superadmin, error_response = verificar_superadmin(request)
+    if not is_superadmin:
+        return error_response
+    
+    try:
+        # Usar el usuario actual como administrador de empresa
+        usuario_admin = request.user
+        
+        # Crear o obtener perfil para el usuario actual si no existe
+        perfil_admin, created = PerfilUsuario.objects.get_or_create(
+            user=usuario_admin,
+            defaults={
+                'nivel_usuario': 'superadmin',
+                'activo': True,
+                'fecha_creacion': timezone.now()
+            }
+        )
+        
+        # 1. Crear empresa demo
+        empresa, created = Empresa.objects.get_or_create(
+            nombre='Empresa Demo AXYOMA',
+            defaults={
+                'rfc': 'DEMO123456789',
+                'razon_social': 'Empresa Demostración AXYOMA S.A. de C.V.',
+                'direccion': 'Av. Demo 123, Ciudad Demo',
+                'telefono': '55-1234-5678',
+                'email': 'demo@axyoma.com',
+                'activo': True,
+                'fecha_creacion': timezone.now(),
+                'admin_empresa': perfil_admin
+            }
+        )
+        
+        # 2. Crear planta demo
+        planta, created = Planta.objects.get_or_create(
+            nombre='Planta Principal Demo',
+            empresa=empresa,
+            defaults={
+                'direccion': 'Zona Industrial Demo, Lote 1',
+                'telefono': '55-1234-5679',
+                'activo': True,
+                'fecha_creacion': timezone.now()
+            }
+        )
+        
+        # 3. Crear departamentos demo
+        departamentos_data = [
+            {'nombre': 'Recursos Humanos', 'descripcion': 'Gestión del personal'},
+            {'nombre': 'Producción', 'descripcion': 'Área de manufactura'},
+            {'nombre': 'Calidad', 'descripcion': 'Control de calidad'},
+            {'nombre': 'Mantenimiento', 'descripcion': 'Mantenimiento de equipos'},
+            {'nombre': 'Administración', 'descripcion': 'Gestión administrativa'}
+        ]
+        
+        departamentos_creados = []
+        for dept_data in departamentos_data:
+            dept, created = Departamento.objects.get_or_create(
+                nombre=dept_data['nombre'],
+                planta=planta,
+                defaults={
+                    'descripcion': dept_data['descripcion'],
+                    'activo': True,
+                    'fecha_creacion': timezone.now()
+                }
+            )
+            departamentos_creados.append(dept)
+        
+        # 4. Crear puestos demo
+        puestos_data = [
+            {'nombre': 'Gerente de Recursos Humanos', 'departamento': 'Recursos Humanos'},
+            {'nombre': 'Supervisor de Producción', 'departamento': 'Producción'},
+            {'nombre': 'Operador de Máquina', 'departamento': 'Producción'},
+            {'nombre': 'Inspector de Calidad', 'departamento': 'Calidad'},
+            {'nombre': 'Técnico de Mantenimiento', 'departamento': 'Mantenimiento'},
+            {'nombre': 'Asistente Administrativo', 'departamento': 'Administración'}
+        ]
+        
+        puestos_creados = []
+        for puesto_data in puestos_data:
+            # Buscar el departamento correspondiente
+            departamento = next((d for d in departamentos_creados if d.nombre == puesto_data['departamento']), None)
+            if departamento:
+                puesto, created = Puesto.objects.get_or_create(
+                    nombre=puesto_data['nombre'],
+                    departamento=departamento,
+                    defaults={
+                        'descripcion': f'Puesto de {puesto_data["nombre"]}',
+                        'activo': True,
+                        'fecha_creacion': timezone.now()
+                    }
+                )
+                puestos_creados.append(puesto)
+        
+        # 5. Crear empleados demo
+        empleados_data = [
+            {'nombre': 'Juan', 'apellidos': 'Pérez García', 'puesto': 'Gerente de Recursos Humanos'},
+            {'nombre': 'María', 'apellidos': 'López Rodríguez', 'puesto': 'Supervisor de Producción'},
+            {'nombre': 'Carlos', 'apellidos': 'González Martínez', 'puesto': 'Operador de Máquina'},
+            {'nombre': 'Ana', 'apellidos': 'Hernández López', 'puesto': 'Inspector de Calidad'},
+            {'nombre': 'Luis', 'apellidos': 'Ramírez Torres', 'puesto': 'Técnico de Mantenimiento'},
+            {'nombre': 'Elena', 'apellidos': 'Morales Sánchez', 'puesto': 'Asistente Administrativo'}
+        ]
+        
+        empleados_creados = []
+        for i, emp_data in enumerate(empleados_data, 1):
+            # Buscar el puesto correspondiente
+            puesto = next((p for p in puestos_creados if p.nombre == emp_data['puesto']), None)
+            if puesto:
+                empleado, created = Empleado.objects.get_or_create(
+                    numero_empleado=f'EMP{i:03d}',
+                    defaults={
+                        'nombre': emp_data['nombre'],
+                        'apellidos': emp_data['apellidos'],
+                        'puesto': puesto,
+                        'email': f'{emp_data["nombre"].lower()}.{emp_data["apellidos"].split()[0].lower()}@demo.com',
+                        'telefono': f'55-1234-567{i}',
+                        'activo': True,
+                        'fecha_ingreso': timezone.now().date(),
+                        'fecha_creacion': timezone.now()
+                    }
+                )
+                empleados_creados.append(empleado)
+        
+        # Respuesta de éxito
+        return Response({
+            'success': True,
+            'message': 'Datos demo cargados exitosamente (versión simplificada)',
+            'datos_creados': {
+                'empresa': {
+                    'id': empresa.id,
+                    'nombre': empresa.nombre,
+                    'admin': usuario_admin.username
+                },
+                'planta': {
+                    'id': planta.id,
+                    'nombre': planta.nombre
+                },
+                'departamentos': len(departamentos_creados),
+                'puestos': len(puestos_creados),
+                'empleados': len(empleados_creados)
+            },
+            'detalles': {
+                'departamentos': [d.nombre for d in departamentos_creados],
+                'puestos': [p.nombre for p in puestos_creados],
+                'empleados': [f'{e.nombre} {e.apellidos}' for e in empleados_creados]
+            },
+            'fecha_carga': timezone.now().isoformat()
+        })
+        
+    except Exception as e:
+        import traceback
+        return Response({
+            'success': False,
+            'error': f'Error cargando datos demo: {str(e)}',
+            'traceback': traceback.format_exc(),
+            'timestamp': timezone.now().isoformat()
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
