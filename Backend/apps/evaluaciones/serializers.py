@@ -107,7 +107,7 @@ class EvaluacionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Evaluacion
-        fields = [ 'evaluacion_id', 'titulo', 'descripcion', 'instrucciones', 'tiempo_limite',
+        fields = [ 'evaluacion_id', 'titulo', 'descripcion', 'instrucciones', 'contenido_informativo', 'tiempo_limite',
             'umbral_aprobacion', 'estado', 'tipo_evaluacion', 'tipo_evaluacion_id', 'secciones' ]
 
         read_only_fields = [ 'evaluacion_id' ]
@@ -121,7 +121,7 @@ class EvaluacionSerializer(serializers.ModelSerializer):
             seccion = SeccionEval.objects.create(evaluacion=evaluacion, **seccion_data)
 
             for pregunta_data in preguntas_data:
-                pregunta_id = pregunta_data.pop('pregunta').id
+                pregunta_id = pregunta_data.pop('pregunta').pregunta_id
 
                 SeccionPregunta.objects.create(
                     seccion=seccion,
@@ -144,7 +144,7 @@ class EvaluacionSerializer(serializers.ModelSerializer):
                 seccion = SeccionEval.objects.create(evaluacion=instance, **seccion_data)
 
                 for pregunta_data in preguntas_data:
-                    pregunta_id = pregunta_data.pop('pregunta').id
+                    pregunta_id = pregunta_data.pop('pregunta').pregunta_id
 
                     SeccionPregunta.objects.create(
                         seccion=seccion,

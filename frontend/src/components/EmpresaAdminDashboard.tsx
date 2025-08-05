@@ -1,11 +1,14 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmpleadosCRUD from './EmpleadosCRUD';
 import GestionPlantas from './GestionPlantas';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
-import EvaluacionesGestion from './EvaluacionesGestion';
-import AsignacionEvaluaciones from './AsignacionEvaluaciones';
+
+import EvaluacionesDashboard from './evaluaciones/EvaluacionesDashboard';
+// import AsignacionEvaluaciones from './AsignacionEvaluaciones';
+
 import GestionSuscripcion from './GestionSuscripcion';
 import UsuariosPlantasView from './UsuariosPlantasView';
 import { logout } from '../services/authService';
@@ -47,7 +50,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               <h2>¡Bienvenido al Panel de Administración!</h2>
               <p>Gestiona tu empresa de manera integral desde este panel de control</p>
             </div>
-            
+
             <div className="stats-grid">
               <div className="stat-card">
                 <div className="stat-icon">👥</div>
@@ -86,28 +89,28 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
             <div className="quick-actions">
               <h3>Acciones Rápidas</h3>
               <div className="action-buttons">
-                <button 
+                <button
                   className="action-btn"
                   onClick={() => setActiveSection('empleados')}
                 >
                   <span className="action-icon">👤</span>
                   <span>Gestionar Empleados</span>
                 </button>
-                <button 
+                <button
                   className="action-btn"
                   onClick={() => setActiveSection('plantas')}
                 >
                   <span className="action-icon">🏭</span>
                   <span>Ver Plantas</span>
                 </button>
-                <button 
+                <button
                   className="action-btn"
                   onClick={() => setActiveSection('evaluaciones')}
                 >
                   <span className="action-icon">📋</span>
                   <span>Crear Evaluación</span>
                 </button>
-                <button 
+                <button
                   className="action-btn"
                   onClick={() => setActiveSection('asignaciones')}
                 >
@@ -120,25 +123,25 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
         );
       case 'empleados':
         return (
-          <EmpleadosCRUD 
+          <EmpleadosCRUD
             userData={userData}
           />
         );
       case 'plantas':
         return (
-          <GestionPlantas 
+          <GestionPlantas
             empresaId={empresaId || 1}
           />
         );
       case 'usuarios-plantas':
         return (
-          <UsuariosPlantasView 
+          <UsuariosPlantasView
             empresaId={empresaId || 1}
           />
         );
       case 'departamentos':
         return (
-          <GestionDepartamentos 
+          <GestionDepartamentos
             empresaId={empresaId || 1}
           />
         );
@@ -148,19 +151,18 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
         );
       case 'evaluaciones':
         return (
-          <EvaluacionesGestion 
-            userData={userData}
+          <EvaluacionesDashboard
           />
         );
-      case 'asignaciones':
-        return (
-          <AsignacionEvaluaciones 
-            userData={userData}
-          />
-        );
+      // case 'asignaciones':
+      //   return (
+      //     <AsignacionEvaluaciones
+      //       userData={userData}
+      //     />
+      //   );
       case 'suscripcion':
         return (
-          <GestionSuscripcion 
+          <GestionSuscripcion
             empresaId={empresaId || 1}
           />
         );
@@ -187,63 +189,63 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
           </div>
         </div>
         <nav className="sidebar-nav">
-          <button 
+          <button
             className={activeSection === 'overview' ? 'active' : ''}
             onClick={() => setActiveSection('overview')}
           >
             <span className="nav-icon">📊</span>
             <span className="nav-text">Dashboard</span>
           </button>
-          <button 
+          <button
             className={activeSection === 'empleados' ? 'active' : ''}
             onClick={() => setActiveSection('empleados')}
           >
             <span className="nav-icon">👥</span>
             <span className="nav-text">Empleados</span>
           </button>
-          <button 
+          <button
             className={activeSection === 'plantas' ? 'active' : ''}
             onClick={() => setActiveSection('plantas')}
           >
             <span className="nav-icon">🏭</span>
             <span className="nav-text">Plantas</span>
           </button>
-          <button 
+          <button
             className={activeSection === 'usuarios-plantas' ? 'active' : ''}
             onClick={() => setActiveSection('usuarios-plantas')}
           >
             <span className="nav-icon">👤</span>
             <span className="nav-text">Usuarios Plantas</span>
           </button>
-          <button 
+          <button
             className={activeSection === 'departamentos' ? 'active' : ''}
             onClick={() => setActiveSection('departamentos')}
           >
             <span className="nav-icon">🏢</span>
             <span className="nav-text">Departamentos</span>
           </button>
-          <button 
+          <button
             className={activeSection === 'puestos' ? 'active' : ''}
             onClick={() => setActiveSection('puestos')}
           >
             <span className="nav-icon">💼</span>
             <span className="nav-text">Puestos</span>
           </button>
-          <button 
+          <button
             className={activeSection === 'evaluaciones' ? 'active' : ''}
             onClick={() => setActiveSection('evaluaciones')}
           >
             <span className="nav-icon">📋</span>
             <span className="nav-text">Evaluaciones</span>
           </button>
-          <button 
+          <button
             className={activeSection === 'asignaciones' ? 'active' : ''}
             onClick={() => setActiveSection('asignaciones')}
           >
             <span className="nav-icon">🎯</span>
             <span className="nav-text">Asignaciones</span>
           </button>
-          <button 
+          <button
             className={activeSection === 'suscripcion' ? 'active' : ''}
             onClick={() => setActiveSection('suscripcion')}
           >

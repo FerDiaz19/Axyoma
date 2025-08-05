@@ -3,8 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import EmpleadosCRUD from './EmpleadosCRUD';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
-import EvaluacionesGestion from './EvaluacionesGestion';
-import AsignacionEvaluaciones from './AsignacionEvaluaciones';
+
+import EvaluacionesDashboard from './evaluaciones/EvaluacionesDashboard';
+
+// import EvaluacionesGestion from './EvaluacionesGestion';
+// import AsignacionEvaluaciones from './AsignacionEvaluaciones';
+
 import { logout } from '../services/authService';
 import '../css/Dashboard.css';
 import '../css/PlantaAdminDashboard.css';
@@ -55,9 +59,9 @@ const PlantaAdminDashboard: React.FC<PlantaAdminDashboardProps> = ({ userData })
 const handleLogout = () => {
   try {
     console.log("🚪 Iniciando cierre de sesión...");
-    
+
     logout(); // Limpia el token
-    
+
     console.log("✅ Sesión cerrada, redirigiendo a página principal...");
 
     // Navegamos al inicio
@@ -82,9 +86,9 @@ const handleLogout = () => {
       case 'empleados':
         return <EmpleadosCRUD userData={userData} />;
       case 'evaluaciones':
-        return <EvaluacionesGestion userData={{ nivel_usuario: 'admin_planta' }} />;
-      case 'asignaciones':
-        return <AsignacionEvaluaciones userData={{ nivel_usuario: 'admin_planta' }} />;
+        return <EvaluacionesDashboard />;
+      // case 'asignaciones':
+      //   return <AsignacionEvaluaciones userData={{ nivel_usuario: 'admin_planta' }} />;
       default:
         return <div>Sección no encontrada</div>;
     }
@@ -103,7 +107,7 @@ const handleLogout = () => {
 
         <nav className="sidebar-nav">
           {menuItems.map((item) => (
-            <button 
+            <button
               key={item.id}
               className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
               onClick={() => setActiveSection(item.id)}

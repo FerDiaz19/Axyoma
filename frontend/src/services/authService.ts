@@ -11,14 +11,14 @@ export interface LoginData {
 }
 
 export interface LoginResponse {
-  message: string;
-  usuario: string;
-  nivel_usuario: string;
-  tipo_dashboard: string;
-  permisos: string[];
-  token: string;  // Token de autenticación
-  empresa_id?: number;
-  nombre_empresa?: string;
+    message: string;
+    usuario: string;
+    nivel_usuario: string;
+    tipo_dashboard: string;
+    permisos: string[];
+    token: string;  // Token de autenticación
+    empresa_id?: number;
+    nombre_empresa?: string;
 }
 
 // -------------------------------------------------------------------------- //
