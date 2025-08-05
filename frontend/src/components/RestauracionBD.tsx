@@ -98,15 +98,16 @@ const RestauracionBD: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-  const handleCargarDatosDemo = async () => {
+  };  const handleCargarDatosDemo = async () => {
     const confirmacion = window.confirm(
       '📊 ¿Cargar datos de demostración?\n\n' +
       'Se creará:\n' +
-      '• 1 empresa demo con estructura completa\n' +
-      '• 3 usuarios de prueba\n' +
-      '• Planes de suscripción\n' +
-      '• 1 empleado de ejemplo\n\n' +
+      '• 1 empresa demo: "Empresa Demo AXYOMA"\n' +
+      '• 1 planta: "Planta Principal Demo"\n' +
+      '• 5 departamentos: RH, Producción, Calidad, Mantenimiento, Administración\n' +
+      '• 6 puestos de trabajo\n' +
+      '• 6 empleados ejemplo completos\n' +
+      '• 3 planes de suscripción\n\n' +
       'Esta operación es segura y no elimina datos existentes.'
     );
 
@@ -115,16 +116,15 @@ const RestauracionBD: React.FC = () => {
     try {
       setLoading(true);
       const data = await cargarDatosDemo();
-      
-      mostrarMensaje(
+        mostrarMensaje(
         '✅ Datos demo cargados exitosamente\n\n' +
-        `👥 Usuarios creados: ${data.usuarios_creados || 0}\n` +
-        `🏢 Empresas: ${data.empresas_creadas || 0}\n` +
-        `🏭 Plantas: ${data.plantas_creadas || 0}\n` +
-        `📋 Departamentos: ${data.departamentos_creados || 0}\n` +
-        `💼 Puestos: ${data.puestos_creados || 0}\n` +
-        `👤 Empleados: ${data.empleados_creados || 0}\n\n` +
-        '🎉 ¡Sistema listo para demostrar!',
+        `🏢 Empresa: "Empresa Demo AXYOMA"\n` +
+        `🏭 Planta: "Planta Principal Demo"\n` +
+        `📋 Departamentos: 5 (RH, Producción, Calidad, Mantenimiento, Admin)\n` +
+        `💼 Puestos: 6 (Gerente, Supervisor, Operador, Inspector, Técnico, Asistente)\n` +
+        `👤 Empleados: 6 (Juan, María, Carlos, Ana, Luis, Elena)\n` +
+        `💳 Planes: 3 (Básico, Profesional, Empresarial)\n\n` +
+        '🎉 ¡Sistema listo para demostrar con estructura completa!',
         'success'
       );
       await cargarEstadoBD();
@@ -275,16 +275,12 @@ const RestauracionBD: React.FC = () => {
               Carga datos de demostración mínimos para probar el sistema.
               No elimina datos existentes.
             </p>
-            
-            <div className="demo-list">
+              <div className="demo-list">
               <h4>📋 Se creará:</h4>
               <ul>
-                <li>🏢 1 empresa demo completa</li>
-                <li>👥 3 usuarios de prueba (admin_empresa, admin_planta)</li>
-                <li>🏭 1 planta con 3 departamentos</li>
-                <li>💼 3 puestos esenciales</li>
-                <li>💳 3 planes de suscripción</li>
-                <li>👤 1 empleado de ejemplo</li>
+                <li>Recrea un superadmin</li>
+                <li>Informacion escencial para funcionar</li>
+                <li>🔗 Estructura organizacional completa y funcional</li>
               </ul>
             </div>
           </div>
@@ -302,14 +298,14 @@ const RestauracionBD: React.FC = () => {
       </div>
 
       {/* Información adicional */}
-      <div className="info-adicional">
-        <div className="info-card">
+      <div className="info-adicional">        <div className="info-card">
           <h3>💡 Recomendaciones</h3>
           <ul>
             <li><strong>Antes de reiniciar:</strong> Crear respaldo completo</li>
             <li><strong>Para pruebas:</strong> Usar datos demo después de reiniciar</li>
             <li><strong>Para producción:</strong> Verificar respaldos antes de operaciones críticas</li>
-            <li><strong>Usuarios disponibles después de demo:</strong> superadmin, admin_empresa, admin_planta</li>
+            <li><strong>Datos demo incluye:</strong> Empresa completa con 5 departamentos, 6 puestos y 6 empleados</li>
+            <li><strong>Estructura jerárquica:</strong> Empresa → Planta → Departamentos → Puestos → Empleados</li>
           </ul>
         </div>
       </div>

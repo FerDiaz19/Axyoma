@@ -1,0 +1,13 @@
+{
+  "tipo": "tablas",
+  "tablas": [
+    "departamentos"
+  ],
+  "incluir_datos": true,
+  "descripcion": "DEPARTAMENTOS_1",
+  "fecha_creacion": "2025-08-04T17:56:01.803594",
+  "usuario": "admin",
+  "archivo": "backup_tablas_departamentos_20250804_175601.sql",
+  "tamaño_bytes": 1273,
+  "base_datos": "axyomadb"
+}

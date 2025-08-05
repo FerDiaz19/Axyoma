@@ -225,14 +225,16 @@ const GestionRespaldos: React.FC<GestionRespaldosProps> = ({ className = '' }) =
       setLoading(false);
     }
   };
-
   const handleCargarDatosIniciales = async () => {
     const confirmacion = window.confirm(
       `📊 Cargar datos de prueba\n\n` +
       `Esto creará:\n` +
-      `• Usuarios de prueba (superadmin, admin_empresa, admin_planta)\n` +
-      `• Empresa demo con plantas, departamentos y puestos\n` +
-      `• Empleados de ejemplo\n\n` +
+      `• 1 empresa demo: "Empresa Demo AXYOMA"\n` +
+      `• 1 planta: "Planta Principal Demo"\n` +
+      `• 5 departamentos: RH, Producción, Calidad, Mantenimiento, Administración\n` +
+      `• 6 puestos de trabajo completos\n` +
+      `• 6 empleados ejemplo: Juan, María, Carlos, Ana, Luis, Elena\n` +
+      `• 3 planes de suscripción\n\n` +
       `¿Continuar?`
     );
     
