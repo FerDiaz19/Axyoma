@@ -17,6 +17,7 @@ router.register(r'evaluaciones', EvaluacionViewSet)
 router.register(r'preguntas', PreguntaViewSet)
 router.register(r'conjuntos-respuestas', ConjuntoRespuestasViewSet)
 router.register(r'asignaciones', AsignacionViewSet)
+router.register(r'asignaciones-empleado', AsignacionEmpleadoViewSet)
 router.register(r'respuestas-empleado', RespuestaEmpleadoViewSet)
 router.register(r'resultados-evaluacion', ResultadoEvaluacionViewSet)
 

@@ -100,6 +100,8 @@ export interface EvaluacionRequest {
   umbral_aprobacion?: number | null;
   estado: boolean;
   tipo_evaluacion_id: number;
+  empresa_id?: number | null;
+  creado_por_id?: number | null;
   secciones: SeccionEvalRequest[];
 }
 
@@ -109,8 +111,10 @@ export interface Evaluacion extends EvaluacionRequest {
   fecha_registro: string;
   fecha_modificacion: string;
   tipo_evaluacion: string;
-  empresa: number | null;
-  creado_por: number | null;
+  empresa_nombre: string | null;
+  empresa_id: number | null;
+  creado_por_nombre: string | null;
+  creado_por_id: number | null;
   secciones: SeccionEval[];
 }
 
@@ -138,6 +142,14 @@ export interface AsignacionEmpleado {
   asignacion: number;
   empleado: number;
   empleado_nombre: string;
+  empleado_puesto: string;
+  empleado_puesto_id: number;
+  empleado_departamento: string;
+  empleado_departamento_id: number;
+  empleado_planta: string;
+  empleado_planta_id: number;
+  empleado_empresa: string;
+  empleado_empresa_id: number;
   token_acceso: string;
   status: 'Pendiente' | 'Desactivada' | 'Completada' | 'Expirada';
   fecha_inicio: string;
@@ -158,9 +170,19 @@ export interface RespuestaEmpleado {
   fecha_respuesta: string;
 }
 
+// Interfaz de resultados obtenidos.
+export interface ResultadoEvaluacion {
+  resultado_id: number;
+  asignacion_empleado: number;
+  puntaje_total?: number;
+  num_respuestas_correctas?: number;
+  num_preguntas_evaluables?: number;
+  porcentaje_correctas?: number;
+  aprobado: boolean;
+}
+
 // -------------------------------------------------------------------------- //
 
-// Servicios
 const evaluacionesAPI = {
   // Tipos de evaluación
   getTipos: () => api.get<TipoEvaluacion[]>('/appraisal/tipos-evaluacion/'),
@@ -175,9 +197,6 @@ const evaluacionesAPI = {
   activarEvaluacion: (id: number) => api.patch<{ status: string }>(`/appraisal/evaluaciones/${id}/activar/`),
 
   // ! Nota: Las secciones se gestionan anidadamente dentro de la Evaluación.
-
-  getEmpleados: () => api.get<Asignacion[]>('/empleados/'),
-
   // Preguntas
   getPreguntas: () => api.get<Pregunta[]>('/appraisal/preguntas/'),
   createPregunta: (data: PreguntaRequest) => api.post<Pregunta>('/appraisal/preguntas/', data),
@@ -198,9 +217,25 @@ const evaluacionesAPI = {
   asignarEmpleados: (id: number, data: { empleado_ids?: number[], planta_ids?: number[], puesto_ids?: number[], departamento_ids?: number[] }) =>
     api.post<{ status: string }>(`/appraisal/asignaciones/${id}/asignar_empleados/`, data),
 
+
+  // Asignaciones de Empleados
+  getAsignacionesEmpleado: () => api.get<AsignacionEmpleado[]>('/appraisal/asignaciones-empleado/'),
+  getAsignacionEmpleado: (id: number) => api.get<AsignacionEmpleado>(`/appraisal/asignaciones-empleado/${id}/`),
+
+
+  // Aactivar y desactivar asignaciones individuales
+  desactivarAsignacionEmpleado: (id: number) => api.patch<{ status: string }>(`/appraisal/asignaciones-empleado/${id}/desactivar/`),
+  activarAsignacionEmpleado: (id: number) => api.patch<{ status: string }>(`/appraisal/asignaciones-empleado/${id}/activar/`),
+
+
   // Respuestas del Empleado
   getRespuestasEmpleado: () => api.get<RespuestaEmpleado[]>('/appraisal/respuestas-empleado/'),
   createRespuestaEmpleado: (data: Partial<RespuestaEmpleado>) => api.post<RespuestaEmpleado>('/appraisal/respuestas-empleado/', data),
+
+
+  // Resultados de Evaluación
+  getResultadosEvaluacion: () => api.get<ResultadoEvaluacion[]>('/appraisal/resultados-evaluacion/'),
+  getResultadoEvaluacion: (id: number) => api.get<ResultadoEvaluacion>(`/appraisal/resultados-evaluacion/${id}/`),
 };
 
 // -------------------------------------------------------------------------- //

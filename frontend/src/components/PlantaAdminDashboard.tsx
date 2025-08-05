@@ -85,8 +85,11 @@ const handleLogout = () => {
         return <GestionPuestos />;
       case 'empleados':
         return <EmpleadosCRUD userData={userData} />;
+
+
       case 'evaluaciones':
-        return <EvaluacionesDashboard />;
+        return <EvaluacionesDashboard userData={userData} />
+
       // case 'asignaciones':
       //   return <AsignacionEvaluaciones userData={{ nivel_usuario: 'admin_planta' }} />;
       default:

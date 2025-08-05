@@ -49,13 +49,13 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
     try {
       setError(null);
       console.log('🔍 Cargando usuarios de planta para empresa:', empresaId);
-      
+
       const response = await api.get(`/plantas/usuarios-planta/?empresa_id=${empresaId}`);
       console.log('👥 Usuarios obtenidos:', response.data);
       setUsuarios(response.data);
     } catch (error: any) {
       console.error('❌ Error cargando usuarios:', error);
-      
+
       if (error.response?.status === 404) {
         setUsuarios([]);
       } else {
@@ -70,7 +70,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
     try {
       setError(null);
       console.log('🔍 Cargando credenciales para empresa:', empresaId);
-      
+
       const response = await api.get('/plantas/credenciales-usuarios/');
       console.log('🔑 Credenciales obtenidas:', response.data);
       setCredenciales(response.data.credenciales || []);
@@ -90,10 +90,10 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
       const response = await api.post('/plantas/resetear-password-usuario/', {
         usuario_id: usuarioId
       });
-      
+
       setPasswordResetData(response.data);
       alert(`Contraseña reseteada exitosamente.\nNueva contraseña: ${response.data.nueva_password}`);
-      
+
       // Recargar usuarios
       await cargarUsuarios();
     } catch (error: any) {
@@ -108,12 +108,12 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
     try {
       setError(null);
       const accion = activo ? 'activar' : 'suspender';
-      
+
       await api.post('/plantas/usuarios-planta/toggle-status/', {
         usuario_id: usuarioId,
         accion: accion
       });
-      
+
       await cargarUsuarios();
       alert(`Usuario ${accion} exitosamente`);
     } catch (error: any) {
@@ -134,13 +134,13 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
         <h2>Usuarios de Plantas</h2>
         <div className="header-actions">
           <div className="vista-tabs">
-            <button 
+            <button
               className={vistaActual === 'usuarios' ? 'tab-active' : 'tab-inactive'}
               onClick={() => setVistaActual('usuarios')}
             >
               👥 Usuarios
             </button>
-            <button 
+            <button
               className={vistaActual === 'credenciales' ? 'tab-active' : 'tab-inactive'}
               onClick={() => {
                 setVistaActual('credenciales');
@@ -190,13 +190,13 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
                     </span>
                   </div>
                   <div className="usuario-actions">
-                    <button 
+                    <button
                       className={`btn ${usuario.is_active ? 'btn-warning' : 'btn-success'}`}
                       onClick={() => toggleUsuarioStatus(usuario.usuario_id, !usuario.is_active)}
                     >
                       {usuario.is_active ? 'Suspender' : 'Activar'}
                     </button>
-                    <button 
+                    <button
                       className="btn btn-info"
                       onClick={() => resetearPassword(usuario.usuario_id)}
                     >
@@ -250,7 +250,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
                         <strong>👨‍💼 Nombre:</strong> {credencial.nombre_completo}
                       </div>
                       <div className="info-row">
-                        <strong>🔑 Contraseña:</strong> 
+                        <strong>🔑 Contraseña:</strong>
                         <span className="password-info">{credencial.password_visible}</span>
                       </div>
                       {credencial.fecha_creacion && (
@@ -260,7 +260,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
                       )}
                     </div>
                     <div className="credencial-actions">
-                      <button 
+                      <button
                         className="btn btn-warning"
                         onClick={() => resetearPassword(credencial.usuario_id)}
                       >
@@ -289,7 +289,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
               <p className="instructions">{passwordResetData.instrucciones}</p>
             </div>
             <div className="modal-actions">
-              <button 
+              <button
                 className="btn btn-primary"
                 onClick={() => {
                   navigator.clipboard.writeText(passwordResetData.nueva_password);
@@ -298,7 +298,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
               >
                 📋 Copiar Contraseña
               </button>
-              <button 
+              <button
                 className="btn btn-secondary"
                 onClick={() => setPasswordResetData(null)}
               >

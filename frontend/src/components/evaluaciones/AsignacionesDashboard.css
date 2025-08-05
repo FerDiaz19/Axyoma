@@ -1,0 +1,510 @@
+/* Variables CSS minimalistas */
+:root {
+    /* Paleta de colores más limpia */
+    --color-primary: #5A67D8; /* Azul suave y profesional */
+    --color-primary-dark: #434190;
+    --color-primary-light: #C3DAFE;
+
+    --color-accent: #38A169; /* Verde para acentos */
+    --color-accent-dark: #2F855A;
+
+    --color-gray-50: #F7FAFC; /* Fondo muy claro */
+    --color-gray-100: #EDF2F7; /* Elementos ligeros, hover */
+    --color-gray-200: #E2E8F0; /* Bordes */
+    --color-gray-400: #A0AEC0; /* Texto secundario */
+    --color-gray-600: #4A5568; /* Texto principal */
+
+    --color-white: #FFFFFF;
+
+    /* Colores de estado */
+    --color-danger: #E53E3E;
+    --color-success: #38A169;
+    --color-warning: #DD6B20;
+    --color-info: #3182CE;
+
+    /* Sombras y bordes */
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --border-radius: 8px;
+
+    /* Transiciones */
+    --transition-fast: 0.2s ease-out;
+}
+
+/* Contenedor principal de la página de asignaciones */
+.asignaciones-page-container {
+    padding: 30px;
+    background-color: var(--color-background-light);
+    min-height: 100vh; /* Ocupa al menos toda la altura de la ventana */
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter', sans-serif; /* Fuente profesional */
+}
+
+/* Sección de encabezado */
+.header-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--color-primary-light);
+}
+
+.header-section h2 {
+    color: var(--color-primary-dark);
+    margin: 0;
+    font-size: 2.2em;
+    font-weight: 700;
+}
+
+/* Contenedor de los paneles (lista de evaluaciones y detalles de asignaciones) */
+.content-wrapper {
+    display: flex;
+    gap: 25px; /* Espacio entre los paneles */
+    flex-grow: 1;
+    align-items: flex-start; /* Alinea los paneles en la parte superior */
+}
+
+/* Estilos base para las tarjetas */
+.card {
+    background-color: var(--color-background-card);
+    border-radius: var(--border-radius-default);
+    box-shadow: var(--shadow-light);
+    padding: 25px;
+    transition: box-shadow var(--transition-speed);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-medium);
+}
+
+/* Panel de lista de evaluaciones (izquierda) */
+.evaluaciones-list-panel {
+    flex: 0 0 350px; /* Ancho fijo para el panel de evaluaciones */
+    max-height: calc(100vh - 120px); /* Altura máxima con scroll */
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+}
+
+.evaluaciones-list-panel h3 {
+    color: var(--color-text-dark);
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 15px;
+    font-size: 1.5em;
+    font-weight: 600;
+}
+
+.evaluacion-selection-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.evaluacion-item {
+    padding: 15px 20px;
+    margin-bottom: 10px;
+    background-color: var(--color-background-light);
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--border-radius-default);
+    cursor: pointer;
+    transition: background-color var(--transition-speed), border-color var(--transition-speed), box-shadow var(--transition-speed);
+    font-weight: 500;
+    color: var(--color-text-dark);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.evaluacion-item:hover {
+    background-color: #EEF2F6; /* Un gris azulado muy suave */
+    border-color: var(--color-primary-light);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.evaluacion-item.selected {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary-dark);
+    color: white;
+    box-shadow: var(--shadow-medium);
+    font-weight: 600;
+}
+
+.evaluacion-item.selected:hover {
+    background-color: var(--color-primary-dark);
+}
+
+.evaluacion-empresa {
+    font-size: 0.85em;
+    color: var(--color-text-secondary);
+    opacity: 0.8;
+}
+.evaluacion-item.selected .evaluacion-empresa {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.evaluaciones-list-panel p {
+    color: var(--color-text-secondary);
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* Panel de detalles de asignaciones (derecha) */
+.asignaciones-details-panel {
+    flex-grow: 1;
+    max-height: calc(100vh - 120px); /* Altura máxima con scroll */
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+}
+
+.asignaciones-details-panel h3 {
+    color: var(--color-text-dark);
+    margin-top: 0;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 15px;
+    font-size: 1.8em;
+    font-weight: 600;
+}
+
+.select-evaluacion-message {
+    text-align: center;
+    color: var(--color-text-secondary);
+    font-style: italic;
+    margin-top: 50px;
+    font-size: 1.1em;
+}
+
+/* Agrupación por planta (para admin-empresa) */
+.planta-group {
+    margin-bottom: 40px;
+    padding: 20px;
+    border: 1px solid var(--color-border-light);
+    border-radius: var(--border-radius-default);
+    background-color: #FDFDFD; /* Ligeramente más claro que el fondo de la tarjeta */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.planta-group h4 {
+    color: var(--color-accent-dark);
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px dashed var(--color-accent-light);
+    padding-bottom: 10px;
+    font-size: 1.4em;
+    font-weight: 600;
+}
+
+.asignaciones-base-list {
+    list-style: none;
+    padding: 0;
+}
+
+.asignacion-base-item {
+    background-color: var(--color-background-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--border-radius-default);
+    padding: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.08);
+    transition: box-shadow var(--transition-speed);
+}
+
+.asignacion-base-item:hover {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.asignacion-base-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px dashed var(--color-border-light);
+    padding-bottom: 10px;
+}
+
+.asignacion-base-header h5 {
+    margin: 0;
+    color: var(--color-primary-dark);
+    font-size: 1.2em;
+    font-weight: 600;
+}
+
+.asignacion-base-item p {
+    margin: 5px 0;
+    color: var(--color-text-secondary);
+    font-size: 0.95em;
+}
+
+.base-asignacion-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap; /* Para que los botones se envuelvan en pantallas pequeñas */
+}
+
+/* Formulario para asignar más empleados */
+.assign-more-employees-form {
+    background-color: #F0F4F8; /* Un azul muy claro */
+    border: 1px dashed var(--color-info);
+    padding: 20px;
+    margin-top: 25px;
+    border-radius: var(--border-radius-default);
+}
+
+.assign-more-employees-form h6 {
+    color: var(--color-info);
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    flex: 1; /* Permite que los grupos de formularios crezcan */
+    min-width: 200px; /* Ancho mínimo para cada grupo */
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    font-size: 0.95em;
+}
+
+.form-group input[type="text"],
+.form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 0.95em;
+    color: var(--color-text-dark);
+    background-color: white;
+    transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+}
+
+.form-group input[type="text"]:focus,
+.form-group select:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.2);
+    outline: none;
+}
+
+.select-multiple {
+    min-height: 150px; /* Altura mínima para el select múltiple */
+    overflow-y: auto;
+    resize: vertical; /* Permite redimensionar verticalmente */
+}
+
+/* Sección de empleados asignados */
+.empleados-asignados-section {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--color-border-light);
+}
+
+.empleados-asignados-section h6 {
+    color: var(--color-text-dark);
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.departamento-group {
+    margin-bottom: 20px;
+    padding-left: 15px;
+    border-left: 4px solid var(--color-secondary-light);
+    background-color: #F8F8F8; /* Un fondo muy sutil para el grupo */
+    border-radius: 4px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.departamento-group strong {
+    color: var(--color-secondary-dark);
+    display: block;
+    margin-bottom: 10px;
+    font-size: 1em;
+}
+
+.puesto-group {
+    margin-bottom: 10px;
+    padding-left: 10px;
+    border-left: 2px solid var(--color-accent);
+}
+
+.puesto-group em {
+    color: var(--color-accent-dark);
+    display: block;
+    margin-bottom: 8px;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 0.95em;
+}
+
+.empleados-list-detail {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.empleado-asignado-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: var(--color-background-light);
+    border: 1px solid var(--color-border-light);
+    border-radius: 6px;
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    font-size: 0.9em;
+    color: var(--color-text-dark);
+}
+
+.empleado-asignado-item span:first-child {
+    flex-grow: 1;
+    margin-right: 15px;
+    font-weight: 500;
+}
+
+/* Badges de estado */
+.badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75em;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: white;
+    margin-left: 10px;
+    margin-right: 1rem;
+    min-width: 80px; /* Ancho mínimo para que los textos no se corten */
+    text-align: center;
+}
+
+.badge-active { background-color: var(--color-success); }
+.badge-inactive { background-color: var(--color-secondary); }
+.badge-pending { background-color: var(--color-warning); color: var(--color-text-dark); }
+.badge-completed { background-color: var(--color-info); }
+
+/* Botones */
+.btn-secondary, .btn-primary, .btn-danger, .btn-success, .btn-info {
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color var(--transition-speed), box-shadow var(--transition-speed), transform 0.1s ease-out;
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.95em;
+}
+
+.btn-secondary { background-color: var(--color-secondary); color: white; }
+.btn-secondary:hover { background-color: var(--color-secondary-dark); transform: translateY(-1px); }
+
+.btn-primary { background-color: var(--color-primary); color: white; }
+.btn-primary:hover { background-color: var(--color-primary-dark); transform: translateY(-1px); }
+
+.btn-danger { background-color: var(--color-danger); color: white; }
+.btn-danger:hover { background-color: #D62C2C; transform: translateY(-1px); }
+
+.btn-success { background-color: var(--color-success); color: white; }
+.btn-success:hover { background-color: #1F9D4F; transform: translateY(-1px); }
+
+.btn-info { background-color: var(--color-info); color: white; }
+.btn-info:hover { background-color: #306DCF; transform: translateY(-1px); }
+
+.btn-small {
+    padding: 7px 12px;
+    font-size: 0.8em;
+    gap: 5px;
+}
+
+.btn-link {
+    background: none;
+    color: var(--color-primary);
+    text-decoration: none;
+    padding: 0;
+    font-weight: 500;
+}
+.btn-link:hover {
+    color: var(--color-primary-dark);
+    text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .content-wrapper {
+        flex-direction: column;
+        gap: 20px;
+    }
+    .evaluaciones-list-panel,
+    .asignaciones-details-panel {
+        flex: none;
+        width: 100%;
+        max-height: none; /* Permite que crezca en altura */
+        overflow-y: visible; /* Desactiva el scroll interno si no es necesario */
+    }
+    .evaluaciones-list-panel {
+        max-height: 400px; /* Limita la altura para la lista de evaluaciones en pantallas pequeñas */
+    }
+    .form-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .header-section {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    .header-section h2 {
+        font-size: 1.8em;
+    }
+}
+
+@media (max-width: 600px) {
+    .asignaciones-page-container {
+        padding: 15px;
+    }
+    .card {
+        padding: 15px;
+    }
+    .header-section h2 {
+        font-size: 1.5em;
+    }
+    .evaluacion-item {
+        padding: 12px 15px;
+        font-size: 0.9em;
+    }
+    .asignacion-base-item {
+        padding: 15px;
+    }
+    .assign-more-employees-form {
+        padding: 15px;
+    }
+    .btn-secondary, .btn-primary, .btn-danger, .btn-success, .btn-info {
+        padding: 8px 12px;
+        font-size: 0.85em;
+    }
+    .badge {
+        font-size: 0.7em;
+        padding: 4px 8px;
+        margin-right: .5rem;
+    }
+}

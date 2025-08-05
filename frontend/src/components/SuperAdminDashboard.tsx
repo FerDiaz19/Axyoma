@@ -3194,7 +3194,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           {activeSection === 'planes' && renderPlanes()}
           {activeSection === 'suscripciones' && renderSuscripciones()}
           {/* {activeSection === 'pagos' && renderPagos()} // Desactivado temporalmente */}
-          {activeSection === 'evaluaciones' && <EvaluacionesDashboard />}
+          {activeSection === 'evaluaciones' && <EvaluacionesDashboard userData={userData} />}
           {activeSection === 'gestion-bd' && <GestionBD />}
         </main>
       </div>

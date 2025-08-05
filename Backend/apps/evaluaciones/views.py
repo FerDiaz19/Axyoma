@@ -6,6 +6,8 @@
 
 from .models import *
 from .serializers import *
+from apps.users.models import Empleado
+
 
 from django.utils import timezone
 from django.db import transaction
@@ -144,7 +146,8 @@ class AsignacionViewSet(viewsets.ModelViewSet):
 
         # * 02: En caso de haber proporcionado a todos los empleados de una planta.
         if planta_ids:
-            empleados_a_asignar |= Empleado.objects.filter(planta__planta_id__in=planta_ids)
+            empleados_a_asignar |= Empleado.objects.filter(puesto__departamento__planta__planta_id__in=planta_ids)
+
 
         # * 03: En caso de haber proporcionado a todos los empleados de un puesto.
         if puesto_ids:
@@ -152,7 +155,8 @@ class AsignacionViewSet(viewsets.ModelViewSet):
 
         # * 04: En caso de haber proporcionado a todos los empleados de un departamento.
         if departamento_ids:
-            empleados_a_asignar |= Empleado.objects.filter(departamento__departamento_id__in=departamento_ids)
+            empleados_a_asignar |= Empleado.objects.filter(puesto__departamento__departamento_id__in=departamento_ids)
+
 
         # Solamente por si acaaso, eliminamos los duplicados.
         empleados_a_asignar = empleados_a_asignar.distinct()
@@ -230,6 +234,58 @@ class AsignacionViewSet(viewsets.ModelViewSet):
                 status__in=[ 'Desactivada', 'Expirada' ]).update(status='Pendiente')
 
         return Response({ 'status': 'La asignación ha sido reactivada con éxito.' },
+            status=status.HTTP_200_OK)
+
+class AsignacionEmpleadoViewSet(viewsets.ModelViewSet):
+    queryset = AsignacionEmpleado.objects.all()
+    serializer_class = AsignacionEmpleadoSerializer
+    permission_classes = [ IsAuthenticated ]
+
+    # ------------------------------------------------------------------------ #
+
+    @action(detail=True, methods=['patch'])
+    def desactivar(self, request, pk=None):
+        asignacion_empleado = self.get_object()
+
+        if asignacion_empleado.status == 'Completada':
+            return Response({ 'error': 'La asignación ha sido contestada.' },
+                status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            asignacion_empleado.status = 'Desactivada'
+            asignacion_empleado.save()
+
+        return Response({ 'status': 'La asignacion del empleado ha sido desactivada.' },
+            status=status.HTTP_200_OK)
+
+    # ------------------------------------------------------------------------ #
+
+    @action(detail=True, methods=['patch'])
+    def activar(self, request, pk=None):
+        asignacion_empleado = self.get_object()
+        asignacion_base = asignacion_empleado.asignacion
+        evaluacion_relacionada = asignacion_base.evalacion
+
+        if not evaluacion_relacionada.estado:
+            return Response({ 'error':
+                'Dado el estado inactivo de la evaluación, no se ha podidod llevar a cabo el proceso de asgnación.'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+        # Mucho cuida'o con intentar reactivar una asignación que se encuentra 'expirada'.
+        if asignacion_base.fecha_fin < timezone.now():
+            return Response({ 'error': 'La asignación no ha podido ser reactivada debido a que su fecha de término ha sido excedida.' },
+                status=status.HTTP_400_BAD_REQUEST)
+
+        # Mucho cuida'o con intentar reactivar una asignación que se encuentra 'expirada'.
+        if asignacion_empleado.status == 'Expirada':
+            return Response({ 'error': 'La asignación no ha podido ser reactivada debido a que su fecha de término ha sido excedida.' },
+                status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            asignacion_empleado.status = 'Pendiente'
+            asignacion_empleado.save()
+
+        return Response({ 'status': 'La asignacion del empleado ha sido reactivada con éxito.' },
             status=status.HTTP_200_OK)
 
 # ---------------------------------------------------------------------------- #

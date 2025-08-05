@@ -23,7 +23,7 @@ const Dashboard: React.FC = () => {
     // Verificar si hay una sesión activa
     const token = localStorage.getItem('authToken');
     const userDataStored = localStorage.getItem('userData');
-    
+
     if (token && userDataStored) {
       setIsLoggedIn(true);
       setUserData(JSON.parse(userDataStored));
@@ -34,12 +34,12 @@ const Dashboard: React.FC = () => {
     setIsLoggedIn(true);
     setUserData(data);
     localStorage.setItem('userData', JSON.stringify(data));
-    
+
     // Asegurar que el token esté guardado (ya debe estar desde authService.login)
     if (data.token && !localStorage.getItem('authToken')) {
       localStorage.setItem('authToken', data.token);
     }
-    
+
     // Verificar si necesita mostrar alerta de suscripción
     checkSubscriptionAlert(data);
   };
@@ -49,12 +49,12 @@ const Dashboard: React.FC = () => {
     if (data.tipo_dashboard === 'admin-empresa' || data.tipo_dashboard === 'admin-planta') {
       const suscripcion = data.suscripcion;
       const advertencia = data.advertencia;
-      
+
       // Mostrar alerta si:
       // 1. No tiene suscripción
       // 2. Suscripción vencida
       // 3. Empresa suspendida por suscripción
-      if (!suscripcion?.tiene_suscripcion || 
+      if (!suscripcion?.tiene_suscripcion ||
           advertencia?.requiere_accion ||
           (suscripcion && (suscripcion.estado === 'sin_suscripcion' || suscripcion.estado === 'vencida'))) {
         setShowSubscriptionAlert(true);
@@ -68,10 +68,10 @@ const Dashboard: React.FC = () => {
     setUserData(null);
     setShowSubscriptionAlert(false);
     localStorage.removeItem('userData');
-    
+
     // Redirigir al landing page
     navigate('/', { replace: true });
-    
+
     // Forzar recarga para reiniciar completamente la app
     setTimeout(() => {
       window.location.reload();
@@ -96,14 +96,14 @@ const Dashboard: React.FC = () => {
   // Obtener información para la alerta de suscripción
   const getSubscriptionAlertInfo = () => {
     if (!userData?.suscripcion) return null;
-    
+
     const suscripcion = userData.suscripcion;
     const empresaId = userData.empresa_id;
     const empresaNombre = userData.nombre_empresa;
-    
+
     let tipoAlerta: 'sin_suscripcion' | 'vencida' | 'por_vencer' = 'sin_suscripcion';
     let diasRestantes = 0;
-    
+
     if (suscripcion.estado === 'vencida') {
       tipoAlerta = 'vencida';
       diasRestantes = suscripcion.dias_vencida || 0;
@@ -111,7 +111,7 @@ const Dashboard: React.FC = () => {
       tipoAlerta = 'por_vencer';
       diasRestantes = suscripcion.dias_restantes || 0;
     }
-    
+
     return {
       empresaId,
       empresaNombre,
@@ -134,31 +134,31 @@ const Dashboard: React.FC = () => {
     // Validación mejorada del nivel de usuario
     const tipoUsuario = userData.nivel_usuario?.toLowerCase();
     const tipoDashboard = userData.tipo_dashboard?.toLowerCase();
-    
+
     try {
       // Validar tipos conocidos
       if (tipoUsuario === 'superadmin' || tipoUsuario === 'super_admin' || tipoUsuario === 'super-admin') {
         return <SuperAdminDashboard userData={userData} onLogout={handleLogout} />;
-      } 
-      
+      }
+
       if (tipoUsuario === 'admin_empresa' || tipoUsuario === 'admin-empresa' || tipoDashboard === 'admin-empresa') {
         return <EmpresaAdminDashboard userData={userData} />;
-      } 
-      
+      }
+
       if (tipoUsuario === 'admin_planta' || tipoUsuario === 'admin-planta' || tipoDashboard === 'admin-planta') {
         return <PlantaAdminDashboard userData={userData} />;
-      } 
-      
+      }
+
       if (tipoUsuario === 'empleado') {
         return <EmpleadoDashboard userData={userData} />;
       }
-      
+
       // Si llegamos aquí, el tipo no es válido
       console.error('❌ ERROR: Tipo de usuario no reconocido:', {
         nivel_usuario: userData.nivel_usuario,
         tipo_dashboard: userData.tipo_dashboard
       });
-      
+
       return (
         <div className="error-container">
           <h2>Error: Tipo de usuario no válido</h2>
@@ -190,14 +190,14 @@ const Dashboard: React.FC = () => {
       <div className="auth-container">
         {!showRegistro ? (
           <div>
-            <Login 
-              onLogin={handleLoginSuccess} 
+            <Login
+              onLogin={handleLoginSuccess}
             />
           </div>
         ) : (
           <div>
-            <RegistroEmpresa 
-              onRegistroSuccess={handleRegistroSuccess} 
+            <RegistroEmpresa
+              onRegistroSuccess={handleRegistroSuccess}
               onSwitchToLogin={() => setShowRegistro(false)}
             />
           </div>

@@ -6,8 +6,14 @@ import GestionPlantas from './GestionPlantas';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
 
+
+
+
 import EvaluacionesDashboard from './evaluaciones/EvaluacionesDashboard';
-// import AsignacionEvaluaciones from './AsignacionEvaluaciones';
+import AsignacionesDashboard from './evaluaciones/AsignacionesDashboard';
+
+
+
 
 import GestionSuscripcion from './GestionSuscripcion';
 import UsuariosPlantasView from './UsuariosPlantasView';
@@ -149,17 +155,35 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
         return (
           <GestionPuestos empresaId={empresaId || 1} />
         );
+
+
+
+
+
+
+
+
+
       case 'evaluaciones':
         return (
-          <EvaluacionesDashboard
-          />
+          <EvaluacionesDashboard userData={userData} />
         );
-      // case 'asignaciones':
-      //   return (
-      //     <AsignacionEvaluaciones
-      //       userData={userData}
-      //     />
-      //   );
+
+      case 'asignaciones':
+        return (
+          <AsignacionesDashboard userData={userData} />
+        );
+
+
+
+
+
+
+
+
+
+
+
       case 'suscripcion':
         return (
           <GestionSuscripcion

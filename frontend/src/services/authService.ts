@@ -5,31 +5,57 @@ import api from "../api";
 
 // -------------------------------------------------------------------------- //
 
+// Datos mandados a la API para realizar el inicio de sesión.
 export interface LoginData {
-  username: string;
-  password: string;
+    username: string;
+    password: string;
 }
 
+// ! Cuidadito, no se estaban tomando todos los datos relevantes.
 export interface LoginResponse {
-    message: string;
-    usuario: string;
-    nivel_usuario: string;
-    tipo_dashboard: string;
-    permisos: string[];
-    token: string;  // Token de autenticación
-    empresa_id?: number;
-    nombre_empresa?: string;
+    message: string; // Ej. 'Login exitoso'
+    token: string;  // Token de autenticación (usado para peticiones a la API)
+
+    usuario: string; // Nombre del usuario.
+    user_id?: number; // ID del usuario.
+    nivel_usuario: string; // Nivel del usuario.
+    correo: string; // Correo del usuario... o de la empresa.
+
+    nombre_completo: string; // Nombre completo del usuario.
+    profile_id?: number; // ID del perfil del usuario.
+
+    tipo_dashboard: string; // Tipo de dashboard a mostrar.
+
+    // En caso de recibir un usuario admin-planta o admin-empresa.
+    planta_id?: number; // ID de la planta que administra el usuario.
+    nombre_planta?: string; // Nombre de la planta que se adninnistra.
+
+    empresa_id?: number; // ID de la empresa que se administra.
+    nombre_empresa?: string; /// Nombre de la empresa que se administra.
+    empresa_suspendida?: boolean; // Indica si la empresa está suspendida.
+
+    suscripcion: { // Información acerca de la suscripción.
+        tiene_suscripcion: boolean;
+        estado: string;
+        mensaje: string;
+        requiere_pago: boolean;
+        dias_restantes: number;
+        acceso_reportes: boolean;
+    };
+
+    permisos: string[]; // Permisos que posee el usuario.
+
+    advertencia?: { // Informaicón sobre una advertencia dada.
+        tipo: string;
+        mensaje: string;
+        detalles: string;
+    };
 }
-
-// -------------------------------------------------------------------------- //
-
-// Quitar "api/" del contexto ya que api.ts ya lo incluye
-const context = "auth/";
-
 
 // -------------------------------------------------------------------------- //
 
 export const login = async (data: LoginData): Promise<LoginResponse> => {
+
     try { // Limpiar y sanitizar los datos de entrada.
         const cleanData = {
             username: data.username,
@@ -40,28 +66,35 @@ export const login = async (data: LoginData): Promise<LoginResponse> => {
 
         // ------------------------------------------------------------------ //
 
-        const response = await api.post<LoginResponse>(`${context}login/`, cleanData);
+        const response = await api.post<LoginResponse>('auth/login/', cleanData);
         console.log("✅ Respuesta recibida:", response.data);
 
-        // Validar que la respuesta contiene un tipo de usuario válido
+
+        // Validación anterior para el tipo de usuario. Si bien, debería rehacer esta, ...
+        // dado que se toma en varios puntos de la APP, vamo' a dejarlo como esta.
         const tipoUsuario = response.data.nivel_usuario?.toLowerCase();
-        if (!tipoUsuario ||
-            !['superadmin', 'admin_empresa', 'admin-empresa', 'admin_planta', 'admin-planta', 'empleado'].includes(tipoUsuario)) {
+
+        if (!tipoUsuario || ![ // WTF, ¿por qué pusieron 'empleado'? Esos bueyen ni siquiera son usuarios.
+            'superadmin', 'admin_empresa', 'admin-empresa', 'admin_planta', 'admin-planta', 'empleado'
+            ].includes(tipoUsuario)) {
+
             console.warn("⚠️ Tipo de usuario inválido recibido:", tipoUsuario);
             throw new Error(`Tipo de usuario no válido: ${response.data.nivel_usuario}`);
         }
 
-        // Guardar datos de sesión en localStorage
+
+        // Guardado de datos recibidos en el LocalStorage:
         if (response.data.token) {
             localStorage.setItem('authToken', response.data.token);
             localStorage.setItem('userType', tipoUsuario);
-            localStorage.setItem('userData', JSON.stringify(response.data));
+            localStorage.setItem('userData', JSON.stringify(response.data)); // Toda la info. completa.
             console.log("🔑 Token y datos de usuario guardados en localStorage");
-        } else {
-            console.warn("⚠️ No se recibió token en la respuesta");
-        }
+
+        } else { console.warn("⚠️ No se recibió token en la respuesta"); }
 
         return response.data;
+
+
     } catch (error: any) {
         console.error("❌ Error durante el inicio de sesión: ", error);
 
@@ -91,13 +124,16 @@ export const login = async (data: LoginData): Promise<LoginResponse> => {
 
 export const logout = () => {
     console.log("🚪 Cerrando sesión y limpiando datos locales");
+
     localStorage.removeItem('authToken');
-    localStorage.removeItem('token'); // Para compatibilidad
     localStorage.removeItem('userType');
     localStorage.removeItem('userData');
+
+    // Estos no son guardados aquí, quizá lo hacen en otra parte, ni idea.
+    localStorage.removeItem('token'); // Para compatibilidade
     localStorage.removeItem('empresaData');
     localStorage.removeItem('plantaData');
-    localStorage.clear(); // Limpiar todo por seguridad
+    localStorage.clear();
 };
 
 // -------------------------------------------------------------------------- //

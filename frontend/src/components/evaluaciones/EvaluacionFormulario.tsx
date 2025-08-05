@@ -123,7 +123,9 @@ const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
             const { texto_pregunta, tipo_pregunta, es_obligatoria, conjunto_respuestas_id, opciones_nuevas, respuesta_correcta } = preguntaForm;
 
             if (!texto_pregunta) {
-                alert('El texto de la pregunta es obligatorio.');
+                // Reemplazado alert con un mensaje en la consola o un modal personalizado
+                console.error('El texto de la pregunta es obligatorio.');
+                // Aquí podrías mostrar un modal o un mensaje en el UI
                 setIsSaving(false);
                 return;
             }
@@ -136,7 +138,6 @@ const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
                 const newConjuntoData: ConjuntoRespuestasRequest = {
                     nombre: `Respuestas a pregunta: ${texto_pregunta.substring(0, 50)}...`, // Nombre descriptivo
                     descripcion: `Conjunto de respuestas para la pregunta: "${texto_pregunta}"`,
-                    // predefinido: false, // No es predefinido, se crea al momento
                     opciones: opciones_nuevas.map((op, idx) => ({ ...op, numero_orden: idx + 1 })),
                 };
                 const createdConjunto = await evaluacionesAPI.createConjuntoRespuestas(newConjuntoData);
@@ -148,7 +149,9 @@ const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
                     finalRespuestaCorrectaId = foundOption?.opcion_conjunto_id || null;
                 }
             } else if (['Múltiple', 'Escala', 'Bool'].includes(tipo_pregunta) && !finalConjuntoRespuestasId) {
-                alert('Debe seleccionar o crear un conjunto de respuestas para este tipo de pregunta.');
+                // Reemplazado alert con un mensaje en la consola o un modal personalizado
+                console.error('Debe seleccionar o crear un conjunto de respuestas para este tipo de pregunta.');
+                // Aquí podrías mostrar un modal o un mensaje en el UI
                 setIsSaving(false);
                 return;
             } else if (typeof respuesta_correcta === 'number') {
@@ -177,7 +180,7 @@ const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
             onCloseForm(); // Cerrar el formulario de agregar pregunta
         } catch (error) {
             console.error('Error al guardar la pregunta o el conjunto de respuestas:', error);
-            alert('Error al guardar la pregunta. Asegúrese de que todas las opciones tengan texto y que el conjunto de respuestas sea válido.');
+            // Aquí podrías mostrar un modal o un mensaje en el UI
         } finally {
             setIsSaving(false);
         }
@@ -387,7 +390,7 @@ interface EvaluacionFormularioProps {
     evaluacion: Evaluacion | null;
     onClose: () => void;
     tiposEvaluacion: TipoEvaluacion[];
-    user: { rol: string; empresa_id?: number };
+    user: { nivel_usuario: string; empresa_id?: number; user_id?: number };
 }
 
 const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion, onClose, tiposEvaluacion, user }) => {
@@ -447,9 +450,14 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
                         respuesta_correcta: sp.respuesta_correcta,
                     })),
                 })),
+                // Al editar, los IDs de empresa y creado_por ya vienen en el objeto evaluacion
+                // y no necesitan ser enviados en el PUT a menos que se cambien.
+                // Sin embargo, para consistencia con la interfaz, podemos incluirlos si están presentes.
+                empresa_id: evaluacion.empresa_id,
+                creado_por_id: user?.user_id,
             });
         } else {
-            const tipoPorRol = user?.rol === 'superadmin'
+            const tipoPornivel_usuario = user?.nivel_usuario === 'superadmin'
                 ? tiposEvaluacion.find((t: TipoEvaluacion) => t.nombre.toLowerCase() === 'normativa')?.tipo_evaluacion_id
                 : tiposEvaluacion.find((t: TipoEvaluacion) => t.nombre.toLowerCase() === 'interna')?.tipo_evaluacion_id;
 
@@ -461,8 +469,11 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
                 tiempo_limite: null,
                 umbral_aprobacion: null,
                 estado: true,
-                tipo_evaluacion_id: tipoPorRol,
+                tipo_evaluacion_id: tipoPornivel_usuario,
                 secciones: [],
+                // Al crear, estos campos se establecen por el nivel de usuario
+                empresa_id: user?.nivel_usuario !== 'superadmin' ? user?.empresa_id : null,
+                creado_por_id: user?.user_id,
             });
             setPreguntasDeEvaluacion({});
         }
@@ -533,7 +544,7 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
             setShowAddPreguntaFormIndex(null);
         } catch (error) {
             console.error('Error al crear la pregunta y añadirla a la sección:', error);
-            alert('Error al crear la pregunta. Verifique los datos e intente de nuevo.');
+            // Aquí podrías mostrar un modal o un mensaje en el UI
         }
     };
 
@@ -554,26 +565,42 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
         e.preventDefault();
         setLoading(true);
         try {
-            const dataToSend = { ...formData, empresa: user?.empresa_id };
+            // Se crea una copia mutable de formData para añadir los IDs
+            const dataToSubmit: EvaluacionRequest = { ...formData } as EvaluacionRequest;
 
-            const seccionesSinPreguntas = dataToSend.secciones?.some(s => s.es_evaluable && s.preguntas_seccion.length === 0);
+            // Lógica para asignar empresa_id y creado_por_id
+            if (user.nivel_usuario === 'superadmin') {
+                dataToSubmit.creado_por_id = user.user_id;
+                dataToSubmit.empresa_id = null; // Las evaluaciones normativas no están ligadas a una empresa específica
+            } else if (user.nivel_usuario === 'admin-empresa' || user.nivel_usuario === 'admin-planta') {
+                dataToSubmit.creado_por_id = user.user_id;
+                dataToSubmit.empresa_id = user.empresa_id || null; // Asegura que empresa_id se envíe si está disponible
+            }
+            // Si el usuario es de otro tipo o no está autenticado, estos campos pueden ser null o no enviados
+            // según la lógica de tu backend y si son obligatorios o no.
+
+            const seccionesSinPreguntas = dataToSubmit.secciones?.some(s => s.es_evaluable && s.preguntas_seccion.length === 0);
             if (seccionesSinPreguntas) {
-                alert('Las secciones evaluables deben tener al menos una pregunta.');
+                // Reemplazado alert con un mensaje en la consola o un modal personalizado
+                console.error('Las secciones evaluables deben tener al menos una pregunta.');
+                // Aquí podrías mostrar un modal o un mensaje en el UI
                 setLoading(false);
                 return;
             }
 
             if (evaluacion && evaluacion.evaluacion_id) {
-                await evaluacionesAPI.updateEvaluacion(evaluacion.evaluacion_id, dataToSend as EvaluacionRequest);
-                alert('Evaluación actualizada con éxito.');
+                await evaluacionesAPI.updateEvaluacion(evaluacion.evaluacion_id, dataToSubmit);
+                // Reemplazado alert con un mensaje en la consola o un modal personalizado
+                console.log('Evaluación actualizada con éxito.');
             } else {
-                await evaluacionesAPI.createEvaluacion(dataToSend as EvaluacionRequest);
-                alert('Evaluación creada con éxito.');
+                await evaluacionesAPI.createEvaluacion(dataToSubmit);
+                // Reemplazado alert con un mensaje en la consola o un modal personalizado
+                console.log('Evaluación creada con éxito.');
             }
             onClose();
         } catch (error) {
             console.error('Error al guardar la evaluación:', error);
-            alert('Error al guardar la evaluación. Verifique los datos e intente de nuevo.');
+            // Aquí podrías mostrar un modal o un mensaje en el UI
         } finally {
             setLoading(false);
         }
@@ -627,11 +654,11 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
                             </div>
                             <div className="form-group">
                                 <label htmlFor="tiempoLimite">Tiempo Límite (minutos)</label>
-                                <input type="number" id="tiempoLimite" value={formData.tiempo_limite || ''} onChange={(e) => handleInputChange(e, 'tiempo_limite')} />
+                                <input type="number" id="tiempoLimite" min={0} max={240} value={formData.tiempo_limite || ''} onChange={(e) => handleInputChange(e, 'tiempo_limite')} />
                             </div>
                             <div className="form-group">
                                 <label htmlFor="umbralAprobacion">Umbral de Aprobación (%)</label>
-                                <input type="number" id="umbralAprobacion" value={formData.umbral_aprobacion || ''} onChange={(e) => handleInputChange(e, 'umbral_aprobacion')} />
+                                <input type="number" id="umbralAprobacion" min={0} max={100} value={formData.umbral_aprobacion || ''} onChange={(e) => handleInputChange(e, 'umbral_aprobacion')} />
                             </div>
                             <div className="form-group boolean-toggle">
                                 <label htmlFor="estadoEvaluacion">Estado</label>

@@ -1,56 +1,39 @@
 
+// -------------------------------------------------------------------------- //
+
 import React, { useState, useEffect } from 'react';
 import evaluacionesAPI, { Evaluacion, TipoEvaluacion } from '../../services/evaluacionesService';
 
 import EvaluacionFormulario from './EvaluacionFormulario';
-import AsignacionesModal from './AsignacionesModal';
+// import AsignacionesModal from './AsignacionesModal';
+import EvaluacionPrevia from './EvaluacionPrevia';
 
-// 👉 Importa el archivo CSS que acabas de crear
+
 import './EvaluacionesDashboard.css';
 
 // -------------------------------------------------------------------------- //
 
 interface UserData {
-    rol: string;
-    empresa?: number;
+    usuario: string;
+    user_id?: number;
+    nivel_usuario: string;
+
+    empresa_id?: number;
+    nombre_empresa?: string;
+    planta_id?: number;
 }
 
-const EvaluacionesDashboard: React.FC = () => {
+// -------------------------------------------------------------------------- //
+
+const EvaluacionesDashboard: React.FC<{ userData: UserData | null }> = ({ userData }) => {
     const [evaluaciones, setEvaluaciones] = useState<Evaluacion[]>([]);
     const [tiposEvaluacion, setTiposEvaluacion] = useState<TipoEvaluacion[]>([]);
     const [selectedEvaluacion, setSelectedEvaluacion] = useState<Evaluacion | null>(null);
     const [showForm, setShowForm] = useState(false);
-    const [showAsignaciones, setShowAsignaciones] = useState(false);
+    // const [showAsignaciones, setShowAsignaciones] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [showPreview, setShowPreview] = useState(false);
 
-    const [userData, setUserData] = useState<UserData | null>(null);
-
-    // ---------------------------------------------------------------------- //
-    // Nuevo useEffect para obtener los datos del usuario de localStorage
-    useEffect(() => {
-        console.log("🔄 EvaluacionesDashboard: Intentando obtener userData de localStorage...");
-        const storedUserData = localStorage.getItem('userData');
-        if (storedUserData) {
-            try {
-                const data = JSON.parse(storedUserData);
-                // Verifica el campo del rol, que puede ser 'rol' o 'nivel_usuario'
-                const userRole = data.rol || data.nivel_usuario;
-                const normalizedUserData = {
-                    rol: userRole?.replace('_', '-').toLowerCase(),
-                    empresa: data.empresa,
-                };
-                setUserData(normalizedUserData);
-                console.log("✅ EvaluacionesDashboard: userData cargado exitosamente:", normalizedUserData);
-            } catch (error) {
-                console.error("❌ Error al procesar los datos de usuario de localStorage:", error);
-                setUserData(null);
-            }
-        } else {
-            console.log("⚠️ EvaluacionesDashboard: No se encontró userData en localStorage.");
-            setUserData(null);
-            setLoading(false); // Detener el loading si no hay datos de usuario
-        }
-    }, []); // Se ejecuta solo una vez al montar el componente
 
     // ---------------------------------------------------------------------- //
 
@@ -68,24 +51,27 @@ const EvaluacionesDashboard: React.FC = () => {
 
     const fetchEvaluaciones = async () => {
         setLoading(true);
+
         try {
             const response = await evaluacionesAPI.getEvaluaciones();
             const allEvaluaciones = response.data;
 
             if (userData) {
                 const filteredEvaluaciones = allEvaluaciones.filter(evaluacion => {
-                    // Lógica de filtrado
-                    if (userData.rol === 'superadmin') {
+
+                    if (userData.nivel_usuario === 'superadmin') {
                         return evaluacion.tipo_evaluacion === 'Normativa';
                     }
-                    if (userData.rol === 'admin-empresa' || userData.rol === 'admin-planta') {
+
+                    if (userData.nivel_usuario === 'admin-empresa' || userData.nivel_usuario === 'admin-planta') {
                         return (
-                            evaluacion.tipo_evaluacion === 'Normativa' ||
-                            (evaluacion.tipo_evaluacion === 'Interna' && evaluacion.empresa === userData.empresa)
+                            evaluacion.tipo_evaluacion === 'Normativa' || (evaluacion.tipo_evaluacion === 'Interna' &&
+                                evaluacion.empresa_nombre === userData.nombre_empresa)
                         );
                     }
                     return false;
                 });
+
                 setEvaluaciones(filteredEvaluaciones);
             } else {
                 setEvaluaciones(allEvaluaciones);
@@ -122,11 +108,11 @@ const EvaluacionesDashboard: React.FC = () => {
 
     const handleEdit = (evaluacion: Evaluacion) => {
         if (!userData) return;
-        if (userData.rol === 'superadmin' && evaluacion.tipo_evaluacion !== 'Normativa') {
+        if (userData.nivel_usuario === 'superadmin' && evaluacion.tipo_evaluacion !== 'Normativa') {
             alert('Usted solamente posee permisos para editar evaluaciones normativas');
             return;
         }
-        if ((userData.rol === 'admin-empresa' || userData.rol === 'admin-planta') && evaluacion.tipo_evaluacion === 'Normativa') {
+        if ((userData.nivel_usuario === 'admin-empresa' || userData.nivel_usuario === 'admin-planta') && evaluacion.tipo_evaluacion === 'Normativa') {
             alert('Usted no posee permisos para editar evaluaciones normativas.');
             return;
         }
@@ -154,15 +140,22 @@ const EvaluacionesDashboard: React.FC = () => {
 
     // ---------------------------------------------------------------------- //
 
-    const handleAsignar = (evaluacion: Evaluacion) => {
-        if (!userData) return;
-        if (userData.rol === 'superadmin') {
-            alert('Solamente las empresas clientes poseen permiso para realizar asignaciones.');
-            return;
-        }
+    const handlePreview = (evaluacion: Evaluacion) => {
         setSelectedEvaluacion(evaluacion);
-        setShowAsignaciones(true);
+        setShowPreview(true);
     };
+
+    // ---------------------------------------------------------------------- //
+
+    // const handleAsignar = (evaluacion: Evaluacion) => {
+    //     if (!userData) return;
+    //     if (userData.nivel_usuario === 'superadmin') {
+    //         alert('Solamente las empresas clientes poseen permiso para realizar asignaciones.');
+    //         return;
+    //     }
+    //     setSelectedEvaluacion(evaluacion);
+    //     setShowAsignaciones(true);
+    // };
 
     // ---------------------------------------------------------------------- //
 
@@ -171,7 +164,7 @@ const EvaluacionesDashboard: React.FC = () => {
             <h2>Gestión de evaluaciones</h2>
             <button onClick={handleCreate}
                 className="btn-primary"
-                disabled={!userData || (userData.rol !== 'superadmin' && userData.rol !== 'admin-empresa' && userData.rol !== 'admin-planta')}
+                disabled={!userData || (userData.nivel_usuario !== 'superadmin' && userData.nivel_usuario !== 'admin-empresa' && userData.nivel_usuario !== 'admin-planta')}
                 >➕ Crear evaluación
             </button>
 
@@ -197,8 +190,8 @@ const EvaluacionesDashboard: React.FC = () => {
                                 <button onClick={() => handleEdit(evaluacion)}
                                     className="btn-secondary"
                                     disabled={
-                                        (userData?.rol === 'superadmin' && evaluacion.tipo_evaluacion !== 'Normativa') ||
-                                        ((userData?.rol === 'admin-empresa' || userData?.rol === 'admin-planta') && evaluacion.tipo_evaluacion === 'Normativa')
+                                        (userData?.nivel_usuario === 'superadmin' && evaluacion.tipo_evaluacion !== 'Normativa') ||
+                                        ((userData?.nivel_usuario === 'admin-empresa' || userData?.nivel_usuario === 'admin-planta') && evaluacion.tipo_evaluacion === 'Normativa')
                                     }>✏️ Editar
                                 </button>
 
@@ -207,10 +200,10 @@ const EvaluacionesDashboard: React.FC = () => {
                                     className={`btn-${evaluacion.estado ? 'danger' : 'success'}`}
                                     disabled={
                                         // Superadmin no puede activar evaluaciones que no sean Normativa
-                                        (userData?.rol === 'superadmin' && evaluacion.tipo_evaluacion !== 'Normativa') ||
+                                        (userData?.nivel_usuario === 'superadmin' && evaluacion.tipo_evaluacion !== 'Normativa') ||
 
                                         // Admins no pueden DESACTIVAR evaluaciones Normativa
-                                        ((userData?.rol === 'admin-empresa' || userData?.rol === 'admin-planta') &&
+                                        ((userData?.nivel_usuario === 'admin-empresa' || userData?.nivel_usuario === 'admin-planta') &&
                                         evaluacion.tipo_evaluacion === 'Normativa' &&
                                         evaluacion.estado === true)
                                     }
@@ -218,10 +211,13 @@ const EvaluacionesDashboard: React.FC = () => {
                                     {evaluacion.estado ? 'Desactivar' : 'Activar'}
                                 </button>
 
+                                <button onClick={() => handlePreview(evaluacion)} className="btn-info">
+                                    👁️ Vista Previa
+                                </button>
 
-                                {(userData?.rol === 'admin-empresa' || userData?.rol === 'admin-planta') && (
+                                {/* {(userData?.nivel_usuario === 'admin-empresa' || userData?.nivel_usuario === 'admin-planta') && (
                                     <button onClick={() => handleAsignar(evaluacion)} className="btn-info">👥 Asignar evaluación</button>
-                                )}
+                                )} */}
                             </div>
                         </li>
                     ))}
@@ -240,10 +236,17 @@ const EvaluacionesDashboard: React.FC = () => {
                 />
             )}
 
-            {showAsignaciones && selectedEvaluacion && (
+            {/* {showAsignaciones && selectedEvaluacion && (
                 <AsignacionesModal
                     evaluacion={selectedEvaluacion}
                     onClose={() => setShowAsignaciones(false)}
+                />
+            )} */}
+
+            {showPreview && selectedEvaluacion && (
+                <EvaluacionPrevia
+                    evaluacion={selectedEvaluacion}
+                    onClose={() => setShowPreview(false)}
                 />
             )}
         </div>

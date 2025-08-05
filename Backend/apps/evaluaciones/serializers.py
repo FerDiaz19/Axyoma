@@ -190,12 +190,13 @@ class AsignacionEmpleadoSerializer(serializers.ModelSerializer):
     class Meta:
         model = AsignacionEmpleado
         fields = [
-            'asignacion_empleado_id', 'empleado', 'empleado_nombre', 'status',
+            'asignacion_empleado_id', 'empleado', 'empleado_nombre', 'status', 'token_acceso',
             'empleado_puesto', 'empleado_puesto_id', 'empleado_departamento', 'empleado_departamento_id',
             'empleado_planta', 'empleado_planta_id', 'empleado_empresa', 'empleado_empresa_id'
 
         ]
         read_only_fields = [
+            'token_acceso',
             'asignacion_empleado_id',
             'empleado_nombre',
             'empleado_puesto',
