@@ -3,6 +3,7 @@
 
 ''' Vistas para las entidades relacionadas a las evaluaciones (Ed Rubio) '''
 
+
 from .models import *
 from .serializers import *
 
@@ -33,11 +34,25 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
     def desactivar(self, request, pk=None):
         try:
             evaluacion = self.get_object()
-            evaluacion.estado = False
-            evaluacion.save()
+
+            with transaction.atomic():
+                evaluacion.estado = False
+                evaluacion.save() # Se desactiva la evaluación.
+
+                # Y, una cosita que había olvidado, era el desactivar las asignaciones dadas.
+                asignaciones_relacionadas = Asignacion.objects.filter(evaluacion=evaluacion, status=True)
+
+                for asignacion in asignaciones_relacionadas:
+                    asignacion.status = False
+                    asignacion.save()
+
+                    AsignacionEmpleado.objects.filter(asignacion=asignacion).update(status='Desactivada')
+
             return Response({'status': 'La evaluación ha sido desactivada.'}, status=status.HTTP_200_OK)
         except Evaluacion.DoesNotExist:
             return Response({'error': 'Owh, parece que la evaluación no se encuentra más en la base de datos.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as error:
+            return Response({'error': f'Ha ocurrido un error al desactivar la evaluación: {str(error)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # ------------------------------------------------------------------------ #
 
@@ -45,11 +60,31 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
     def activar(self, request, pk=None):
         try:
             evaluacion = self.get_object()
-            evaluacion.estado = True
-            evaluacion.save()
-            return Response({'status': 'La evaluación ha sido activada.'}, status=status.HTTP_200_OK)
+
+            with transaction.atomic():
+                evaluacion.estado = True
+                evaluacion.save() # Activamo' la evaluación.
+
+                # Junto a las asignaciones relacionadas.
+                asignaciones_relacionadas = Asignacion.objects.filter(evaluacion=evaluacion, status=False)
+
+                for asignacion in asignaciones_relacionadas:
+
+                    # Solo reactiva si la fecha de término no ha sido excedida.
+                    if asignacion.fecha_fin >= timezone.now():
+                        asignacion.status = True
+                        asignacion.save()
+
+                        AsignacionEmpleado.objects.filter(
+                            asignacion=asignacion,
+                            status__in=['Desactivada', 'Expirada']
+                        ).update(status='Pendiente')
+
+            return Response({'status': 'La evaluación y sus asignaciones relacionadas han sido activadas.'}, status=status.HTTP_200_OK)
         except Evaluacion.DoesNotExist:
             return Response({'error': 'Owh, parece que la evaluación no se encuentra más en la base de datos.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as error:
+            return Response({'error': f'Ha ocurrido un error al activar la evaluación: {str(error)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 # ---------------------------------------------------------------------------- #
 
@@ -82,6 +117,14 @@ class AsignacionViewSet(viewsets.ModelViewSet):
             A mi parecer, la manera más agradable de realizar las asignaciones sería, no uno a uno,
             sino más bien por conjuntos, sea de empleados, plantas, departamentos o puestos.
         '''
+
+        evaluacion_relacionada = asignacion.evaluacion
+        if not evaluacion_relacionada.estado:
+            return Response({ 'error':
+                'Dado el estado inactivo de la evaluación, no se ha podidod llevar a cabo el proceso de asgnación.'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
+
         empleado_ids = request.data.get('empleado_ids', [])
         planta_ids = request.data.get('planta_ids', [])
         puesto_ids = request.data.get('puesto_ids', [])
@@ -164,6 +207,13 @@ class AsignacionViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'])
     def activar_asignacion(self, request, pk=None):
         asignacion = self.get_object()
+
+        evaluacion_relacionada = asignacion.evaluacion
+        if not evaluacion_relacionada.estado:
+            return Response({ 'error':
+                'Dado el estado inactivo de la evaluación, no se ha podidod llevar a cabo el proceso de asgnación.'},
+                    status=status.HTTP_400_BAD_REQUEST)
+
 
         # Mucho cuida'o con intentar reactivar una asignación que se encuentra 'expirada'.
         if asignacion.fecha_fin < timezone.now():

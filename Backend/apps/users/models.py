@@ -323,7 +323,7 @@ class Puesto(models.Model):
         return self.departamento.planta
 
     def __str__(self):
-        return f"{self.nombre} - {self.departamento.nombre}"
+        return f"{self.nombre} ({self.departamento.nombre}) : {self.empresa.nombre} ({self.departamento.planta.nombre})"
 
 # ---------------------------------------------------------------------------- #
 

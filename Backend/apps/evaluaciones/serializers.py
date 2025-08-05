@@ -5,6 +5,8 @@
 
 
 from .models import *
+from apps.users.models import Empresa, PerfilUsuario
+
 from rest_framework import serializers
 
 # ---------------------------------------------------------------------------- #
@@ -100,17 +102,29 @@ class SeccionEvalSerializer(serializers.ModelSerializer):
 
 class EvaluacionSerializer(serializers.ModelSerializer):
     secciones = SeccionEvalSerializer(many=True, required=False)
+
     tipo_evaluacion = serializers.CharField(source='tipo_evaluacion.nombre', read_only=True)
     tipo_evaluacion_id = serializers.PrimaryKeyRelatedField(
-        queryset=TipoEvaluacion.objects.all(), source='tipo_evaluacion'
-    )
+        queryset=TipoEvaluacion.objects.all(), source='tipo_evaluacion')
+
+    empresa_nombre = serializers.CharField(source='empresa.nombre', read_only=True, allow_null=True)
+    empresa_id = serializers.PrimaryKeyRelatedField(queryset=Empresa.objects.all(),
+        source='empresa', write_only=True, allow_null=True, required=False)
+
+    creado_por_nombre = serializers.CharField(source='creado_por.username', read_only=True, allow_null=True)
+    creado_por_id = serializers.PrimaryKeyRelatedField(queryset=PerfilUsuario.objects.all(),
+        source='creado_por', write_only=True, allow_null=True, required=False)
+
 
     class Meta:
         model = Evaluacion
-        fields = [ 'evaluacion_id', 'titulo', 'descripcion', 'instrucciones', 'contenido_informativo', 'tiempo_limite',
-            'umbral_aprobacion', 'estado', 'tipo_evaluacion', 'tipo_evaluacion_id', 'secciones' ]
+        fields = [
+            'evaluacion_id', 'titulo', 'descripcion', 'instrucciones', 'contenido_informativo', 'tiempo_limite',
+            'umbral_aprobacion', 'estado', 'tipo_evaluacion', 'tipo_evaluacion_id', 'secciones',
+            'empresa_nombre', 'empresa_id', 'creado_por_nombre', 'creado_por_id' ]
 
         read_only_fields = [ 'evaluacion_id' ]
+
 
     def create(self, validated_data):
         secciones_data = validated_data.pop('secciones', [])
@@ -131,6 +145,7 @@ class EvaluacionSerializer(serializers.ModelSerializer):
                 )
 
         return evaluacion
+
 
     def update(self, instance, validated_data):
         secciones_data = validated_data.pop('secciones', None)
@@ -160,10 +175,39 @@ class EvaluacionSerializer(serializers.ModelSerializer):
 class AsignacionEmpleadoSerializer(serializers.ModelSerializer):
     empleado_nombre = serializers.CharField(source='empleado.nombre_completo', read_only=True)
 
+    empleado_puesto = serializers.CharField(source='empleado.puesto.nombre', read_only=True)
+    empleado_puesto_id = serializers.IntegerField(source='empleado.puesto.puesto_id', read_only=True)
+
+    empleado_departamento = serializers.CharField(source='empleado.departamento.nombre', read_only=True)
+    empleado_departamento_id = serializers.IntegerField(source='empleado.departamento.departamento_id', read_only=True)
+
+    empleado_planta = serializers.CharField(source='empleado.planta.nombre', read_only=True)
+    empleado_planta_id = serializers.IntegerField(source='empleado.planta.planta_id', read_only=True)
+
+    empleado_empresa = serializers.CharField(source='empleado.empresa.nombre', read_only=True)
+    empleado_empresa_id = serializers.IntegerField(source='empleado.empresa.empresa_id', read_only=True)
+
     class Meta:
         model = AsignacionEmpleado
-        fields = [ 'asignacion_empleado_id', 'empleado', 'empleado_nombre', 'status' ]
-        read_only_fields = [ 'asignacion_empleado_id', 'status', 'empleado_nombre' ]
+        fields = [
+            'asignacion_empleado_id', 'empleado', 'empleado_nombre', 'status',
+            'empleado_puesto', 'empleado_puesto_id', 'empleado_departamento', 'empleado_departamento_id',
+            'empleado_planta', 'empleado_planta_id', 'empleado_empresa', 'empleado_empresa_id'
+
+        ]
+        read_only_fields = [
+            'asignacion_empleado_id',
+            'empleado_nombre',
+            'empleado_puesto',
+            'empleado_puesto_id',
+            'empleado_departamento',
+            'empleado_departamento_id',
+            'empleado_planta',
+            'empleado_planta_id',
+            'empleado_empresa',
+            'empleado_empresa_id',
+            'status'
+        ]
 
 # ---------------------------------------------------------------------------- #
 

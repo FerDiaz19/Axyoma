@@ -21,7 +21,7 @@ from rest_framework.decorators import action, api_view, permission_classes
 
 
 from apps.users.models import *
-from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion
+from apps.subscriptions.models import *
 
 from .serializers import (
     LoginSerializer, EmpresaRegistroSerializer,
@@ -843,6 +843,32 @@ class PlantaViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Planta no encontrada'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+
+
+    @action(detail=False, methods=['get'], url_path='listado-plantas')
+    def listado_plantas(self, request):
+        try:
+            queryset = Planta.objects.all()
+            serializer = PlantaSerializer(queryset, many=True)
+
+            return Response(serializer.data)
+        except Exception as e:
+            import traceback
+            return Response({
+                'error': f'Error: {str(e)}',
+                'trace': traceback.format_exc()
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
 
     @action(detail=False, methods=['get'], url_path='usuarios-planta')
     def usuarios_planta(self, request):
