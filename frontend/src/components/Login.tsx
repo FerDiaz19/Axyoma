@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { login } from '../services/authService';
 import { findBackendServer } from '../utils/serverCheck';
+import logoImage from '../utils/logo.png';
 import '../css/Login.css';
 
 interface LoginProps {
@@ -107,11 +108,17 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
   return (
     <div className="login-container">      {/* Lado izquierdo - Imagen */}
-      <div className="login-left">
-        <div className="login-image-section">
+      <div className="login-left">        <div className="login-image-section">
           <div className="image-placeholder">
             <div className="brand-logo">
-              <h1>AXYOMA</h1>
+              <div className="logo-container">
+                <img 
+                  src={logoImage} 
+                  alt="AXYOMA Logo" 
+                  className="logo-icon"
+                />
+                <h1>AXYOMA</h1>
+              </div>
             </div>
           </div>
         </div>
