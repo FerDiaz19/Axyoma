@@ -146,11 +146,12 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   <span>Asignar Evaluaciones</span>
                 </button>
               </div>
-            </div>
-          </div>        );
+            </div>          </div>
+        );
       case 'graficas':
         return (
           <div className="welcome-section">
+            {/* Hero Banner PRINCIPAL al inicio */}
             <div className="hero-banner">
               <h2>
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
@@ -159,75 +160,189 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                 Gráficas y Reportes
               </h2>
               <p>Visualiza datos y métricas de tu empresa con gráficos interactivos</p>
+            </div>            {/* Gráficas Compactas en el centro */}
+            <div className="evaluaciones-charts-section">
+              {/* Container para gráficas en grid horizontal */}
+              <div className="charts-grid">
+                {/* Gráfica de Barras - Compacta */}
+                <div className="chart-container">
+                  <div className="chart-header">
+                    <h4>Resultados de Evaluaciones NOM-035</h4>
+                    <p className="chart-subtitle">Puntajes por empleado</p>
+                  </div>
+                  <div className="bar-chart">
+                    <div className="chart-data">
+                      <div className="bar-item">
+                        <div className="bar-info">
+                          <span className="employee-name">Amieva Ángel</span>
+                          <span className="department">Desarrollo</span>
+                        </div>                        <div className="bar-visual">
+                          <div className="bar-background">
+                            <div className="bar-fill failed" style={{width: '35%', '--width': '35%'} as any}></div>
+                          </div>
+                          <span className="score">35/100</span>
+                        </div>
+                      </div>
+                      <div className="bar-item">
+                        <div className="bar-info">
+                          <span className="employee-name">María González</span>
+                          <span className="department">RRHH</span>
+                        </div>                        <div className="bar-visual">
+                          <div className="bar-background">
+                            <div className="bar-fill passed" style={{width: '78%', '--width': '78%'} as any}></div>
+                          </div>
+                          <span className="score">78/100</span>
+                        </div>
+                      </div>
+                      <div className="bar-item">
+                        <div className="bar-info">
+                          <span className="employee-name">Carlos Ruiz</span>
+                          <span className="department">Producción</span>
+                        </div>                        <div className="bar-visual">
+                          <div className="bar-background">
+                            <div className="bar-fill warning" style={{width: '62%', '--width': '62%'} as any}></div>
+                          </div>
+                          <span className="score">62/100</span>
+                        </div>
+                      </div>
+                      <div className="bar-item">
+                        <div className="bar-info">
+                          <span className="employee-name">Ana López</span>
+                          <span className="department">Calidad</span>
+                        </div>                        <div className="bar-visual">
+                          <div className="bar-background">
+                            <div className="bar-fill passed" style={{width: '85%', '--width': '85%'} as any}></div>
+                          </div>
+                          <span className="score">85/100</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gráfica de Pastel - Compacta */}
+                <div className="chart-container">
+                  <div className="chart-header">
+                    <h4>Distribución de Resultados</h4>
+                    <p className="chart-subtitle">Estado general de evaluaciones</p>
+                  </div>
+                  <div className="pie-chart-section">
+                    <div className="pie-chart">
+                      <div className="pie-slice failed" style={{
+                        '--percentage': '25',
+                        '--rotation': '0deg'
+                      } as any}></div>
+                      <div className="pie-slice warning" style={{
+                        '--percentage': '25', 
+                        '--rotation': '90deg'
+                      } as any}></div>
+                      <div className="pie-slice passed" style={{
+                        '--percentage': '50',
+                        '--rotation': '180deg'
+                      } as any}></div>
+                    </div>
+                    <div className="pie-legend">
+                      <div className="legend-item">
+                        <span className="legend-color failed"></span>
+                        <span className="legend-text">Crítico (25%)</span>
+                      </div>
+                      <div className="legend-item">
+                        <span className="legend-color warning"></span>
+                        <span className="legend-text">Medio (25%)</span>
+                      </div>
+                      <div className="legend-item">
+                        <span className="legend-color passed"></span>
+                        <span className="legend-text">Bajo (50%)</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Estadísticas Rápidas */}
+              <div className="quick-stats">
+                <div className="stat-item">
+                  <div className="stat-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                      <path d="M10 9a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM6 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM1.49 15.326a.78.78 0 0 1-.358-.442 3 3 0 0 1 4.308-3.516 6.484 6.484 0 0 0-1.905 3.959c-.023.222-.014.442.025.654a4.97 4.97 0 0 1-2.07-.655ZM16.44 15.98a4.97 4.97 0 0 0 2.07-.654.78.78 0 0 0 .357-.442 3 3 0 0 0-4.308-3.517 6.484 6.484 0 0 1 1.907 3.96 2.32 2.32 0 0 1-.026.654ZM18 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM5.304 16.19a.844.844 0 0 1-.277-.71 5 5 0 0 1 9.947 0 .843.843 0 0 1-.277.71A6.975 6.975 0 0 1 10 18a6.974 6.974 0 0 1-4.696-1.81Z" />
+                    </svg>
+                  </div>
+                  <div className="stat-content">
+                    <span className="stat-number">32</span>
+                    <span className="stat-label">Completadas</span>
+                  </div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.236 4.53L7.53 10.06a.75.75 0 0 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="stat-content">
+                    <span className="stat-number">75%</span>
+                    <span className="stat-label">Aprobación</span>
+                  </div>
+                </div>
+                <div className="stat-item">
+                  <div className="stat-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                      <path fillRule="evenodd" d="M1 6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v8a3 3 0 0 1-3 3H4a3 3 0 0 1-3-3V6Zm4 1.5a2 2 0 1 1 4 0 2 2 0 0 1-4 0Zm2 3a4 4 0 0 0-3.665 2.395.75.75 0 0 0 .416 1A8.98 8.98 0 0 0 7 14.5a8.98 8.98 0 0 0 3.249-.604.75.75 0 0 0 .416-1.001A4.001 4.001 0 0 0 7 10.5Zm5-3.75a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Zm0 2.5a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="stat-content">
+                    <span className="stat-number">67</span>
+                    <span className="stat-label">Promedio</span>
+                  </div>
+                </div>
+              </div>
             </div>
-              <div className="dashboards-grid">
-              <div className="dashboard-card">
+
+            {/* Solo UNA Dashboard Card al final - compacta */}
+            <div className="dashboards-grid-single">
+              {/* <div className="dashboard-card">
                 <div className="dashboard-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
-                    <path fillRule="evenodd" d="M2 3a1 1 0 0 0-1 1v1a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H2Zm0 4.5h4v9a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-9h4v9a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-9H18a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v1.5a1 1 0 0 0 1 1Z" clipRule="evenodd" />
+                    <path d="M15.5 2A1.5 1.5 0 0 1 17 3.5v13a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 1 16.5v-13A1.5 1.5 0 0 1 2.5 2h13ZM4 6a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1V7a1 1 0 0 0-1-1H4Zm4-2a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1H8Zm4 4a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1V9a1 1 0 0 0-1-1h-1Z" />
                   </svg>
                 </div>
                 <div className="dashboard-content">
-                  <h3>Gráficas Generales</h3>
-                  <p className="dashboard-description">Métricas y KPIs empresariales visualizados</p>
+                  <h3>Explorar Más Gráficas</h3>
+                  <p className="dashboard-description">Accede a análisis detallados y reportes avanzados</p>
                   <p className="dashboard-status">Próximamente disponible</p>
                 </div>
-              </div>
-              
-              <div className="dashboard-card">
-                <div className="dashboard-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
-                    <path d="M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM14.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z" />
-                  </svg>
-                </div>
-                <div className="dashboard-content">
-                  <h3>Análisis de Personal</h3>
-                  <p className="dashboard-description">Gráficos de recursos humanos y rendimiento</p>
-                  <p className="dashboard-status">En desarrollo</p>
-                </div>
-              </div>
-              
-              <div className="dashboard-card">
-                <div className="dashboard-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
-                    <path fillRule="evenodd" d="M4.25 2A2.25 2.25 0 0 0 2 4.25v2.5A2.25 2.25 0 0 0 4.25 9h2.5A2.25 2.25 0 0 0 9 6.75v-2.5A2.25 2.25 0 0 0 6.75 2h-2.5Zm0 9A2.25 2.25 0 0 0 2 13.25v2.5A2.25 2.25 0 0 0 4.25 18h2.5A2.25 2.25 0 0 0 9 15.75v-2.5A2.25 2.25 0 0 0 6.75 11h-2.5Zm9-9A2.25 2.25 0 0 0 11 4.25v2.5A2.25 2.25 0 0 0 13.25 9h2.5A2.25 2.25 0 0 0 18 6.75v-2.5A2.25 2.25 0 0 0 15.75 2h-2.5Zm0 9A2.25 2.25 0 0 0 11 13.25v2.5A2.25 2.25 0 0 0 13.25 18h2.5A2.25 2.25 0 0 0 18 15.75v-2.5A2.25 2.25 0 0 0 15.75 11h-2.5Z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="dashboard-content">
-                  <h3>Reportes Operacionales</h3>
-                  <p className="dashboard-description">Gráficas de plantas y producción</p>
-                  <p className="dashboard-status">Planificado</p>
-                </div>
-              </div>
-              
-              <div className="dashboard-card">
-                <div className="dashboard-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
-                    <path fillRule="evenodd" d="M15.988 3.012A2.25 2.25 0 0 1 18 5.25v6.5A2.25 2.25 0 0 1 15.75 14H13.5V7A2.5 2.5 0 0 0 11 4.5H8.128a2.252 2.252 0 0 1 1.884-1.488A2.25 2.25 0 0 1 12.25 1h1.5c.78 0 1.467.397 1.871 1.002l.367.01ZM11.5 6.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75Zm0 2.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
-                    <path d="M2 7a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7Zm2 3.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm0 2.5a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Z" />
-                  </svg>
-                </div>
-                <div className="dashboard-content">
-                  <h3>Resultados de Evaluaciones</h3>
-                  <p className="dashboard-description">Gráficos de progreso y resultados NOM</p>
-                  <p className="dashboard-status">En desarrollo</p>
-                </div>
-              </div>
+              </div> */}
             </div>
+
+            {/* 
+            ============================
+            INTEGRATION NOTES FOR DEVELOPERS
+            ============================
             
-            <div className="dashboard-info">
-              <div className="info-banner">
-                <h3>🔧 Sección en Desarrollo</h3>
-                <p>Esta sección de gráficas se está desarrollando activamente. Pronto contarás con:</p>
-                <ul>
-                  <li>✅ Gráficos interactivos en tiempo real</li>
-                  <li>📈 Visualizaciones personalizables por área</li>
-                  <li>📊 Reportes exportables en PDF y Excel</li>
-                  <li>🎯 Métricas específicas por departamento</li>
-                  <li>📅 Análisis de tendencias históricas</li>
-                </ul>
-              </div>
-            </div>
+            API Endpoints for real data integration:
+            
+            1. EVALUATION RESULTS CHART:
+               - Endpoint: /api/appraisal/resultados/
+               - Method: GET
+               - Expected format: Array of {empleado_nombre, departamento, puntaje_total}
+               - Integration: Replace hardcoded data in chart-data div
+            
+            2. PIE CHART DATA:
+               - Endpoint: /api/appraisal/estadisticas/
+               - Method: GET  
+               - Expected format: {critico: number, medio: number, bajo: number}
+               - Integration: Calculate percentages and update pie slices
+            
+            3. QUICK STATS:
+               - Endpoint: /api/appraisal/resumen/
+               - Method: GET
+               - Expected format: {completadas: number, aprobacion_porcentaje: number, promedio: number}
+               - Integration: Update stat-number spans dynamically
+            
+            4. FUTURE CHARTS:
+               - Add onClick handlers to dashboard-card
+               - Navigate to specific chart components
+               - Implement filters and date ranges
+            */}
           </div>
         );
       case 'empleados':
@@ -257,9 +372,12 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   <h3>Total Plantas</h3>
                   <p className="summary-number">3</p>
                 </div>
-              </div>
-              <div className="summary-card">
-                <div className="summary-icon">✅</div>
+              </div>              <div className="summary-card">
+                <div className="summary-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                    <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
+                  </svg>
+                </div>
                 <div className="summary-content">
                   <h3>Plantas Activas</h3>
                   <p className="summary-number">2</p>
@@ -284,7 +402,12 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   <h4>Planta Norte</h4>
                   <span className="status-badge active">Activa</span>
                 </div>                <div className="plant-info">
-                  <p className="plant-location">📍 Monterrey, Nuevo León</p>
+                  <p className="plant-location">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
+                      <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 0 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.505l.041.018.006.003.002.001ZM10 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
+                    </svg>
+                    Monterrey, Nuevo León
+                  </p>
                   <p className="plant-employees">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
                       <path d="M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM14.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z" />
@@ -309,7 +432,12 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   <h4>Planta Centro</h4>
                   <span className="status-badge active">Activa</span>
                 </div>                <div className="plant-info">
-                  <p className="plant-location">📍 Ciudad de México</p>
+                  <p className="plant-location">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
+                      <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 0 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.505l.041.018.006.003.002.001ZM10 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
+                    </svg>
+                    Ciudad de México
+                  </p>
                   <p className="plant-employees">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
                       <path d="M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM14.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z" />
@@ -334,7 +462,12 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   <h4>Planta Occidente</h4>
                   <span className="status-badge inactive">Suspendida</span>
                 </div>                <div className="plant-info">
-                  <p className="plant-location">📍 Guadalajara, Jalisco</p>
+                  <p className="plant-location">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
+                      <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 0 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.505l.041.018.006.003.002.001ZM10 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
+                    </svg>
+                    Guadalajara, Jalisco
+                  </p>
                   <p className="plant-employees">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
                       <path d="M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM14.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z" />
