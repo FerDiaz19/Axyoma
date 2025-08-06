@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { login } from '../services/authService';
 import { findBackendServer } from '../utils/serverCheck';
+import logoImage from '../utils/full-logo.png';
 import '../css/Login.css';
 
 interface LoginProps {
@@ -13,7 +14,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [serverStatus, setServerStatus] = useState<string>('checking');
-  
+
   useEffect(() => {
     // Verificar estado del servidor al cargar el componente
     const checkServer = async () => {
@@ -24,7 +25,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
         setServerStatus('inactive');
       }
     };
-    
+
     checkServer();
   }, []);
 
@@ -35,8 +36,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
     try {
       // Sanitizar username - eliminar espacios y convertir a minúsculas
-      const sanitizedUsername = username.trim().toLowerCase();
-      
+      const sanitizedUsername = username.trim()
+
       // Normalizar nombres de usuario conocidos
       let normalizedUsername = sanitizedUsername;
       if (sanitizedUsername === 'admin planta' || sanitizedUsername === 'admin-planta') {
@@ -46,12 +47,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       } else if (sanitizedUsername === 'super admin' || sanitizedUsername === 'superadmin') {
         normalizedUsername = 'superadmin';
       }
-      
+
       console.log(`🔑 Intentando login con usuario normalizado: ${normalizedUsername}`);
-      
-      const userData = await login({ 
+
+      const userData = await login({
         username: normalizedUsername,
-        password 
+        password
       });
       onLogin(userData);
     } catch (error: any) {
@@ -78,7 +79,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <li>Comprueba que el puerto 8000 esté disponible</li>
             <li>Verifica la consola de Django por posibles errores</li>
           </ul>
-          <button 
+          <button
             onClick={() => window.location.reload()}
             className="retry-button"
           >
@@ -97,30 +98,28 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
     return null;
   };
 
-  // Función auxiliar para establecer credenciales (renombrada para evitar error de ESLint)
-  const applyTestCredential = (testUser: string, testPassword: string) => {
-    setUsername(testUser);
-    setPassword(testPassword);
-    // Opcionalmente, hacer submit automáticamente
-    // handleSubmit(new Event('submit') as any);
-  };
+
 
   return (
     <div className="login-container">      {/* Lado izquierdo - Imagen */}
-      <div className="login-left">
-        <div className="login-image-section">
+      <div className="login-left">        <div className="login-image-section">
           <div className="image-placeholder">
             <div className="brand-logo">
-              <h1>AXYOMA</h1>
+              <div className="logo-container">
+                <img
+                  src={logoImage}
+                  alt="AXYOMA Logo"
+                  className="logo-icon"
+                />
+              </div>
             </div>
           </div>
         </div>
       </div>
-      
+
       {/* Lado derecho - Formulario */}
       <div className="login-right">
         <div className="login-form-container">          <div className="login-header">
-            <h2>Bienvenido de vuelta</h2>
             <p>Inicia sesión para acceder a tu cuenta</p>
           </div>
 
@@ -160,8 +159,8 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               </div>
             )}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="login-button"
               disabled={loading}
             >
@@ -175,7 +174,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
             </button>
           </form>          <div className="login-footer">
             <p className="register-link">
-              ¿No tienes cuenta? 
+              ¿No tienes cuenta?
               <a href="/registro" className="link-button">
                 Crear cuenta nueva
               </a>

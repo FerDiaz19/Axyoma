@@ -4,8 +4,10 @@ import EmpleadosCRUD from './EmpleadosCRUD';
 import GestionPlantas from './GestionPlantas';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
-import EvaluacionesGestion from './EvaluacionesGestion';
-import AsignacionEvaluaciones from './AsignacionEvaluaciones';
+
+import EvaluacionesDashboard from './evaluaciones/EvaluacionesDashboard';
+import AsignacionesDashboard from './evaluaciones/AsignacionesDashboard';
+
 import GestionSuscripcion from './GestionSuscripcion';
 import UsuariosPlantasView from './UsuariosPlantasView';
 import { logout } from '../services/authService';
@@ -100,7 +102,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
 
             <div className="quick-actions">
               <h3>Acciones Rápidas</h3>              <div className="action-buttons">
-                <button 
+                <button
                   className="action-btn"
                   onClick={() => setActiveSection('empleados')}
                 >
@@ -111,7 +113,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   </span>
                   <span>Gestionar Empleados</span>
                 </button>
-                <button 
+                <button
                   className="action-btn"
                   onClick={() => setActiveSection('plantas')}
                 >
@@ -122,7 +124,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   </span>
                   <span>Ver Plantas</span>
                 </button>
-                <button 
+                <button
                   className="action-btn"
                   onClick={() => setActiveSection('evaluaciones')}
                 >
@@ -134,7 +136,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   </span>
                   <span>Crear Evaluación</span>
                 </button>
-                <button 
+                <button
                   className="action-btn"
                   onClick={() => setActiveSection('asignaciones')}
                 >
@@ -173,7 +175,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   <p className="dashboard-status">Próximamente disponible</p>
                 </div>
               </div>
-              
+
               <div className="dashboard-card">
                 <div className="dashboard-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
@@ -186,7 +188,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   <p className="dashboard-status">En desarrollo</p>
                 </div>
               </div>
-              
+
               <div className="dashboard-card">
                 <div className="dashboard-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
@@ -199,7 +201,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                   <p className="dashboard-status">Planificado</p>
                 </div>
               </div>
-              
+
               <div className="dashboard-card">
                 <div className="dashboard-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
@@ -214,7 +216,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                 </div>
               </div>
             </div>
-            
+
             <div className="dashboard-info">
               <div className="info-banner">
                 <h3>🔧 Sección en Desarrollo</h3>
@@ -232,7 +234,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
         );
       case 'empleados':
         return (
-          <EmpleadosCRUD 
+          <EmpleadosCRUD
             userData={userData}
           />
         );      case 'plantas':
@@ -356,14 +358,14 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
             </div>
 
             <div className="plants-actions-section">
-              <button 
+              <button
                 className="btn btn-violet"
                 onClick={() => {/* Navegar a gestión completa */}}
               >
                 <span className="action-icon">⚙️</span>
                 Gestión Completa de Plantas
               </button>
-              <button 
+              <button
                 className="btn btn-violet"
                 onClick={() => {/* Crear nueva planta */}}
               >
@@ -375,13 +377,13 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
         );
       case 'usuarios-plantas':
         return (
-          <UsuariosPlantasView 
+          <UsuariosPlantasView
             empresaId={empresaId || 1}
           />
         );
       case 'departamentos':
         return (
-          <GestionDepartamentos 
+          <GestionDepartamentos
             empresaId={empresaId || 1}
           />
         );
@@ -389,21 +391,27 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
         return (
           <GestionPuestos empresaId={empresaId || 1} />
         );
+
+
+
       case 'evaluaciones':
         return (
-          <EvaluacionesGestion 
-            userData={userData}
-          />
+          <EvaluacionesDashboard userData={userData} />
         );
+
       case 'asignaciones':
         return (
-          <AsignacionEvaluaciones 
-            userData={userData}
-          />
+          <AsignacionesDashboard userData={userData} />
         );
+
+
+
+
+
+
       case 'suscripcion':
         return (
-          <GestionSuscripcion 
+          <GestionSuscripcion
             empresaId={empresaId || 1}
           />
         );
@@ -433,7 +441,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
             <span className="sidebar-subtitle">Panel Empresa</span>
           </div>
         </div>
-        <nav className="sidebar-nav">          <button 
+        <nav className="sidebar-nav">          <button
             className={activeSection === 'overview' ? 'active' : ''}
             onClick={() => setActiveSection('overview')}
           >
@@ -443,7 +451,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               </svg>
             </span>
             <span className="nav-text">Dashboard</span>
-          </button>          <button 
+          </button>          <button
             className={activeSection === 'empleados' ? 'active' : ''}
             onClick={() => setActiveSection('empleados')}
           >
@@ -453,7 +461,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               </svg>
             </span>
             <span className="nav-text">Empleados</span>
-          </button>          <button 
+          </button>          <button
             className={activeSection === 'plantas' ? 'active' : ''}
             onClick={() => setActiveSection('plantas')}
           >
@@ -463,7 +471,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               </svg>
             </span>
             <span className="nav-text">Plantas</span>
-          </button>          <button 
+          </button>          <button
             className={activeSection === 'usuarios-plantas' ? 'active' : ''}
             onClick={() => setActiveSection('usuarios-plantas')}
           >
@@ -473,7 +481,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               </svg>
             </span>
             <span className="nav-text">Usuarios Plantas</span>
-          </button>          <button 
+          </button>          <button
             className={activeSection === 'departamentos' ? 'active' : ''}
             onClick={() => setActiveSection('departamentos')}
           >
@@ -483,7 +491,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               </svg>
             </span>
             <span className="nav-text">Departamentos</span>
-          </button>          <button 
+          </button>          <button
             className={activeSection === 'puestos' ? 'active' : ''}
             onClick={() => setActiveSection('puestos')}
           >
@@ -494,7 +502,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               </svg>
             </span>
             <span className="nav-text">Puestos</span>
-          </button>          <button 
+          </button>          <button
             className={activeSection === 'evaluaciones' ? 'active' : ''}
             onClick={() => setActiveSection('evaluaciones')}
           >
@@ -505,7 +513,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               </svg>
             </span>
             <span className="nav-text">Evaluaciones</span>
-          </button>          <button 
+          </button>          <button
             className={activeSection === 'asignaciones' ? 'active' : ''}
             onClick={() => setActiveSection('asignaciones')}
           >
@@ -515,7 +523,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               </svg>
             </span>
             <span className="nav-text">Asignaciones</span>
-          </button>          <button 
+          </button>          <button
             className={activeSection === 'graficas' ? 'active' : ''}
             onClick={() => setActiveSection('graficas')}
           >
@@ -525,7 +533,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               </svg>
             </span>
             <span className="nav-text">Gráficas</span>
-          </button><button 
+          </button><button
             className={activeSection === 'suscripcion' ? 'active' : ''}
             onClick={() => setActiveSection('suscripcion')}
           >

@@ -1,0 +1,234 @@
+/* -------------------------------------------------------------------------- */
+/* Estilos para la Vista Previa de Evaluación (EvaluacionPrevia.css) */
+/* -------------------------------------------------------------------------- */
+
+/* Reutilizar estilos de modal-overlay, modal-content, modal-header-custom, etc. de forms.css */
+/* Asegúrate de que forms.css esté importado antes que este archivo o que estos estilos se fusionen */
+
+.preview-modal {
+    max-width: 900px; /* Ancho máximo para la vista previa */
+    /* Puedes ajustar el min-width si es necesario, pero 70vw ya es bastante grande */
+}
+
+.preview-body {
+    padding: 2rem;
+    overflow-y: auto; /* Permitir scroll si el contenido es muy largo */
+}
+
+.preview-section {
+    background-color: #ffffff;
+    border: 1px solid #eef1f4;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.03);
+}
+
+.preview-section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #495057;
+    margin-top: 0;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.preview-section p {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    color: #555;
+}
+
+.preview-section p strong {
+    color: #333;
+}
+
+.preview-section a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.preview-section a:hover {
+    text-decoration: underline;
+    color: #0056b3;
+}
+
+/* Estilos para las secciones dentro de la vista previa */
+.seccion-preview-card.card {
+    background-color: #fcfcfc;
+    border: 1px solid #eef1f4;
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.04);
+}
+
+.seccion-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.seccion-preview-header h5 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #343a40;
+    margin: 0;
+}
+
+.seccion-description {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+/* Badges específicos para la vista previa */
+.badge-evaluable {
+    background-color: #d1ecf1; /* Azul claro */
+    color: #0c5460;
+    padding: 0.25em 0.6em;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-no-evaluable {
+    background-color: #f8d7da; /* Rojo claro */
+    color: #721c24;
+    padding: 0.25em 0.6em;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* Estilos para las preguntas dentro de las secciones */
+.preguntas-sub-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #555;
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+    border-bottom: 1px dashed #e0e0e0;
+    padding-bottom: 0.4rem;
+}
+
+.preguntas-preview-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pregunta-preview-item {
+    background-color: #ffffff;
+    border: 1px solid #eef1f4;
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.6rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.pregunta-preview-item p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #343a40;
+    display: flex; /* Para alinear elementos en la misma línea */
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pregunta-preview-item p strong {
+    color: #007bff; /* Color para el número de orden */
+}
+
+.pregunta-preview-item .pregunta-type {
+    font-size: 0.8rem;
+    color: #777;
+    font-style: italic;
+    white-space: nowrap;
+}
+
+.opciones-preview {
+    margin-top: 0.5rem;
+    padding-left: 1rem;
+    font-size: 0.9rem;
+    color: #444;
+}
+
+.opciones-preview strong {
+    font-weight: 600;
+    color: #333;
+}
+
+.opciones-preview ul {
+    list-style: disc; /* Usar viñetas para las opciones */
+    margin-top: 0.5rem;
+    margin-left: 1.5rem;
+    padding: 0;
+}
+
+.opciones-preview li {
+    margin-bottom: 0.3rem;
+    color: #555;
+}
+
+/* Reutilizar badges de forms.css para 'Obligatoria' y 'Opcional' */
+/* .badge-obligatoria, .badge-opcional, .badge-correcta */
+
+/* Media Queries para Responsividad */
+@media (max-width: 768px) {
+    .preview-modal {
+        width: 95%;
+        margin: 10px;
+        min-width: unset;
+    }
+
+    .preview-body {
+        padding: 1rem;
+    }
+
+    .preview-section {
+        padding: 1rem;
+    }
+
+    .preview-section-title {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .seccion-preview-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .seccion-preview-header h5 {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .pregunta-preview-item p {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .pregunta-preview-item .pregunta-type {
+        width: 100%;
+        text-align: right;
+        font-size: 0.75rem;
+    }
+
+    .opciones-preview {
+        padding-left: 0;
+    }
+
+    .opciones-preview ul {
+        margin-left: 1rem;
+    }
+}

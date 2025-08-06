@@ -1,0 +1,568 @@
+/* -------------------------------------------------------------------------- */
+/* Estilos Globales del Formulario (forms.css) - Minimalista */
+/* -------------------------------------------------------------------------- */
+
+/* Overlay y Contenido del Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3); /* Overlay más suave */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    overflow-y: auto;
+    padding: 20px 0;
+}
+
+.modal-content {
+    background-color: #fcfcfc; /* Fondo casi blanco para un look más ligero */
+    border-radius: 10px; /* Bordes ligeramente más suaves */
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08); /* Sombra más sutil */
+    min-width: 70vw;
+    max-width: 900px; /* Limitar el ancho máximo para mejor legibilidad */
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* Encabezado del Modal (superior fijo) */
+.modal-header-custom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem 2rem; /* Relleno ligeramente reducido */
+    border-bottom: 1px solid #eef1f4; /* Línea divisoria más clara */
+    background-color: #ffffff;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04); /* Sombra muy ligera para el header */
+}
+
+.modal-title {
+    font-size: 1.5rem; /* Tamaño de título ligeramente más pequeño */
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.modal-actions-top {
+    display: flex;
+    gap: 10px;
+}
+
+/* Estilos de Botones Generales */
+.btn-primary, .btn-secondary, .btn-add-option, .btn-add-pregunta, .btn-add-seccion {
+    padding: 0.65rem 1.2rem; /* Relleno más compacto */
+    border: none;
+    border-radius: 6px; /* Bordes ligeramente más cuadrados */
+    cursor: pointer;
+    font-size: 0.9rem; /* Fuente más pequeña */
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px; /* Espacio reducido entre ícono y texto */
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: white;
+    box-shadow: 0 2px 5px rgba(0, 123, 255, 0.15); /* Sombra más suave */
+}
+
+.btn-primary:hover {
+    background-color: #0056b3;
+    box-shadow: 0 3px 8px rgba(0, 123, 255, 0.25); /* Sombra al pasar el ratón */
+}
+
+.btn-primary:disabled {
+    background-color: #e0e0e0; /* Color más claro para deshabilitado */
+    color: #999;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.8;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+    box-shadow: 0 2px 5px rgba(108, 117, 125, 0.15);
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268;
+    box-shadow: 0 3px 8px rgba(108, 117, 125, 0.25);
+}
+
+.btn-secondary:disabled {
+    background-color: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.8;
+}
+
+/* Estilos de Formulario General */
+form {
+    padding: 2rem;
+}
+
+.form-section {
+    background-color: #ffffff;
+    border: 1px solid #eef1f4; /* Borde más sutil */
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem; /* Margen reducido */
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.03); /* Sombra muy ligera */
+}
+
+.form-section-title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #495057;
+    margin-top: 0;
+    margin-bottom: 1.2rem; /* Margen reducido */
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid #e9ecef; /* Borde más claro */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2rem; /* Espacio entre elementos reducido */
+    margin-bottom: 0.8rem; /* Margen reducido */
+}
+
+.form-group {
+    flex: 1;
+    min-width: 220px; /* Ancho mínimo ligeramente reducido */
+    margin-bottom: 0.8rem; /* Margen reducido */
+}
+
+.form-group input {
+    border: 1px solid #eef1f4;
+}
+
+.form-group.flex-grow {
+    flex: 2;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.4rem; /* Margen reducido */
+    font-weight: 500;
+    color: #555; /* Color de etiqueta más suave */
+    font-size: 0.85rem; /* Fuente más pequeña para las etiquetas */
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group textarea,
+.form-group select {
+    width: 100%;
+    padding: 0.7rem 1rem; /* Relleno más compacto */
+    border: 1px solid #dcdfe4; /* Borde más suave */
+    border-radius: 5px; /* Bordes ligeramente más cuadrados */
+    font-size: 0.9rem; /* Fuente más pequeña */
+    color: #343a40;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+}
+
+.form-group input:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15); /* Sombra de foco más suave */
+    outline: none;
+}
+
+.form-group textarea {
+    resize: vertical;
+}
+
+.disabled-input {
+    background-color: #f5f5f5; /* Fondo más claro para disabled */
+    cursor: not-allowed;
+    color: #888; /* Color de texto más suave */
+    border-style: solid; /* Borde sólido, pero más claro */
+    border-color: #e0e0e0;
+}
+
+/* Estilos para el Toggle Booleano (switch) */
+.boolean-toggle {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 140px;
+    padding-top: 1.6rem; /* Ajuste para alinear con otros campos */
+}
+
+.boolean-toggle label:first-child {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px; /* Ancho ligeramente reducido */
+    height: 22px; /* Altura ligeramente reducida */
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #e0e0e0; /* Gris más claro para inactivo */
+    transition: .4s;
+    border-radius: 22px; /* Bordes redondeados */
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 16px; /* Tamaño del pulgar reducido */
+    width: 16px; /* Tamaño del pulgar reducido */
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15); /* Sombra más suave para el pulgar */
+}
+
+input:checked + .slider {
+    background-color: #28a745;
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 0 2px rgba(40, 167, 69, 0.15); /* Sombra de foco más suave */
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px); /* Desplazamiento ajustado */
+}
+
+/* Estilos de Secciones de Evaluación */
+.seccion-container.card {
+    background-color: #fcfcfc;
+    border: 1px solid #eef1f4;
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem; /* Relleno ligeramente reducido */
+    margin-bottom: 1.2rem; /* Margen reducido */
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.04);
+}
+
+.seccion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem; /* Margen reducido */
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid #f5f5f5; /* Borde más claro */
+}
+
+.seccion-header .seccion-title {
+    font-size: 1.15rem; /* Tamaño de fuente ligeramente reducido */
+    font-weight: 600;
+    color: #343a40;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+    flex-grow: 1;
+    margin-right: 1rem;
+}
+
+.seccion-header .seccion-title:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.15); /* Sombra de foco más suave */
+    outline: none;
+}
+
+.btn-icon-remove {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 1.1rem; /* Tamaño de ícono ligeramente reducido */
+    padding: 0.4rem;
+    border-radius: 50%;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-icon-remove:hover {
+    background-color: #ffebeb; /* Fondo de hover más suave */
+    color: #c82333;
+}
+
+/* Lista de Preguntas */
+.preguntas-list {
+    list-style: none;
+    padding: 0;
+    margin: 1.2rem 0 0.8rem 0; /* Margen reducido */
+}
+
+.pregunta-form-item.card {
+    background-color: #ffffff;
+    border: 1px solid #eef1f4;
+    border-radius: 8px;
+    padding: 1rem 1.2rem; /* Relleno más compacto */
+    margin-bottom: 0.8rem; /* Margen reducido */
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem; /* Espacio reducido */
+    position: relative;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03); /* Sombra más ligera */
+}
+
+.pregunta-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem; /* Espacio reducido */
+    font-size: 1rem; /* Fuente ligeramente más pequeña */
+    font-weight: 500;
+    color: #343a40;
+}
+
+.pregunta-order {
+    font-weight: 600;
+    color: #007bff;
+    min-width: 22px; /* Para alinear los números de orden */
+}
+
+.pregunta-text {
+    flex-grow: 1;
+}
+
+.pregunta-type {
+    font-size: 0.85rem; /* Fuente más pequeña */
+    color: #777; /* Color más suave */
+    font-style: italic;
+    white-space: nowrap;
+}
+
+.pregunta-details {
+    padding-left: 1.2rem; /* Relleno ajustado */
+}
+
+.pregunta-meta {
+    display: flex;
+    gap: 8px; /* Espacio reducido */
+    margin-top: 0.4rem; /* Margen reducido */
+    padding-left: 1.2rem; /* Relleno ajustado */
+}
+
+.badge {
+    padding: 0.25em 0.6em; /* Relleno más compacto */
+    border-radius: 3px; /* Bordes ligeramente más cuadrados */
+    font-size: 0.75rem; /* Tamaño de fuente más pequeño */
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.badge-obligatoria {
+    background-color: #ffe082; /* Amarillo más suave */
+    color: #664a00; /* Texto más oscuro para contraste */
+}
+
+.badge-opcional {
+    background-color: #ced4da; /* Gris más suave */
+    color: #495057;
+}
+
+.badge-correcta {
+    background-color: #a7d9b7; /* Verde más suave */
+    color: #1e7e34;
+}
+
+/* Formulario para Añadir Nueva Pregunta */
+.add-pregunta-form-container {
+    background-color: #fcfcfc; /* Fondo más claro para el sub-formulario */
+    border: 1px solid #eef1f4;
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem; /* Relleno ajustado */
+    margin-top: 1.2rem; /* Margen ajustado */
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03); /* Sombra interior más sutil */
+}
+
+.add-pregunta-form-container .form-section-title {
+    border-bottom: 1px dashed #dcdfe4; /* Línea punteada más clara */
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    font-size: 1.1rem;
+    color: #666;
+}
+
+.add-pregunta-form-container .form-group {
+    margin-bottom: 0.8rem;
+}
+
+.add-pregunta-form-container .form-row {
+    gap: 0.8rem; /* Espacio reducido */
+}
+
+.options-section {
+    border-top: 1px dashed #eef1f4; /* Línea punteada más clara */
+    padding-top: 1.2rem;
+    margin-top: 1.2rem;
+}
+
+.opciones-container {
+    background-color: #f7f9fb; /* Fondo más claro para el contenedor de opciones */
+    border: 1px dashed #e0e6ed; /* Borde punteado más claro */
+    border-radius: 6px;
+    padding: 0.8rem; /* Relleno más compacto */
+    margin-top: 0.6rem;
+}
+
+.option-item {
+    margin-bottom: 0.6rem;
+}
+
+.btn-add-option {
+    background-color: #17a2b8;
+    color: white;
+    padding: 0.5rem 1rem; /* Relleno más compacto */
+    border-radius: 5px;
+    font-size: 0.85rem;
+    margin-top: 0.4rem;
+}
+
+.btn-add-option:hover {
+    background-color: #138496;
+}
+
+/* Botones de acción del formulario (inferior) */
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem; /* Margen reducido */
+    padding-top: 1.2rem;
+    border-top: 1px solid #eef1f4;
+}
+
+.form-actions-small {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem; /* Espacio reducido */
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px dashed #eef1f4;
+}
+
+/* Botones de agregar pregunta a la sección */
+.btn-add-pregunta {
+    display: block;
+    width: 100%;
+    padding: 0.7rem 1.2rem; /* Relleno más compacto */
+    background-color: #f0f4f8; /* Fondo más claro */
+    color: #555;
+    border: 1px dashed #d1d9e0; /* Borde punteado más claro */
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-top: 1.2rem;
+}
+
+.btn-add-pregunta:hover {
+    background-color: #e0e6ed;
+    border-color: #c0c7cf;
+}
+
+
+/* Media Queries para Responsividad */
+@media (max-width: 768px) {
+    .modal-content {
+        width: 95%;
+        margin: 10px;
+        min-width: unset; /* Eliminar min-width en móviles */
+    }
+
+    .modal-header-custom, form {
+        padding: 1rem 1rem; /* Relleno ajustado para móviles */
+    }
+
+    .modal-title {
+        font-size: 1.3rem;
+    }
+
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .form-group {
+        min-width: 100%;
+        margin-bottom: 0.8rem;
+
+    }
+
+    .boolean-toggle {
+        justify-content: space-between;
+        width: 100%;
+        padding-top: 0;
+        margin-bottom: 0.8rem; /* Añadir margen inferior para separación */
+    }
+
+    .seccion-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .seccion-header .seccion-title {
+        width: 100%;
+        margin-right: 0;
+    }
+
+    .btn-icon-remove {
+        position: absolute;
+        top: 0.8rem; /* Posición ajustada */
+        right: 0.8rem; /* Posición ajustada */
+        font-size: 1rem; /* Tamaño de ícono ajustado */
+    }
+
+    .pregunta-form-item {
+        padding: 0.8rem; /* Relleno ajustado */
+    }
+
+    .pregunta-header {
+        flex-wrap: wrap;
+        gap: 0.4rem; /* Espacio reducido */
+    }
+    .pregunta-type {
+        width: 100%;
+        text-align: right;
+        font-size: 0.8rem; /* Tamaño de fuente ajustado */
+    }
+    .pregunta-details, .pregunta-meta {
+        padding-left: 0;
+    }
+}

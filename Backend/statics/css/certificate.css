@@ -1,0 +1,120 @@
+
+.main-container {
+    display: flex;
+    align-items: center; justify-content: center;
+}
+
+.certificate-container {
+    margin-top: 2rem;
+    width: 80dvw; height: 90dvh;
+    background-color: var(--color-text);
+    text-align: center; padding: 0 6rem;
+    box-shadow: var(--color-alt-soft) 0 .25rem .75rem;
+
+    border-color: var(--color-accent);
+    display: flex; flex-direction: column;
+    border-width: 1rem; border-style: solid;
+}
+
+.company-name {
+    margin-top: 5rem;
+    font-size: 1.2rem;
+    color: var(--color-accent);
+    text-transform: uppercase;
+}
+
+.certificate-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.5rem;
+    color: var(--color-accent);
+    letter-spacing: 2px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.certificate-body {
+    margin-top: 4rem;
+}
+
+.main-text {
+    font-size: 1.2rem;
+    color: var(--color-canvas);
+    line-height: 1.6;
+    margin: 0;
+}
+
+.main-text-small {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.5;
+    margin: 20px 0 0;
+}
+
+.recipient-name {
+    font-size: 2.5rem;
+    color: var(--color-hover);
+    margin: 10px 0;
+    font-weight: normal;
+}
+
+.evaluation-name {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #34495e;
+    margin: 10px 0 30px;
+}
+
+.evaluation-results {
+    margin-top: 30px;
+    padding: 20px;
+    background-color: rgba(162, 37, 34, .05);
+    border: 1px solid var(--color-subtitle);;
+}
+
+.result-text {
+    font-size: 1.1rem;
+    font-style: italic;
+    font-weight: 500;
+}
+
+.result-aprobado {
+    color: var(--color-success);
+}
+
+.result-no-aprobado {
+    color: var(--color-danger);
+}
+
+.signature-section {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+    margin-top: 80px;
+    padding-top: 20px;
+}
+
+.signature-item {
+    flex-basis: 40%;
+    text-align: center;
+}
+
+.signature-line {
+    border-bottom: 1.8px solid var(--color-canvas);
+    width: 80%;
+    margin: 0 auto 10px;
+}
+
+.signature-name {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--color-canvas);
+    margin: 0;
+}
+
+.signature-title {
+    font-size: .98rem;
+    color: #555;
+    margin: 5px 0 0;
+}
+
+/* -------------------------------------------------------------------------- */

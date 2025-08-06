@@ -1,17 +1,20 @@
 /* Contenedor principal */
 .login-container {
   display: flex;
-  min-height: 100vh;
-  background: #1c1c28 url('../utils/Corporativo.jpg') no-repeat center center;
+  min-height: 100dvh;
+  background: #181721 url('../utils/Corporativo.jpg') no-repeat center center;
   background-size: cover;
-  position: relative;
-  font-family: 'Inter', sans-serif;
+  /* position: absolute; */
+
+
+
 }
+
 .title{
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: #F1EFF2;
   font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 1rem;
@@ -22,7 +25,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(24, 23, 33, .4);
 }
 
 /* Lado izquierdo con bienvenida */
@@ -55,11 +58,12 @@
 
 /* Lado derecho con formulario */
 .login-right {
-  flex: 0 0 400px;
+  flex: .5;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1;
+  margin-right: 10rem;
   padding: 2rem;
 }
 
@@ -79,9 +83,11 @@
   flex-direction: column;
 }
 
-.login-logo img {
-  max-width: 120px;
+.logo-icon {
+  width: 30rem;
 }
+
+
 
 .login-logo h2 {
   margin-top: 0.5rem;
@@ -193,15 +199,15 @@
   .login-container {
     flex-direction: column;
   }
-  
+
   .login-left {
     min-height: 40vh;
   }
-  
+
   .login-right {
     flex: 1;
   }
-  
+
   .login-form-container {
     margin: 1rem;
   }

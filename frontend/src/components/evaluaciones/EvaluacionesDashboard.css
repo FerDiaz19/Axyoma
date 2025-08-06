@@ -1,0 +1,181 @@
+/* -------------------------------------------------------------------------- */
+/* Estilos para EvaluacionesDashboard (Mejorados) */
+/* -------------------------------------------------------------------------- */
+
+.dashboard-container {
+    padding: 2rem;
+    font-family: 'Inter', sans-serif; /* Fuente moderna */
+    color: #333;
+    background-color: #f0f2f5; /* Fondo más suave */
+    min-height: 100vh;
+}
+
+.dashboard-container h2 {
+    color: #1e293b; /* Color de texto más oscuro */
+    margin-bottom: 2rem;
+    font-weight: 700;
+    border-bottom: 3px solid #3b82f6; /* Línea azul más limpia */
+    padding-bottom: 0.75rem;
+    font-size: 2rem;
+}
+
+.dashboard-container .btn-primary {
+    background-color: #3b82f6; /* Azul primario */
+    color: white;
+    border: none;
+    padding: 0.9rem 1.8rem;
+    font-size: 1rem;
+    border-radius: 9999px; /* Borde completamente redondo */
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    margin-bottom: 2.5rem;
+    font-weight: 600;
+}
+
+.dashboard-container .btn-primary:hover {
+    background-color: #2563eb; /* Azul más oscuro al pasar el cursor */
+    transform: translateY(-2px); /* Efecto de "levantar" */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-container .btn-primary:disabled {
+    background-color: #d1d5db;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* --- Lista de Evaluaciones --- */
+
+.evaluaciones-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+}
+
+.evaluacion-card {
+    background-color: #ffffff;
+    border-radius: 16px; /* Bordes más redondeados */
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Sombra más sutil y profunda */
+    padding: 2rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.evaluacion-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.evaluacion-card h4 {
+    margin-top: 0;
+    color: #1e293b;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.evaluacion-card p {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: #64748b; /* Color de texto más suave */
+}
+
+.evaluacion-card .card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem; /* Espaciado más consistente */
+    margin-top: 1.5rem;
+    align-items: center;
+}
+
+/* --- Botones --- */
+
+.evaluacion-card .btn-secondary,
+.evaluacion-card .btn-danger,
+.evaluacion-card .btn-success,
+.evaluacion-card .btn-info {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    flex-grow: 1; /* Para que los botones se expandan en el ancho */
+}
+
+.evaluacion-card .btn-secondary {
+    background-color: #e2e8f0;
+    color: #4a5568;
+}
+
+.evaluacion-card .btn-secondary:hover {
+    background-color: #cbd5e1;
+    transform: scale(1.05);
+}
+
+.evaluacion-card .btn-danger {
+    background-color: #ef4444; /* Rojo más vibrante */
+    color: white;
+}
+
+.evaluacion-card .btn-danger:hover {
+    background-color: #dc2626;
+    transform: scale(1.05);
+}
+
+.evaluacion-card .btn-success {
+    background-color: #22c55e;
+    color: white;
+}
+
+.evaluacion-card .btn-success:hover {
+    background-color: #16a34a;
+    transform: scale(1.05);
+}
+
+/* --- Botón "Asignar" mejorado --- */
+.evaluacion-card .btn-info {
+    background-color: #3b82f6; /* Usando el mismo azul primario */
+    color: white;
+}
+
+.evaluacion-card .btn-info:hover {
+    background-color: #2563eb;
+    transform: scale(1.05);
+}
+
+/* --- Enlace "Contenido Informativo" --- */
+.evaluacion-card .btn-link {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #4a5568; /* Color de texto sutil */
+    text-decoration: none; /* Sin subrayado */
+    padding: 0.6rem 1.2rem;
+    background-color: #f1f5f9; /* Fondo muy claro */
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-grow: 1;
+}
+
+.evaluacion-card .btn-link:hover {
+    background-color: #e2e8f0; /* Fondo más oscuro al pasar el cursor */
+    color: #1e293b; /* Texto más oscuro */
+    transform: translateY(-2px); /* Pequeño efecto de elevación */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* --- Estados específicos --- */
+
+.evaluacion-card p strong {
+    color: #1e293b;
+    font-weight: 600;
+}

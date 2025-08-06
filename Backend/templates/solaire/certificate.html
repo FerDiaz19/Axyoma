@@ -1,0 +1,62 @@
+
+{% extends 'solaire/main.html' %}
+{% load static %}
+
+{% block title %}Evaluación completada{% endblock title %}
+{% block childStylesheet %}<link href='{% static "css/certificate.css" %}' rel='stylesheet' />{% endblock childStylesheet %}
+
+{% block content%}
+<div class="main-container">
+
+    <div class="certificate-container">
+        <p class="company-name">{{ empleadoEmpresa }}</p>
+        <h1 class="certificate-title">CONSTANCIA DE TERMINACIÓN</h1>
+
+        <div class="certificate-body">
+            <p class="main-text">
+                Se otorga la presente constancia a:
+            </p>
+            <p class="recipient-name">{{ empleadoNombre }}</p>
+            <hr class="separator">
+            <p class="main-text-small">
+                Por haber completado satisfactoriamente la evaluación {{ evaluacionTipo }}:
+            </p>
+            <p class="evaluation-name">"{{ evaluacionNombre }}"</p>
+            <p class="main-text-small">
+                a la fecha del {{ fechaCompletado|date:"d M Y" }}.
+            </p>
+
+            {% if evaluacionEvaluable %}
+            <div class="evaluation-results">
+                {% if aprobacionObtenida %}
+                <p class="result-text result-aprobado">
+                    Se acredita la evaluación tras obtener una calificación del **{{ puntajeTotal|floatformat:2 }}%**, superando el umbral mínimo de **{{ evaluacionEvaluable }}%**.
+                </p>
+                {% else %}
+                <p class="result-text result-no-aprobado">
+                    No se acredita la evaluación tras obtener una calificación del **{{ puntajeTotal|floatformat:2 }}%**.
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        </div>
+
+        <div class="signature-section">
+            <div class="signature-item">
+                <div class="signature-line"></div>
+                <p class="signature-name">{{ empleadoNombre }}</p>
+                <p class="signature-title">{{ empleadoEmpresa }}</p>
+            </div>
+            <div class="signature-item">
+                <div class="signature-line"></div>
+                <p class="signature-name">Axyoma™</p>
+                <p class="signature-title">Yukas Team</p>
+            </div>
+        </div>
+
+    </div>
+
+
+</div>
+{% endblock content %}

@@ -1,0 +1,225 @@
+
+{% extends 'solaire/main.html' %}
+{% load static %}
+
+{% block title %}{{ evaluacion.titulo }}{% endblock title %}
+{% block childStylesheet %}<link href='{% static "css/appraisal.css" %}' rel='stylesheet' />{% endblock childStylesheet %}
+{% block childScripts %}<script src='{% static "scripts/appraisal.js" %}' type='module'></script>{% endblock childScripts %}
+
+
+{% block content%}
+<div class='main-container'>
+
+    <!-- Información general de la evaluación. :) -->
+    <header class='survey-header'>
+        <div class='header-container'>
+
+            <div class='header-info'>
+                <h3>{{ evaluacion.titulo }}</h3> <!-- Nombre de la evaluación -->
+
+                <div class='employee-info'>
+                    <i class='bx bx-user'></i> <!-- Nombre del empleado -->
+                    <p>Empleado: {{ empleado.nombre }} {{ empleado.apellido_paterno }} {{ empleado.apellido_materno }}</p>
+                </div>
+            </div>
+
+            <div class='header-status'>
+                <i class='bx bxs-doughnut-chart'></i>
+                <span class='seccion-label' id='section-label'></span>
+            </div>
+        </div>
+
+        <div class='progress-info'>
+            <p class='progress-label'>Progreso general</p>
+            <span id='section-percent' class='progress-percent'></span>
+        </div>
+
+        <span class='progress-bar'>
+            <span id='section-progress' class='progress-fill'></span>
+        </span>
+    </header>
+
+
+    <!-- Secciones de la evaluación -->
+    <div class='survey-sections'>
+        {% for seccion in secciones %}
+            <button class='section-button {% if forloop.first %}active{% endif %}' data-section-id='section-{{ seccion.seccion_id }}'>
+                {{ seccion.nombre }}
+            </button>
+        {% endfor %}
+    </div>
+
+    <!-- Contenido de la evaluación -->
+    <form method='post' class='survey-form'>{% csrf_token %}
+
+        {% for seccion in secciones %}
+            <div id='section-{{ seccion.seccion_id }}' class='section-content {% if not forloop.first %}hidden{% endif %}'>
+
+                <div class='section-info-container'>
+                    <div class='section-info'>
+                        <h3>{{ seccion.nombre }}</h3>
+                        <p>{{ seccion.descripcion }}</p>
+                    </div>
+
+                    <span class='question-count'>{{ seccion.preguntas_seccion.all|length }} pregunta{% if seccion.preguntas_seccion.all|length != 1 %}s{% endif %}</span>
+                </div>
+
+                <!-- Preguntillas con sus posibles respuestas -->
+                {% for relacion_pregunta in seccion.preguntas_seccion.all %}
+                    {% with pregunta=relacion_pregunta.pregunta %}
+
+                        <!-- Vamo' a tomar en cuenta las preguntas condicionales -->
+                        {% if pregunta.pregunta_padre %}
+                        <div class='question-block' data-parent-activator-value='{{ pregunta.activador_padre }}'
+                            data-parent-question-id='{{ pregunta.pregunta_padre.pregunta_id }}'>
+
+                            <p class='question-text'>
+                                <span class='question-number'>{{ forloop.counter }}.</span>
+                                {{ pregunta.texto_pregunta }}
+
+                                {% if pregunta.es_obligatoria %}<span class='required-asterisk'>*</span>{% endif %}
+                            </p>
+
+                            <!-- Preguntas abiertas-->
+                            {% if pregunta.tipo_pregunta == "Abierta" %}
+                            <textarea placeholder='Escribe tu respuesta aquí...' minlength='4' maxlength='192' {% if pregunta.es_obligatoria %}required{% endif %}
+                                id='pregunta_{{ pregunta.pregunta_id }}_abierta' name='pregunta_{{ pregunta.pregunta_id }}'></textarea>
+
+                            <!-- Preguntas de escala -->
+                            {% elif pregunta.tipo_pregunta == "Escala" %}
+                            <div class='rating-scale'>
+                                {% if relacion_pregunta.conjunto_respuestas.opciones.all %}
+
+                                <div class='scale-labels'>
+                                    <span>{{ relacion_pregunta.conjunto_respuestas.opciones.first.texto_opcion }}</span>
+                                    <span>{{ relacion_pregunta.conjunto_respuestas.opciones.last.texto_opcion }}</span>
+                                </div>
+
+                                <div class='scale-options'>
+                                    {% for opcion in relacion_pregunta.conjunto_respuestas.opciones.all %}
+                                        <div class='scale-item'><input type='radio'
+                                            id='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}' name='pregunta_{{ pregunta.pregunta_id }}'
+                                                value='{{ opcion.opcion_conjunto_id }}' {% if pregunta.es_obligatoria %}required{% endif %}>
+                                            <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.valor_numerico }}</label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Preguntas booleanas -->
+                            {% elif pregunta.tipo_pregunta == "Bool" %}
+                            <div class='bool-group'>
+                                {% for opcion in relacion_pregunta.conjunto_respuestas.opciones.all %}
+                                    <div class='bool-item'>
+                                        <input type='radio' value='{{ opcion.opcion_conjunto_id }}' {% if pregunta.es_obligatoria %}required{% endif %}
+                                            id='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}' name='pregunta_{{ pregunta.pregunta_id }}'>
+                                        <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.texto_opcion }}</label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Preguntas múltiples -->
+                            {% elif pregunta.tipo_pregunta == "Múltiple" %}
+                            <div class='multiple-group'>
+                                {% for opcion in relacion_pregunta.conjunto_respuestas.opciones.all %}
+                                    <div class='multiple-item'>
+                                        <input type='radio' {% if pregunta.es_obligatoria %}required{% endif %} name='pregunta_{{ pregunta.pregunta_id }}'
+                                            value='{{ opcion.opcion_conjunto_id }}' id='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>
+                                        <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.texto_opcion }}</label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+
+                        <!-- Ahora las preguntillas normales -->
+                        {% else %}
+                        <div class='question-block'>
+                            <p class='question-text'>
+                                <span class='question-number'>{{ forloop.counter }}.</span>
+                                {{ pregunta.texto_pregunta }}
+
+                                {% if pregunta.es_obligatoria %}<span class='required-asterisk'>*</span>{% endif %}
+                            </p>
+
+                            <!-- Preguntas abiertas-->
+                            {% if pregunta.tipo_pregunta == "Abierta" %}
+                            <textarea placeholder='Escribe tu respuesta aquí...' minlength='4' maxlength='192' {% if pregunta.es_obligatoria %}required{% endif %}
+                                id='pregunta_{{ pregunta.pregunta_id }}_abierta' name='pregunta_{{ pregunta.pregunta_id }}'></textarea>
+
+                            <!-- Preguntas de escala -->
+                            {% elif pregunta.tipo_pregunta == "Escala" %}
+                            <div class='rating-scale'>
+                                {% if relacion_pregunta.conjunto_respuestas.opciones.all %}
+
+                                <div class='scale-labels'>
+                                    <span>{{ relacion_pregunta.conjunto_respuestas.opciones.first.texto_opcion }}</span>
+                                    <span>{{ relacion_pregunta.conjunto_respuestas.opciones.last.texto_opcion }}</span>
+                                </div>
+
+                                <div class='scale-options'>
+                                    {% for opcion in relacion_pregunta.conjunto_respuestas.opciones.all %}
+                                        <div class='scale-item'><input type='radio'
+                                            id='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}' name='pregunta_{{ pregunta.pregunta_id }}'
+                                                value='{{ opcion.opcion_conjunto_id }}' {% if pregunta.es_obligatoria %}required{% endif %}>
+                                            <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.valor_numerico }}</label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <!-- Preguntas booleanas -->
+                            {% elif pregunta.tipo_pregunta == "Bool" %}
+                            <div class='bool-group'>
+                                {% for opcion in relacion_pregunta.conjunto_respuestas.opciones.all %}
+                                    <div class='bool-item'>
+                                        <input type='radio' value='{{ opcion.opcion_conjunto_id }}' {% if pregunta.es_obligatoria %}required{% endif %}
+                                            id='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}' name='pregunta_{{ pregunta.pregunta_id }}'>
+                                        <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.texto_opcion }}</label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                            <!-- Preguntas múltiples -->
+                            {% elif pregunta.tipo_pregunta == "Múltiple" %}
+                            <div class='multiple-group'>
+                                {% for opcion in relacion_pregunta.conjunto_respuestas.opciones.all %}
+                                    <div class='multiple-item'>
+                                        <input type='radio' {% if pregunta.es_obligatoria %}required{% endif %} name='pregunta_{{ pregunta.pregunta_id }}'
+                                            value='{{ opcion.opcion_conjunto_id }}' id='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>
+                                        <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.texto_opcion }}</label>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    {% endwith %}
+                {% endfor %}
+
+
+                <!-- Navegación entre secciones (Anterior/Siguiente) -->
+                <div class='navigation-buttons'>
+                    {% if not forloop.first %}
+                        <button type='button' class='prev-section'>Anterior</button>
+                    {% endif %}
+                    {% if not forloop.last %}
+                        <button type='button' class='next-section'>Siguiente</button>
+                    {% else %}
+                        <button type='submit' class='submit-survey'>Finalizar</button>
+                    {% endif %}
+                </div>
+
+            </div>
+        {% endfor %}
+    </form>
+
+    <div class='footer-message'>
+        <p><span class='required-asterisk'>*</span> Indica campo obligatorio. Completa todos los campos requeridos para continuar a la siguiente sección.</p>
+    </div>
+</div>
+
+{% endblock content %}

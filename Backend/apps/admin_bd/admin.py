@@ -6,14 +6,14 @@ from .models import LogRespaldo, ConfiguracionBD
 @admin.register(LogRespaldo)
 class LogRespaldoAdmin(admin.ModelAdmin):
     list_display = [
-        'tipo', 'usuario', 'empresa', 'archivo_nombre', 
+        'tipo', 'usuario', 'empresa', 'archivo_nombre',
         'fecha_creacion', 'exitoso', 'archivo_tamaño'
     ]
     list_filter = ['tipo', 'exitoso', 'fecha_creacion', 'empresa']
     search_fields = ['archivo_nombre', 'usuario__username', 'empresa__nombre']
     readonly_fields = ['fecha_creacion', 'archivo_tamaño', 'archivo_ruta']
     ordering = ['-fecha_creacion']
-    
+
     fieldsets = (
         ('Información General', {
             'fields': ('tipo', 'usuario', 'empresa', 'exitoso')
@@ -26,11 +26,11 @@ class LogRespaldoAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
+
     def has_add_permission(self, request):
         # Los logs se crean automáticamente, no manualmente
         return False
-    
+
     def has_change_permission(self, request, obj=None):
         # Los logs no se deben modificar
         return False
@@ -42,7 +42,7 @@ class ConfiguracionBDAdmin(admin.ModelAdmin):
         'nombre_bd', 'host', 'puerto', 'directorio_respaldos',
         'habilitar_respaldos_automaticos', 'frecuencia_respaldo_dias'
     ]
-    
+
     fieldsets = (
         ('Configuración de Conexión', {
             'fields': ('nombre_bd', 'host', 'puerto', 'usuario_admin')
@@ -54,11 +54,11 @@ class ConfiguracionBDAdmin(admin.ModelAdmin):
             )
         }),
     )
-    
+
     def has_add_permission(self, request):
         # Solo permitir una configuración
         return not ConfiguracionBD.objects.exists()
-    
+
     def has_delete_permission(self, request, obj=None):
         # No permitir eliminar la configuración
         return False

@@ -15,7 +15,7 @@ urlpatterns = [
     path('pagos/', SubscriptionViewSet.as_view({'get': 'pagos'}), name='listar_pagos'),
     path('pago-simple/', SubscriptionViewSet.as_view({'post': 'pago_simple'}), name='pago_simple'),
     path('info-empresa/', SubscriptionViewSet.as_view({'get': 'info_empresa'}), name='info_empresa'),
-    
+
     # Incluir rutas del router
     path('', include(router.urls)),
 ]
