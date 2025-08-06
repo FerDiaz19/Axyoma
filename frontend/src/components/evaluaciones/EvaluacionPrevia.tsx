@@ -1,12 +1,10 @@
 import React from 'react';
-import { Evaluacion, SeccionEval, SeccionPregunta, ConjuntoRespuestas, PosiblesRespuestas } from '../../services/evaluacionesService';
+import { Evaluacion, SeccionEval, SeccionPregunta, PosiblesRespuestas } from '../../services/evaluacionesService';
 import './EvaluacionPrevia.css'; // Asegúrate de crear este archivo CSS
 
 interface EvaluacionPreviaProps {
     evaluacion: Evaluacion;
     onClose: () => void;
-    // Opcional: Podrías pasar los conjuntos disponibles si no quieres que cada PreguntaFormItem los busque
-    // conjuntosDisponibles: ConjuntoRespuestas[];
 }
 
 const EvaluacionPrevia: React.FC<EvaluacionPreviaProps> = ({ evaluacion, onClose }) => {
@@ -42,8 +40,8 @@ const EvaluacionPrevia: React.FC<EvaluacionPreviaProps> = ({ evaluacion, onClose
                         <p><strong>Tipo de Evaluación:</strong> {evaluacion.tipo_evaluacion}</p>
                         {evaluacion.empresa_nombre && <p><strong>Empresa:</strong> {evaluacion.empresa_nombre}</p>}
                         {evaluacion.creado_por_nombre && <p><strong>Creado por:</strong> {evaluacion.creado_por_nombre}</p>}
-                        <p><strong>Fecha de Registro:</strong> {new Date(evaluacion.fecha_registro).toLocaleDateString()}</p>
-                        <p><strong>Última Modificación:</strong> {new Date(evaluacion.fecha_modificacion).toLocaleDateString()}</p>
+                        {evaluacion.fecha_registro && <p><strong>Fecha de Registro:</strong> {new Date(evaluacion.fecha_registro).toLocaleDateString()}</p>}
+                        {evaluacion.fecha_modificacion && <p><strong>Última Modificación:</strong> {new Date(evaluacion.fecha_modificacion).toLocaleDateString()}</p>}
                     </section>
 
                     <section className="preview-section">
@@ -64,6 +62,7 @@ const EvaluacionPrevia: React.FC<EvaluacionPreviaProps> = ({ evaluacion, onClose
                                     {seccion.descripcion && <p className="seccion-description">{seccion.descripcion}</p>}
 
                                     <h6 className="preguntas-sub-title">Preguntas:</h6>
+
                                     {seccion.preguntas_seccion.length === 0 ? (
                                         <p>Esta sección no tiene preguntas.</p>
                                     ) : (
@@ -86,7 +85,8 @@ const EvaluacionPrevia: React.FC<EvaluacionPreviaProps> = ({ evaluacion, onClose
                                                                 {sp.conjunto_respuestas.opciones.map((opcion: PosiblesRespuestas) => (
                                                                     <li key={opcion.opcion_conjunto_id}>
                                                                         {opcion.texto_opcion}
-                                                                        {opcion.opcion_conjunto_id === sp.respuesta_correcta && (
+                                                                        {/* Muestra "(Correcta)" si esta es la opción de respuesta correcta */}
+                                                                        {sp.respuesta_correcta && sp.respuesta_correcta.opcion_conjunto_id === opcion.opcion_conjunto_id && (
                                                                             <span className="badge badge-correcta"> (Correcta)</span>
                                                                         )}
                                                                     </li>
@@ -99,8 +99,7 @@ const EvaluacionPrevia: React.FC<EvaluacionPreviaProps> = ({ evaluacion, onClose
                                         </ul>
                                     )}
                                 </div>
-                            ))
-                        )}
+                            )))}
                     </section>
                 </div>
             </div>

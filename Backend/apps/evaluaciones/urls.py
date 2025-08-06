@@ -26,19 +26,3 @@ urlpatterns = [
 ]
 
 # ---------------------------------------------------------------------------- #
-
-# http://localhost:8000/api/appraisal/tipos-evaluacion/
-
-# http://localhost:8000/api/appraisal/evaluaciones/
-
-# http://localhost:8000/api/appraisal/preguntas/
-
-# http://localhost:8000/api/appraisal/conjuntos-respuestas/
-
-# http://localhost:8000/api/appraisal/asignaciones/
-
-# http://localhost:8000/api/appraisal/respuestas-empleado/
-
-# http://localhost:8000/api/appraisal/resultados-evaluacion/
-
-# ---------------------------------------------------------------------------- #

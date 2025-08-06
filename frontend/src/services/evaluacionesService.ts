@@ -1,4 +1,3 @@
-
 // -------------------------------------------------------------------------- //
 
 import api from '../api';
@@ -7,235 +6,246 @@ import api from '../api';
 
 // Interfaz para el tipo de evaluación
 export interface TipoEvaluacion {
-  tipo_evaluacion_id: number;
-  nombre: string;
-  descripcion: string;
+    tipo_evaluacion_id: number;
+    nombre: string;
+    descripcion: string;
 }
 
 // Interfaz para una posible opción de respuesta
 // Usada para enviar datos anidados para creación/actualización
 export interface PosiblesRespuestasRequest {
-  texto_opcion: string;
-  valor_booleano?: boolean | null;
-  valor_numerico?: number | null;
-  valor_decimal?: number | null;
-  numero_orden: number;
+    texto_opcion: string;
+    valor_booleano?: boolean | null;
+    valor_numerico?: number | null;
+    valor_decimal?: number | null;
+    numero_orden: number;
 }
 
 // Interfaz de respuesta completa para una opción de respuesta
 export interface PosiblesRespuestas extends PosiblesRespuestasRequest {
-  opcion_conjunto_id: number;
+    opcion_conjunto_id: number;
 }
 
 // Interfaz para un conjunto de respuestas (opciones)
 // Usada para enviar datos anidados para creación/actualización
 export interface ConjuntoRespuestasRequest {
-  nombre: string;
-  descripcion: string;
-  opciones: PosiblesRespuestasRequest[];
+    nombre: string;
+    descripcion: string;
+    opciones: PosiblesRespuestasRequest[];
+    predefinido?: boolean;
+    conjunto_id?: number;
 }
 
 // Interfaz de respuesta completa para un conjunto de respuestas
 export interface ConjuntoRespuestas extends ConjuntoRespuestasRequest {
-  conjunto_id: number;
-  predefinido: boolean;
-  opciones: PosiblesRespuestas[];
+    conjunto_id: number;
+    predefinido: boolean;
+    opciones: PosiblesRespuestas[];
 }
 
-// Interfaz para la pregunta en sí
-// Usada para enviar datos anidados para creación/actualización
+// Interfaz para la pregunta en sí, usada para enviar datos anidados para creación/actualización
 export interface PreguntaRequest {
-  texto_pregunta: string;
-  tipo_pregunta: 'Abierta' | 'Múltiple' | 'Escala' | 'Bool';
-  es_obligatoria: boolean;
-  pregunta_padre?: number | null;
-  activador_padre?: string | null;
+    texto_pregunta: string;
+    tipo_pregunta: 'Abierta' | 'Múltiple' | 'Escala' | 'Bool';
+    es_obligatoria: boolean;
+    pregunta_padre?: number | null;
+    activador_padre?: string | null;
 }
 
 // Interfaz de respuesta completa para una pregunta
 export interface Pregunta extends PreguntaRequest {
-  pregunta_id: number;
+    pregunta_id: number;
 }
 
-// Interfaz para la relación entre una sección y una pregunta
-// Usada para enviar datos anidados para creación/actualización
+// Inerfaz para la relación de preguntas con sus secciones.
 export interface SeccionPreguntaRequest {
-  pregunta_id: number;
-  numero_orden: number;
-  conjunto_respuestas_id?: number | null;
-  respuesta_correcta?: number | null;
+    pregunta: PreguntaRequest;
+    numero_orden: number;
+    // Puede ser ConjuntoRespuestasRequest (para crear nuevo) o ConjuntoRespuestas (para referenciar uno existente.)
+    conjunto_respuestas?: ConjuntoRespuestasRequest | ConjuntoRespuestas | null;
+    // Puede ser PosiblesRespuestasRequest (para crear nueva opción) o PosiblesRespuestas (para referenciar una opción existente.)
+    respuesta_correcta?: PosiblesRespuestasRequest | PosiblesRespuestas | null;
 }
 
 // Interfaz de respuesta completa para una relación entre una sección y una pregunta
 export interface SeccionPregunta extends SeccionPreguntaRequest {
-  seccion_pregunta_id: number;
-  pregunta: Pregunta;
-  conjunto_respuestas?: ConjuntoRespuestas; // Opcional
+    seccion_pregunta_id: number;
+    pregunta: Pregunta;
+    conjunto_respuestas?: ConjuntoRespuestas;
+    respuesta_correcta?: PosiblesRespuestas;
 }
 
 // Interfaz para una sección de una evaluación
 // Usada para enviar datos anidados para creación/actualización
 export interface SeccionEvalRequest {
-  nombre: string;
-  descripcion?: string | null;
-  numero_orden: number;
-  es_evaluable: boolean;
-  preguntas_seccion: SeccionPreguntaRequest[];
+    nombre: string;
+    descripcion?: string | null;
+    numero_orden: number;
+    es_evaluable: boolean;
+    preguntas_seccion: SeccionPreguntaRequest[];
 }
 
 // Interfaz de respuesta completa para una sección de una evaluación
 export interface SeccionEval extends SeccionEvalRequest {
-  seccion_id: number;
-  preguntas_seccion: SeccionPregunta[];
+    seccion_id: number;
+    preguntas_seccion: SeccionPregunta[];
 }
 
 // Interfaz principal para la evaluación
 // Usada para enviar datos anidados para creación/actualización
 export interface EvaluacionRequest {
-  titulo: string;
-  descripcion?: string | null;
-  instrucciones?: string | null;
-  contenido_informativo?: string | null;
-  tiempo_limite?: number | null;
-  umbral_aprobacion?: number | null;
-  estado: boolean;
-  tipo_evaluacion_id: number;
-  empresa_id?: number | null;
-  creado_por_id?: number | null;
-  secciones: SeccionEvalRequest[];
+    titulo: string;
+    descripcion?: string | null;
+    instrucciones?: string | null;
+    contenido_informativo?: string | null;
+    tiempo_limite?: number | null;
+    umbral_aprobacion?: number | null;
+    estado: boolean;
+    tipo_evaluacion_id: number;
+    empresa_id?: number | null;
+    creado_por_id?: number | null;
+    secciones: SeccionEvalRequest[];
 }
 
 // Interfaz de respuesta completa para la evaluación
 export interface Evaluacion extends EvaluacionRequest {
-  evaluacion_id: number;
-  fecha_registro: string;
-  fecha_modificacion: string;
-  tipo_evaluacion: string;
-  empresa_nombre: string | null;
-  empresa_id: number | null;
-  creado_por_nombre: string | null;
-  creado_por_id: number | null;
-  secciones: SeccionEval[];
+    evaluacion_id: number;
+    fecha_registro: string;
+    fecha_modificacion: string;
+    tipo_evaluacion: string;
+    empresa_nombre: string | null;
+    empresa_id: number | null;
+    creado_por_nombre: string | null;
+    creado_por_id: number | null;
+    secciones: SeccionEval[];
 }
 
 // Interfaz para el resultado de una evaluación
 export interface AsignacionRequest {
-  evaluacion: number;
-  fecha_inicio: string;
-  fecha_fin: string;
-  status?: boolean;
+    evaluacion: number;
+    fecha_inicio: string;
+    fecha_fin: string;
+    status?: boolean;
 }
 
 // Interfaz de respuesta completa para la asignación
 export interface Asignacion extends AsignacionRequest {
-  asignacion_id: number;
-  status: boolean;
-  empleado_evaluado: number | null;
-  puesto_al_momento: string | null;
-  departamento_al_momento: string | null;
-  asignaciones_empleado: AsignacionEmpleado[];
+    asignacion_id: number;
+    status: boolean;
+    empleado_evaluado: number | null;
+    puesto_al_momento: string | null;
+    departamento_al_momento: string | null;
+    asignaciones_empleado: AsignacionEmpleado[];
 }
 
 // Interfaz para la asignación de un empleado específico
 export interface AsignacionEmpleado {
-  asignacion_empleado_id: number;
-  asignacion: number;
-  empleado: number;
-  empleado_nombre: string;
-  empleado_puesto: string;
-  empleado_puesto_id: number;
-  empleado_departamento: string;
-  empleado_departamento_id: number;
-  empleado_planta: string;
-  empleado_planta_id: number;
-  empleado_empresa: string;
-  empleado_empresa_id: number;
-  token_acceso: string;
-  status: 'Pendiente' | 'Desactivada' | 'Completada' | 'Expirada';
-  fecha_inicio: string;
-  fecha_completado: string | null;
+    asignacion_empleado_id: number;
+    asignacion: number;
+    empleado: number;
+    empleado_nombre: string;
+    empleado_puesto: string;
+    empleado_puesto_id: number;
+    empleado_departamento: string;
+    empleado_departamento_id: number;
+    empleado_planta: string;
+    empleado_planta_id: number;
+    empleado_empresa: string;
+    empleado_empresa_id: number;
+    token_acceso: string;
+    status: 'Pendiente' | 'Desactivada' | 'Completada' | 'Expirada';
+    fecha_inicio: string;
+    fecha_completado: string | null;
 }
 
 // Interfaz para la respuesta de un empleado
 export interface RespuestaEmpleado {
-  respuesta_empleado_id: number;
-  asignacion_empleado: number;
-  seccion_pregunta: number;
-  opcion_seleccionada: number | null;
-  respuesta_texto: string | null;
-  respuesta_valor_numerico: number | null;
-  respuesta_valor_decimal: number | null;
-  respuesta_valor_booleano: boolean | null;
-  es_correcta: boolean | null;
-  fecha_respuesta: string;
+    respuesta_empleado_id: number;
+    asignacion_empleado: number;
+    seccion_pregunta: number;
+    opcion_seleccionada: number | null;
+    respuesta_texto: string | null;
+    respuesta_valor_numerico: number | null;
+    respuesta_valor_decimal: number | null;
+    respuesta_valor_booleano: boolean | null;
+    es_correcta: boolean | null;
+    fecha_respuesta: string;
 }
 
 // Interfaz de resultados obtenidos.
 export interface ResultadoEvaluacion {
-  resultado_id: number;
-  asignacion_empleado: number;
-  puntaje_total?: number;
-  num_respuestas_correctas?: number;
-  num_preguntas_evaluables?: number;
-  porcentaje_correctas?: number;
-  aprobado: boolean;
+    resultado_id: number;
+    asignacion_empleado: number;
+    puntaje_total?: number;
+    num_respuestas_correctas?: number;
+    num_preguntas_evaluables?: number;
+    porcentaje_correctas?: number;
+    aprobado: boolean;
+}
+
+export interface OpcionRespuestaForm {
+    texto_opcion: string;
+    valor_booleano?: boolean | null;
+    valor_numerico?: number | null;
+    valor_decimal?: number | null;
+    numero_orden: number;
 }
 
 // -------------------------------------------------------------------------- //
 
 const evaluacionesAPI = {
-  // Tipos de evaluación
-  getTipos: () => api.get<TipoEvaluacion[]>('/appraisal/tipos-evaluacion/'),
-  createTipo: (data: Partial<TipoEvaluacion>) => api.post<TipoEvaluacion>('/appraisal/tipos-evaluacion/', data),
+    // Tipos de evaluación
+    getTipos: () => api.get<TipoEvaluacion[]>('/appraisal/tipos-evaluacion/'),
+    createTipo: (data: Partial<TipoEvaluacion>) => api.post<TipoEvaluacion>('/appraisal/tipos-evaluacion/', data),
 
-  // Evaluaciones
-  getEvaluaciones: () => api.get<Evaluacion[]>('/appraisal/evaluaciones/'),
-  getEvaluacion: (id: number) => api.get<Evaluacion>(`/appraisal/evaluaciones/${id}/`),
-  createEvaluacion: (data: EvaluacionRequest) => api.post<Evaluacion>('/appraisal/evaluaciones/', data),
-  updateEvaluacion: (id: number, data: EvaluacionRequest) => api.put<Evaluacion>(`/appraisal/evaluaciones/${id}/`, data),
-  desactivarEvaluacion: (id: number) => api.patch<{ status: string }>(`/appraisal/evaluaciones/${id}/desactivar/`),
-  activarEvaluacion: (id: number) => api.patch<{ status: string }>(`/appraisal/evaluaciones/${id}/activar/`),
+    // Evaluaciones
+    getEvaluaciones: () => api.get<Evaluacion[]>('/appraisal/evaluaciones/'),
+    getEvaluacion: (id: number) => api.get<Evaluacion>(`/appraisal/evaluaciones/${id}/`),
+    createEvaluacion: (data: EvaluacionRequest) => api.post<Evaluacion>('/appraisal/evaluaciones/', data),
+    updateEvaluacion: (id: number, data: EvaluacionRequest) => api.put<Evaluacion>(`/appraisal/evaluaciones/${id}/`, data),
+    desactivarEvaluacion: (id: number) => api.patch<{ status: string }>(`/appraisal/evaluaciones/${id}/desactivar/`),
+    activarEvaluacion: (id: number) => api.patch<{ status: string }>(`/appraisal/evaluaciones/${id}/activar/`),
 
-  // ! Nota: Las secciones se gestionan anidadamente dentro de la Evaluación.
-  // Preguntas
-  getPreguntas: () => api.get<Pregunta[]>('/appraisal/preguntas/'),
-  createPregunta: (data: PreguntaRequest) => api.post<Pregunta>('/appraisal/preguntas/', data),
-  updatePregunta: (id: number, data: PreguntaRequest) => api.put<Pregunta>(`/appraisal/preguntas/${id}/`, data),
-  deletePregunta: (id: number) => api.delete(`/appraisal/preguntas/${id}/`),
+    // ! Nota: Las secciones se gestionan anidadamente dentro de la Evaluación.
+    // Preguntas
+    getPreguntas: () => api.get<Pregunta[]>('/appraisal/preguntas/'),
+    createPregunta: (data: PreguntaRequest) => api.post<Pregunta>('/appraisal/preguntas/', data),
+    updatePregunta: (id: number, data: PreguntaRequest) => api.put<Pregunta>(`/appraisal/preguntas/${id}/`, data),
+    deletePregunta: (id: number) => api.delete(`/appraisal/preguntas/${id}/`),
 
-  // Conjuntos de Respuestas
-  getConjuntosRespuestas: () => api.get<ConjuntoRespuestas[]>('/appraisal/conjuntos-respuestas/'),
-  createConjuntoRespuestas: (data: ConjuntoRespuestasRequest) => api.post<ConjuntoRespuestas>('/appraisal/conjuntos-respuestas/', data),
-  updateConjuntoRespuestas: (id: number, data: ConjuntoRespuestasRequest) => api.put<ConjuntoRespuestas>(`/appraisal/conjuntos-respuestas/${id}/`, data),
+    // Conjuntos de Respuestas
+    getConjuntosRespuestas: () => api.get<ConjuntoRespuestas[]>('/appraisal/conjuntos-respuestas/'),
+    createConjuntoRespuestas: (data: ConjuntoRespuestasRequest) => api.post<ConjuntoRespuestas>('/appraisal/conjuntos-respuestas/', data),
+    updateConjuntoRespuestas: (id: number, data: ConjuntoRespuestasRequest) => api.put<ConjuntoRespuestas>(`/appraisal/conjuntos-respuestas/${id}/`, data),
 
-  // Asignaciones
-  getAsignaciones: () => api.get<Asignacion[]>('/appraisal/asignaciones/'),
-  getAsignacion: (id: number) => api.get<Asignacion>(`/appraisal/asignaciones/${id}/`),
-  createAsignacion: (data: AsignacionRequest) => api.post<Asignacion>('/appraisal/asignaciones/', data),
-  desactivarAsignacion: (id: number) => api.patch<{ status: string }>(`/appraisal/asignaciones/${id}/desactivar_asignacion/`),
-  activarAsignacion: (id: number) => api.patch<{ status: string }>(`/appraisal/asignaciones/${id}/activar_asignacion/`),
-  asignarEmpleados: (id: number, data: { empleado_ids?: number[], planta_ids?: number[], puesto_ids?: number[], departamento_ids?: number[] }) =>
-    api.post<{ status: string }>(`/appraisal/asignaciones/${id}/asignar_empleados/`, data),
-
-
-  // Asignaciones de Empleados
-  getAsignacionesEmpleado: () => api.get<AsignacionEmpleado[]>('/appraisal/asignaciones-empleado/'),
-  getAsignacionEmpleado: (id: number) => api.get<AsignacionEmpleado>(`/appraisal/asignaciones-empleado/${id}/`),
+    // Asignaciones
+    getAsignaciones: () => api.get<Asignacion[]>('/appraisal/asignaciones/'),
+    getAsignacion: (id: number) => api.get<Asignacion>(`/appraisal/asignaciones/${id}/`),
+    createAsignacion: (data: AsignacionRequest) => api.post<Asignacion>('/appraisal/asignaciones/', data),
+    desactivarAsignacion: (id: number) => api.patch<{ status: string }>(`/appraisal/asignaciones/${id}/desactivar_asignacion/`),
+    activarAsignacion: (id: number) => api.patch<{ status: string }>(`/appraisal/asignaciones/${id}/activar_asignacion/`),
+    asignarEmpleados: (id: number, data: { empleado_ids?: number[], planta_ids?: number[], puesto_ids?: number[], departamento_ids?: number[] }) =>
+        api.post<{ status: string }>(`/appraisal/asignaciones/${id}/asignar_empleados/`, data),
 
 
-  // Aactivar y desactivar asignaciones individuales
-  desactivarAsignacionEmpleado: (id: number) => api.patch<{ status: string }>(`/appraisal/asignaciones-empleado/${id}/desactivar/`),
-  activarAsignacionEmpleado: (id: number) => api.patch<{ status: string }>(`/appraisal/asignaciones-empleado/${id}/activar/`),
+    // Asignaciones de Empleados
+    getAsignacionesEmpleado: () => api.get<AsignacionEmpleado[]>('/appraisal/asignaciones-empleado/'),
+    getAsignacionEmpleado: (id: number) => api.get<AsignacionEmpleado>(`/appraisal/asignaciones-empleado/${id}/`),
 
 
-  // Respuestas del Empleado
-  getRespuestasEmpleado: () => api.get<RespuestaEmpleado[]>('/appraisal/respuestas-empleado/'),
-  createRespuestaEmpleado: (data: Partial<RespuestaEmpleado>) => api.post<RespuestaEmpleado>('/appraisal/respuestas-empleado/', data),
+    // Aactivar y desactivar asignaciones individuales
+    desactivarAsignacionEmpleado: (id: number) => api.patch<{ status: string }>(`/appraisal/asignaciones-empleado/${id}/desactivar/`),
+    activarAsignacionEmpleado: (id: number) => api.patch<{ status: string }>(`/appraisal/asignaciones-empleado/${id}/activar/`),
 
 
-  // Resultados de Evaluación
-  getResultadosEvaluacion: () => api.get<ResultadoEvaluacion[]>('/appraisal/resultados-evaluacion/'),
-  getResultadoEvaluacion: (id: number) => api.get<ResultadoEvaluacion>(`/appraisal/resultados-evaluacion/${id}/`),
+    // Respuestas del Empleado
+    getRespuestasEmpleado: () => api.get<RespuestaEmpleado[]>('/appraisal/respuestas-empleado/'),
+    createRespuestaEmpleado: (data: Partial<RespuestaEmpleado>) => api.post<RespuestaEmpleado>('/appraisal/respuestas-empleado/', data),
+
+
+    // Resultados de Evaluación
+    getResultadosEvaluacion: () => api.get<ResultadoEvaluacion[]>('/appraisal/resultados-evaluacion/'),
+    getResultadoEvaluacion: (id: number) => api.get<ResultadoEvaluacion>(`/appraisal/resultados-evaluacion/${id}/`),
 };
 
 // -------------------------------------------------------------------------- //

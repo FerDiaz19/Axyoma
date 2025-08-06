@@ -5,7 +5,6 @@ import React, { useState, useEffect } from 'react';
 import evaluacionesAPI, { Evaluacion, TipoEvaluacion } from '../../services/evaluacionesService';
 
 import EvaluacionFormulario from './EvaluacionFormulario';
-// import AsignacionesModal from './AsignacionesModal';
 import EvaluacionPrevia from './EvaluacionPrevia';
 
 
@@ -42,7 +41,6 @@ const EvaluacionesDashboard: React.FC<{ userData: UserData | null }> = ({ userDa
             fetchEvaluaciones();
             fetchTiposEvaluacion();
         } else {
-            // Si no hay userData, detener el estado de carga
             setLoading(false);
         }
     }, [userData]);
@@ -141,21 +139,10 @@ const EvaluacionesDashboard: React.FC<{ userData: UserData | null }> = ({ userDa
     // ---------------------------------------------------------------------- //
 
     const handlePreview = (evaluacion: Evaluacion) => {
+        console.log('en proceso...')
         setSelectedEvaluacion(evaluacion);
         setShowPreview(true);
     };
-
-    // ---------------------------------------------------------------------- //
-
-    // const handleAsignar = (evaluacion: Evaluacion) => {
-    //     if (!userData) return;
-    //     if (userData.nivel_usuario === 'superadmin') {
-    //         alert('Solamente las empresas clientes poseen permiso para realizar asignaciones.');
-    //         return;
-    //     }
-    //     setSelectedEvaluacion(evaluacion);
-    //     setShowAsignaciones(true);
-    // };
 
     // ---------------------------------------------------------------------- //
 
@@ -214,10 +201,6 @@ const EvaluacionesDashboard: React.FC<{ userData: UserData | null }> = ({ userDa
                                 <button onClick={() => handlePreview(evaluacion)} className="btn-info">
                                     👁️ Vista Previa
                                 </button>
-
-                                {/* {(userData?.nivel_usuario === 'admin-empresa' || userData?.nivel_usuario === 'admin-planta') && (
-                                    <button onClick={() => handleAsignar(evaluacion)} className="btn-info">👥 Asignar evaluación</button>
-                                )} */}
                             </div>
                         </li>
                     ))}
@@ -235,13 +218,6 @@ const EvaluacionesDashboard: React.FC<{ userData: UserData | null }> = ({ userDa
                     user={userData}
                 />
             )}
-
-            {/* {showAsignaciones && selectedEvaluacion && (
-                <AsignacionesModal
-                    evaluacion={selectedEvaluacion}
-                    onClose={() => setShowAsignaciones(false)}
-                />
-            )} */}
 
             {showPreview && selectedEvaluacion && (
                 <EvaluacionPrevia

@@ -1,4 +1,3 @@
-
 # ---------------------------------------------------------------------------- #
 
 ''' Serializadores para las entidades relacionadas a las evaluaciones (Ed Rubio) '''
@@ -12,13 +11,12 @@ from rest_framework import serializers
 # ---------------------------------------------------------------------------- #
 
 class PosiblesRespuestasSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = PosiblesRespuestas
         fields = [
             'opcion_conjunto_id', 'texto_opcion', 'valor_booleano',
             'valor_numerico', 'valor_decimal', 'numero_orden' ]
-
-        read_only_fields = [ 'opcion_conjunto_id' ]
 
 # ---------------------------------------------------------------------------- #
 
@@ -28,13 +26,14 @@ class ConjuntoRespuestasSerializer(serializers.ModelSerializer):
     class Meta:
         model = ConjuntoRespuestas
         fields = [ 'conjunto_id', 'nombre', 'descripcion', 'predefinido', 'opciones' ]
-        read_only_fields = [ 'conjunto_id', 'predefinido' ]
+
 
     def create(self, validated_data):
         opciones_data = validated_data.pop('opciones', [])
         conjunto = ConjuntoRespuestas.objects.create(**validated_data)
 
         for opcion_data in opciones_data:
+            opcion_data.pop('opcion_conjunto_id', None)
             PosiblesRespuestas.objects.create(conjunto_respuestas=conjunto, **opcion_data)
         return conjunto
 
@@ -46,6 +45,7 @@ class ConjuntoRespuestasSerializer(serializers.ModelSerializer):
             instance.opciones.all().delete()
 
             for opcion_data in opciones_data:
+                opcion_data.pop('opcion_conjunto_id', None)
                 PosiblesRespuestas.objects.create(conjunto_respuestas=instance, **opcion_data)
         return instance
 
@@ -64,19 +64,155 @@ class PreguntaSerializer(serializers.ModelSerializer):
 # ---------------------------------------------------------------------------- #
 
 class SeccionPreguntaSerializer(serializers.ModelSerializer):
-    pregunta = PreguntaSerializer(read_only=True)
-    conjunto_respuestas = ConjuntoRespuestasSerializer(read_only=True)
-    pregunta_id = serializers.PrimaryKeyRelatedField(
-        queryset=Pregunta.objects.all(), source='pregunta')
-    conjunto_respuestas_id = serializers.PrimaryKeyRelatedField(
-        queryset=ConjuntoRespuestas.objects.all(), source='conjunto_respuestas', required=False, allow_null=True)
+    pregunta = PreguntaSerializer()
+    conjunto_respuestas = serializers.JSONField(required=False, allow_null=True, write_only=True)
+    conjunto_respuestas_detail = ConjuntoRespuestasSerializer(source='conjunto_respuestas', read_only=True)
+    respuesta_correcta = PosiblesRespuestasSerializer(required=False, allow_null=True)
 
     class Meta:
         model = SeccionPregunta
-        fields = [ 'seccion_pregunta_id', 'pregunta', 'pregunta_id', 'numero_orden',
-            'conjunto_respuestas', 'conjunto_respuestas_id', 'respuesta_correcta' ]
+        fields = [
+            'seccion_pregunta_id', 'pregunta', 'numero_orden',
+            'conjunto_respuestas', 'respuesta_correcta', 'conjunto_respuestas_detail'
+        ]
 
         read_only_fields = [ 'seccion_pregunta_id' ]
+
+    def create(self, validated_data, seccion_instance):
+        pregunta_data = validated_data.pop('pregunta')
+        conjunto_respuestas_data = validated_data.pop('conjunto_respuestas', None)
+        respuesta_correcta_data = validated_data.pop('respuesta_correcta', None)
+
+        pregunta_instance = Pregunta.objects.create(**pregunta_data)
+
+        conjunto_respuestas_instance = None
+        if conjunto_respuestas_data:
+            conjunto_id = conjunto_respuestas_data.get('conjunto_id')
+
+            if conjunto_id is not None:
+                try:
+                    # Intentar obtener el ConjuntoRespuestas existente por ID
+                    db_conjunto = ConjuntoRespuestas.objects.get(conjunto_id=conjunto_id)
+
+                    # Si el conjunto existe y es predefinido, lo usamos directamente
+                    if db_conjunto.predefinido:
+                        conjunto_respuestas_instance = db_conjunto
+                    else:
+                        # Si tiene ID pero NO es predefinido, esto es un caso de uso no esperado
+                        # o un intento de recrear un conjunto personalizado ya existente.
+                        # Aquí, asumimos que si se envía un ID, debe ser para un predefinido.
+                        raise serializers.ValidationError(
+                            f"El conjunto de respuestas con ID {conjunto_id} no es predefinido y no puede ser asociado de esta manera."
+                        )
+                except ConjuntoRespuestas.DoesNotExist:
+                    # Si el ID fue proporcionado pero no existe, es un error
+                    raise serializers.ValidationError(
+                        f"Conjunto de respuestas con ID {conjunto_id} no encontrado."
+                    )
+            else:
+                # Si no se proporcionó un conjunto_id, se crea un nuevo ConjuntoRespuestas
+                # Aseguramos que los nuevos conjuntos no sean marcados como predefinidos
+                data_for_new_conjunto = conjunto_respuestas_data.copy()
+                data_for_new_conjunto['predefinido'] = False
+
+                conjunto_serializer = ConjuntoRespuestasSerializer(data=data_for_new_conjunto)
+                conjunto_serializer.is_valid(raise_exception=True)
+                conjunto_respuestas_instance = conjunto_serializer.save()
+
+        respuesta_correcta_instance = None
+        if respuesta_correcta_data and conjunto_respuestas_instance:
+            opcion_id = respuesta_correcta_data.get('opcion_conjunto_id')
+            opcion_text = respuesta_correcta_data.get('texto_opcion')
+
+            try:
+                if opcion_id:
+                    respuesta_correcta_instance = PosiblesRespuestas.objects.get(
+                        opcion_conjunto_id=opcion_id,
+                        conjunto_respuestas=conjunto_respuestas_instance
+                    )
+                elif opcion_text:
+                    respuesta_correcta_instance = PosiblesRespuestas.objects.get(
+                        conjunto_respuestas=conjunto_respuestas_instance,
+                        texto_opcion=opcion_text
+                    )
+                else:
+                    raise serializers.ValidationError("Datos de respuesta correcta incompletos.")
+            except PosiblesRespuestas.DoesNotExist:
+                raise serializers.ValidationError("La respuesta correcta especificada no existe en el conjunto de respuestas.")
+
+        seccion_pregunta = SeccionPregunta.objects.create(
+            seccion=seccion_instance,
+            pregunta=pregunta_instance,
+            conjunto_respuestas=conjunto_respuestas_instance,
+            respuesta_correcta=respuesta_correcta_instance,
+            **validated_data
+        )
+        return seccion_pregunta
+
+    def update(self, instance, validated_data, seccion_instance):
+        pregunta_data = validated_data.pop('pregunta', None)
+        conjunto_respuestas_data = validated_data.pop('conjunto_respuestas', None)
+        respuesta_correcta_data = validated_data.pop('respuesta_correcta', None)
+
+        if pregunta_data:
+            # Asumiendo que al actualizar una pregunta, si se cambia, se crea una nueva instancia de Pregunta
+            # Si la intención es actualizar la pregunta existente, la lógica debería ser diferente aquí.
+            pregunta_instance = Pregunta.objects.create(**pregunta_data)
+            instance.pregunta = pregunta_instance
+
+        conjunto_respuestas_instance = None
+        if conjunto_respuestas_data:
+            conjunto_id = conjunto_respuestas_data.get('conjunto_id')
+
+            if conjunto_id is not None:
+                try:
+                    db_conjunto = ConjuntoRespuestas.objects.get(conjunto_id=conjunto_id)
+                    if db_conjunto.predefinido:
+                        conjunto_respuestas_instance = db_conjunto
+                    else:
+                        raise serializers.ValidationError(
+                            f"El conjunto de respuestas con ID {conjunto_id} no es predefinido y no puede ser asociado de esta manera."
+                        )
+                except ConjuntoRespuestas.DoesNotExist:
+                    raise serializers.ValidationError(
+                        f"Conjunto de respuestas con ID {conjunto_id} no encontrado durante la actualización."
+                    )
+            else:
+                data_for_new_conjunto = conjunto_respuestas_data.copy()
+                data_for_new_conjunto['predefinido'] = False
+
+                conjunto_serializer = ConjuntoRespuestasSerializer(data=data_for_new_conjunto)
+                conjunto_serializer.is_valid(raise_exception=True)
+                conjunto_respuestas_instance = conjunto_serializer.save()
+        instance.conjunto_respuestas = conjunto_respuestas_instance
+
+        respuesta_correcta_instance = None
+        if respuesta_correcta_data and conjunto_respuestas_instance:
+            opcion_id = respuesta_correcta_data.get('opcion_conjunto_id')
+            opcion_text = respuesta_correcta_data.get('texto_opcion')
+
+            try:
+                if opcion_id:
+                    respuesta_correcta_instance = PosiblesRespuestas.objects.get(
+                        opcion_conjunto_id=opcion_id,
+                        conjunto_respuestas=conjunto_respuestas_instance
+                    )
+                elif opcion_text:
+                    respuesta_correcta_instance = PosiblesRespuestas.objects.get(
+                        conjunto_respuestas=conjunto_respuestas_instance,
+                        texto_opcion=opcion_text
+                    )
+                else:
+                    raise serializers.ValidationError("Datos de respuesta correcta incompletos.")
+            except PosiblesRespuestas.DoesNotExist:
+                raise serializers.ValidationError("La respuesta correcta especificada no existe en el conjunto de respuestas durante la actualización.")
+
+        instance.seccion = seccion_instance
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 # ---------------------------------------------------------------------------- #
 
@@ -94,9 +230,24 @@ class SeccionEvalSerializer(serializers.ModelSerializer):
         preguntas_data = validated_data.pop('preguntas_seccion', [])
         seccion = SeccionEval.objects.create(**validated_data)
 
-        for pregunta_data in preguntas_data:
-            SeccionPregunta.objects.create(seccion=seccion, **pregunta_data)
+        seccion_pregunta_serializer = self.fields['preguntas_seccion'].child
+        for pregunta_item_data in preguntas_data:
+            seccion_pregunta_serializer.create(validated_data=pregunta_item_data, seccion_instance=seccion)
+
         return seccion
+
+    def update(self, instance, validated_data):
+        preguntas_data = validated_data.pop('preguntas_seccion', None)
+        instance = super().update(instance, validated_data)
+
+        if preguntas_data is not None:
+            instance.preguntas_seccion.all().delete()
+            seccion_pregunta_serializer = self.fields['preguntas_seccion'].child
+
+            for pregunta_item_data in preguntas_data:
+                seccion_pregunta_serializer.create(validated_data=pregunta_item_data, seccion_instance=instance)
+
+        return instance
 
 # ---------------------------------------------------------------------------- #
 
@@ -130,19 +281,9 @@ class EvaluacionSerializer(serializers.ModelSerializer):
         secciones_data = validated_data.pop('secciones', [])
         evaluacion = Evaluacion.objects.create(**validated_data)
 
+        seccion_serializer = self.fields['secciones'].child
         for seccion_data in secciones_data:
-            preguntas_data = seccion_data.pop('preguntas_seccion', [])
-            seccion = SeccionEval.objects.create(evaluacion=evaluacion, **seccion_data)
-
-            for pregunta_data in preguntas_data:
-                pregunta_id = pregunta_data.pop('pregunta').pregunta_id
-
-                SeccionPregunta.objects.create(
-                    seccion=seccion,
-                    pregunta_id=pregunta_id,
-                    numero_orden=pregunta_data['numero_orden'],
-                    conjunto_respuestas_id=pregunta_data.get('conjunto_respuestas_id')
-                )
+            seccion_serializer.create(validated_data={**seccion_data, 'evaluacion': evaluacion})
 
         return evaluacion
 
@@ -153,20 +294,9 @@ class EvaluacionSerializer(serializers.ModelSerializer):
 
         if secciones_data is not None:
             instance.secciones.all().delete()
-
+            seccion_serializer = self.fields['secciones'].child
             for seccion_data in secciones_data:
-                preguntas_data = seccion_data.pop('preguntas_seccion', [])
-                seccion = SeccionEval.objects.create(evaluacion=instance, **seccion_data)
-
-                for pregunta_data in preguntas_data:
-                    pregunta_id = pregunta_data.pop('pregunta').pregunta_id
-
-                    SeccionPregunta.objects.create(
-                        seccion=seccion,
-                        pregunta_id=pregunta_id,
-                        numero_orden=pregunta_data['numero_orden'],
-                        conjunto_respuestas_id=pregunta_data.get('conjunto_respuestas_id')
-                    )
+                seccion_serializer.create(validated_data={**seccion_data, 'evaluacion': instance})
 
         return instance
 
@@ -219,7 +349,7 @@ class AsignacionSerializer(serializers.ModelSerializer):
         model = Asignacion
         fields = [
             'asignacion_id', 'evaluacion', 'fecha_inicio', 'fecha_fin',
-            'status', 'empleado_evaluado', 'asignaciones_empleado' ]
+        'status', 'empleado_evaluado', 'asignaciones_empleado' ]
 
         read_only_fields = [ 'asignacion_id' ]
 

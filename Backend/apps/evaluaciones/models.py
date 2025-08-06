@@ -234,7 +234,6 @@ class ConjuntoRespuestas(models.Model):
     conjunto_id = models.AutoField(primary_key=True)
     nombre = models.CharField(
         max_length=64,
-        unique=True,
         verbose_name='Nombre del Conjunto',
         help_text='Nombre identificativo del conjunto (ej: Escala Likert 5 puntos)'
     )

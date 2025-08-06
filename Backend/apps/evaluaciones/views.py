@@ -1,4 +1,3 @@
-
 # ---------------------------------------------------------------------------- #
 
 ''' Vistas para las entidades relacionadas a las evaluaciones (Ed Rubio) '''
@@ -7,7 +6,6 @@
 from .models import *
 from .serializers import *
 from apps.users.models import Empleado
-
 
 from django.utils import timezone
 from django.db import transaction
@@ -264,19 +262,17 @@ class AsignacionEmpleadoViewSet(viewsets.ModelViewSet):
     def activar(self, request, pk=None):
         asignacion_empleado = self.get_object()
         asignacion_base = asignacion_empleado.asignacion
-        evaluacion_relacionada = asignacion_base.evalacion
+        evaluacion_relacionada = asignacion_base.evaluacion
 
         if not evaluacion_relacionada.estado:
             return Response({ 'error':
                 'Dado el estado inactivo de la evaluación, no se ha podidod llevar a cabo el proceso de asgnación.'},
                     status=status.HTTP_400_BAD_REQUEST)
 
-        # Mucho cuida'o con intentar reactivar una asignación que se encuentra 'expirada'.
         if asignacion_base.fecha_fin < timezone.now():
             return Response({ 'error': 'La asignación no ha podido ser reactivada debido a que su fecha de término ha sido excedida.' },
                 status=status.HTTP_400_BAD_REQUEST)
 
-        # Mucho cuida'o con intentar reactivar una asignación que se encuentra 'expirada'.
         if asignacion_empleado.status == 'Expirada':
             return Response({ 'error': 'La asignación no ha podido ser reactivada debido a que su fecha de término ha sido excedida.' },
                 status=status.HTTP_400_BAD_REQUEST)

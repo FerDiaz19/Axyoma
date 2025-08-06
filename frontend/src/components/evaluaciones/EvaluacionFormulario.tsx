@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './EvaluacionFormulario.css';
-
-
 import evaluacionesAPI, {
     Evaluacion,
     EvaluacionRequest,
@@ -24,21 +22,20 @@ interface OpcionRespuestaForm {
     valor_booleano?: boolean | null;
     valor_numerico?: number | null;
     valor_decimal?: number | null;
-    numero_orden?: number;
+    numero_orden: number;
 }
 
-// Definimos los tipos literales para tipo_pregunta basados en tus modelos de Django
 type TipoPreguntaLiteral = "Abierta" | "Múltiple" | "Escala" | "Bool";
 
 interface PreguntaFormState {
     texto_pregunta: string;
-    tipo_pregunta: TipoPreguntaLiteral; // Usamos el tipo literal aquí
+    tipo_pregunta: TipoPreguntaLiteral;
     es_obligatoria: boolean;
-    // Para preguntas de tipo Múltiple/Escala/Bool, este ID se llenará
-    // ya sea con un conjunto predefinido o con uno nuevo creado
-    conjunto_respuestas_id: number | null;
-    opciones_nuevas: OpcionRespuestaForm[]; // Para crear un nuevo conjunto (tipo Múltiple)
-    respuesta_correcta: string | number | null; // Acepta string (para nuevas opciones) o number (para IDs)
+    // Ahora puede ser ConjuntoRespuestas (con ID) o ConjuntoRespuestasRequest (sin ID)
+    conjunto_respuestas?: ConjuntoRespuestasRequest | ConjuntoRespuestas;
+    opciones_nuevas: OpcionRespuestaForm[];
+    // Ahora puede ser PosiblesRespuestas (con ID) o PosiblesRespuestasRequest (sin ID)
+    respuesta_correcta?: PosiblesRespuestas | OpcionRespuestaForm | null;
 }
 
 // -------------------------------------------------------------------------- //
@@ -46,10 +43,9 @@ interface PreguntaFormState {
 // -------------------------------------------------------------------------- //
 interface AgregarPreguntaFormProps {
     seccionIndex: number;
-    // onAddPregunta ahora recibe la pregunta creada por la API y la SeccionPreguntaRequest
-    onAddPregunta: (seccionIndex: number, preguntaDataToCreate: PreguntaRequest, seccionPregunta: SeccionPreguntaRequest) => void;
+    onAddPregunta: (seccionIndex: number, seccionPregunta: SeccionPreguntaRequest) => void;
     conjuntosDisponibles: ConjuntoRespuestas[];
-    onCloseForm: () => void; // Para cerrar el formulario de agregar pregunta
+    onCloseForm: () => void;
 }
 
 const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
@@ -62,37 +58,34 @@ const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
         texto_pregunta: '',
         tipo_pregunta: 'Abierta',
         es_obligatoria: true,
-        conjunto_respuestas_id: null,
+        conjunto_respuestas: undefined,
         opciones_nuevas: [],
         respuesta_correcta: null,
     });
     const [isSaving, setIsSaving] = useState(false);
 
-    // Efecto para manejar la lógica de conjunto de respuestas según el tipo de pregunta
     useEffect(() => {
-        const updateConjuntoId = () => {
-            let newConjuntoId: number | null = null;
+        const updateConjunto = () => {
+            let newConjunto: ConjuntoRespuestas | undefined;
             if (preguntaForm.tipo_pregunta === 'Escala') {
-                newConjuntoId = 1; // ID para 'Escala'
+                newConjunto = conjuntosDisponibles.find(c => c.nombre.toLowerCase().includes('escala'));
             } else if (preguntaForm.tipo_pregunta === 'Bool') {
-                newConjuntoId = 2; // ID para 'Bool' (Sí/No)
+                newConjunto = conjuntosDisponibles.find(c => c.nombre.toLowerCase().includes('sí/no') || c.nombre.toLowerCase().includes('si/no'));
             }
             setPreguntaForm(prev => ({
                 ...prev,
-                conjunto_respuestas_id: newConjuntoId,
-                opciones_nuevas: [], // Resetear opciones si cambia a tipo con conjunto predefinido
+                conjunto_respuestas: newConjunto, // Asignamos el objeto ConjuntoRespuestas completo
+                opciones_nuevas: [],
                 respuesta_correcta: null,
             }));
         };
 
-        updateConjuntoId();
-    }, [preguntaForm.tipo_pregunta]);
+        updateConjunto();
+    }, [preguntaForm.tipo_pregunta, conjuntosDisponibles]);
 
     const handlePreguntaInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        // Manejar 'checked' solo si el target es un HTMLInputElement (para checkboxes)
         const checked = (e.target instanceof HTMLInputElement && e.target.type === 'checkbox') ? e.target.checked : undefined;
-
         setPreguntaForm(prev => ({
             ...prev,
             [name]: typeof checked === 'boolean' ? checked : value,
@@ -117,48 +110,35 @@ const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
         setPreguntaForm(prev => ({ ...prev, opciones_nuevas: updatedOpciones.map((opt, i) => ({ ...opt, numero_orden: i + 1 })) }));
     };
 
-    const handleSavePregunta = async () => {
+    const handleRespuestaCorrectaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const selectedValue = e.target.value;
+        const opciones = preguntaForm.conjunto_respuestas?.opciones || preguntaForm.opciones_nuevas;
+
+        const selectedOption = opciones.find(op => {
+            // Si tiene opcion_conjunto_id (es una PosiblesRespuestas), compara por ID o texto
+            if ((op as PosiblesRespuestas).opcion_conjunto_id !== undefined) {
+                return String((op as PosiblesRespuestas).opcion_conjunto_id) === selectedValue || (op as PosiblesRespuestas).texto_opcion === selectedValue;
+            }
+            // Si no, es una OpcionRespuestaForm (nueva), compara por texto
+            return (op as OpcionRespuestaForm).texto_opcion === selectedValue;
+        });
+
+        setPreguntaForm(prev => ({
+            ...prev,
+            respuesta_correcta: selectedOption || null,
+        }));
+    };
+
+    const handleSavePregunta = () => {
         setIsSaving(true);
         try {
-            const { texto_pregunta, tipo_pregunta, es_obligatoria, conjunto_respuestas_id, opciones_nuevas, respuesta_correcta } = preguntaForm;
+            const { texto_pregunta, tipo_pregunta, es_obligatoria, opciones_nuevas, respuesta_correcta, conjunto_respuestas } = preguntaForm;
 
             if (!texto_pregunta) {
-                // Reemplazado alert con un mensaje en la consola o un modal personalizado
                 console.error('El texto de la pregunta es obligatorio.');
-                // Aquí podrías mostrar un modal o un mensaje en el UI
                 setIsSaving(false);
                 return;
             }
-
-            let finalConjuntoRespuestasId = conjunto_respuestas_id;
-            let finalRespuestaCorrectaId: number | null = null;
-
-            // Lógica para crear un nuevo conjunto de respuestas si el tipo es 'Múltiple'
-            if (tipo_pregunta === 'Múltiple' && opciones_nuevas.length > 0) {
-                const newConjuntoData: ConjuntoRespuestasRequest = {
-                    nombre: `Respuestas a pregunta: ${texto_pregunta.substring(0, 50)}...`, // Nombre descriptivo
-                    descripcion: `Conjunto de respuestas para la pregunta: "${texto_pregunta}"`,
-                    opciones: opciones_nuevas.map((op, idx) => ({ ...op, numero_orden: idx + 1 })),
-                };
-                const createdConjunto = await evaluacionesAPI.createConjuntoRespuestas(newConjuntoData);
-                finalConjuntoRespuestasId = createdConjunto.data.conjunto_id;
-
-                // Si se seleccionó una respuesta correcta de las nuevas opciones, encontrar su ID
-                if (typeof respuesta_correcta === 'string' && createdConjunto.data.opciones) {
-                    const foundOption = createdConjunto.data.opciones.find(opt => opt.texto_opcion === respuesta_correcta);
-                    finalRespuestaCorrectaId = foundOption?.opcion_conjunto_id || null;
-                }
-            } else if (['Múltiple', 'Escala', 'Bool'].includes(tipo_pregunta) && !finalConjuntoRespuestasId) {
-                // Reemplazado alert con un mensaje en la consola o un modal personalizado
-                console.error('Debe seleccionar o crear un conjunto de respuestas para este tipo de pregunta.');
-                // Aquí podrías mostrar un modal o un mensaje en el UI
-                setIsSaving(false);
-                return;
-            } else if (typeof respuesta_correcta === 'number') {
-                // Si la respuesta correcta ya es un ID (para conjuntos predefinidos)
-                finalRespuestaCorrectaId = respuesta_correcta;
-            }
-
 
             const newPreguntaData: PreguntaRequest = {
                 texto_pregunta,
@@ -168,27 +148,66 @@ const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
                 activador_padre: null,
             };
 
-            const tempSeccionPregunta: SeccionPreguntaRequest = {
-                pregunta_id: -1, // Placeholder, el ID real se asignará después de crear la pregunta
-                numero_orden: 0, // Placeholder, el orden real se asignará en el padre
-                conjunto_respuestas_id: finalConjuntoRespuestasId,
-                respuesta_correcta: finalRespuestaCorrectaId, // Usar el ID final aquí
+            let finalConjuntoRespuestas: ConjuntoRespuestasRequest | ConjuntoRespuestas | null = null;
+            let finalRespuestaCorrecta: PosiblesRespuestasRequest | PosiblesRespuestas | null = null;
+
+            if (tipo_pregunta === 'Múltiple') {
+                if (opciones_nuevas.length === 0) {
+                    console.error('Las preguntas de tipo Múltiple deben tener al menos una opción.');
+                    setIsSaving(false);
+                    return;
+                }
+                // Para Múltiple, siempre creamos un nuevo ConjuntoRespuestasRequest
+                finalConjuntoRespuestas = {
+                    nombre: `Respuestas a pregunta: ${texto_pregunta.substring(0, 50)}...`,
+                    descripcion: `Conjunto de respuestas para la pregunta: "${texto_pregunta}"`,
+                    opciones: opciones_nuevas.map(op => ({
+                        texto_opcion: op.texto_opcion,
+                        valor_booleano: op.valor_booleano,
+                        valor_numerico: op.valor_numerico,
+                        valor_decimal: op.valor_decimal,
+                        numero_orden: op.numero_orden,
+                    })),
+                };
+                if (respuesta_correcta) {
+                    // Para Múltiple, la respuesta correcta es una nueva PosiblesRespuestasRequest
+                    const { texto_opcion, valor_booleano, valor_numerico, valor_decimal, numero_orden } = respuesta_correcta as OpcionRespuestaForm;
+                    finalRespuestaCorrecta = { texto_opcion, valor_booleano, valor_numerico, valor_decimal, numero_orden: numero_orden || 0 };
+                }
+            } else if (['Escala', 'Bool'].includes(tipo_pregunta)) {
+                if (!conjunto_respuestas) {
+                    console.error(`No se encontró un conjunto de respuestas predefinido para el tipo "${tipo_pregunta}".`);
+                    setIsSaving(false);
+                    return;
+                }
+                // Para Escala/Bool, usamos el ConjuntoRespuestas predefinido directamente (con su ID y predefinido: true)
+                finalConjuntoRespuestas = conjunto_respuestas as ConjuntoRespuestas;
+
+                if (respuesta_correcta) {
+                    // Para Escala/Bool, la respuesta correcta es una PosiblesRespuestas existente (con su ID)
+                    finalRespuestaCorrecta = respuesta_correcta as PosiblesRespuestas;
+                }
+            }
+
+            const seccionPreguntaToSubmit: SeccionPreguntaRequest = {
+                pregunta: newPreguntaData,
+                numero_orden: 0,
+                conjunto_respuestas: finalConjuntoRespuestas,
+                respuesta_correcta: finalRespuestaCorrecta,
             };
 
-            // Llamar a la función del padre para añadir la pregunta
-            onAddPregunta(seccionIndex, newPreguntaData, tempSeccionPregunta);
-            onCloseForm(); // Cerrar el formulario de agregar pregunta
+            onAddPregunta(seccionIndex, seccionPreguntaToSubmit);
+            onCloseForm();
         } catch (error) {
-            console.error('Error al guardar la pregunta o el conjunto de respuestas:', error);
-            // Aquí podrías mostrar un modal o un mensaje en el UI
+            console.error('Error al preparar la pregunta:', error);
         } finally {
             setIsSaving(false);
         }
     };
 
-    const opcionesParaRespuestaCorrecta = preguntaForm.conjunto_respuestas_id
-        ? conjuntosDisponibles.find(c => c.conjunto_id === preguntaForm.conjunto_respuestas_id)?.opciones || []
-        : preguntaForm.opciones_nuevas; // Si es un nuevo conjunto, usar las opciones que el usuario está creando
+    const opcionesParaRespuestaCorrecta = preguntaForm.tipo_pregunta === 'Múltiple'
+        ? preguntaForm.opciones_nuevas
+        : preguntaForm.conjunto_respuestas?.opciones || [];
 
     return (
         <div className="add-pregunta-form-container">
@@ -224,14 +243,13 @@ const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
                             id="esObligatoria"
                             name="es_obligatoria"
                             checked={preguntaForm.es_obligatoria}
-                            onChange={handlePreguntaInputChange}
+                            onChange={(e) => setPreguntaForm(prev => ({ ...prev, es_obligatoria: e.target.checked }))}
                         />
                         <span className="slider round"></span>
                     </label>
                 </div>
             </div>
 
-            {/* Campos para Conjuntos de Respuestas (Múltiple, Escala, Bool) */}
             {['Múltiple', 'Escala', 'Bool'].includes(preguntaForm.tipo_pregunta) && (
                 <div className="options-section">
                     {preguntaForm.tipo_pregunta === 'Múltiple' ? (
@@ -262,28 +280,27 @@ const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
                             <label>Conjunto de Respuestas Predefinido</label>
                             <input
                                 type="text"
-                                value={conjuntosDisponibles.find(c => c.conjunto_id === preguntaForm.conjunto_respuestas_id)?.nombre || ''}
+                                value={preguntaForm.conjunto_respuestas?.nombre || ''}
                                 disabled
                                 className="disabled-input"
                             />
                         </div>
                     )}
 
-                    {/* Selector de Respuesta Correcta */}
                     {opcionesParaRespuestaCorrecta.length > 0 && (
                         <div className="form-group">
                             <label htmlFor="respuestaCorrecta">Respuesta Correcta</label>
                             <select
                                 id="respuestaCorrecta"
                                 name="respuesta_correcta"
-                                value={preguntaForm.respuesta_correcta || ''}
-                                onChange={handlePreguntaInputChange}
+                                value={preguntaForm.respuesta_correcta?.texto_opcion || ''}
+                                onChange={handleRespuestaCorrectaChange}
                             >
                                 <option value="">Seleccione...</option>
                                 {opcionesParaRespuestaCorrecta.map((opcion: PosiblesRespuestas | OpcionRespuestaForm, index: number) => (
                                     <option
                                         key={(opcion as PosiblesRespuestas).opcion_conjunto_id || index}
-                                        value={(opcion as PosiblesRespuestas).opcion_conjunto_id || (opcion as OpcionRespuestaForm).texto_opcion}
+                                        value={opcion.texto_opcion}
                                     >
                                         {opcion.texto_opcion}
                                     </option>
@@ -311,7 +328,6 @@ const AgregarPreguntaForm: React.FC<AgregarPreguntaFormProps> = ({
 // -------------------------------------------------------------------------- //
 interface PreguntaFormItemProps {
     pregunta: SeccionPreguntaRequest;
-    preguntaData: Pregunta;
     conjuntosDisponibles: ConjuntoRespuestas[];
     onUpdate: (updatedPregunta: SeccionPreguntaRequest) => void;
     onRemove: () => void;
@@ -319,48 +335,68 @@ interface PreguntaFormItemProps {
 
 const PreguntaFormItem: React.FC<PreguntaFormItemProps> = ({
     pregunta,
-    preguntaData,
     conjuntosDisponibles,
     onUpdate,
     onRemove,
 }) => {
-    const conjuntoRespuestas = conjuntosDisponibles.find(c => c.conjunto_id === pregunta.conjunto_respuestas_id);
+    // Cuando se edita, el conjunto_respuestas ya viene como ConjuntoRespuestasRequest si fue creado nuevo,
+    // o como ConjuntoRespuestas si fue cargado de la API.
+    // Necesitamos manejar ambos casos para mostrar las opciones correctamente.
+    const conjuntoRespuestas = (pregunta.conjunto_respuestas as ConjuntoRespuestas) ||
+        conjuntosDisponibles.find(c => c.conjunto_id === (pregunta.conjunto_respuestas as ConjuntoRespuestas)?.conjunto_id);
+
+    const opcionesParaRespuestaCorrecta = conjuntoRespuestas?.opciones || [];
 
     const handleRespuestaCorrectaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedOptionId = e.target.value === '' ? null : Number(e.target.value);
+        const selectedValue = e.target.value;
+        // Encuentra la opción seleccionada por su texto_opcion
+        const selectedOption = opcionesParaRespuestaCorrecta.find(op => op.texto_opcion === selectedValue);
+
+        // Crea un nuevo objeto de respuesta correcta en el formato PosiblesRespuestasRequest
+        // Si el conjunto es predefinido, la opción también lo será y tendrá su ID
+        let newRespuestaCorrecta: PosiblesRespuestasRequest | PosiblesRespuestas | null = null;
+        if (selectedOption) {
+            // Si la opción tiene opcion_conjunto_id, es una PosiblesRespuestas existente
+            if ((selectedOption as PosiblesRespuestas).opcion_conjunto_id !== undefined) {
+                newRespuestaCorrecta = selectedOption as PosiblesRespuestas;
+            } else {
+                // Si no, es una OpcionRespuestaForm (nueva), mapeamos a PosiblesRespuestasRequest
+                const { texto_opcion, valor_booleano, valor_numerico, valor_decimal, numero_orden } = selectedOption;
+                newRespuestaCorrecta = { texto_opcion, valor_booleano, valor_numerico, valor_decimal, numero_orden };
+            }
+        }
+
         onUpdate({
             ...pregunta,
-            respuesta_correcta: selectedOptionId,
+            respuesta_correcta: newRespuestaCorrecta,
         });
     };
 
     // Obtener el texto de la respuesta correcta si está seleccionada
-    const respuestaCorrectaTexto = conjuntoRespuestas?.opciones?.find(
-        opt => opt.opcion_conjunto_id === pregunta.respuesta_correcta
-    )?.texto_opcion || '';
+    const respuestaCorrectaTexto = (pregunta.respuesta_correcta as PosiblesRespuestas)?.texto_opcion || '';
 
     return (
-        <li className="pregunta-form-item card"> {/* Añadimos la clase 'card' */}
+        <li className="pregunta-form-item card">
             <div className="pregunta-header">
                 <span className="pregunta-order">{pregunta.numero_orden}.</span>
-                <span className="pregunta-text">{preguntaData.texto_pregunta}</span>
-                <span className="pregunta-type">({preguntaData.tipo_pregunta})</span>
+                <span className="pregunta-text">{pregunta.pregunta.texto_pregunta}</span>
+                <span className="pregunta-type">({pregunta.pregunta.tipo_pregunta})</span>
                 <button type="button" className="btn-icon-remove" onClick={onRemove}>
                     <i className="fas fa-trash"></i>
                 </button>
             </div>
 
-            {conjuntoRespuestas && conjuntoRespuestas.opciones && conjuntoRespuestas.opciones.length > 0 && (
+            {opcionesParaRespuestaCorrecta.length > 0 && (
                 <div className="pregunta-details">
                     <div className="form-group-inline">
                         <label>Respuesta Correcta:</label>
                         <select
-                            value={pregunta.respuesta_correcta || ''}
+                            value={(pregunta.respuesta_correcta as PosiblesRespuestas)?.texto_opcion || ''}
                             onChange={handleRespuestaCorrectaChange}
                         >
                             <option value="">Seleccione...</option>
-                            {conjuntoRespuestas.opciones.map((opcion: PosiblesRespuestas) => (
-                                <option key={opcion.opcion_conjunto_id} value={opcion.opcion_conjunto_id}>
+                            {opcionesParaRespuestaCorrecta.map((opcion: PosiblesRespuestas) => (
+                                <option key={opcion.opcion_conjunto_id} value={opcion.texto_opcion}>
                                     {opcion.texto_opcion}
                                 </option>
                             ))}
@@ -368,10 +404,9 @@ const PreguntaFormItem: React.FC<PreguntaFormItemProps> = ({
                     </div>
                 </div>
             )}
-            {/* Mostrar el estado de obligatoria de manera elegante */}
             <div className="pregunta-meta">
-                <span className={`badge ${preguntaData.es_obligatoria ? 'badge-obligatoria' : 'badge-opcional'}`}>
-                    {preguntaData.es_obligatoria ? 'Obligatoria' : 'Opcional'}
+                <span className={`badge ${pregunta.pregunta.es_obligatoria ? 'badge-obligatoria' : 'badge-opcional'}`}>
+                    {pregunta.pregunta.es_obligatoria ? 'Obligatoria' : 'Opcional'}
                 </span>
                 {respuestaCorrectaTexto && (
                     <span className="badge badge-correcta">
@@ -402,7 +437,6 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
         secciones: [],
     });
     const [conjuntosDisponibles, setConjuntosDisponibles] = useState<ConjuntoRespuestas[]>([]);
-    const [preguntasDeEvaluacion, setPreguntasDeEvaluacion] = useState<{ [key: number]: Pregunta }>({});
     const [showAddPreguntaFormIndex, setShowAddPreguntaFormIndex] = useState<number | null>(null);
 
     useEffect(() => {
@@ -419,14 +453,6 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
 
     useEffect(() => {
         if (evaluacion) {
-            const nuevasPreguntasMap: { [key: number]: Pregunta } = {};
-            evaluacion.secciones.forEach((seccion: SeccionEval) => {
-                seccion.preguntas_seccion.forEach((sp: SeccionPregunta) => {
-                    nuevasPreguntasMap[sp.pregunta.pregunta_id] = sp.pregunta;
-                });
-            });
-            setPreguntasDeEvaluacion(nuevasPreguntasMap);
-
             setFormData({
                 titulo: evaluacion.titulo,
                 descripcion: evaluacion.descripcion,
@@ -437,22 +463,20 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
                 estado: evaluacion.estado,
                 tipo_evaluacion_id: evaluacion.tipo_evaluacion_id,
                 secciones: evaluacion.secciones.map((seccion: SeccionEval) => ({
-                    seccion_id: seccion.seccion_id,
+                    seccion_id: seccion.seccion_id, // Mantener el ID para la edición
                     nombre: seccion.nombre,
                     descripcion: seccion.descripcion,
                     numero_orden: seccion.numero_orden,
                     es_evaluable: seccion.es_evaluable,
                     preguntas_seccion: seccion.preguntas_seccion.map((sp: SeccionPregunta) => ({
-                        seccion_pregunta_id: sp.seccion_pregunta_id,
-                        pregunta_id: sp.pregunta.pregunta_id,
+                        // CORRECCIÓN CLAVE: Ahora asignamos directamente los objetos completos
+                        // ya que las interfaces *Request permiten los tipos completos (con IDs)
+                        pregunta: sp.pregunta, // Ya es Pregunta, que extiende PreguntaRequest
                         numero_orden: sp.numero_orden,
-                        conjunto_respuestas_id: sp.conjunto_respuestas?.conjunto_id || null,
-                        respuesta_correcta: sp.respuesta_correcta,
+                        conjunto_respuestas: sp.conjunto_respuestas, // Ya es ConjuntoRespuestas, que extiende ConjuntoRespuestasRequest
+                        respuesta_correcta: sp.respuesta_correcta, // Ya es PosiblesRespuestas, que extiende PosiblesRespuestasRequest
                     })),
                 })),
-                // Al editar, los IDs de empresa y creado_por ya vienen en el objeto evaluacion
-                // y no necesitan ser enviados en el PUT a menos que se cambien.
-                // Sin embargo, para consistencia con la interfaz, podemos incluirlos si están presentes.
                 empresa_id: evaluacion.empresa_id,
                 creado_por_id: user?.user_id,
             });
@@ -471,14 +495,11 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
                 estado: true,
                 tipo_evaluacion_id: tipoPornivel_usuario,
                 secciones: [],
-                // Al crear, estos campos se establecen por el nivel de usuario
                 empresa_id: user?.nivel_usuario !== 'superadmin' ? user?.empresa_id : null,
                 creado_por_id: user?.user_id,
             });
-            setPreguntasDeEvaluacion({});
         }
     }, [evaluacion, tiposEvaluacion, user]);
-
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, field: keyof EvaluacionRequest) => {
         let value: string | number | boolean | null = e.target.value;
@@ -524,28 +545,13 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
         setFormData({ ...formData, secciones: updatedSecciones.map((s, i) => ({ ...s, numero_orden: i + 1 })) });
     };
 
-    const handleAddPreguntaToSection = async (seccionIndex: number, newPreguntaData: PreguntaRequest, tempSeccionPregunta: SeccionPreguntaRequest) => {
-        try {
-            const res = await evaluacionesAPI.createPregunta(newPreguntaData);
-            const preguntaCreada: Pregunta = res.data;
+    const handleAddPreguntaToSection = (seccionIndex: number, newSeccionPregunta: SeccionPreguntaRequest) => {
+        const updatedSecciones = [...formData.secciones!];
+        newSeccionPregunta.numero_orden = updatedSecciones[seccionIndex].preguntas_seccion.length + 1;
+        updatedSecciones[seccionIndex].preguntas_seccion.push(newSeccionPregunta);
 
-            setPreguntasDeEvaluacion(prev => ({
-                ...prev,
-                [preguntaCreada.pregunta_id]: preguntaCreada,
-            }));
-
-            const updatedSecciones = [...formData.secciones!];
-            updatedSecciones[seccionIndex].preguntas_seccion.push({
-                ...tempSeccionPregunta,
-                pregunta_id: preguntaCreada.pregunta_id,
-                numero_orden: updatedSecciones[seccionIndex].preguntas_seccion.length + 1,
-            });
-            setFormData({ ...formData, secciones: updatedSecciones });
-            setShowAddPreguntaFormIndex(null);
-        } catch (error) {
-            console.error('Error al crear la pregunta y añadirla a la sección:', error);
-            // Aquí podrías mostrar un modal o un mensaje en el UI
-        }
+        setFormData({ ...formData, secciones: updatedSecciones });
+        setShowAddPreguntaFormIndex(null);
     };
 
     const handleUpdatePregunta = (seccionIndex: number, preguntaIndex: number, updatedPregunta: SeccionPreguntaRequest) => {
@@ -565,42 +571,30 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
         e.preventDefault();
         setLoading(true);
         try {
-            // Se crea una copia mutable de formData para añadir los IDs
-            const dataToSubmit: EvaluacionRequest = { ...formData } as EvaluacionRequest;
+            const dataToSubmit: EvaluacionRequest = { ...formData,
+                secciones: formData.secciones || [],
+                titulo: formData.titulo || '',
+                estado: formData.estado || false,
+                tipo_evaluacion_id: formData.tipo_evaluacion_id || -1,
+            };
 
-            // Lógica para asignar empresa_id y creado_por_id
-            if (user.nivel_usuario === 'superadmin') {
-                dataToSubmit.creado_por_id = user.user_id;
-                dataToSubmit.empresa_id = null; // Las evaluaciones normativas no están ligadas a una empresa específica
-            } else if (user.nivel_usuario === 'admin-empresa' || user.nivel_usuario === 'admin-planta') {
-                dataToSubmit.creado_por_id = user.user_id;
-                dataToSubmit.empresa_id = user.empresa_id || null; // Asegura que empresa_id se envíe si está disponible
-            }
-            // Si el usuario es de otro tipo o no está autenticado, estos campos pueden ser null o no enviados
-            // según la lógica de tu backend y si son obligatorios o no.
-
-            const seccionesSinPreguntas = dataToSubmit.secciones?.some(s => s.es_evaluable && s.preguntas_seccion.length === 0);
+            const seccionesSinPreguntas = dataToSubmit.secciones.some(s => s.es_evaluable && s.preguntas_seccion.length === 0);
             if (seccionesSinPreguntas) {
-                // Reemplazado alert con un mensaje en la consola o un modal personalizado
                 console.error('Las secciones evaluables deben tener al menos una pregunta.');
-                // Aquí podrías mostrar un modal o un mensaje en el UI
                 setLoading(false);
                 return;
             }
 
             if (evaluacion && evaluacion.evaluacion_id) {
                 await evaluacionesAPI.updateEvaluacion(evaluacion.evaluacion_id, dataToSubmit);
-                // Reemplazado alert con un mensaje en la consola o un modal personalizado
                 console.log('Evaluación actualizada con éxito.');
             } else {
                 await evaluacionesAPI.createEvaluacion(dataToSubmit);
-                // Reemplazado alert con un mensaje en la consola o un modal personalizado
                 console.log('Evaluación creada con éxito.');
             }
             onClose();
         } catch (error) {
             console.error('Error al guardar la evaluación:', error);
-            // Aquí podrías mostrar un modal o un mensaje en el UI
         } finally {
             setLoading(false);
         }
@@ -647,101 +641,97 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
                             <label htmlFor="instrucciones">Instrucciones</label>
                             <textarea id="instrucciones" value={formData.instrucciones || ''} onChange={(e) => handleInputChange(e, 'instrucciones')} rows={3} />
                         </div>
+                        <div className="form-group">
+                            <label htmlFor="contenido_informativo">Contenido informativo</label>
+                            <textarea id="contenido_informativo" value={formData.contenido_informativo || ''} onChange={(e) => handleInputChange(e, 'contenido_informativo')} rows={3} />
+                        </div>
                         <div className="form-row">
-                            <div className="form-group flex-grow">
-                                <label htmlFor="contenidoInformativo">Contenido Informativo (URL)</label>
-                                <input type="text" id="contenidoInformativo" value={formData.contenido_informativo || ''} onChange={(e) => handleInputChange(e, 'contenido_informativo')} />
+                            <div className="form-group">
+                                <label htmlFor="tiempo_limite">Tiempo Límite (minutos)</label>
+                                <input type="number" id="tiempo_limite" value={formData.tiempo_limite || ''} onChange={(e) => handleInputChange(e, 'tiempo_limite')} />
                             </div>
                             <div className="form-group">
-                                <label htmlFor="tiempoLimite">Tiempo Límite (minutos)</label>
-                                <input type="number" id="tiempoLimite" min={0} max={240} value={formData.tiempo_limite || ''} onChange={(e) => handleInputChange(e, 'tiempo_limite')} />
-                            </div>
-                            <div className="form-group">
-                                <label htmlFor="umbralAprobacion">Umbral de Aprobación (%)</label>
-                                <input type="number" id="umbralAprobacion" min={0} max={100} value={formData.umbral_aprobacion || ''} onChange={(e) => handleInputChange(e, 'umbral_aprobacion')} />
-                            </div>
-                            <div className="form-group boolean-toggle">
-                                <label htmlFor="estadoEvaluacion">Estado</label>
-                                <label className="switch">
-                                    <input type="checkbox" id="estadoEvaluacion" checked={formData.estado || false} onChange={(e) => handleInputChange(e, 'estado')} />
-                                    <span className="slider round"></span>
-                                </label>
+                                <label htmlFor="umbral_aprobacion">Umbral de Aprobación (%)</label>
+                                <input type="number" id="umbral_aprobacion" value={formData.umbral_aprobacion || ''} onChange={(e) => handleInputChange(e, 'umbral_aprobacion')} />
                             </div>
                         </div>
                     </section>
 
                     <section className="form-section">
-                        <h4 className="form-section-title">Secciones <button type="button" onClick={handleAddSeccion} className="btn-add-seccion">➕ Agregar Sección</button></h4>
-                        {formData.secciones?.map((seccion, seccionIndex) => (
+                        <h4 className="form-section-title">Secciones de la Evaluación</h4>
+                        {formData.secciones!.map((seccion, seccionIndex) => (
                             <div key={seccionIndex} className="seccion-container card">
                                 <div className="seccion-header">
-                                    <input
-                                        type="text"
-                                        className="seccion-title"
-                                        value={seccion.nombre}
-                                        onChange={(e) => handleSeccionChange(e, seccionIndex, 'nombre')}
-                                        required
-                                    />
-                                    <button type="button" onClick={() => handleRemoveSeccion(seccionIndex)} className="btn-icon-remove">
+                                    <div className="form-group flex-grow">
+                                        <label>Nombre de la Sección</label>
+                                        <input
+                                            type="text"
+                                            value={seccion.nombre}
+                                            onChange={(e) => handleSeccionChange(e, seccionIndex, 'nombre')}
+                                            required
+                                        />
+                                    </div>
+                                    <button type="button" className="btn-icon-remove" onClick={() => handleRemoveSeccion(seccionIndex)}>
                                         <i className="fas fa-trash"></i>
                                     </button>
                                 </div>
-                                <div className="form-row">
-                                    <div className="form-group flex-grow">
-                                        <label htmlFor={`descripcionSeccion-${seccionIndex}`}>Descripción de Sección (Opcional)</label>
-                                        <textarea
-                                            id={`descripcionSeccion-${seccionIndex}`}
-                                            value={seccion.descripcion || ''}
-                                            onChange={(e) => handleSeccionChange(e as React.ChangeEvent<HTMLTextAreaElement>, seccionIndex, 'descripcion')}
-                                            placeholder="Descripción de la sección (opcional)"
-                                            rows={2}
+                                <div className="form-group">
+                                    <label>Descripción de la Sección</label>
+                                    <textarea
+                                        value={seccion.descripcion || ''}
+                                        onChange={(e) => handleSeccionChange(e, seccionIndex, 'descripcion')}
+                                        rows={2}
+                                    />
+                                </div>
+                                <div className="form-group boolean-toggle">
+                                    <label htmlFor={`es_evaluable-${seccionIndex}`}>Es Evaluable</label>
+                                    <label className="switch">
+                                        <input
+                                            type="checkbox"
+                                            id={`es_evaluable-${seccionIndex}`}
+                                            checked={seccion.es_evaluable}
+                                            onChange={(e) => handleSeccionChange(e, seccionIndex, 'es_evaluable')}
                                         />
-                                    </div>
-                                    <div className="form-group boolean-toggle">
-                                        <label htmlFor={`esEvaluable-${seccionIndex}`}>Es evaluable</label>
-                                        <label className="switch">
-                                            <input
-                                                type="checkbox"
-                                                id={`esEvaluable-${seccionIndex}`}
-                                                checked={seccion.es_evaluable}
-                                                onChange={(e) => handleSeccionChange(e, seccionIndex, 'es_evaluable')}
-                                            />
-                                            <span className="slider round"></span>
-                                        </label>
-                                    </div>
+                                        <span className="slider round"></span>
+                                    </label>
                                 </div>
 
-                                <ul className="preguntas-list">
-                                    {seccion.preguntas_seccion.map((pregunta, preguntaIndex) => {
-                                        const preguntaData = preguntasDeEvaluacion[pregunta.pregunta_id];
-                                        if (!preguntaData) return null;
-                                        return (
-                                            <PreguntaFormItem
-                                                key={pregunta.pregunta_id}
-                                                pregunta={pregunta}
-                                                preguntaData={preguntaData}
-                                                conjuntosDisponibles={conjuntosDisponibles}
-                                                onUpdate={(updatedPregunta) => handleUpdatePregunta(seccionIndex, preguntaIndex, updatedPregunta)}
-                                                onRemove={() => handleRemovePregunta(seccionIndex, preguntaIndex)}
-                                            />
-                                        );
-                                    })}
-                                </ul>
-
-                                {showAddPreguntaFormIndex === seccionIndex ? (
-                                    <AgregarPreguntaForm
-                                        seccionIndex={seccionIndex}
-                                        onAddPregunta={handleAddPreguntaToSection}
-                                        conjuntosDisponibles={conjuntosDisponibles}
-                                        onCloseForm={() => setShowAddPreguntaFormIndex(null)}
-                                    />
-                                ) : (
-                                    <button type="button" className="btn-add-pregunta" onClick={() => setShowAddPreguntaFormIndex(seccionIndex)}>
-                                        ➕ Agregar Pregunta
-                                    </button>
-                                )}
+                                <div className="preguntas-section">
+                                    <h5 className="form-section-title">Preguntas</h5>
+                                    {seccion.preguntas_seccion.length > 0 ? (
+                                        <ul className="preguntas-list">
+                                            {seccion.preguntas_seccion.map((pregunta, preguntaIndex) => (
+                                                <PreguntaFormItem
+                                                    key={preguntaIndex}
+                                                    pregunta={pregunta}
+                                                    conjuntosDisponibles={conjuntosDisponibles}
+                                                    onUpdate={(updatedPregunta) => handleUpdatePregunta(seccionIndex, preguntaIndex, updatedPregunta)}
+                                                    onRemove={() => handleRemovePregunta(seccionIndex, preguntaIndex)}
+                                                />
+                                            ))}
+                                        </ul>
+                                    ) : (
+                                        <p className="no-items-message">Esta sección no tiene preguntas.</p>
+                                    )}
+                                    {showAddPreguntaFormIndex !== seccionIndex && (
+                                        <button type="button" className="btn-add-pregunta" onClick={() => setShowAddPreguntaFormIndex(seccionIndex)}>
+                                            ➕ Añadir Pregunta
+                                        </button>
+                                    )}
+                                    {showAddPreguntaFormIndex === seccionIndex && (
+                                        <AgregarPreguntaForm
+                                            seccionIndex={seccionIndex}
+                                            onAddPregunta={handleAddPreguntaToSection}
+                                            conjuntosDisponibles={conjuntosDisponibles}
+                                            onCloseForm={() => setShowAddPreguntaFormIndex(null)}
+                                        />
+                                    )}
+                                </div>
                             </div>
                         ))}
+                        <button type="button" className="btn-add-seccion" onClick={handleAddSeccion}>
+                            ➕ Añadir Sección
+                        </button>
                     </section>
                 </form>
             </div>

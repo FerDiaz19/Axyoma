@@ -1,267 +1,234 @@
-:root {
-  --bg-color-dark: #dbdbde;
-  --bg-color-card: #f6f2f7;
-  --text-color-light: #302e30;
-  --text-color-secondary: #40374e; /* Púrpura sutil */
-  --accent-color-green: #2b2235;
-  --accent-color-red: #ff5555;
-  --accent-color-yellow: #f1fa8c;
-  --border-color: #8d8f9a;
-  --shadow-color: rgba(69, 62, 68, 0.4);
-}
+/* -------------------------------------------------------------------------- */
+/* Estilos para la Vista Previa de Evaluación (EvaluacionPrevia.css) */
+/* -------------------------------------------------------------------------- */
 
-/* Contenedor principal del modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.7);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
+/* Reutilizar estilos de modal-overlay, modal-content, modal-header-custom, etc. de forms.css */
+/* Asegúrate de que forms.css esté importado antes que este archivo o que estos estilos se fusionen */
 
 .preview-modal {
-  background-color: var(--bg-color-dark);
-  color: var(--text-color-light);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px var(--shadow-color);
-  max-width: 900px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  transition: all 0.3s ease-in-out;
+    max-width: 900px; /* Ancho máximo para la vista previa */
+    /* Puedes ajustar el min-width si es necesario, pero 70vw ya es bastante grande */
 }
 
-/* Scrollbar personalizado */
-.preview-modal::-webkit-scrollbar {
-  width: 8px;
-}
-
-.preview-modal::-webkit-scrollbar-track {
-  background: var(--bg-color-card);
-  border-radius: 10px;
-}
-
-.preview-modal::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 10px;
-}
-
-/* Encabezado */
-.modal-header-custom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 30px;
-  border-bottom: 1px solid var(--border-color);
-  position: sticky;
-  top: 0;
-  background-color: var(--bg-color-dark);
-  z-index: 10;
-}
-
-.modal-title {
-  font-size: 1.8em;
-  font-weight: 600;
-  margin: 0;
-  color: var(--text-color-secondary);
-}
-
-.btn-volver {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  background-color: var(--border-color);
-  color: var(--text-color-light);
-  font-size: 1em;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.btn-volver:hover {
-  background-color: var(--text-color-secondary);
-  color: var(--bg-color-dark);
-}
-
-.btn-volver i {
-  margin-right: 8px;
-}
-
-/* Cuerpo del modal */
 .preview-body {
-  padding: 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 30px;
+    padding: 2rem;
+    overflow-y: auto; /* Permitir scroll si el contenido es muy largo */
 }
 
-/* Estilo para las secciones */
 .preview-section {
-  background-color: var(--bg-color-card);
-  padding: 25px;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    background-color: #ffffff;
+    border: 1px solid #eef1f4;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.03);
 }
 
 .preview-section-title {
-  font-size: 1.5em;
-  color: var(--accent-color-green);
-  border-bottom: 2px solid var(--border-color);
-  padding-bottom: 10px;
-  margin-top: 0;
-  margin-bottom: 20px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #495057;
+    margin-top: 0;
+    margin-bottom: 1.2rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid #e9ecef;
 }
 
-/* Estilo para la información general */
 .preview-section p {
-  margin: 8px 0;
-  font-size: 1em;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+    color: #555;
 }
 
 .preview-section p strong {
-  color: var(--text-color-secondary);
-  font-weight: 500;
-  min-width: 150px;
+    color: #333;
 }
 
 .preview-section a {
-  color: var(--accent-color-yellow);
-  text-decoration: none;
-  transition: color 0.2s ease;
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.2s ease;
 }
 
 .preview-section a:hover {
-  color: var(--text-color-light);
-  text-decoration: underline;
+    text-decoration: underline;
+    color: #0056b3;
 }
 
-/* Estilo para las secciones de la evaluación */
-.seccion-preview-card {
-  margin-bottom: 20px;
-  border: 1px solid var(--border-color);
-  background-color: var(--bg-color-dark);
-  padding: 20px;
-  border-radius: 8px;
+/* Estilos para las secciones dentro de la vista previa */
+.seccion-preview-card.card {
+    background-color: #fcfcfc;
+    border: 1px solid #eef1f4;
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 1px 5px rgba(0, 0, 0, 0.04);
 }
 
 .seccion-preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid #f5f5f5;
 }
 
 .seccion-preview-header h5 {
-  margin: 0;
-  font-size: 1.2em;
-  color: var(--text-color-light);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #343a40;
+    margin: 0;
 }
 
 .seccion-description {
-  font-style: italic;
-  color: var(--border-color);
-  margin-bottom: 15px;
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 1rem;
 }
 
-.preguntas-sub-title {
-  font-size: 1.1em;
-  color: var(--accent-color-yellow);
-  border-bottom: 1px dashed var(--border-color);
-  padding-bottom: 8px;
-  margin-top: 20px;
-  margin-bottom: 15px;
-}
-
-/* Estilo para las preguntas */
-.preguntas-preview-list {
-  list-style-type: none;
-  padding-left: 0;
-}
-
-.pregunta-preview-item {
-  margin-bottom: 20px;
-  padding-left: 15px;
-  border-left: 3px solid var(--border-color);
-}
-
-.pregunta-preview-item p {
-  margin: 0;
-  line-height: 1.5;
-  display: block; /* Para que los badges estén en la misma línea */
-}
-
-.pregunta-type {
-  font-size: 0.9em;
-  color: var(--border-color);
-  font-style: italic;
-  margin-left: 5px;
-}
-
-.opciones-preview {
-  margin-top: 10px;
-  background-color: rgba(0, 0, 0, 0.2);
-  padding: 15px;
-  border-radius: 6px;
-  border: 1px dashed var(--border-color);
-}
-
-.opciones-preview strong {
-  display: block;
-  margin-bottom: 10px;
-  color: var(--accent-color-green);
-}
-
-.opciones-preview ul {
-  list-style-type: '👉 '; /* Viñeta personalizada */
-  padding-left: 20px;
-}
-
-.opciones-preview li {
-  margin-bottom: 5px;
-  color: var(--text-color-light);
-}
-
-/* Badges (etiquetas) */
-.badge {
-  font-size: 0.8em;
-  padding: 4px 8px;
-  border-radius: 5px;
-  font-weight: 600;
-  margin-left: 10px;
-  white-space: nowrap;
-}
-
+/* Badges específicos para la vista previa */
 .badge-evaluable {
-  background-color: var(--accent-color-green);
-  color: var(--bg-color-dark);
+    background-color: #d1ecf1; /* Azul claro */
+    color: #0c5460;
+    padding: 0.25em 0.6em;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
 .badge-no-evaluable {
-  background-color: var(--accent-color-red);
-  color: var(--text-color-light);
+    background-color: #f8d7da; /* Rojo claro */
+    color: #721c24;
+    padding: 0.25em 0.6em;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
-.badge-obligatoria {
-  background-color: var(--accent-color-green);
-  color: var(--bg-color-dark);
+/* Estilos para las preguntas dentro de las secciones */
+.preguntas-sub-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #555;
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+    border-bottom: 1px dashed #e0e0e0;
+    padding-bottom: 0.4rem;
 }
 
-.badge-opcional {
-  background-color: var(--border-color);
-  color: var(--text-color-light);
+.preguntas-preview-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
-.badge-correcta {
-  background-color: var(--accent-color-yellow);
-  color: var(--bg-color-dark);
-  margin-left: 10px;
+.pregunta-preview-item {
+    background-color: #ffffff;
+    border: 1px solid #eef1f4;
+    border-radius: 6px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.6rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.pregunta-preview-item p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #343a40;
+    display: flex; /* Para alinear elementos en la misma línea */
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.pregunta-preview-item p strong {
+    color: #007bff; /* Color para el número de orden */
+}
+
+.pregunta-preview-item .pregunta-type {
+    font-size: 0.8rem;
+    color: #777;
+    font-style: italic;
+    white-space: nowrap;
+}
+
+.opciones-preview {
+    margin-top: 0.5rem;
+    padding-left: 1rem;
+    font-size: 0.9rem;
+    color: #444;
+}
+
+.opciones-preview strong {
+    font-weight: 600;
+    color: #333;
+}
+
+.opciones-preview ul {
+    list-style: disc; /* Usar viñetas para las opciones */
+    margin-top: 0.5rem;
+    margin-left: 1.5rem;
+    padding: 0;
+}
+
+.opciones-preview li {
+    margin-bottom: 0.3rem;
+    color: #555;
+}
+
+/* Reutilizar badges de forms.css para 'Obligatoria' y 'Opcional' */
+/* .badge-obligatoria, .badge-opcional, .badge-correcta */
+
+/* Media Queries para Responsividad */
+@media (max-width: 768px) {
+    .preview-modal {
+        width: 95%;
+        margin: 10px;
+        min-width: unset;
+    }
+
+    .preview-body {
+        padding: 1rem;
+    }
+
+    .preview-section {
+        padding: 1rem;
+    }
+
+    .preview-section-title {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .seccion-preview-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .seccion-preview-header h5 {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .pregunta-preview-item p {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .pregunta-preview-item .pregunta-type {
+        width: 100%;
+        text-align: right;
+        font-size: 0.75rem;
+    }
+
+    .opciones-preview {
+        padding-left: 0;
+    }
+
+    .opciones-preview ul {
+        margin-left: 1rem;
+    }
 }
