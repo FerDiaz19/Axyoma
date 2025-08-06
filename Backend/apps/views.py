@@ -815,17 +815,15 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
             # Cambiar status de todos los puestos de los departamentos
             puestos = Puesto.objects.filter(departamento__planta=planta)
-            puestos.update(status=nuevo_status)
-
-            # Cambiar status de todos los empleados de la planta (a través de puesto->departamento->planta)
+            puestos.update(status=nuevo_status)            # Cambiar status de todos los empleados de la planta (a través de puesto->departamento->planta)
             empleados = Empleado.objects.filter(puesto__departamento__planta=planta)
             empleados.update(status=nuevo_status)
 
             # Activar/desactivar cuenta del administrador de planta
             try:
                 admin_planta = AdminPlanta.objects.get(planta=planta)
-                admin_planta.usuario.user.is_active = nuevo_status
-                admin_planta.usuario.user.save()
+                admin_planta.usuario.user_id.is_active = nuevo_status
+                admin_planta.usuario.user_id.save()
                 admin_planta.status = nuevo_status
                 admin_planta.save()
             except AdminPlanta.DoesNotExist:
@@ -871,26 +869,22 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 else:
                     return Response({'error': 'empresa_id requerido para superadmin'}, status=status.HTTP_400_BAD_REQUEST)
             else:
-                return Response({'error': 'Sin permisos'}, status=status.HTTP_403_FORBIDDEN)
-
-            # Obtener plantas de la empresa
-            plantas = Planta.objects.filter(empresa=empresa, status=True)
-
-            # Obtener usuarios administradores de estas plantas
-            admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user', 'planta')
+                return Response({'error': 'Sin permisos'}, status=status.HTTP_403_FORBIDDEN)            # Obtener plantas de la empresa
+            plantas = Planta.objects.filter(empresa=empresa, status=True)            # Obtener usuarios administradores de estas plantas
+            admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user_id', 'planta')
 
             usuarios_data = []
             for admin_planta in admin_plantas:
                 usuario_data = {
-                    'usuario_id': admin_planta.usuario.user.id,
-                    'username': admin_planta.usuario.user.username,
-                    'email': admin_planta.usuario.user.email,
-                    'first_name': admin_planta.usuario.user.first_name,
-                    'last_name': admin_planta.usuario.user.last_name,
-                    'is_active': admin_planta.usuario.user.is_active,
+                    'usuario_id': admin_planta.usuario.user_id.id,
+                    'username': admin_planta.usuario.user_id.username,
+                    'email': admin_planta.usuario.user_id.email,
+                    'first_name': admin_planta.usuario.user_id.first_name,
+                    'last_name': admin_planta.usuario.user_id.last_name,
+                    'is_active': admin_planta.usuario.user_id.is_active,
                     'planta_id': admin_planta.planta.planta_id,
                     'planta_nombre': admin_planta.planta.nombre,
-                    'fecha_creacion': admin_planta.usuario.user.date_joined.isoformat() if admin_planta.usuario.user.date_joined else None
+                    'fecha_creacion': admin_planta.usuario.user_id.date_joined.isoformat() if admin_planta.usuario.user_id.date_joined else None
                 }
                 usuarios_data.append(usuario_data)
 
@@ -918,13 +912,9 @@ class PlantaViewSet(viewsets.ModelViewSet):
             # Obtener empresa del admin
             empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
             if not empresa:
-                return Response({'error': 'Admin sin empresa asignada'}, status=status.HTTP_404_NOT_FOUND)
-
-            # Obtener plantas de la empresa
-            plantas = Planta.objects.filter(empresa=empresa, status=True)
-
-            # Obtener usuarios administradores de estas plantas
-            admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user', 'planta')
+                return Response({'error': 'Admin sin empresa asignada'}, status=status.HTTP_404_NOT_FOUND)            # Obtener plantas de la empresa
+            plantas = Planta.objects.filter(empresa=empresa, status=True)            # Obtener usuarios administradores de estas plantas
+            admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user_id', 'planta')
 
             credenciales_data = []
             for admin_planta in admin_plantas:
@@ -933,12 +923,12 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 credencial_data = {
                     'planta_id': admin_planta.planta.planta_id,
                     'planta_nombre': admin_planta.planta.nombre,
-                    'usuario_id': admin_planta.usuario.user.id,
-                    'username': admin_planta.usuario.user.username,
-                    'email': admin_planta.usuario.user.email,
-                    'nombre_completo': f"{admin_planta.usuario.user.first_name} {admin_planta.usuario.user.last_name}",
-                    'is_active': admin_planta.usuario.user.is_active,
-                    'fecha_creacion': admin_planta.usuario.user.date_joined.isoformat() if admin_planta.usuario.user.date_joined else None,
+                    'usuario_id': admin_planta.usuario.user_id.id,
+                    'username': admin_planta.usuario.user_id.username,
+                    'email': admin_planta.usuario.user_id.email,
+                    'nombre_completo': f"{admin_planta.usuario.user_id.first_name} {admin_planta.usuario.user_id.last_name}",
+                    'is_active': admin_planta.usuario.user_id.is_active,
+                    'fecha_creacion': admin_planta.usuario.user_id.date_joined.isoformat() if admin_planta.usuario.user_id.date_joined else None,
                     'password_visible': '⚠️ Revise los logs del servidor para la contraseña original',
                     'instrucciones': 'Las contraseñas se generan automáticamente al crear la planta y aparecen en los logs del servidor Django'
                 }
@@ -1772,10 +1762,9 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'prioridad': 'alta'
                 })
 
-            # === ESTADÍSTICAS DE USUARIOS ===
-            try:
-                total_usuarios = PerfilUsuario.objects.filter(user__isnull=False).count()
-                usuarios_activos = PerfilUsuario.objects.filter(user__isnull=False, user__is_active=True).count()
+            # === ESTADÍSTICAS DE USUARIOS ===            try:
+                total_usuarios = PerfilUsuario.objects.filter(user_id__isnull=False).count()
+                usuarios_activos = PerfilUsuario.objects.filter(user_id__isnull=False, user_id__is_active=True).count()
                 usuarios_inactivos = total_usuarios - usuarios_activos
 
                 estadisticas['dashboard']['tarjetas_principales']['usuarios'].update({
@@ -1788,7 +1777,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
                 # Distribución por tipo de usuario
                 tipos_usuario = ['superadmin', 'admin-empresa', 'admin-planta', 'empleado']
                 for tipo in tipos_usuario:
-                    cantidad = PerfilUsuario.objects.filter(user__isnull=False, nivel_usuario=tipo).count()
+                    cantidad = PerfilUsuario.objects.filter(user_id__isnull=False, nivel_usuario=tipo).count()
                     porcentaje = round((cantidad / total_usuarios * 100), 1) if total_usuarios > 0 else 0
                     tipo_key = tipo.replace('-', '_')
                     estadisticas['dashboard']['distribucion_usuarios'][tipo_key].update({
@@ -2058,16 +2047,15 @@ class SuperAdminViewSet(viewsets.ViewSet):
                     'empleados_activos': Empleado.objects.filter(status=True).count(),
                     'total_usuarios': PerfilUsuario.objects.filter(user__isnull=False).count(),
                     'usuarios_activos': PerfilUsuario.objects.filter(user__isnull=False, user__is_active=True).count(),
-                },
-                'usuarios_por_nivel': {
-                    'superadmin': PerfilUsuario.objects.filter(user__isnull=False, nivel_usuario='superadmin').count(),
-                    'admin_empresa': PerfilUsuario.objects.filter(user__isnull=False, nivel_usuario='admin-empresa').count(),
-                    'admin_planta': PerfilUsuario.objects.filter(user__isnull=False, nivel_usuario='admin-planta').count(),
-                    'empleado': PerfilUsuario.objects.filter(user__isnull=False, nivel_usuario='empleado').count(),
+                },                'usuarios_por_nivel': {
+                    'superadmin': PerfilUsuario.objects.filter(user_id__isnull=False, nivel_usuario='superadmin').count(),
+                    'admin_empresa': PerfilUsuario.objects.filter(user_id__isnull=False, nivel_usuario='admin-empresa').count(),
+                    'admin_planta': PerfilUsuario.objects.filter(user_id__isnull=False, nivel_usuario='admin-planta').count(),
+                    'empleado': PerfilUsuario.objects.filter(user_id__isnull=False, nivel_usuario='empleado').count(),
                 },
                 'estado_sistema': {
                     'porcentaje_empresas_activas': round((Empresa.objects.filter(status=True).count() / max(Empresa.objects.count(), 1)) * 100, 1),
-                    'porcentaje_usuarios_activos': round((PerfilUsuario.objects.filter(user__isnull=False, user__is_active=True).count() / max(PerfilUsuario.objects.filter(user__isnull=False).count(), 1)) * 100, 1),
+                    'porcentaje_usuarios_activos': round((PerfilUsuario.objects.filter(user_id__isnull=False, user_id__is_active=True).count() / max(PerfilUsuario.objects.filter(user_id__isnull=False).count(), 1)) * 100, 1),
                     'empresas_con_plantas': Empresa.objects.filter(planta__isnull=False).distinct().count(),
                     'plantas_con_departamentos': Planta.objects.filter(departamento__isnull=False).distinct().count(),
                 },
@@ -2217,14 +2205,13 @@ class SuperAdminViewSet(viewsets.ViewSet):
             activo = request.query_params.get('activo', '')
 
             # Solo obtener usuarios que tienen user asociado
-            usuarios = PerfilUsuario.objects.filter(user__isnull=False)
+            usuarios = PerfilUsuario.objects.filter(user_id__isnull=False)
 
             if buscar:
                 usuarios = usuarios.filter(
                     nombre__icontains=buscar
                 ) | usuarios.filter(
-                    apellido_paterno__icontains=buscar
-                ) | usuarios.filter(
+                    apellido_paterno__icontains=buscar                ) | usuarios.filter(
                     correo__icontains=buscar
                 )
 
@@ -2233,31 +2220,30 @@ class SuperAdminViewSet(viewsets.ViewSet):
 
             if activo:
                 activo_bool = activo.lower() == 'true'
-                usuarios = usuarios.filter(user__is_active=activo_bool)
+                usuarios = usuarios.filter(user_id__is_active=activo_bool)
 
             usuarios_data = []
             for usuario in usuarios:
                 try:
                     # Información básica del usuario
                     usuario_info = {
-                        'user_id': usuario.user.id,
+                        'user_id': usuario.user_id.id,
                         'profile_id': usuario.id,
-                        'username': usuario.user.username,
-                        'email': usuario.user.email,
+                        'username': usuario.user_id.username,
+                        'email': usuario.user_id.email,
                         'nombre': usuario.nombre,
                         'apellido_paterno': usuario.apellido_paterno,
                         'apellido_materno': getattr(usuario, 'apellido_materno', '') or '',
                         'nombre_completo': f"{usuario.nombre} {usuario.apellido_paterno} {getattr(usuario, 'apellido_materno', '') or ''}".strip(),
                         'correo': usuario.correo,
-                        'nivel_usuario': usuario.nivel_usuario,
-                        'fecha_registro': usuario.user.date_joined,
-                        'ultimo_login': usuario.user.last_login,
-                        'is_active': usuario.user.is_active,
+                        'nivel_usuario': usuario.nivel_usuario,                        'fecha_registro': usuario.user_id.date_joined,
+                        'ultimo_login': usuario.user_id.last_login,
+                        'is_active': usuario.user_id.is_active,
                         'empresa': None,
                         'planta': None,
                     }
 
-                    print(f"🔍 DEBUG: Usuario {usuario.user.username} - nivel_usuario: '{usuario.nivel_usuario}'")
+                    print(f"🔍 DEBUG: Usuario {usuario.user_id.username} - nivel_usuario: '{usuario.nivel_usuario}'")
 
                     # Información de empresa/planta según el rol (de forma segura)
                     if usuario.nivel_usuario == 'admin-empresa':
@@ -2765,17 +2751,15 @@ class SuperAdminViewSet(viewsets.ViewSet):
 
             # Cambiar status de todos los puestos de los departamentos
             puestos = Puesto.objects.filter(departamento__planta=planta)
-            puestos.update(status=nuevo_status)
-
-            # Cambiar status de todos los empleados de la planta (a través de puesto->departamento->planta)
+            puestos.update(status=nuevo_status)            # Cambiar status de todos los empleados de la planta (a través de puesto->departamento->planta)
             empleados = Empleado.objects.filter(puesto__departamento__planta=planta)
             empleados.update(status=nuevo_status)
 
             # Activar/desactivar cuenta del administrador de planta
             try:
                 admin_planta = AdminPlanta.objects.get(planta=planta)
-                admin_planta.usuario.user.is_active = nuevo_status
-                admin_planta.usuario.user.save()
+                admin_planta.usuario.user_id.is_active = nuevo_status
+                admin_planta.usuario.user_id.save()
                 admin_planta.status = nuevo_status
                 admin_planta.save()
             except AdminPlanta.DoesNotExist:
@@ -3671,8 +3655,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
                     'descripcion': plan.descripcion,
                     'precio': float(plan.precio),
                     'duracion': plan.duracion,
-                    'status': plan.status
-                }
+                    'status': plan.status                }
             })
 
         except PlanSuscripcion.DoesNotExist:
@@ -3684,9 +3667,7 @@ class SuscripcionViewSet(viewsets.ViewSet):
             return Response(
                 {'error': f'Error actualizando plan: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-    @action(detail=False, methods=['get'], permission_classes=[])
+            )    @action(detail=False, methods=['get'], permission_classes=[])
     def listar_suscripciones(self, request):
         """Lista todas las suscripciones de empresas"""
         try:
