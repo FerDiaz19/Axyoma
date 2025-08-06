@@ -199,7 +199,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               activas: 0, 
               inactivas: 0, 
               porcentaje_activas: 0, 
-              icono: "🏢", 
+              icono: <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" />
+              </svg>, 
               color: "blue", 
               tendencia: "neutral" 
             },
@@ -208,7 +210,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               activos: 0, 
               inactivos: 0, 
               porcentaje_activos: 0, 
-              icono: "👥", 
+              icono: <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>, 
               color: "green", 
               tendencia: "neutral" 
             },
@@ -217,7 +221,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               activas: 0, 
               inactivas: 0, 
               porcentaje_activas: 0, 
-              icono: "🏭", 
+              icono: <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+              </svg>, 
               color: "orange", 
               tendencia: "neutral" 
             },
@@ -226,7 +232,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               activos: 0, 
               inactivos: 0, 
               porcentaje_activos: 0, 
-              icono: "👤", 
+              icono: <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>, 
               color: "purple", 
               tendencia: "neutral" 
             }
@@ -920,8 +928,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           color: '#6b4eff',
           fontWeight: 'bold'
         }}>
-          📊 Dashboard del Sistema
-        </h2>        <p style={{
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: '2rem', height: '2rem', display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }}>
+            <path fillRule="evenodd" d="M3 3v10a1 1 0 0 0 1 1h12a1 1 0 1 0 0-2H5.414l3.293-3.293a1 1 0 0 0 0-1.414L7 6.586l3.293-3.293a1 1 0 1 1 1.414 1.414L8.414 8l2.293 2.293a1 1 0 0 0 1.414 0L17 5.414V7a1 1 0 1 0 2 0V3a1 1 0 0 0-1-1h-4a1 1 0 1 0 0 2h1.586L12 7.586 9.707 5.293a1 1 0 0 0-1.414 0L5 8.586V4a1 1 0 0 0-2 0Z" clipRule="evenodd" />
+          </svg>
+          Dashboard del Sistema
+        </h2><p style={{
           textAlign: 'center',
           color: '#d0d0e0',
           fontSize: '1.1rem',
@@ -946,7 +957,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               fontSize: '1.8rem',
               fontWeight: 'bold'
             }}>
-              🎯 Métricas Principales del Sistema
+              <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '2rem', height: '2rem', marginRight: '10px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg> Métricas Principales del Sistema
             </h3>
             
             <div style={{
@@ -962,7 +975,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 border: '1px solid #3a3a4d',
                 transition: 'transform 0.3s ease'
               }}>
-                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🏢</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: '3rem', height: '3rem' }}>
+                    <path fillRule="evenodd" d="M4 16.5v-13h-.25a.75.75 0 0 1 0-1.5h12.5a.75.75 0 0 1 0 1.5H16v13h.25a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75v-2.5a.75.75 0 0 0-.75-.75h-2.5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 1-.75.75h-3.5a.75.75 0 0 1 0-1.5H4ZM6 5.75A.75.75 0 0 1 6.75 5h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 6 5.75ZM6.75 8a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM6 11.75A.75.75 0 0 1 6.75 11h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM9.75 5a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM9 8.75A.75.75 0 0 1 9.75 8h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 9 8.75ZM9.75 11a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM12 5.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM12.75 8a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM12 11.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
+                  </svg>
+                </div>
                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
                   {getStatsData()?.total_empresas || 0}
                 </div>
@@ -972,9 +989,16 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   display: 'flex', 
                   justifyContent: 'space-between',
                   fontSize: '0.9rem'
-                }}>
-                  <span>✅ {getStatsData()?.empresas_activas || 0}</span>
-                  <span>❌ {(getStatsData()?.total_empresas || 0) - (getStatsData()?.empresas_activas || 0)}</span>
+                }}>                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px', color: '#4caf50' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg> {getStatsData()?.empresas_activas || 0}
+                  </span>
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px', color: '#f44336' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg> {(getStatsData()?.total_empresas || 0) - (getStatsData()?.empresas_activas || 0)}
+                  </span>
                 </div>
               </div>              {/* Tarjeta Usuarios */}
               <div style={{
@@ -984,7 +1008,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 textAlign: 'center',
                 border: '1px solid #3a3a4d'
               }}>
-                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>👥</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: '3rem', height: '3rem' }}>
+                    <path d="M7 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM14.5 9a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z" />
+                  </svg>
+                </div>
                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
                   {getStatsData()?.total_usuarios || 0}
                 </div>
@@ -994,9 +1022,16 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   display: 'flex', 
                   justifyContent: 'space-between',
                   fontSize: '0.9rem'
-                }}>
-                  <span>✅ {getStatsData()?.usuarios_activos || 0}</span>
-                  <span>❌ {(getStatsData()?.total_usuarios || 0) - (getStatsData()?.usuarios_activos || 0)}</span>
+                }}>                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px', color: '#4caf50' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg> {getStatsData()?.usuarios_activos || 0}
+                  </span>
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px', color: '#f44336' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg> {(getStatsData()?.total_usuarios || 0) - (getStatsData()?.usuarios_activos || 0)}
+                  </span>
                 </div>
               </div>              {/* Tarjeta Plantas */}
               <div style={{
@@ -1006,7 +1041,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 textAlign: 'center',
                 border: '1px solid #3a3a4d'
               }}>
-                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🏭</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: '3rem', height: '3rem' }}>
+                    <path fillRule="evenodd" d="M8.157 2.175a1.5 1.5 0 0 0-1.147 0l-4.084 1.69A1.5 1.5 0 0 0 2 5.251v10.877a1.5 1.5 0 0 0 2.074 1.386l3.51-1.452 4.26 1.763a1.5 1.5 0 0 0 1.146 0l4.083-1.69A1.5 1.5 0 0 0 18 14.748V3.873a1.5 1.5 0 0 0-2.073-1.386l-3.51 1.452-4.26-1.764ZM7.58 5a.75.75 0 0 1 .75.75v6.5a.75.75 0 0 1-1.5 0v-6.5A.75.75 0 0 1 7.58 5Zm5.59 2.75a.75.75 0 0 0-1.5 0v6.5a.75.75 0 0 0 1.5 0v-6.5Z" clipRule="evenodd" />
+                  </svg>
+                </div>
                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
                   {getStatsData()?.total_plantas || 0}
                 </div>
@@ -1016,9 +1055,16 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   display: 'flex', 
                   justifyContent: 'space-between',
                   fontSize: '0.9rem'
-                }}>
-                  <span>✅ {getStatsData()?.plantas_activas || 0}</span>
-                  <span>❌ {(getStatsData()?.total_plantas || 0) - (getStatsData()?.plantas_activas || 0)}</span>
+                }}>                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px', color: '#4caf50' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg> {getStatsData()?.plantas_activas || 0}
+                  </span>
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px', color: '#f44336' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg> {(getStatsData()?.total_plantas || 0) - (getStatsData()?.plantas_activas || 0)}
+                  </span>
                 </div>
               </div>              {/* Tarjeta Empleados */}
               <div style={{
@@ -1028,7 +1074,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 textAlign: 'center',
                 border: '1px solid #3a3a4d'
               }}>
-                <div style={{ fontSize: '3rem', marginBottom: '10px' }}>👤</div>
+                <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '3rem', height: '3rem', marginBottom: '10px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
                   {getStatsData()?.total_empleados || 0}
                 </div>
@@ -1038,9 +1086,16 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   display: 'flex', 
                   justifyContent: 'space-between',
                   fontSize: '0.9rem'
-                }}>
-                  <span>✅ {getStatsData()?.empleados_activos || 0}</span>
-                  <span>❌ {(getStatsData()?.total_empleados || 0) - (getStatsData()?.empleados_activos || 0)}</span>
+                }}>                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px', color: '#4caf50' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg> {getStatsData()?.empleados_activos || 0}
+                  </span>
+                  <span>
+                    <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px', color: '#f44336' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg> {(getStatsData()?.total_empleados || 0) - (getStatsData()?.empleados_activos || 0)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -1063,9 +1118,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 fontSize: '1.5rem', 
                 marginBottom: '20px',
                 textAlign: 'center',
-                fontWeight: 'bold'
-              }}>
-                📋 Estado de Suscripciones
+                fontWeight: 'bold'              }}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: '1.2rem', height: '1.2rem', display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }}>
+                  <path fillRule="evenodd" d="M5 2.75C5 1.784 5.784 1 6.75 1h6.5C14.216 1 15 1.784 15 2.75v6.5c0 .966-.784 1.75-1.75 1.75h-6.5A1.75 1.75 0 0 1 5 9.25v-6.5Zm1.75-.25a.25.25 0 0 0-.25.25v6.5c0 .138.112.25.25.25h6.5a.25.25 0 0 0 .25-.25v-6.5a.25.25 0 0 0-.25-.25h-6.5Z" clipRule="evenodd" />
+                  <path d="M5 12.25a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1-.75-.75ZM7 14.75a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75ZM9 17.25a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75Z" />
+                </svg>
+                Estado de Suscripciones
               </h4>
               
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -1131,7 +1189,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 textAlign: 'center',
                 fontWeight: 'bold'
               }}>
-                💰 Estado Financiero
+                <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '2rem', height: '2rem', marginRight: '10px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg> Estado Financiero
               </h4>
               
               <div style={{ textAlign: 'center', marginBottom: '20px' }}>
@@ -1191,9 +1251,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               marginBottom: '25px',
               fontSize: '1.8rem',
               fontWeight: 'bold',
-              color: '#d4621a'
-            }}>
-              🏗️ Estructura Organizacional
+              color: '#d4621a'            }}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: '1.2rem', height: '1.2rem', display: 'inline', marginRight: '0.5rem', verticalAlign: 'middle' }}>
+                <path fillRule="evenodd" d="M4 16.5v-13h-.25a.75.75 0 0 1 0-1.5h12.5a.75.75 0 0 1 0 1.5H16v13h.25a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75v-2.5a.75.75 0 0 0-.75-.75h-2.5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 1-.75.75h-3.5a.75.75 0 0 1 0-1.5H4ZM6 5.75A.75.75 0 0 1 6.75 5h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 6 5.75ZM6.75 8a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM6 11.75A.75.75 0 0 1 6.75 11h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM9.75 5a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM9 8.75A.75.75 0 0 1 9.75 8h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 9 8.75ZM9.75 11a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM12 5.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM12.75 8a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM12 11.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
+              </svg>
+              Estructura Organizacional
             </h3>
             
             <div style={{
@@ -1207,7 +1269,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 textAlign: 'center',
                 color: '#fff'
               }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🏢</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style={{ width: '2.5rem', height: '2.5rem' }}>
+                    <path fillRule="evenodd" d="M4 16.5v-13h-.25a.75.75 0 0 1 0-1.5h12.5a.75.75 0 0 1 0 1.5H16v13h.25a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75v-2.5a.75.75 0 0 0-.75-.75h-2.5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 1-.75.75h-3.5a.75.75 0 0 1 0-1.5H4ZM6 5.75A.75.75 0 0 1 6.75 5h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 6 5.75ZM6.75 8a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM6 11.75A.75.75 0 0 1 6.75 11h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM9.75 5a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM9 8.75A.75.75 0 0 1 9.75 8h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 9 8.75ZM9.75 11a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM12 5.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM12.75 8a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM12 11.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
+                  </svg>
+                </div>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
                   {getStatsData()?.total_departamentos || 0}
                 </div>
@@ -1228,7 +1294,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 textAlign: 'center',
                 color: '#fff'
               }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>💼</div>
+                <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '2.5rem', height: '2.5rem', marginBottom: '10px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m8 6V8a2 2 0 00-2-2H10a2 2 0 00-2 2v6m8 0a2 2 0 01-2 2H10a2 2 0 01-2-2m8 0V8a2 2 0 00-2-2H10a2 2 0 00-2 2v6" />
+                </svg>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
                   {getStatsData()?.total_puestos || 0}
                 </div>
@@ -1274,7 +1342,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderEmpresas = () => (
     <div className="section-content">
       <div className="section-header">
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>🏢 Gestión de Empresas</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>
+           Gestión de Empresas
+        </h2>
         <div className="stats-mini" style={{
           display: 'flex',
           justifyContent: 'center',
@@ -1367,7 +1437,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                         color: '#d0d0e0',
                         fontWeight: 'normal'
                       }}>
-                        🏢 {empresa.nombre?.length > 25 ? empresa.nombre.substring(0, 25) + '...' : empresa.nombre}
+                        <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px', verticalAlign: 'middle' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" />
+                        </svg> {empresa.nombre?.length > 25 ? empresa.nombre.substring(0, 25) + '...' : empresa.nombre}
                       </div>
                     </div>
                   </td>                  <td>
@@ -1428,7 +1500,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       fontWeight: 'bold',
                       minWidth: '60px'
                     }}>
-                      🏭 {empresa.plantas_count || 0}
+                      <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px', verticalAlign: 'middle' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                      </svg> {empresa.plantas_count || 0}
                     </div>
                   </td>
                   <td>
@@ -1452,8 +1526,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       display: 'flex',
                       gap: '8px',
                       justifyContent: 'center'
-                    }}>
-                      <button 
+                    }}>                      <button 
                         onClick={() => handleEdit('empresa', empresa)}                        style={{
                           background: '#6b4eff',
                           color: 'white',
@@ -1465,7 +1538,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                           cursor: 'pointer'
                         }}
                       >
-                        ✏️ Editar
+                        <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg> Editar
                       </button>
                       <button 
                         onClick={() => handleToggleStatus('empresa', empresa.empresa_id, empresa.status, empresa.nombre)}
@@ -1479,9 +1554,20 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                           fontSize: '0.85rem',
                           fontWeight: 'bold',
                           cursor: 'pointer'
-                        }}
-                      >
-                        {empresa.status ? "⏸️ Suspender" : "▶️ Activar"}
+                        }}                      >
+                        {empresa.status ? (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg> Suspender
+                          </>
+                        ) : (
+                          <>
+                            <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M15 14h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg> Activar
+                          </>
+                        )}
                       </button>
                     </div>
                   </td>
@@ -1500,7 +1586,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderUsuarios = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>👥 Gestión de Usuarios</h3>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>
+          Gestión de Usuarios
+        </h2>
         <div className="stats-mini" style={{
           display: 'flex',
           justifyContent: 'center',
@@ -1605,7 +1693,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     lineHeight: '1.4'
                   }}>
                     <strong style={{ color: '#fff' }}>{usuario.username}</strong>
-                    <div style={{ fontSize: '0.8rem', color: '#d0d0e0' }}>📧 {usuario.email}</div>
+                    <div style={{ fontSize: '0.8rem', color: '#d0d0e0' }}>
+                      <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '0.8rem', height: '0.8rem', marginRight: '3px', verticalAlign: 'middle' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                      </svg> {usuario.email}
+                    </div>
                   </div>
                 </td>                <td>
                   <div>
@@ -1627,11 +1719,34 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                                '#1a8a7e',
                     textAlign: 'center',
                     minWidth: '120px'
-                  }}>
-                    {usuario.nivel_usuario === 'superadmin' && '👑 Super Admin'}
-                    {usuario.nivel_usuario === 'admin-empresa' && '🏢 Admin Empresa'}
-                    {usuario.nivel_usuario === 'admin-planta' && '🏭 Admin Planta'}
-                    {usuario.nivel_usuario === 'empleado' && '👤 Empleado'}
+                  }}>                    {usuario.nivel_usuario === 'superadmin' && (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                        </svg> Super Admin
+                      </>
+                    )}
+                    {usuario.nivel_usuario === 'admin-empresa' && (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1" />
+                        </svg> Admin Empresa
+                      </>
+                    )}
+                    {usuario.nivel_usuario === 'admin-planta' && (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg> Admin Planta
+                      </>
+                    )}
+                    {usuario.nivel_usuario === 'empleado' && (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1rem', height: '1rem', marginRight: '5px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg> Empleado
+                      </>
+                    )}
                   </div>
                 </td>                <td>
                   <div style={{
@@ -1642,7 +1757,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     lineHeight: '1.4'
                   }}>
                     {usuario.empresa && <strong style={{ color: '#fff' }}>🏢 {usuario.empresa.nombre}</strong>}
-                    {usuario.planta && <div style={{ fontSize: '0.8rem', color: '#d0d0e0' }}>🏭 {usuario.planta.nombre}</div>}
+                    {usuario.planta && <div style={{ fontSize: '0.8rem', color: '#d0d0e0' }}>{usuario.planta.nombre}</div>}
                     {!usuario.empresa && !usuario.planta && <span style={{ color: '#a0a0a0', fontStyle: 'italic' }}>Sin asignar</span>}
                   </div>
                 </td>
@@ -1718,7 +1833,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderPlantas = () => (
     <div className="section-content">
       <div className="section-header">
-        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>🏭 Gestión de Plantas</h2>
+        <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Gestión de Plantas</h2>
         <div className="stats-mini" style={{
           display: 'flex',
           justifyContent: 'center',
@@ -1947,7 +2062,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderDepartamentos = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>🏢 Gestión de Departamentos</h3>        <div className="stats-mini" style={{
+        <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>Gestión de Departamentos</h2>        <div className="stats-mini" style={{
           display: 'flex',
           justifyContent: 'center',
           gap: '15px',
@@ -2164,7 +2279,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderPuestos = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>💼 Gestión de Puestos</h3>        <div className="stats-mini" style={{
+        <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>Gestión de Puestos</h2>        <div className="stats-mini" style={{
           display: 'flex',
           justifyContent: 'center',
           gap: '15px',
@@ -2378,7 +2493,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderEmpleados = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>👤 Gestión de Empleados</h3><div className="stats-mini" style={{
+        <h2 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>Gestión de Empleados</h2><div className="stats-mini" style={{
           display: 'flex',
           justifyContent: 'center',
           gap: '15px',
@@ -2615,7 +2730,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           marginBottom: '20px',
           gap: '20px'
         }}>
-          <h3 style={{ color: '#fff', margin: 0, flex: 1 }}>📋 Gestión de Planes de Suscripción</h3>
+          <h2 style={{ color: '#fff', margin: 0, flex: 1 }}>Gestión de Planes de Suscripción</h2>
           <button 
             onClick={() => setModalCrearPlan(true)}
             className="btn-primary"
@@ -2753,11 +2868,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
     <div className="section-content">
       <div className="section-header">
         {/* Título centrado */}
-        <h3 style={{ 
+        <h2 style={{ 
           textAlign: 'center', 
           marginBottom: '20px',
           color: '#fff' 
-        }}>💳 Empresas con Suscripciones Activas</h3>
+        }}>Empresas con Suscripciones Activas</h2>
 
         {/* Stats organizados horizontalmente */}
         <div className="stats-mini" style={{
@@ -3001,75 +3116,109 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   return (
     <div className="dashboard superadmin-dashboard">
       {/* Sidebar - Always visible */}
-      <aside className="dashboard-sidebar">
-        <div className="sidebar-header">
+      <aside className="dashboard-sidebar">        <div className="sidebar-header">
           <div className="sidebar-logo">
-            <h2>👑 AXYOMA</h2>
+            <h2>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                <path d="M11.7 4a2.2 2.2 0 0 0-.2-.86 3.6 3.6 0 0 0-.73-.99 3.2 3.2 0 0 0-1.53-.64 7.93 7.93 0 0 0-1.64-.01 3.2 3.2 0 0 0-1.53.64 3.6 3.6 0 0 0-.73.99c-.17.28-.17.58-.2.86H4.5A2.5 2.5 0 0 0 2 6.5v9A2.5 2.5 0 0 0 4.5 18h11a2.5 2.5 0 0 0 2.5-2.5v-9A2.5 2.5 0 0 0 15.5 4H11.7Zm-1.43 5.5a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-1.5 0v-2.19l-.72.72a.75.75 0 0 1-1.06-1.06l2-2a.75.75 0 0 1 .53-.22Z" />
+              </svg>
+              AXYOMA
+            </h2>
             <span className="sidebar-subtitle">Super Admin Panel</span>
           </div>
         </div>
-          <nav className="sidebar-nav">
-            <button 
+          <nav className="sidebar-nav">            <button 
               className={activeSection === 'estadisticas' ? 'active' : ''}
               onClick={() => setActiveSection('estadisticas')}
             >
-              <span className="nav-icon">📊</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M3 3v10a1 1 0 0 0 1 1h12a1 1 0 1 0 0-2H5.414l3.293-3.293a1 1 0 0 0 0-1.414L7 6.586l3.293-3.293a1 1 0 1 1 1.414 1.414L8.414 8l2.293 2.293a1 1 0 0 0 1.414 0L17 5.414V7a1 1 0 1 0 2 0V3a1 1 0 0 0-1-1h-4a1 1 0 1 0 0 2h1.586L12 7.586 9.707 5.293a1 1 0 0 0-1.414 0L5 8.586V4a1 1 0 0 0-2 0Z" clipRule="evenodd" />
+                </svg>
+              </span>
               <span className="nav-text">Estadísticas</span>
-            </button>
-            <button 
+            </button>            <button 
               className={activeSection === 'empresas' ? 'active' : ''}
               onClick={() => setActiveSection('empresas')}
             >
-              <span className="nav-icon">🏢</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M4 16.5v-13h-.25a.75.75 0 0 1 0-1.5h12.5a.75.75 0 0 1 0 1.5H16v13h.25a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75v-2.5a.75.75 0 0 0-.75-.75h-2.5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 1-.75.75h-3.5a.75.75 0 0 1 0-1.5H4ZM6 5.75A.75.75 0 0 1 6.75 5h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 6 5.75ZM6.75 8a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM6 11.75A.75.75 0 0 1 6.75 11h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM9.75 5a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM9 8.75A.75.75 0 0 1 9.75 8h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 9 8.75ZM9.75 11a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM12 5.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM12.75 8a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM12 11.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
+                </svg>
+              </span>
               <span className="nav-text">Empresas</span>
-            </button>
-            <button 
+            </button>            <button 
               className={activeSection === 'usuarios' ? 'active' : ''}
               onClick={() => setActiveSection('usuarios')}
             >
-              <span className="nav-icon">👥</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path d="M7 8a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM14.5 9a2.5 2.5 0 1 1 5 0 2.5 2.5 0 0 1-5 0ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z" />
+                </svg>
+              </span>
               <span className="nav-text">Usuarios</span>
-            </button>
-            <button 
+            </button>            <button 
               className={activeSection === 'plantas' ? 'active' : ''}
               onClick={() => setActiveSection('plantas')}
             >
-              <span className="nav-icon">🏭</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M8.157 2.175a1.5 1.5 0 0 0-1.147 0l-4.084 1.69A1.5 1.5 0 0 0 2 5.251v10.877a1.5 1.5 0 0 0 2.074 1.386l3.51-1.452 4.26 1.763a1.5 1.5 0 0 0 1.146 0l4.083-1.69A1.5 1.5 0 0 0 18 14.748V3.873a1.5 1.5 0 0 0-2.073-1.386l-3.51 1.452-4.26-1.764ZM7.58 5a.75.75 0 0 1 .75.75v6.5a.75.75 0 0 1-1.5 0v-6.5A.75.75 0 0 1 7.58 5Zm5.59 2.75a.75.75 0 0 0-1.5 0v6.5a.75.75 0 0 0 1.5 0v-6.5Z" clipRule="evenodd" />
+                </svg>
+              </span>
               <span className="nav-text">Plantas</span>
-            </button>
-            <button 
+            </button>            <button 
               className={activeSection === 'departamentos' ? 'active' : ''}
               onClick={() => setActiveSection('departamentos')}
             >
-              <span className="nav-icon">🏢</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M4 16.5v-13h-.25a.75.75 0 0 1 0-1.5h12.5a.75.75 0 0 1 0 1.5H16v13h.25a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75v-2.5a.75.75 0 0 0-.75-.75h-2.5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 1-.75.75h-3.5a.75.75 0 0 1 0-1.5H4ZM6 5.75A.75.75 0 0 1 6.75 5h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 6 5.75ZM6.75 8a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM6 11.75A.75.75 0 0 1 6.75 11h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM9.75 5a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM9 8.75A.75.75 0 0 1 9.75 8h.5a.75.75 0 0 1 0 1.5h-.5A.75.75 0 0 1 9 8.75ZM9.75 11a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM12 5.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75ZM12.75 8a.75.75 0 0 0 0 1.5h.5a.75.75 0 0 0 0-1.5h-.5ZM12 11.75a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
+                </svg>
+              </span>
               <span className="nav-text">Departamentos</span>
-            </button>
-            <button 
+            </button>            <button 
               className={activeSection === 'puestos' ? 'active' : ''}
               onClick={() => setActiveSection('puestos')}
             >
-              <span className="nav-icon">💼</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M6 3.75A2.75 2.75 0 0 1 8.75 1h2.5A2.75 2.75 0 0 1 14 3.75v.443c.572.055 1.14.122 1.706.2C17.053 4.582 18 5.75 18 7.07v3.469c0 1.126-.694 2.191-1.83 2.54-1.952.599-4.024.921-6.17.921s-4.219-.322-6.17-.921C2.694 12.73 2 11.665 2 10.539V7.07c0-1.321.947-2.489 2.294-2.676A41.047 41.047 0 0 1 6 4.193V3.75Zm6.5 0v.325a41.622 41.622 0 0 0-5 0V3.75c0-.69.56-1.25 1.25-1.25h2.5c.69 0 1.25.56 1.25 1.25ZM10 10a1 1 0 0 0-1 1v.01a1 1 0 0 0 1 1h.01a1 1 0 0 0 1-1V11a1 1 0 0 0-1-1H10Z" clipRule="evenodd" />
+                  <path d="M3 15.055v-.684c.126.053.255.1.39.142 2.092.642 4.313.987 6.61.987 2.297 0 4.518-.345 6.61-.987.135-.041.264-.089.39-.142v.684c0 1.347-.985 2.53-2.363 2.686a41.454 41.454 0 0 1-9.274 0C3.985 17.585 3 16.402 3 15.055Z" />
+                </svg>
+              </span>
               <span className="nav-text">Puestos</span>
-            </button>
-            <button 
+            </button>            <button 
               className={activeSection === 'empleados' ? 'active' : ''}
               onClick={() => setActiveSection('empleados')}
             >
-              <span className="nav-icon">👤</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path d="M10 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3.465 14.493a1.23 1.23 0 0 0 .41 1.412A9.957 9.957 0 0 0 10 18c2.31 0 4.438-.784 6.131-2.1.43-.333.604-.903.408-1.41a7.002 7.002 0 0 0-13.074.003Z" />
+                </svg>
+              </span>
               <span className="nav-text">Empleados</span>
-            </button>
-            <button 
+            </button>            <button 
               className={activeSection === 'suscripciones' ? 'active' : ''}
               onClick={() => setActiveSection('suscripciones')}
             >
-              <span className="nav-icon">💳</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path d="M4.632 3.533A2 2 0 0 1 6.577 2h6.846a2 2 0 0 1 1.945 1.533l1.976 8.234A3.489 3.489 0 0 0 16 11.5H4c-.476 0-.93.095-1.344.267l1.976-8.234Z" />
+                  <path fillRule="evenodd" d="M4 13a2 2 0 1 0 0 4h12a2 2 0 1 0 0-4H4Zm11.24 2a.75.75 0 0 1 .75-.75H16a.75.75 0 0 1 .75.75v.01a.75.75 0 0 1-.75.75h-.01a.75.75 0 0 1-.75-.75V15Zm-2.25-.75a.75.75 0 0 0-.75.75v.01c0 .414.336.75.75.75H13a.75.75 0 0 0 .75-.75V15a.75.75 0 0 0-.75-.75h-.01Z" clipRule="evenodd" />
+                </svg>
+              </span>
               <span className="nav-text">Suscripciones</span>
-            </button>
-            <button 
+            </button>            <button 
               className={activeSection === 'planes' ? 'active' : ''}
               onClick={() => setActiveSection('planes')}
             >
-              <span className="nav-icon">📋</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M5 2.75C5 1.784 5.784 1 6.75 1h6.5C14.216 1 15 1.784 15 2.75v6.5c0 .966-.784 1.75-1.75 1.75h-6.5A1.75 1.75 0 0 1 5 9.25v-6.5Zm1.75-.25a.25.25 0 0 0-.25.25v6.5c0 .138.112.25.25.25h6.5a.25.25 0 0 0 .25-.25v-6.5a.25.25 0 0 0-.25-.25h-6.5Z" clipRule="evenodd" />
+                  <path d="M5 12.25a.75.75 0 0 1 .75-.75h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1-.75-.75ZM7 14.75a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75ZM9 17.25a.75.75 0 0 1 .75-.75h.5a.75.75 0 0 1 0 1.5h-.5a.75.75 0 0 1-.75-.75Z" />
+                </svg>
+              </span>
               <span className="nav-text">Planes</span>
             </button>
             {/* <button 
@@ -3078,19 +3227,25 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             >
               <span className="nav-icon">💰</span>
               <span className="nav-text">Pagos</span>
-            </button> */}
-            <button 
+            </button> */}            <button 
               className={activeSection === 'evaluaciones' ? 'active' : ''}
               onClick={() => setActiveSection('evaluaciones')}
             >
-              <span className="nav-icon">📝</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path fillRule="evenodd" d="M4.25 2A2.25 2.25 0 0 0 2 4.25v11.5A2.25 2.25 0 0 0 4.25 18h11.5A2.25 2.25 0 0 0 18 15.75V4.25A2.25 2.25 0 0 0 15.75 2H4.25Zm4.03 6.28a.75.75 0 0 0-1.06-1.06L4.97 9.47a.75.75 0 0 0 0 1.06l2.25 2.25a.75.75 0 0 0 1.06-1.06L6.56 10l1.72-1.72Zm4.5-1.06a.75.75 0 1 0-1.06 1.06L13.44 10l-1.72 1.72a.75.75 0 1 0 1.06 1.06l2.25-2.25a.75.75 0 0 0 0-1.06l-2.25-2.25Z" clipRule="evenodd" />
+                </svg>
+              </span>
               <span className="nav-text">Evaluaciones</span>
-            </button>
-            <button 
+            </button>            <button 
               className={activeSection === 'gestion-bd' ? 'active' : ''}
               onClick={() => setActiveSection('gestion-bd')}
             >
-              <span className="nav-icon">🗄️</span>
+              <span className="nav-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path d="M3 4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4ZM3 10a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-6ZM14 9a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-6a1 1 0 0 0-1-1h-2Z" />
+                </svg>
+              </span>
               <span className="nav-text">Gestión BD</span>
             </button>
         </nav>
@@ -3107,7 +3262,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           <div className="header-right">
             <div className="user-info">
               <div className="user-avatar">
-                <span className="avatar-icon">👤</span>
+                <span className="avatar-icon"></span>
               </div>
                            <div className="user-details">
                 <span className="user-name">{userData?.nombre_completo || userData?.usuario}</span>
@@ -3155,7 +3310,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
         <EditModal
           isOpen={modalCrearPlan}
           onClose={() => setModalCrearPlan(false)}
-          title="📋 Crear Nuevo Plan de Suscripción"
+          title="Crear Nuevo Plan de Suscripción"
           initialData={{
             nombre: '',
             descripcion: '',
@@ -3173,7 +3328,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
         <EditModal
           isOpen={modalCrearSuscripcion}
           onClose={() => setModalCrearSuscripcion(false)}
-          title="💳 Crear Nueva Suscripción"
+          title="Crear Nueva Suscripción"
           initialData={{
             empresa_id: '',
 
@@ -3210,7 +3365,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
         <EditModal
           isOpen={modalCrearUsuario}
           onClose={() => setModalCrearUsuario(false)}
-          title="👑 Crear Nuevo Usuario SuperAdmin"
+          title="Crear Nuevo Usuario SuperAdmin"
           initialData={{
             username: '',
             email: '',

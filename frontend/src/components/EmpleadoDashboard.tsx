@@ -64,7 +64,11 @@ const EmpleadoDashboard: React.FC<EmpleadoDashboardProps> = ({ userData }) => {
       <aside className="dashboard-sidebar">
         <div className="sidebar-header">
           <div className="sidebar-logo">
-            <h2>👤 AXYOMA</h2>
+            <h2>
+              <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '2rem', height: '2rem', marginRight: '10px', verticalAlign: 'middle' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg> AXYOMA
+            </h2>
             <span className="sidebar-subtitle">Panel de Empleado</span>
           </div>
         </div>
@@ -74,14 +78,22 @@ const EmpleadoDashboard: React.FC<EmpleadoDashboardProps> = ({ userData }) => {
             className={activeSection === 'perfil' ? 'active' : ''}
             onClick={() => setActiveSection('perfil')}
           >
-            <span className="nav-icon">👤</span>
+            <span className="nav-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </span>
             <span className="nav-text">Mi Perfil</span>
           </button>
           <button 
             className={activeSection === 'evaluaciones' ? 'active' : ''}
             onClick={() => setActiveSection('evaluaciones')}
           >
-            <span className="nav-icon">📝</span>
+            <span className="nav-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </span>
             <span className="nav-text">Mis Evaluaciones</span>
           </button>
         </nav>
@@ -105,7 +117,11 @@ const EmpleadoDashboard: React.FC<EmpleadoDashboardProps> = ({ userData }) => {
           <div className="header-right">
             <div className="user-info">
               <div className="user-avatar">
-                <span className="avatar-icon">👤</span>
+                <span className="avatar-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" style={{ width: '1.5rem', height: '1.5rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </span>
               </div>
               <div className="user-details">
                 <span className="user-name">{userData.nombre_completo || userData.usuario}</span>
