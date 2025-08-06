@@ -100,17 +100,18 @@
 .login-form {
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
   justify-content: center;
 }
 
-.form-group label {
+.login-form .form-group label {
   color: #ffffff;
   font-size: 0.9rem;
   margin-bottom: 0.3rem;
 }
 
-/* El input siempre fondo oscuro y texto blanco, sin efecto al hacer click */
-.form-input, .form-input:focus {
+/* El input siempre fondo oscuro y texto blanco, solo para login */
+.login-form .form-input, .login-form .form-input:focus {
   padding: 1rem 1.2rem;
   border-radius: 10px;
   border: 1px solid #444;
@@ -121,12 +122,12 @@
   transition: border-color 0.3s ease;
 }
 
-.form-input:focus {
+.login-form .form-input:focus {
   border-color: #6b4eff;
   box-shadow: 0 0 0 3px rgba(107, 78, 255, 0.1);
 }
 
-.form-input::placeholder {
+.login-form .form-input::placeholder {
   color: #888;
 }
 
@@ -199,8 +200,9 @@
   font-size: 0.95rem;
 }
 
-/* Labels específicos para usuario y contraseña */
-.form-group label[for="username"], .form-group label[for="password"] {
+/* Labels específicos para usuario y contraseña - solo login */
+.login-form .form-group label[for="username"], 
+.login-form .form-group label[for="password"] {
   color: #fff;
 }
 

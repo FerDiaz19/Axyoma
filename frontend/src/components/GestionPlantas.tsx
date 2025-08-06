@@ -258,13 +258,13 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
                   {error}
                 </div>
               )}
-              
-              <div className="form-group">
+                <div className="form-group">
                 <label>Nombre de la Planta:</label>
                 <input
                   type="text"
                   value={formData.nombre}
                   onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+                  placeholder="Ej: Planta Industrial Norte, Fábrica Central..."
                   required
                 />
               </div>
@@ -274,13 +274,14 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
                 <textarea
                   value={formData.direccion}
                   onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
+                  placeholder="Ingresa la dirección completa de la planta industrial..."
                   required
                 />
               </div>
 
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary" disabled={saving}>
-                  {saving ? 'Guardando...' : (editingPlanta ? 'Actualizar' : 'Guardar')}
+                  <span>{saving ? 'Guardando...' : (editingPlanta ? 'Actualizar' : 'Crear Planta')}</span>
                 </button>
                 <button 
                   type="button" 
@@ -288,7 +289,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
                   onClick={resetForm}
                   disabled={saving}
                 >
-                  Cancelar
+                  <span>Cancelar</span>
                 </button>
               </div>
             </form>

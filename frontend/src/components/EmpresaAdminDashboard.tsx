@@ -9,14 +9,22 @@ import AsignacionEvaluaciones from './AsignacionEvaluaciones';
 import GestionSuscripcion from './GestionSuscripcion';
 import UsuariosPlantasView from './UsuariosPlantasView';
 import { logout } from '../services/authService';
+import { crearPlanta, obtenerPlantas, actualizarPlanta } from '../services/organizacionService';
+import api from '../api';
 import '../css/EmpresaAdminDashboard.css';
+import '../css/GestionPlantas.css';
 
 interface EmpresaAdminDashboardProps {
   userData: any;
 }
 
 const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData }) => {
-  const [activeSection, setActiveSection] = useState('overview');
+  const [activeSection, setActiveSection] = useState('overview');  const [showPlantaModal, setShowPlantaModal] = useState(false);
+  const [plantaFormData, setPlantaFormData] = useState({ nombre: '', direccion: '' });
+  const [savingPlanta, setSavingPlanta] = useState(false);
+  const [plantaError, setPlantaError] = useState<string | null>(null);  const [plantas, setPlantas] = useState<any[]>([]);
+  const [loadingPlantas, setLoadingPlantas] = useState(false);
+  const [editingPlanta, setEditingPlanta] = useState<any>(null);
   const navigate = useNavigate();
 
   const empresaId = userData?.empresa_id;
@@ -25,7 +33,6 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
   console.log('🔍 DEBUG EmpresaAdminDashboard - userData completo:', userData);
   console.log('🔍 DEBUG EmpresaAdminDashboard - empresaId obtenido:', empresaId);
   console.log('🔍 DEBUG EmpresaAdminDashboard - empresa_id directo:', userData?.empresa_id);
-
   const handleLogout = async () => {
     try {
       await logout();
@@ -37,6 +44,100 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
       navigate('/login');
     }
   };
+  const handleCrearPlanta = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingPlanta(true);
+    setPlantaError(null);
+
+    try {
+      if (editingPlanta) {
+        // Editing existing planta
+        console.log('📝 Editando planta:', plantaFormData);
+        await actualizarPlanta(editingPlanta.planta_id, plantaFormData);
+        alert('¡Planta actualizada exitosamente!');
+      } else {
+        // Creating new planta
+        console.log('📝 Creando planta:', plantaFormData);
+        await crearPlanta(plantaFormData);
+        alert('¡Planta creada exitosamente! Se ha creado automáticamente un usuario administrador para esta planta.');
+      }
+      
+      // Reload plants data and reset form
+      await cargarPlantas();
+      resetPlantaForm();
+    } catch (error: any) {
+      console.error('❌ Error guardando planta:', error);
+      setPlantaError(error.message || 'Error al guardar la planta');
+    } finally {
+      setSavingPlanta(false);
+    }
+  };  const resetPlantaForm = () => {
+    setPlantaFormData({ nombre: '', direccion: '' });
+    setPlantaError(null);
+    setEditingPlanta(null);
+    setShowPlantaModal(false);
+  };
+
+  const cargarPlantas = async () => {
+    if (!empresaId) return;
+    
+    try {
+      setLoadingPlantas(true);
+      console.log('🔍 Cargando plantas para empresa:', empresaId);
+      
+      // Usar la API con filtro por empresa y incluir suspendidas
+      const response = await api.get(`/plantas/?empresa_id=${empresaId}&incluir_suspendidas=true`);
+      console.log('📦 Plantas obtenidas:', response.data);
+      setPlantas(response.data || []);
+    } catch (error: any) {
+      console.error('❌ Error cargando plantas:', error);
+      setPlantas([]);
+    } finally {
+      setLoadingPlantas(false);
+    }
+  };
+  const handleEditPlanta = (planta: any) => {
+    console.log('✏️ Editando planta:', planta);
+    // Set the editing planta and pre-fill the form
+    setEditingPlanta(planta);
+    setPlantaFormData({
+      nombre: planta.nombre,
+      direccion: planta.direccion
+    });
+    setShowPlantaModal(true);
+  };
+
+  const handleTogglePlantaStatus = async (planta: any) => {
+    const accion = planta.status ? 'suspender' : 'activar';
+    const confirmMessage = planta.status 
+      ? `¿Suspender la planta "${planta.nombre}"? Esto también suspenderá todos los departamentos, puestos y empleados asociados.`
+      : `¿Activar la planta "${planta.nombre}"? Esto también activará todos los departamentos, puestos y empleados asociados.`;
+    
+    if (window.confirm(confirmMessage)) {
+      try {
+        console.log(`🔄 ${accion} planta:`, planta.nombre);
+        
+        // Llamar al endpoint de toggle_status
+        await api.post(`/plantas/${planta.planta_id}/toggle_status/`);
+        
+        // Recargar plantas para actualizar la vista
+        await cargarPlantas();
+        
+        alert(`Planta ${accion}da exitosamente`);
+      } catch (error: any) {
+        console.error(`❌ Error ${accion}ndo planta:`, error);
+        const errorMessage = error.response?.data?.error || error.response?.data?.message || `Error al ${accion} la planta`;
+        alert(`Error al ${accion} la planta: ${errorMessage}`);
+      }
+    }
+  };
+
+  // Load plants data when component mounts or empresa changes
+  React.useEffect(() => {
+    if (empresaId && activeSection === 'plantas') {
+      cargarPlantas();
+    }
+  }, [empresaId, activeSection]);
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -360,8 +461,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                 Gestión de Plantas
               </h2>
               <p className="section-subtitle">Administra las plantas industriales de tu empresa</p>
-            </div>
-              <div className="plants-summary-cards">
+            </div>              <div className="plants-summary-cards">
               <div className="summary-card">
                 <div className="summary-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
@@ -370,9 +470,10 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                 </div>
                 <div className="summary-content">
                   <h3>Total Plantas</h3>
-                  <p className="summary-number">3</p>
+                  <p className="summary-number">{plantas.length}</p>
                 </div>
-              </div>              <div className="summary-card">
+              </div>
+              <div className="summary-card">
                 <div className="summary-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
                     <path fillRule="evenodd" d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z" clipRule="evenodd" />
@@ -380,7 +481,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                 </div>
                 <div className="summary-content">
                   <h3>Plantas Activas</h3>
-                  <p className="summary-number">2</p>
+                  <p className="summary-number">{plantas.filter(p => p.status).length}</p>
                 </div>
               </div>
               <div className="summary-card">
@@ -391,101 +492,80 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                 </div>
                 <div className="summary-content">
                   <h3>Total Empleados</h3>
-                  <p className="summary-number">156</p>
+                  <p className="summary-number">{plantas.reduce((total, planta) => total + (planta.total_empleados || 0), 0)}</p>
                 </div>
               </div>
-            </div>
-
-            <div className="plants-grid">
-              <div className="plant-card">
-                <div className="plant-card-header">
-                  <h4>Planta Norte</h4>
-                  <span className="status-badge active">Activa</span>
-                </div>                <div className="plant-info">
-                  <p className="plant-location">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
-                      <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 0 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.505l.041.018.006.003.002.001ZM10 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
-                    </svg>
-                    Monterrey, Nuevo León
-                  </p>
-                  <p className="plant-employees">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
-                      <path d="M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM14.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z" />
-                    </svg>
-                    89 empleados
-                  </p>
-                  <p className="plant-departments">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
-                      <path fillRule="evenodd" d="M4 16.5v-13h-.25a.75.75 0 0 1 0-1.5h12.5a.75.75 0 0 1 0 1.5H16v13h.25a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75v-2.5a.75.75 0 0 0-.75-.75h-2.5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 1-.75.75h-3.5a.75.75 0 0 1 0-1.5H4Zm3-11a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM7.5 9a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1ZM11 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm.5 3.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Z" clipRule="evenodd" />
-                    </svg>
-                    5 departamentos
-                  </p>
+            </div><div className="plants-grid">
+              {loadingPlantas ? (
+                <div className="loading-plants">
+                  <p>Cargando plantas...</p>
                 </div>
-                <div className="plant-actions">
-                  <button className="btn btn-primary">Ver Detalles</button>
-                  <button className="btn btn-secondary">Editar</button>
+              ) : plantas.length === 0 ? (
+                <div className="empty-plants">
+                  <p>No hay plantas registradas</p>                  <button 
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setEditingPlanta(null);
+                      setPlantaFormData({ nombre: '', direccion: '' });
+                      setPlantaError(null);
+                      setShowPlantaModal(true);
+                    }}
+                  >
+                    Crear Primera Planta
+                  </button>
                 </div>
-              </div>
-
-              <div className="plant-card">
-                <div className="plant-card-header">
-                  <h4>Planta Centro</h4>
-                  <span className="status-badge active">Activa</span>
-                </div>                <div className="plant-info">
-                  <p className="plant-location">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
-                      <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 0 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.505l.041.018.006.003.002.001ZM10 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
-                    </svg>
-                    Ciudad de México
-                  </p>
-                  <p className="plant-employees">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
-                      <path d="M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM14.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z" />
-                    </svg>
-                    67 empleados
-                  </p>
-                  <p className="plant-departments">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
-                      <path fillRule="evenodd" d="M4 16.5v-13h-.25a.75.75 0 0 1 0-1.5h12.5a.75.75 0 0 1 0 1.5H16v13h.25a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75v-2.5a.75.75 0 0 0-.75-.75h-2.5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 1-.75.75h-3.5a.75.75 0 0 1 0-1.5H4Zm3-11a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM7.5 9a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1ZM11 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm.5 3.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Z" clipRule="evenodd" />
-                    </svg>
-                    4 departamentos
-                  </p>
-                </div>
-                <div className="plant-actions">
-                  <button className="btn btn-primary">Ver Detalles</button>
-                  <button className="btn btn-secondary">Editar</button>
-                </div>
-              </div>
-
-              <div className="plant-card">
-                <div className="plant-card-header">
-                  <h4>Planta Occidente</h4>
-                  <span className="status-badge inactive">Suspendida</span>
-                </div>                <div className="plant-info">
-                  <p className="plant-location">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
-                      <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 0 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.505l.041.018.006.003.002.001ZM10 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
-                    </svg>
-                    Guadalajara, Jalisco
-                  </p>
-                  <p className="plant-employees">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
-                      <path d="M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM14.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z" />
-                    </svg>
-                    0 empleados
-                  </p>
-                  <p className="plant-departments">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
-                      <path fillRule="evenodd" d="M4 16.5v-13h-.25a.75.75 0 0 1 0-1.5h12.5a.75.75 0 0 1 0 1.5H16v13h.25a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75v-2.5a.75.75 0 0 0-.75-.75h-2.5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 1-.75.75h-3.5a.75.75 0 0 1 0-1.5H4Zm3-11a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM7.5 9a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1ZM11 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm.5 3.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Z" clipRule="evenodd" />
-                    </svg>
-                    3 departamentos
-                  </p>
-                </div>
-                <div className="plant-actions">
-                  <button className="btn btn-success">Activar</button>
-                  <button className="btn btn-secondary">Editar</button>
-                </div>
-              </div>
+              ) : (
+                plantas.map((planta) => (
+                  <div key={planta.planta_id} className="plant-card">
+                    <div className="plant-card-header">
+                      <h4>{planta.nombre}</h4>
+                      <span className={`status-badge ${planta.status ? 'active' : 'inactive'}`}>
+                        {planta.status ? 'Activa' : 'Suspendida'}
+                      </span>
+                    </div>
+                    <div className="plant-info">
+                      <p className="plant-location">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
+                          <path fillRule="evenodd" d="m9.69 18.933.003.001C9.89 19.02 10 19 10 19s.11.02.308-.066l.002-.001.006-.003.018-.008a5.741 5.741 0 0 0 .281-.14c.186-.096.446-.24.757-.433.62-.384 1.445-.966 2.274-1.765C15.302 14.988 17 12.493 17 9A7 7 0 0 0 3 9c0 3.492 1.698 5.988 3.355 7.584a13.731 13.731 0 0 0 2.273 1.765 11.842 11.842 0 0 0 .976.505l.041.018.006.003.002.001ZM10 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" clipRule="evenodd" />
+                        </svg>
+                        {planta.direccion || 'Dirección no especificada'}
+                      </p>
+                      <p className="plant-employees">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
+                          <path d="M7 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM14.5 9a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5ZM1.615 16.428a1.224 1.224 0 0 1-.569-1.175 6.002 6.002 0 0 1 11.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 0 1 7 18a9.953 9.953 0 0 1-5.385-1.572ZM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 0 0-1.588-3.755 4.502 4.502 0 0 1 5.874 2.636.818.818 0 0 1-.36.98A7.465 7.465 0 0 1 14.5 16Z" />
+                        </svg>
+                        {planta.total_empleados || 0} empleados
+                      </p>
+                      <p className="plant-departments">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-4 inline">
+                          <path fillRule="evenodd" d="M4 16.5v-13h-.25a.75.75 0 0 1 0-1.5h12.5a.75.75 0 0 1 0 1.5H16v13h.25a.75.75 0 0 1 0 1.5h-3.5a.75.75 0 0 1-.75-.75v-2.5a.75.75 0 0 0-.75-.75h-2.5a.75.75 0 0 0-.75.75v2.5a.75.75 0 0 1-.75.75h-3.5a.75.75 0 0 1 0-1.5H4Zm3-11a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1ZM7.5 9a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1ZM11 5.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5v-1Zm.5 3.5a.5.5 0 0 0-.5.5v1a.5.5 0 0 0 .5.5h1a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1Z" clipRule="evenodd" />
+                        </svg>
+                        {planta.total_departamentos || 0} departamentos
+                      </p>
+                    </div>
+                    <div className="plant-actions">
+                      <button 
+                        className="btn btn-primary"
+                        onClick={() => setActiveSection('gestion-plantas')}
+                      >
+                        Ver Detalles
+                      </button>
+                      <button 
+                        className="btn btn-secondary"
+                        onClick={() => handleEditPlanta(planta)}
+                      >
+                        Editar
+                      </button>
+                      <button 
+                        className={`btn ${planta.status ? 'btn-warning' : 'btn-success'}`}
+                        onClick={() => handleTogglePlantaStatus(planta)}
+                      >
+                        {planta.status ? 'Suspender' : 'Activar'}
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="plants-actions-section">
@@ -495,10 +575,14 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               >
                 <span className="action-icon">⚙️</span>
                 Gestión Completa de Plantas
-              </button>
-              <button 
+              </button>              <button 
                 className="btn btn-violet"
-                onClick={() => {/* Crear nueva planta */}}
+                onClick={() => {
+                  setEditingPlanta(null);
+                  setPlantaFormData({ nombre: '', direccion: '' });
+                  setPlantaError(null);
+                  setShowPlantaModal(true);
+                }}
               >
                 <span className="action-icon">➕</span>
                 Agregar Nueva Planta
@@ -706,13 +790,62 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               Cerrar Sesión
             </button>
           </div>
-        </header>
-
-        {/* Content area */}
+        </header>        {/* Content area */}
         <main className="dashboard-content">
           {renderActiveSection()}
         </main>
       </div>
+
+      {/* Modal para crear nueva planta */}
+      {showPlantaModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>{editingPlanta ? 'Editar Planta' : 'Nueva Planta'}</h3>
+            <form onSubmit={handleCrearPlanta}>
+              {plantaError && (
+                <div className="form-error">
+                  {plantaError}
+                </div>
+              )}
+              
+              <div className="form-group">
+                <label>Nombre de la Planta:</label>
+                <input
+                  type="text"
+                  value={plantaFormData.nombre}
+                  onChange={(e) => setPlantaFormData({ ...plantaFormData, nombre: e.target.value })}
+                  placeholder="Ej: Planta Industrial Norte, Fábrica Central..."
+                  required
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Dirección:</label>
+                <textarea
+                  value={plantaFormData.direccion}
+                  onChange={(e) => setPlantaFormData({ ...plantaFormData, direccion: e.target.value })}
+                  placeholder="Ingresa la dirección completa de la planta industrial..."
+                  required
+                />
+              </div>
+
+              <div className="form-actions">
+                <button type="submit" className="btn btn-primary" disabled={savingPlanta}>
+                  <span>{savingPlanta ? 'Guardando...' : (editingPlanta ? 'Actualizar Planta' : 'Crear Planta')}</span>
+                </button>
+                <button 
+                  type="button" 
+                  className="btn btn-secondary"
+                  onClick={resetPlantaForm}
+                  disabled={savingPlanta}
+                >
+                  <span>Cancelar</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
