@@ -116,6 +116,66 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                 </button>
               </div>
             </div>
+          </div>        );
+      case 'graficas':
+        return (
+          <div className="welcome-section">
+            <div className="hero-banner">
+              <h2>📈 Gráficas y Reportes</h2>
+              <p>Visualiza datos y métricas de tu empresa con gráficos interactivos</p>
+            </div>
+            
+            <div className="dashboards-grid">
+              <div className="dashboard-card">
+                <div className="dashboard-icon">📊</div>
+                <div className="dashboard-content">
+                  <h3>Gráficas Generales</h3>
+                  <p className="dashboard-description">Métricas y KPIs empresariales visualizados</p>
+                  <p className="dashboard-status">Próximamente disponible</p>
+                </div>
+              </div>
+              
+              <div className="dashboard-card">
+                <div className="dashboard-icon">👥</div>
+                <div className="dashboard-content">
+                  <h3>Análisis de Personal</h3>
+                  <p className="dashboard-description">Gráficos de recursos humanos y rendimiento</p>
+                  <p className="dashboard-status">En desarrollo</p>
+                </div>
+              </div>
+              
+              <div className="dashboard-card">
+                <div className="dashboard-icon">🏭</div>
+                <div className="dashboard-content">
+                  <h3>Reportes Operacionales</h3>
+                  <p className="dashboard-description">Gráficas de plantas y producción</p>
+                  <p className="dashboard-status">Planificado</p>
+                </div>
+              </div>
+              
+              <div className="dashboard-card">
+                <div className="dashboard-icon">📋</div>
+                <div className="dashboard-content">
+                  <h3>Resultados de Evaluaciones</h3>
+                  <p className="dashboard-description">Gráficos de progreso y resultados NOM</p>
+                  <p className="dashboard-status">En desarrollo</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="dashboard-info">
+              <div className="info-banner">
+                <h3>🔧 Sección en Desarrollo</h3>
+                <p>Esta sección de gráficas se está desarrollando activamente. Pronto contarás con:</p>
+                <ul>
+                  <li>✅ Gráficos interactivos en tiempo real</li>
+                  <li>📈 Visualizaciones personalizables por área</li>
+                  <li>📊 Reportes exportables en PDF y Excel</li>
+                  <li>🎯 Métricas específicas por departamento</li>
+                  <li>📅 Análisis de tendencias históricas</li>
+                </ul>
+              </div>
+            </div>
           </div>
         );
       case 'empleados':
@@ -279,8 +339,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
             <span className="sidebar-subtitle">Panel Empresa</span>
           </div>
         </div>
-        <nav className="sidebar-nav">
-          <button 
+        <nav className="sidebar-nav">          <button 
             className={activeSection === 'overview' ? 'active' : ''}
             onClick={() => setActiveSection('overview')}
           >
@@ -328,13 +387,19 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
           >
             <span className="nav-icon">📋</span>
             <span className="nav-text">Evaluaciones</span>
-          </button>
-          <button 
+          </button>          <button 
             className={activeSection === 'asignaciones' ? 'active' : ''}
             onClick={() => setActiveSection('asignaciones')}
           >
             <span className="nav-icon">🎯</span>
             <span className="nav-text">Asignaciones</span>
+          </button>
+          <button 
+            className={activeSection === 'graficas' ? 'active' : ''}
+            onClick={() => setActiveSection('graficas')}
+          >
+            <span className="nav-icon">📈</span>
+            <span className="nav-text">Gráficas</span>
           </button>
           <button 
             className={activeSection === 'suscripcion' ? 'active' : ''}
