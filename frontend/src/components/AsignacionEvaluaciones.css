@@ -161,7 +161,7 @@
 }
 
 .empleado-card {
-  background: white;
+  background: #1e1e2a;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   padding: 16px;
@@ -253,7 +253,7 @@
 }
 
 .stat-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   padding: 24px;
   text-align: center;
@@ -275,7 +275,7 @@
 
 /* Tabla de evaluaciones */
 .evaluaciones-tabla {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);

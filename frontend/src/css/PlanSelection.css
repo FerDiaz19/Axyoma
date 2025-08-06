@@ -13,7 +13,7 @@
 .plan-selection-header {
   text-align: center;
   margin-bottom: 3rem;
-  background: white;
+  background: #1e1e2a;
   padding: 2rem;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -46,7 +46,7 @@
 }
 
 .plan-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -57,7 +57,7 @@
 }
 
 .plan-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 8px;
   padding: 2rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -283,7 +283,7 @@
   padding: 3rem 2rem;
   font-size: 1.2rem;
   color: #6c757d;
-  background: white;
+  background: #1e1e2a;
   border-radius: 6px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   margin: 2rem auto;

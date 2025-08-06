@@ -18,12 +18,12 @@ export interface UserProfile {
  */
 export const obtenerPerfilUsuario = async (userId: number): Promise<UserProfile | null> => {
   try {
-    console.log(`🔍 Obteniendo perfil para usuario ID: ${userId}`);
-    const response = await api.get(`/users/perfil/${userId}/`);
-    console.log('✅ Perfil obtenido:', response.data);
+    console.log('Obteniendo perfil para usuario ID:' );
+    const response = await api.get('/users/perfil//');
+    console.log('Perfil obtenido:', response.data);
     return response.data;
   } catch (error) {
-    console.error('❌ Error al obtener perfil de usuario:', error);
+    console.error('Error al obtener perfil de usuario:', error);
     return null;
   }
 };
@@ -33,18 +33,18 @@ export const obtenerPerfilUsuario = async (userId: number): Promise<UserProfile 
  */
 export const obtenerEmpresaIdUsuarioActual = async (): Promise<number | null> => {
   try {
-    console.log('🔍 Obteniendo empresa ID para usuario actual');
+    console.log('Obteniendo empresa ID para usuario actual');
     const response = await api.get('/users/mi-empresa/');
-    console.log('✅ Empresa ID obtenido:', response.data.empresa_id);
-    
+    console.log('Empresa ID obtenido:', response.data.empresa_id);
+
     // Guardar en localStorage para futuras referencias
     if (response.data.empresa_id) {
       localStorage.setItem('empresaId', response.data.empresa_id.toString());
     }
-    
+
     return response.data.empresa_id;
   } catch (error) {
-    console.error('❌ Error al obtener empresa ID:', error);
+    console.error('Error al obtener empresa ID:', error);
     return null;
   }
 };

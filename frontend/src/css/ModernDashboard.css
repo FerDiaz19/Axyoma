@@ -1,12 +1,13 @@
 /* ============================================================================
-   MODERN DASHBOARD - DISEÑO PROFESIONAL Y LIMPIO
+   MODERN DASHBOARD - TEMA OSCURO PROFESIONAL
    ============================================================================ */
 
 .modern-dashboard {
   display: flex;
   min-height: 100vh;
-  background: #f8f9fa;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #12121a;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #d0d0e0;
 }
 
 /* ============================================================================
@@ -19,7 +20,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #1c1c28 0%, #2d2d3a 100%);
   color: white;
 }
 
@@ -27,6 +28,7 @@
   font-size: 3rem;
   animation: spin 2s linear infinite;
   margin-bottom: 1rem;
+  color: #6b4eff;
 }
 
 @keyframes spin {
@@ -40,11 +42,12 @@
 
 .dashboard-sidebar {
   width: 280px;
-  background: linear-gradient(180deg, #2c3e50 0%, #34495e 100%);
-  color: white;
+  background: linear-gradient(180deg, #1a1a27 0%, #1e1e2a 100%);
+  color: #d0d0e0;
   display: flex;
   flex-direction: column;
-  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.3);
+  border-right: 1px solid #2c2c3d;
 }
 
 .sidebar-header {
@@ -97,7 +100,7 @@
 }
 
 .user-role {
-  color: #bdc3c7;
+  color: #888;
   font-size: 0.8rem;
 }
 
@@ -114,7 +117,7 @@
   width: 100%;
   background: none;
   border: none;
-  color: white;
+  color: #d0d0e0;
   padding: 1rem 1.5rem;
   display: flex;
   align-items: center;
@@ -127,14 +130,16 @@
 }
 
 .nav-item:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-left-color: #3498db;
+  background: rgba(107, 78, 255, 0.1);
+  border-left-color: #6b4eff;
+  color: #fff;
 }
 
 .nav-item.active {
-  background: rgba(255, 255, 255, 0.15);
-  border-left-color: #3498db;
+  background: rgba(107, 78, 255, 0.2);
+  border-left-color: #6b4eff;
   font-weight: 600;
+  color: #fff;
 }
 
 .nav-icon {
@@ -197,9 +202,9 @@
 
 .logout-btn {
   width: 100%;
-  background: rgba(231, 76, 60, 0.2);
-  border: 1px solid rgba(231, 76, 60, 0.3);
-  color: white;
+  background: rgba(255, 75, 92, 0.2);
+  border: 1px solid rgba(255, 75, 92, 0.3);
+  color: #fff;
   padding: 0.75rem 1rem;
   border-radius: 8px;
   cursor: pointer;
@@ -212,7 +217,8 @@
 }
 
 .logout-btn:hover {
-  background: rgba(231, 76, 60, 0.3);
+  background: rgba(255, 75, 92, 0.3);
+  transform: translateY(-1px);
 }
 
 /* ============================================================================
@@ -224,16 +230,17 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: #12121a;
 }
 
 .main-header {
-  background: white;
+  background: #1e1e2a;
   padding: 2rem;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid #2c2c3d;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .header-left {
@@ -242,7 +249,7 @@
 
 .page-title {
   margin: 0 0 0.5rem 0;
-  color: #2c3e50;
+  color: #fff;
   font-size: 2rem;
   font-weight: 700;
 }
@@ -301,12 +308,12 @@
 }
 
 .warning-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   padding: 3rem;
   text-align: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  border: 2px solid #f39c12;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  border: 2px solid #6b4eff;
   max-width: 500px;
 }
 
@@ -316,13 +323,13 @@
 }
 
 .warning-content h3 {
-  color: #e67e22;
+  color: #6b4eff;
   margin: 0 0 1rem 0;
   font-size: 1.5rem;
 }
 
 .warning-content p {
-  color: #6c757d;
+  color: #d0d0e0;
   margin: 0 0 2rem 0;
   line-height: 1.6;
 }
@@ -363,14 +370,14 @@
 }
 
 .stat-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   padding: 2rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  border: 1px solid #e9ecef;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2c2c3d;
   transition: all 0.3s ease;
 }
 
@@ -454,11 +461,11 @@
 }
 
 .upgrade-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   padding: 3rem;
   text-align: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   max-width: 400px;
 }
 
@@ -468,12 +475,12 @@
 }
 
 .upgrade-card h3 {
-  color: #2c3e50;
+  color: #fff;
   margin: 0 0 1rem 0;
 }
 
 .upgrade-card p {
-  color: #6c757d;
+  color: #d0d0e0;
   margin: 0 0 2rem 0;
 }
 
@@ -498,10 +505,10 @@
    ============================================================================ */
 
 .reportes-section {
-  background: white;
+  background: #1e1e2a;
   padding: 2rem;
   border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 /* ============================================================================

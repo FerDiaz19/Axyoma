@@ -1,46 +1,48 @@
 /**
- * 🔧 ESTILOS PARA RESTAURACIÓN DE BD
- * ==================================
+ * ESTILOS PARA RESTAURACIÓN DE BD - TEMA OSCURO
+ * ==============================================
  * 
  * Estilos CSS para el componente RestauracionBD.tsx
- * Diseño moderno con indicadores de peligro y seguridad.
+ * Diseño moderno con indicadores de peligro y seguridad - Tema oscuro.
  */
 
 .restauracion-bd {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  background: #f8f9fa;
+  background: #12121a;
   min-height: 100vh;
+  color: #d0d0e0;
 }
 
 /* Header */
 .restauracion-header {
   text-align: center;
   margin-bottom: 30px;
-  background: white;
+  background: #1e1e2a;
   padding: 25px;
   border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2c2c3d;
   position: relative;
 }
 
 .restauracion-header h2 {
   margin: 0 0 10px 0;
-  color: #2c3e50;
+  color: #fff;
   font-size: 28px;
   font-weight: 600;
 }
 
 .restauracion-subtitle {
   margin: 0 0 20px 0;
-  color: #7f8c8d;
+  color: #aaa;
   font-size: 16px;
   line-height: 1.5;
 }
 
 .btn-refresh {
-  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  background: linear-gradient(135deg, #6b4eff 0%, #8d70ff 100%);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -73,27 +75,27 @@
 }
 
 .mensaje-success {
-  background: #d4edda;
+  background: #1a2e1a;
   border-left-color: #28a745;
-  color: #155724;
+  color: #75ff7a;
 }
 
 .mensaje-error {
-  background: #f8d7da;
+  background: #2e1a1a;
   border-left-color: #dc3545;
-  color: #721c24;
+  color: #ffbdbd;
 }
 
 .mensaje-warning {
-  background: #fff3cd;
+  background: #2e2a1a;
   border-left-color: #ffc107;
-  color: #856404;
+  color: #ffe066;
 }
 
 .mensaje-info {
-  background: #d1ecf1;
+  background: #1a252e;
   border-left-color: #17a2b8;
-  color: #0c5460;
+  color: #66d9ff;
 }
 
 .mensaje-content {
@@ -119,7 +121,7 @@
 
 /* Estado de BD */
 .estado-bd-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   padding: 25px;
   margin-bottom: 30px;
@@ -128,7 +130,7 @@
 
 .estado-bd-card h3 {
   margin: 0 0 20px 0;
-  color: #2c3e50;
+  color: #fff;
   font-size: 20px;
   font-weight: 600;
 }
@@ -143,9 +145,10 @@
 .estado-item {
   text-align: center;
   padding: 15px;
-  background: #f8f9fa;
+  background: #2c2c3d;
   border-radius: 8px;
-  border: 2px solid #e9ecef;
+  border: 2px solid #3a3a4d;
+  color: #d0d0e0;
 }
 
 .estado-numero {
@@ -159,7 +162,7 @@
 .estado-label {
   display: block;
   font-size: 12px;
-  color: #6c757d;
+  color: #a0a0a0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -171,7 +174,7 @@
   flex-wrap: wrap;
   gap: 15px;
   padding-top: 20px;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid #3a3a4d;
 }
 
 .bd-status {
@@ -182,24 +185,24 @@
 }
 
 .bd-status.vacia {
-  background: #fff3cd;
-  color: #856404;
+  background: #2e2a1a;
+  color: #ffe066;
 }
 
 .bd-status.con-datos {
-  background: #d4edda;
-  color: #155724;
+  background: #1a2e1a;
+  color: #75ff7a;
 }
 
 .ultimo-respaldo {
   font-size: 13px;
-  color: #6c757d;
+  color: #a0a0a0;
 }
 
 .estado-loading {
   text-align: center;
   padding: 40px;
-  color: #6c757d;
+  color: #a0a0a0;
   font-size: 16px;
 }
 
@@ -218,7 +221,7 @@
 }
 
 .function-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -243,7 +246,7 @@
   align-items: center;
   gap: 15px;
   padding: 20px 25px;
-  border-bottom: 1px solid #e9ecef;
+  border-bottom: 1px solid #3a3a4d;
 }
 
 .card-icon {
@@ -257,18 +260,18 @@
 }
 
 .danger-icon {
-  background: #f8d7da;
-  color: #dc3545;
+  background: #4c1d1d;
+  color: #f87171;
 }
 
 .safe-icon {
-  background: #d4edda;
-  color: #28a745;
+  background: #1a2e1a;
+  color: #34d399;
 }
 
 .card-title-group h3 {
   margin: 0;
-  color: #2c3e50;
+  color: #fff;
   font-size: 18px;
   font-weight: 600;
 }
@@ -301,17 +304,18 @@
 
 .card-description {
   margin: 0 0 20px 0;
-  color: #495057;
+  color: #d0d0e0;
   line-height: 1.6;
   font-size: 14px;
 }
 
 .warning-list,
 .demo-list {
-  background: #f8f9fa;
+  background: #2c2c3d;
   padding: 15px;
   border-radius: 8px;
   border-left: 3px solid;
+  color: #d0d0e0;
 }
 
 .warning-list {
@@ -327,6 +331,7 @@
   margin: 0 0 10px 0;
   font-size: 14px;
   font-weight: 600;
+  color: #fff;
 }
 
 .warning-list ul,
@@ -340,12 +345,13 @@
   margin-bottom: 5px;
   font-size: 13px;
   line-height: 1.4;
+  color: #d0d0e0;
 }
 
 .card-footer {
   padding: 20px 25px;
-  background: #f8f9fa;
-  border-top: 1px solid #e9ecef;
+  background: #2c2c3d;
+  border-top: 1px solid #3a3a4d;
 }
 
 .btn {
@@ -391,7 +397,7 @@
 }
 
 .info-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   padding: 25px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -400,7 +406,7 @@
 
 .info-card h3 {
   margin: 0 0 15px 0;
-  color: #2c3e50;
+  color: #fff;
   font-size: 18px;
   font-weight: 600;
 }
@@ -414,10 +420,11 @@
   margin-bottom: 8px;
   line-height: 1.5;
   font-size: 14px;
+  color: #d0d0e0;
 }
 
 .info-card strong {
-  color: #2c3e50;
+  color: #fff;
 }
 
 /* Animaciones */

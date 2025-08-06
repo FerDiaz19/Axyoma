@@ -1,6 +1,6 @@
 /* Estilos para el componente de exportación CSV */
 .exportacion-csv-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);

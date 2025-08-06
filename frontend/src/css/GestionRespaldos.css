@@ -1,36 +1,37 @@
 /**
- * 🗄️ ESTILOS PARA GESTIÓN DE RESPALDOS - DISEÑO MEJORADO
- * =======================================================
+ * ESTILOS PARA GESTIÓN DE RESPALDOS - TEMA OSCURO
+ * ================================================
  * 
  * Estilos CSS modernos para el componente GestionRespaldos.tsx
- * Diseño con cards elegantes y botones bien organizados.
+ * Diseño con cards elegantes y tema oscuro profesional.
  * 
- * 📋 Responsable: Yael Contreras
- * 📅 Fecha: Agosto 2025
- * 🎨 Diseño: Cards modernas con efectos hover y organización visual mejorada
+ * Responsable: Yael Contreras
+ * Fecha: Agosto 2025
+ * Diseño: Cards modernas con tema oscuro y efectos hover mejorados
  */
 
 .gestion-respaldos {
   padding: 20px;
   max-width: 1400px;
   margin: 0 auto;
-  background: #f8f9fa;
+  background: #12121a;
   min-height: 100vh;
 }
 
 /* ========== HEADER PRINCIPAL ========== */
 .respaldos-container {
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   padding: 0;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  border: 1px solid #2c2c3d;
 }
 
 .respaldos-container h2 {
   margin: 0;
   padding: 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #6b4eff;
   color: white;
   text-align: center;
   font-size: 28px;
@@ -52,21 +53,21 @@
 }
 
 .mensaje.success {
-  background: #d4edda;
+  background: #1a2e1a;
   border-left-color: #28a745;
-  color: #155724;
+  color: #75ff7a;
 }
 
 .mensaje.error {
-  background: #f8d7da;
-  border-left-color: #dc3545;
-  color: #721c24;
+  background: #2e1a1a;
+  border-left-color: #ff4b5c;
+  color: #ffbdbd;
 }
 
 .mensaje.warning {
-  background: #fff3cd;
+  background: #2e2a1a;
   border-left-color: #ffc107;
-  color: #856404;
+  color: #ffe066;
 }
 
 /* ========== HEADER DE LISTA ========== */
@@ -75,13 +76,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 30px;
-  border-bottom: 2px solid #e9ecef;
-  background: #f8f9fa;
+  border-bottom: 2px solid #2c2c3d;
+  background: #1a1a27;
 }
 
 .respaldos-header h3 {
   margin: 0;
-  color: #2c3e50;
+  color: #d0d0e0;
   font-size: 24px;
   font-weight: 600;
   display: flex;
@@ -118,7 +119,7 @@
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  background: #007bff;
   color: white;
 }
 
@@ -128,7 +129,7 @@
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, #6c757d 0%, #545b62 100%);
+  background: #6c757d;
   color: white;
 }
 
@@ -138,7 +139,7 @@
 }
 
 .btn-warning {
-  background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+  background: #ffc107;
   color: #212529;
 }
 
@@ -195,13 +196,14 @@
 
 /* ========== TARJETAS DE RESPALDO - DISEÑO PREMIUM ========== */
 .respaldo-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e9ecef;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2c2c3d;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  color: #d0d0e0;
 }
 
 .respaldo-card::before {
@@ -353,13 +355,14 @@
 }
 
 .loading-spinner {
-  background: white;
+  background: #1e1e2a;
   padding: 25px 40px;
   border-radius: 12px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid #2c2c3d;
   font-size: 16px;
   font-weight: 600;
-  color: #495057;
+  color: #d0d0e0;
   display: flex;
   align-items: center;
   gap: 15px;
@@ -379,7 +382,8 @@
 .crear-respaldo,
 .sistema-info {
   padding: 30px;
-  background: white;
+  background: #1e1e2a;
+  color: #d0d0e0;
 }
 
 .crear-header,
@@ -500,11 +504,12 @@
   display: flex;
   align-items: center;
   padding: 16px;
-  background: white;
-  border: 2px solid #e9ecef;
+  background: #1e1e2a;
+  border: 2px solid #2c2c3d;
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
+  color: #d0d0e0;
 }
 
 .tabla-item:hover {

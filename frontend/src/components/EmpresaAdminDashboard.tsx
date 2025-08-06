@@ -9,7 +9,7 @@ import AsignacionEvaluaciones from './AsignacionEvaluaciones';
 import GestionSuscripcion from './GestionSuscripcion';
 import UsuariosPlantasView from './UsuariosPlantasView';
 import { logout } from '../services/authService';
-import '../css/SuperAdminDashboard.css';
+import '../css/EmpresaAdminDashboard.css';
 
 interface EmpresaAdminDashboardProps {
   userData: any;
@@ -123,12 +123,105 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
           <EmpleadosCRUD 
             userData={userData}
           />
-        );
-      case 'plantas':
+        );      case 'plantas':
         return (
-          <GestionPlantas 
-            empresaId={empresaId || 1}
-          />
+          <div className="plantas-dashboard-section">
+            <div className="section-header">
+              <h2>🏭 Gestión de Plantas</h2>
+              <p className="section-subtitle">Administra las plantas industriales de tu empresa</p>
+            </div>
+            
+            <div className="plants-summary-cards">
+              <div className="summary-card">
+                <div className="summary-icon">🏭</div>
+                <div className="summary-content">
+                  <h3>Total Plantas</h3>
+                  <p className="summary-number">3</p>
+                </div>
+              </div>
+              <div className="summary-card">
+                <div className="summary-icon">✅</div>
+                <div className="summary-content">
+                  <h3>Plantas Activas</h3>
+                  <p className="summary-number">2</p>
+                </div>
+              </div>
+              <div className="summary-card">
+                <div className="summary-icon">👥</div>
+                <div className="summary-content">
+                  <h3>Total Empleados</h3>
+                  <p className="summary-number">156</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="plants-grid">
+              <div className="plant-card">
+                <div className="plant-card-header">
+                  <h4>Planta Norte</h4>
+                  <span className="status-badge active">Activa</span>
+                </div>
+                <div className="plant-info">
+                  <p className="plant-location">📍 Monterrey, Nuevo León</p>
+                  <p className="plant-employees">👥 89 empleados</p>
+                  <p className="plant-departments">🏢 5 departamentos</p>
+                </div>
+                <div className="plant-actions">
+                  <button className="btn btn-primary">Ver Detalles</button>
+                  <button className="btn btn-secondary">Editar</button>
+                </div>
+              </div>
+
+              <div className="plant-card">
+                <div className="plant-card-header">
+                  <h4>Planta Centro</h4>
+                  <span className="status-badge active">Activa</span>
+                </div>
+                <div className="plant-info">
+                  <p className="plant-location">📍 Ciudad de México</p>
+                  <p className="plant-employees">👥 67 empleados</p>
+                  <p className="plant-departments">🏢 4 departamentos</p>
+                </div>
+                <div className="plant-actions">
+                  <button className="btn btn-primary">Ver Detalles</button>
+                  <button className="btn btn-secondary">Editar</button>
+                </div>
+              </div>
+
+              <div className="plant-card">
+                <div className="plant-card-header">
+                  <h4>Planta Occidente</h4>
+                  <span className="status-badge inactive">Suspendida</span>
+                </div>
+                <div className="plant-info">
+                  <p className="plant-location">📍 Guadalajara, Jalisco</p>
+                  <p className="plant-employees">👥 0 empleados</p>
+                  <p className="plant-departments">🏢 3 departamentos</p>
+                </div>
+                <div className="plant-actions">
+                  <button className="btn btn-success">Activar</button>
+                  <button className="btn btn-secondary">Editar</button>
+                </div>
+              </div>
+            </div>
+
+            <div className="plants-actions-section">
+              <button 
+                className="btn btn-violet"
+                onClick={() => {/* Navegar a gestión completa */}}
+              >
+                <span className="action-icon">⚙️</span>
+                Gestión Completa de Plantas
+              </button>
+              <button 
+                className="btn btn-violet"
+                onClick={() => {/* Crear nueva planta */}}
+              >
+                <span className="action-icon">➕</span>
+                Agregar Nueva Planta
+              </button>
+            </div>
+          </div>
         );
       case 'usuarios-plantas':
         return (

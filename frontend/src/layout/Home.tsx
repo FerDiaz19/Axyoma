@@ -48,20 +48,19 @@ const Home = () => {
                 <div className="container mx-auto px-6">
                     <h2 className="text-3xl font-bold text-center text-gray-800 mb-16">Nuestras Soluciones ERP</h2>
 
-                    <div className="grid md:grid-cols-3 gap-10">
-                        {[
+                    <div className="grid md:grid-cols-3 gap-10">                        {[
                             {
-                                icon: '✅',
+                                icon: '',
                                 title: 'Gestión de Inventario',
                                 description: 'Controla tus productos, existencias y almacenes en tiempo real'
                             },
                             {
-                                icon: '📦',
+                                icon: '',
                                 title: 'Compras y Proveedores',
                                 description: 'Gestiona tus órdenes de compra, proveedores y abastecimiento fácilmente'
                             },
                             {
-                                icon: '📊',
+                                icon: '',
                                 title: 'Reportes Inteligentes',
                                 description: 'Visualiza indicadores clave para tomar decisiones estratégicas'
                             }

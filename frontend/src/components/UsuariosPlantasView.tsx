@@ -48,13 +48,13 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
   const cargarUsuarios = async () => {
     try {
       setError(null);
-      console.log('🔍 Cargando usuarios de planta para empresa:', empresaId);
+      console.log('Cargando usuarios de planta para empresa:', empresaId);
       
       const response = await api.get(`/plantas/usuarios-planta/?empresa_id=${empresaId}`);
-      console.log('👥 Usuarios obtenidos:', response.data);
+      console.log('Usuarios obtenidos:', response.data);
       setUsuarios(response.data);
     } catch (error: any) {
-      console.error('❌ Error cargando usuarios:', error);
+      console.error('Error cargando usuarios:', error);
       
       if (error.response?.status === 404) {
         setUsuarios([]);
@@ -69,13 +69,13 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
   const cargarCredenciales = async () => {
     try {
       setError(null);
-      console.log('🔍 Cargando credenciales para empresa:', empresaId);
+      console.log('Cargando credenciales para empresa:', empresaId);
       
       const response = await api.get('/plantas/credenciales-usuarios/');
-      console.log('🔑 Credenciales obtenidas:', response.data);
+      console.log('Credenciales obtenidas:', response.data);
       setCredenciales(response.data.credenciales || []);
     } catch (error: any) {
-      console.error('❌ Error cargando credenciales:', error);
+      console.error('Error cargando credenciales:', error);
       setError(`Error al cargar credenciales: ${error.message}`);
     }
   };
@@ -97,7 +97,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
       // Recargar usuarios
       await cargarUsuarios();
     } catch (error: any) {
-      console.error('❌ Error reseteando contraseña:', error);
+      console.error('Error reseteando contraseña:', error);
       const errorMessage = error.response?.data?.error || 'Error al resetear contraseña';
       setError(errorMessage);
       alert(`Error: ${errorMessage}`);
@@ -138,7 +138,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
               className={vistaActual === 'usuarios' ? 'tab-active' : 'tab-inactive'}
               onClick={() => setVistaActual('usuarios')}
             >
-              👥 Usuarios
+              Usuarios
             </button>
             <button 
               className={vistaActual === 'credenciales' ? 'tab-active' : 'tab-inactive'}
@@ -147,7 +147,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
                 cargarCredenciales();
               }}
             >
-              🔑 Credenciales
+              Credenciales
             </button>
           </div>
         </div>
@@ -162,7 +162,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
       {vistaActual === 'usuarios' ? (
         <div className="usuarios-section">
           <div className="section-header">
-            <h3>👥 Gestión de Usuarios</h3>
+            <h3>Gestión de Usuarios</h3>
             <p className="subtitle">Administradores de planta activos</p>
           </div>
 
@@ -179,14 +179,14 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
                     <h4>{usuario.first_name} {usuario.last_name}</h4>
                     <p className="username">@{usuario.username}</p>
                     <p className="email">{usuario.email}</p>
-                    <p className="planta">🏭 {usuario.planta_nombre}</p>
+                    <p className="planta">{usuario.planta_nombre}</p>
                     {usuario.fecha_creacion && (
-                      <p className="fecha">📅 {new Date(usuario.fecha_creacion).toLocaleDateString()}</p>
+                      <p className="fecha">{new Date(usuario.fecha_creacion).toLocaleDateString()}</p>
                     )}
                   </div>
                   <div className="usuario-status">
                     <span className={`status-badge ${usuario.is_active ? 'active' : 'inactive'}`}>
-                      {usuario.is_active ? '✅ Activo' : '❌ Suspendido'}
+                      {usuario.is_active ? 'Activo' : 'Suspendido'}
                     </span>
                   </div>
                   <div className="usuario-actions">
@@ -200,7 +200,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
                       className="btn btn-info"
                       onClick={() => resetearPassword(usuario.usuario_id)}
                     >
-                      🔄 Resetear Password
+                      Resetear Password
                     </button>
                   </div>
                 </div>
@@ -211,7 +211,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
       ) : (
         <div className="credenciales-section">
           <div className="section-header">
-            <h3>🔑 Credenciales de Usuarios</h3>
+            <h3>Credenciales de Usuarios</h3>
             <p className="subtitle">Información de acceso para usuarios de planta</p>
           </div>
 
@@ -224,7 +224,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
             <>
               <div className="credenciales-info">
                 <div className="info-card warning">
-                  <h4>⚠️ Información Importante</h4>
+                  <h4>Información Importante</h4>
                   <p>Las contraseñas se generan automáticamente al crear cada planta y aparecen una sola vez en los logs del servidor Django.</p>
                   <p>Use el botón "Resetear Password" para generar nuevas contraseñas cuando sea necesario.</p>
                 </div>
@@ -232,30 +232,29 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
 
               <div className="credenciales-grid">
                 {credenciales.map((credencial) => (
-                  <div key={credencial.usuario_id} className="credencial-card">
-                    <div className="credencial-header">
-                      <h4>🏭 {credencial.planta_nombre}</h4>
+                  <div key={credencial.usuario_id} className="credencial-card">                    <div className="credencial-header">
+                      <h4>{credencial.planta_nombre}</h4>
                       <span className={`status-badge ${credencial.is_active ? 'active' : 'inactive'}`}>
-                        {credencial.is_active ? '✅ Activo' : '❌ Suspendido'}
+                        {credencial.is_active ? 'Activo' : 'Suspendido'}
                       </span>
                     </div>
                     <div className="credencial-info">
                       <div className="info-row">
-                        <strong>👤 Usuario:</strong> <code>{credencial.username}</code>
+                        <strong>Usuario:</strong> <code>{credencial.username}</code>
                       </div>
                       <div className="info-row">
-                        <strong>📧 Email:</strong> <code>{credencial.email}</code>
+                        <strong>Email:</strong> <code>{credencial.email}</code>
                       </div>
                       <div className="info-row">
-                        <strong>👨‍💼 Nombre:</strong> {credencial.nombre_completo}
+                        <strong>Nombre:</strong> {credencial.nombre_completo}
                       </div>
                       <div className="info-row">
-                        <strong>🔑 Contraseña:</strong> 
+                        <strong>Contraseña:</strong> 
                         <span className="password-info">{credencial.password_visible}</span>
                       </div>
                       {credencial.fecha_creacion && (
                         <div className="info-row">
-                          <strong>📅 Creado:</strong> {new Date(credencial.fecha_creacion).toLocaleDateString()}
+                          <strong>Creado:</strong> {new Date(credencial.fecha_creacion).toLocaleDateString()}
                         </div>
                       )}
                     </div>
@@ -264,7 +263,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
                         className="btn btn-warning"
                         onClick={() => resetearPassword(credencial.usuario_id)}
                       >
-                        🔄 Generar Nueva Contraseña
+                        Generar Nueva Contraseña
                       </button>
                     </div>
                   </div>
@@ -278,7 +277,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
       {passwordResetData && (
         <div className="modal-overlay">
           <div className="modal password-modal">
-            <h3>🔑 Nueva Contraseña Generada</h3>
+            <h3>Nueva Contraseña Generada</h3>
             <div className="password-info-modal">
               <p><strong>Usuario:</strong> {passwordResetData.username}</p>
               <p><strong>Planta:</strong> {passwordResetData.planta}</p>
@@ -296,7 +295,7 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
                   alert('Contraseña copiada al portapapeles');
                 }}
               >
-                📋 Copiar Contraseña
+                Copiar Contraseña
               </button>
               <button 
                 className="btn btn-secondary"
@@ -313,3 +312,4 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
 };
 
 export default UsuariosPlantasView;
+

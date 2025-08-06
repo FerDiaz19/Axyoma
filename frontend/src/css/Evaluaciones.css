@@ -1,9 +1,9 @@
-/* Evaluaciones.css */
+/* Evaluaciones.css - Tema oscuro */
 .evaluaciones-gestion {
   padding: 2rem;
   max-width: 1400px;
   margin: 0 auto;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: #12121a;
   min-height: 100vh;
 }
 
@@ -11,43 +11,43 @@
   margin-bottom: 2rem;
   text-align: center;
   padding: 2rem;
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #2c2c3d;
 }
 
 .page-header h2 {
-  color: #2c3e50;
+  color: #fff;
   margin-bottom: 0.5rem;
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #6b4eff;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .page-header p {
-  color: #7f8c8d;
+  color: #aaa;
   font-size: 1.2rem;
   font-weight: 500;
 }
 
 /* Tabs */
 .tabs-container {
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid #2c2c3d;
 }
 
 .tabs {
   display: flex;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6b4eff 0%, #8d70ff 100%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -87,16 +87,16 @@
 }
 
 .tab.active {
-  background: white;
-  color: #667eea;
-  border-bottom-color: #667eea;
+  background: #1e1e2a;
+  color: #6b4eff;
+  border-bottom-color: #6b4eff;
   font-weight: 700;
 }
 
 .tab-content {
   padding: 2.5rem;
   min-height: 500px;
-  background: white;
+  background: #1e1e2a;
 }
 
 /* Loading */
@@ -182,11 +182,10 @@
   align-items: center;
 }
 
-.tipo-filter {
-  padding: 0.5rem 1rem;
-  border: 1px solid #ced4da;
+.tipo-filter {  padding: 0.5rem 1rem;
+  border: 1px solid #2c2c3d;
   border-radius: 6px;
-  background: white;
+  background: #1e1e2a;
   min-width: 200px;
 }
 
@@ -297,12 +296,12 @@
 }
 
 .evaluacion-card {
-  background: white;
+  background: #1e1e2a;
   border: none;
   border-radius: 20px;
   overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   position: relative;
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -377,7 +376,7 @@
 
 .card-content {
   padding: 1.5rem;
-  background: white;
+  background: #1e1e2a;
 }
 
 .card-content p {
@@ -408,7 +407,7 @@
 }
 
 .pregunta-card {
-  background: white;
+  background: #1e1e2a;
   border: 1px solid #e9ecef;
   border-radius: 8px;
   overflow: hidden;
@@ -495,7 +494,7 @@
 }
 
 .modal-content {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   width: 90%;
   max-width: 800px;
@@ -598,7 +597,7 @@
 .pregunta-checkbox {
   margin-bottom: 0.75rem;
   padding: 0.5rem;
-  background: white;
+  background: #1e1e2a;
   border-radius: 4px;
   border: 1px solid #e9ecef;
 }
@@ -937,7 +936,7 @@
 }
 
 .evaluacion-empresa-card:hover {
-  background: white;
+  background: #1e1e2a;
   border-color: #3498db;
   box-shadow: 0 2px 8px rgba(52, 152, 219, 0.1);
 }
@@ -1048,7 +1047,7 @@
 }
 
 .preguntas-container {
-  background: white;
+  background: #1e1e2a;
   border-radius: 8px;
   padding: 24px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -1247,7 +1246,7 @@
 }
 
 .modal-content {
-  background: white;
+  background: #1e1e2a;
   border-radius: 8px;
   max-width: 600px;
   width: 90%;
@@ -1266,7 +1265,7 @@
 
 .modal-header h3 {
   margin: 0;
-  color: #333;
+  color: #d0d0e0;
 }
 
 .modal-close {
@@ -1300,7 +1299,7 @@
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
-  color: #333;
+  color: #d0d0e0;
 }
 
 .form-group input,
@@ -1461,7 +1460,7 @@
 /* Estilos para selección de empleados */
 .empleado-selection {
   padding: 2rem;
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   backdrop-filter: blur(10px);
@@ -1558,7 +1557,7 @@
   display: flex;
   align-items: center;
   padding: 20px;
-  background: white;
+  background: #1e1e2a;
   border: 2px solid #e9ecef;
   border-radius: 12px;
   cursor: pointer;
@@ -1612,7 +1611,7 @@
   align-items: center;
   margin-bottom: 30px;
   padding: 20px;
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
@@ -1639,7 +1638,7 @@
 }
 
 .pregunta-item {
-  background: white;
+  background: #1e1e2a;
   border: 1px solid #e9ecef;
   border-radius: 12px;
   padding: 24px;
@@ -1767,7 +1766,7 @@
 .sin-preguntas {
   text-align: center;
   padding: 60px 30px;
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   border: 2px dashed #dee2e6;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);

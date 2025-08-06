@@ -48,9 +48,9 @@ const ApiInspector: React.FC = () => {
       }
       
       setResponse(apiResponse.data);
-      console.log('✅ Respuesta API:', apiResponse.data);
+      console.log('Respuesta API:', apiResponse.data);
     } catch (err: any) {
-      console.error('❌ Error en solicitud API:', err);
+      console.error('Error en solicitud API:', err);
       setError(err.message || 'Error desconocido');
       
       if (err.response) {
@@ -64,7 +64,7 @@ const ApiInspector: React.FC = () => {
 
   return (
     <div style={{ padding: '20px', maxWidth: '1000px', margin: '0 auto' }}>
-      <h2>🔍 Inspector de API AXYOMA</h2>
+      <h2>Inspector de API AXYOMA</h2>
       
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>

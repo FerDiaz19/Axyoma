@@ -106,32 +106,12 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="login-container">
-      {/* Lado izquierdo - Imagen */}
+    <div className="login-container">      {/* Lado izquierdo - Imagen */}
       <div className="login-left">
         <div className="login-image-section">
           <div className="image-placeholder">
             <div className="brand-logo">
-              <h1>🏢 AXYOMA</h1>
-              <p>Plataforma Empresarial Profesional</p>
-            </div>
-            <div className="features-list">
-              <div className="feature">
-                <span>📊</span>
-                <span>Gestión de Evaluaciones</span>
-              </div>
-              <div className="feature">
-                <span>👥</span>
-                <span>Administración de Personal</span>
-              </div>
-              <div className="feature">
-                <span>📈</span>
-                <span>Reportes Avanzados</span>
-              </div>
-              <div className="feature">
-                <span>🔒</span>
-                <span>Seguridad Empresarial</span>
-              </div>
+              <h1>AXYOMA</h1>
             </div>
           </div>
         </div>
@@ -139,16 +119,13 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
       
       {/* Lado derecho - Formulario */}
       <div className="login-right">
-        <div className="login-form-container">
-          <div className="login-header">
-            <h2>👋 Bienvenido de vuelta</h2>
+        <div className="login-form-container">          <div className="login-header">
+            <h2>Bienvenido de vuelta</h2>
             <p>Inicia sesión para acceder a tu cuenta</p>
           </div>
 
           <form onSubmit={handleSubmit} className="login-form">
-            <div className="form-group">
-              <label htmlFor="username">
-                <span className="icon">�</span>
+            <div className="form-group">              <label htmlFor="username">
                 Usuario
               </label>
               <input
@@ -162,9 +139,7 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="password">
-                <span className="icon">🔒</span>
+            <div className="form-group">              <label htmlFor="password">
                 Contraseña
               </label>
               <input
@@ -194,65 +169,14 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
                 <>
                   <span className="spinner">🔄</span>
                   Iniciando sesión...
-                </>
-              ) : (
-                <>
-                  <span>🚀</span>
-                  Iniciar Sesión
-                </>
+                </>              ) : (
+                "Iniciar Sesión"
               )}
             </button>
-          </form>
-
-          <div className="login-footer">
-            <div className="divider">
-              <span>o</span>
-            </div>
-
-            {/* Credenciales de prueba - CREDENCIALES REALES DEL SISTEMA */}
-            <div className="test-credentials">
-              <h4>🧪 Usuarios del Sistema</h4>
-              <div className="credentials-list">
-                <div 
-                  className="credential-item clickable"
-                  onClick={() => applyTestCredential('superadmin', 'admin123')}
-                >
-                  <strong>🔧 SuperAdmin:</strong> superadmin / admin123
-                </div>
-                <div 
-                  className="credential-item clickable"
-                  onClick={() => applyTestCredential('admin_technomex', 'admin123')}
-                >
-                  <strong>🏢 TechnoMex Industries:</strong> admin_technomex / admin123
-                </div>
-                <div 
-                  className="credential-item clickable"
-                  onClick={() => applyTestCredential('admin_manu_gonzalez', 'admin123')}
-                >
-                  <strong>🏢 Manufactura González:</strong> admin_manu_gonzalez / admin123
-                </div>
-                <div 
-                  className="credential-item clickable"
-                  onClick={() => applyTestCredential('admin_axis', 'admin123')}
-                >
-                  <strong>🏢 Industrias AXIS:</strong> admin_axis / admin123
-                </div>
-                <div 
-                  className="credential-item clickable"
-                  onClick={() => applyTestCredential('admin_planta_1_1', 'admin123')}
-                >
-                  <strong>📍 Admin Planta:</strong> admin_planta_1_1 / admin123
-                </div>
-              </div>
-              <div className="note">
-                <small>💡 <strong>Nota:</strong> Los 3 tipos de usuarios están funcionando correctamente</small>
-              </div>
-            </div>
-
+          </form>          <div className="login-footer">
             <p className="register-link">
               ¿No tienes cuenta? 
               <a href="/registro" className="link-button">
-                <span>✨</span>
                 Crear cuenta nueva
               </a>
             </p>

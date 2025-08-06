@@ -9,7 +9,7 @@
 }
 
 .registro-form {
-  background: white;
+  background: #1e1e2a;
   padding: 2.5rem;
   border-radius: 20px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
@@ -24,7 +24,7 @@
 }
 
 .form-header h2 {
-  color: #333;
+  color: #d0d0e0;
   margin-bottom: 0.5rem;
   font-size: 2.2rem;
   font-weight: bold;
@@ -64,7 +64,7 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: #d0d0e0;
   font-weight: 600;
 }
 

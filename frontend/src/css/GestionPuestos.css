@@ -1,8 +1,11 @@
-/* GestionPuestos.css */
+/* GestionPuestos.css - Tema oscuro */
 .gestion-puestos {
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  background: #12121a;
+  color: #d0d0e0;
+  min-height: 100vh;
 }
 
 .header-section {
@@ -13,13 +16,14 @@
 }
 
 .header-section h2 {
-  color: #333;
+  color: #fff;
   margin: 0;
   font-size: 1.8rem;
+  font-weight: 600;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6b4eff 0%, #8d70ff 100%);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -31,7 +35,7 @@
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(107, 78, 255, 0.3);
 }
 
 .puestos-grid {
@@ -41,11 +45,13 @@
 }
 
 .puesto-card {
-  background: white;
+  background: #1e1e2a;
+  border: 1px solid #2c2c3d;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  color: #d0d0e0;
 }
 
 .puesto-card:hover {
@@ -64,7 +70,7 @@
 
 .card-header h3 {
   margin: 0;
-  color: #333;
+  color: #d0d0e0;
   font-size: 1.2rem;
 }
 
@@ -138,7 +144,7 @@
 }
 
 .modal {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   width: 90%;
@@ -157,7 +163,7 @@
 
 .modal-header h3 {
   margin: 0;
-  color: #333;
+  color: #d0d0e0;
 }
 
 .close-btn {
@@ -170,7 +176,7 @@
 }
 
 .close-btn:hover {
-  color: #333;
+  color: #d0d0e0;
 }
 
 .modal-form {
@@ -184,7 +190,7 @@
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #333;
+  color: #d0d0e0;
   font-weight: 600;
 }
 

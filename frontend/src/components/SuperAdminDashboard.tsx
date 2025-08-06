@@ -913,21 +913,17 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   // Render de estadísticas
   const renderEstadisticas = () => (
     <div className="section-content">
-      <div className="section-header">
-        <h2 style={{ 
+      <div className="section-header">        <h2 style={{ 
           textAlign: 'center', 
           marginBottom: '30px',
           fontSize: '2.5rem',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
+          color: '#6b4eff',
           fontWeight: 'bold'
         }}>
           📊 Dashboard del Sistema
-        </h2>
-        <p style={{
+        </h2>        <p style={{
           textAlign: 'center',
-          color: '#666',
+          color: '#d0d0e0',
           fontSize: '1.1rem',
           marginBottom: '40px'
         }}>
@@ -937,14 +933,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       
       {estadisticas && (
         <>
-          {/* Sección Principal - Métricas Principales */}
-          <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          {/* Sección Principal - Métricas Principales */}          <div style={{
+            background: '#6b4eff',
             borderRadius: '20px',
             padding: '30px',
             marginBottom: '30px',
-            color: 'white',
-            boxShadow: '0 20px 40px rgba(102, 126, 234, 0.3)'
+            color: 'white'
           }}>
             <h3 style={{ 
               textAlign: 'center', 
@@ -960,14 +954,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
               gap: '20px'
             }}>
-              {/* Tarjeta Empresas */}
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(10px)',
+              {/* Tarjeta Empresas */}              <div style={{
+                background: '#2c2c3d',
                 borderRadius: '15px',
                 padding: '25px',
                 textAlign: 'center',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                border: '1px solid #3a3a4d',
                 transition: 'transform 0.3s ease'
               }}>
                 <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🏢</div>
@@ -984,16 +976,13 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   <span>✅ {getStatsData()?.empresas_activas || 0}</span>
                   <span>❌ {(getStatsData()?.total_empresas || 0) - (getStatsData()?.empresas_activas || 0)}</span>
                 </div>
-              </div>
-
-              {/* Tarjeta Usuarios */}
+              </div>              {/* Tarjeta Usuarios */}
               <div style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(10px)',
+                background: '#2c2c3d',
                 borderRadius: '15px',
                 padding: '25px',
                 textAlign: 'center',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
+                border: '1px solid #3a3a4d'
               }}>
                 <div style={{ fontSize: '3rem', marginBottom: '10px' }}>👥</div>
                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
@@ -1009,16 +998,13 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   <span>✅ {getStatsData()?.usuarios_activos || 0}</span>
                   <span>❌ {(getStatsData()?.total_usuarios || 0) - (getStatsData()?.usuarios_activos || 0)}</span>
                 </div>
-              </div>
-
-              {/* Tarjeta Plantas */}
+              </div>              {/* Tarjeta Plantas */}
               <div style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(10px)',
+                background: '#2c2c3d',
                 borderRadius: '15px',
                 padding: '25px',
                 textAlign: 'center',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
+                border: '1px solid #3a3a4d'
               }}>
                 <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🏭</div>
                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
@@ -1034,16 +1020,13 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   <span>✅ {getStatsData()?.plantas_activas || 0}</span>
                   <span>❌ {(getStatsData()?.total_plantas || 0) - (getStatsData()?.plantas_activas || 0)}</span>
                 </div>
-              </div>
-
-              {/* Tarjeta Empleados */}
+              </div>              {/* Tarjeta Empleados */}
               <div style={{
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(10px)',
+                background: '#2c2c3d',
                 borderRadius: '15px',
                 padding: '25px',
                 textAlign: 'center',
-                border: '1px solid rgba(255, 255, 255, 0.2)'
+                border: '1px solid #3a3a4d'
               }}>
                 <div style={{ fontSize: '3rem', marginBottom: '10px' }}>👤</div>
                 <div style={{ fontSize: '2.5rem', fontWeight: 'bold', marginBottom: '5px' }}>
@@ -1070,13 +1053,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             gap: '25px',
             marginBottom: '30px'
           }}>
-            {/* Panel de Suscripciones */}
-            <div style={{
-              background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            {/* Panel de Suscripciones */}            <div style={{
+              background: '#1a8a7e',
               borderRadius: '20px',
               padding: '25px',
-              color: 'white',
-              boxShadow: '0 15px 35px rgba(17, 153, 142, 0.3)'
+              color: 'white'
             }}>
               <h4 style={{ 
                 fontSize: '1.5rem', 
@@ -1099,9 +1080,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '15px',
                 textAlign: 'center'
-              }}>
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
+              }}>                <div style={{
+                  background: '#2c4a45',
                   borderRadius: '10px',
                   padding: '15px'
                 }}>
@@ -1110,9 +1090,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   </div>
                   <div style={{ fontSize: '0.9rem' }}>✅ Activas</div>
                 </div>
-                
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
+                  <div style={{
+                  background: '#4a3c2c',
                   borderRadius: '10px',
                   padding: '15px'
                 }}>
@@ -1124,9 +1103,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   </div>
                   <div style={{ fontSize: '0.9rem' }}>⏰ Por Vencer</div>
                 </div>
-                
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
+                  <div style={{
+                  background: '#4a2c2c',
                   borderRadius: '10px',
                   padding: '15px'
                 }}>
@@ -1141,13 +1119,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               </div>
             </div>
 
-            {/* Panel de Pagos */}
-            <div style={{
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            {/* Panel de Pagos */}            <div style={{
+              background: '#8d70ff',
               borderRadius: '20px',
               padding: '25px',
-              color: 'white',
-              boxShadow: '0 15px 35px rgba(240, 147, 251, 0.3)'
+              color: 'white'
             }}>
               <h4 style={{ 
                 fontSize: '1.5rem', 
@@ -1170,9 +1146,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '15px',
                 textAlign: 'center'
-              }}>
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
+              }}>                <div style={{
+                  background: '#2c4a45',
                   borderRadius: '10px',
                   padding: '15px'
                 }}>
@@ -1181,9 +1156,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   </div>
                   <div style={{ fontSize: '0.9rem' }}>✅ Exitosos</div>
                 </div>
-                
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
+                  <div style={{
+                  background: '#4a3c2c',
                   borderRadius: '10px',
                   padding: '15px'
                 }}>
@@ -1192,9 +1166,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   </div>
                   <div style={{ fontSize: '0.9rem' }}>⏳ Pendientes</div>
                 </div>
-                
-                <div style={{
-                  background: 'rgba(255, 255, 255, 0.2)',
+                  <div style={{
+                  background: '#4a2c2c',
                   borderRadius: '10px',
                   padding: '15px'
                 }}>
@@ -1207,13 +1180,11 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </div>
           </div>
 
-          {/* Sección de Estructura Organizacional */}
-          <div style={{
-            background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%)',
+          {/* Sección de Estructura Organizacional */}          <div style={{
+            background: '#d4621a',
             borderRadius: '20px',
             padding: '30px',
-            marginBottom: '30px',
-            boxShadow: '0 15px 35px rgba(252, 182, 159, 0.3)'
+            marginBottom: '30px'
           }}>
             <h3 style={{ 
               textAlign: 'center', 
@@ -1229,13 +1200,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
               gap: '20px'
-            }}>
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.8)',
+            }}>              <div style={{
+                background: '#3d302a',
                 borderRadius: '15px',
                 padding: '20px',
                 textAlign: 'center',
-                color: '#d4621a'
+                color: '#fff'
               }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🏢</div>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
@@ -1251,14 +1221,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   <span>✅ {getStatsData()?.departamentos_activos || 0}</span>
                   <span>❌ {(getStatsData()?.total_departamentos || 0) - (getStatsData()?.departamentos_activos || 0)}</span>
                 </div>
-              </div>
-
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.8)',
+              </div>              <div style={{
+                background: '#3d302a',
                 borderRadius: '15px',
                 padding: '20px',
                 textAlign: 'center',
-                color: '#d4621a'
+                color: '#fff'
               }}>
                 <div style={{ fontSize: '2.5rem', marginBottom: '10px' }}>💼</div>
                 <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>
@@ -1279,12 +1247,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           </div>
 
           {/* Botón de Actualización */}
-          <div style={{ textAlign: 'center', marginTop: '30px' }}>
-            <button 
+          <div style={{ textAlign: 'center', marginTop: '30px' }}>            <button 
               onClick={cargarEstadisticas}
-              disabled={loading}
-              style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              disabled={loading}              style={{
+                background: '#6b4eff',
                 color: 'white',
                 border: 'none',
                 borderRadius: '50px',
@@ -1292,7 +1258,6 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 fontSize: '1.1rem',
                 fontWeight: 'bold',
                 cursor: loading ? 'not-allowed' : 'pointer',
-                boxShadow: '0 10px 25px rgba(102, 126, 234, 0.3)',
                 transition: 'all 0.3s ease',
                 opacity: loading ? 0.7 : 1
               }}
@@ -1316,20 +1281,18 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           gap: '15px',
           marginBottom: '20px',
           flexWrap: 'wrap'
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        }}>          <div style={{
+            background: '#6b4eff',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
             textAlign: 'center',
             minWidth: '140px'
-          }}>
-            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{empresas?.length || 0}</div>
+          }}>            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{empresas?.length || 0}</div>
             <div style={{ fontSize: '0.8rem' }}>Total Empresas</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            background: '#1a8a7e',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -1342,8 +1305,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Activas</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-            color: '#333',
+            background: '#d4621a',
+            color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
             textAlign: 'center',
@@ -1382,11 +1345,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
               </tr>
             </thead>
             <tbody>
-              {empresas.map((empresa) => (
-                <tr key={empresa.empresa_id}>
+              {empresas.map((empresa) => (                <tr key={empresa.empresa_id}>
                   <td>
                     <div style={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: '#6b4eff',
                       color: 'white',
                       padding: '8px 12px',
                       borderRadius: '8px',
@@ -1399,26 +1361,25 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   </td>
                   <td>
                     <div>
-                      <strong style={{ fontSize: '1.1rem', color: '#333' }}>{empresa.nombre}</strong>
-                      <div style={{ 
+                      <strong style={{ fontSize: '1.1rem', color: '#fff' }}>{empresa.nombre}</strong>                      <div style={{ 
                         marginTop: '4px',
                         fontSize: '0.85rem',
-                        color: '#666',
+                        color: '#d0d0e0',
                         fontWeight: 'normal'
                       }}>
                         🏢 {empresa.nombre?.length > 25 ? empresa.nombre.substring(0, 25) + '...' : empresa.nombre}
                       </div>
                     </div>
-                  </td>
-                  <td>
+                  </td>                  <td>
                     <div style={{
-                      background: '#f8f9fa',
+                      background: '#2c2c3d',
                       padding: '8px 12px',
                       borderRadius: '6px',
-                      border: '1px solid #e9ecef',
+                      border: '1px solid #444',
                       fontFamily: 'monospace',
                       fontWeight: 'bold',
-                      fontSize: '0.9rem'
+                      fontSize: '0.9rem',
+                      color: '#d0d0e0'
                     }}>
                       {empresa.rfc || 'Sin RFC'}
                     </div>
@@ -1427,7 +1388,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     <div style={{ lineHeight: '1.4' }}>
                       {empresa.correo && empresa.correo.trim() && (
                         <div style={{ marginBottom: '4px' }}>
-                          <span style={{ fontSize: '0.8rem', color: '#666' }}>📧</span>
+                          <span style={{ fontSize: '0.8rem', color: '#d0d0e0' }}>📧</span>
                           <span style={{ fontSize: '0.85rem', marginLeft: '4px' }}>
                             {empresa.correo.length > 20 ? empresa.correo.substring(0, 20) + '...' : empresa.correo}
                           </span>
@@ -1435,12 +1396,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       )}
                       {empresa.telefono && empresa.telefono.trim() && (
                         <div>
-                          <span style={{ fontSize: '0.8rem', color: '#666' }}>📞</span>
+                          <span style={{ fontSize: '0.8rem', color: '#d0d0e0' }}>📞</span>
                           <span style={{ fontSize: '0.85rem', marginLeft: '4px' }}>{empresa.telefono}</span>
                         </div>
                       )}
                       {(!empresa.correo || !empresa.correo.trim()) && (!empresa.telefono || !empresa.telefono.trim()) && (
-                        <span style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>Sin contacto</span>
+                        <span style={{ fontSize: '0.8rem', color: '#a0a0a0', fontStyle: 'italic' }}>Sin contacto</span>
                       )}
                     </div>
                   </td>
@@ -1448,19 +1409,18 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     <div style={{ lineHeight: '1.4' }}>
                       {empresa.direccion && empresa.direccion.trim() ? (
                         <div>
-                          <span style={{ fontSize: '0.8rem', color: '#666' }}>📍</span>
+                          <span style={{ fontSize: '0.8rem', color: '#d0d0e0' }}>📍</span>
                           <span style={{ fontSize: '0.85rem', marginLeft: '4px' }}>
                             {empresa.direccion.length > 30 ? empresa.direccion.substring(0, 30) + '...' : empresa.direccion}
                           </span>
                         </div>
                       ) : (
-                        <span style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic' }}>Sin dirección</span>
+                        <span style={{ fontSize: '0.8rem', color: '#a0a0a0', fontStyle: 'italic' }}>Sin dirección</span>
                       )}
                     </div>
                   </td>
-                  <td>
-                    <div style={{
-                      background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                  <td>                    <div style={{
+                      background: '#1a8a7e',
                       color: 'white',
                       padding: '8px 12px',
                       borderRadius: '20px',
@@ -1494,9 +1454,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       justifyContent: 'center'
                     }}>
                       <button 
-                        onClick={() => handleEdit('empresa', empresa)}
-                        style={{
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        onClick={() => handleEdit('empresa', empresa)}                        style={{
+                          background: '#6b4eff',
                           color: 'white',
                           border: 'none',
                           padding: '8px 12px',
@@ -1510,11 +1469,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       </button>
                       <button 
                         onClick={() => handleToggleStatus('empresa', empresa.empresa_id, empresa.status, empresa.nombre)}
-                        style={{
-                          background: empresa.status ? 
-                            'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' : 
-                            'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
-                          color: empresa.status ? '#333' : 'white',
+                        style={{                          background: empresa.status ? 
+                            '#d4621a' : 
+                            '#1a8a7e',
+                          color: 'white',
                           border: 'none',
                           padding: '8px 12px',
                           borderRadius: '6px',
@@ -1542,27 +1500,25 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderUsuarios = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>👥 Gestión de Usuarios</h3>
+        <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>👥 Gestión de Usuarios</h3>
         <div className="stats-mini" style={{
           display: 'flex',
           justifyContent: 'center',
           gap: '15px',
           marginBottom: '20px',
           flexWrap: 'wrap'
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        }}>          <div style={{
+            background: '#6b4eff',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
             textAlign: 'center',
             minWidth: '140px'
-          }}>
-            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{usuarios?.length || 0}</div>
+          }}>            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{usuarios?.length || 0}</div>
             <div style={{ fontSize: '0.8rem' }}>Total Usuarios</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            background: '#1a8a7e',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -1572,11 +1528,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
               {usuarios?.filter(u => u.is_active).length || 0}
             </div>
-            <div style={{ fontSize: '0.8rem' }}>Activos</div>
-          </div>
+            <div style={{ fontSize: '0.8rem' }}>Activos</div>          </div>
           <div style={{
-            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-            color: '#333',
+            background: '#d4621a',
+            color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
             textAlign: 'center',
@@ -1588,7 +1543,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Suspendidos</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            background: '#8d70ff',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -1628,11 +1583,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </tr>
           </thead>
           <tbody>
-            {usuarios?.map((usuario) => (
-              <tr key={usuario.user_id}>
+            {usuarios?.map((usuario) => (                <tr key={usuario.user_id}>
                 <td>
                   <div style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: '#6b4eff',
                     color: 'white',
                     padding: '8px 12px',
                     borderRadius: '8px',
@@ -1642,22 +1596,20 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   }}>
                     #{usuario.user_id}
                   </div>
-                </td>
-                <td>
+                </td>                <td>
                   <div style={{
-                    background: '#f8f9fa',
+                    background: '#2c2c3d',
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #e9ecef',
+                    border: '1px solid #444',
                     lineHeight: '1.4'
                   }}>
-                    <strong style={{ color: '#333' }}>{usuario.username}</strong>
-                    <div style={{ fontSize: '0.8rem', color: '#666' }}>📧 {usuario.email}</div>
+                    <strong style={{ color: '#fff' }}>{usuario.username}</strong>
+                    <div style={{ fontSize: '0.8rem', color: '#d0d0e0' }}>📧 {usuario.email}</div>
                   </div>
-                </td>
-                <td>
+                </td>                <td>
                   <div>
-                    <strong style={{ fontSize: '1.1rem', color: '#333' }}>
+                    <strong style={{ fontSize: '1.1rem', color: '#fff' }}>
                       {usuario.nombre_completo || `${usuario.nombre} ${usuario.apellido_paterno}`}
                     </strong>
                   </div>
@@ -1669,11 +1621,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     borderRadius: '15px',
                     fontSize: '0.8rem',
                     fontWeight: 'bold',
-                    color: 'white',
-                    background: usuario.nivel_usuario === 'superadmin' ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' :
-                               usuario.nivel_usuario === 'admin-empresa' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' :
-                               usuario.nivel_usuario === 'admin-planta' ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' :
-                               'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                    color: 'white',                    background: usuario.nivel_usuario === 'superadmin' ? '#ff6b6b' :
+                               usuario.nivel_usuario === 'admin-empresa' ? '#6b4eff' :
+                               usuario.nivel_usuario === 'admin-planta' ? '#8d70ff' :
+                               '#1a8a7e',
                     textAlign: 'center',
                     minWidth: '120px'
                   }}>
@@ -1682,22 +1633,21 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     {usuario.nivel_usuario === 'admin-planta' && '🏭 Admin Planta'}
                     {usuario.nivel_usuario === 'empleado' && '👤 Empleado'}
                   </div>
-                </td>
-                <td>
+                </td>                <td>
                   <div style={{
-                    background: '#f8f9fa',
+                    background: '#2c2c3d',
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #e9ecef',
+                    border: '1px solid #444',
                     lineHeight: '1.4'
                   }}>
-                    {usuario.empresa && <strong style={{ color: '#333' }}>🏢 {usuario.empresa.nombre}</strong>}
-                    {usuario.planta && <div style={{ fontSize: '0.8rem', color: '#666' }}>🏭 {usuario.planta.nombre}</div>}
-                    {!usuario.empresa && !usuario.planta && <span style={{ color: '#999', fontStyle: 'italic' }}>Sin asignar</span>}
+                    {usuario.empresa && <strong style={{ color: '#fff' }}>🏢 {usuario.empresa.nombre}</strong>}
+                    {usuario.planta && <div style={{ fontSize: '0.8rem', color: '#d0d0e0' }}>🏭 {usuario.planta.nombre}</div>}
+                    {!usuario.empresa && !usuario.planta && <span style={{ color: '#a0a0a0', fontStyle: 'italic' }}>Sin asignar</span>}
                   </div>
                 </td>
                 <td>
-                  <div style={{ fontSize: '0.9rem', color: '#666' }}>
+                  <div style={{ fontSize: '0.9rem', color: '#d0d0e0' }}>
                     📅 {usuario.fecha_registro ? new Date(usuario.fecha_registro).toLocaleDateString() : 'N/A'}
                   </div>
                 </td>
@@ -1725,10 +1675,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   }}>
                     <button 
                       onClick={() => handleToggleStatus('usuario', usuario.user_id, usuario.is_active, usuario.nombre_completo)}
-                      style={{
-                        background: usuario.is_active 
-                          ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' 
-                          : 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)',
+                      style={{                      background: usuario.is_active 
+                          ? '#d4621a' 
+                          : '#1a8a7e',
                         color: 'white',
                         border: 'none',
                         padding: '8px 12px',
@@ -1743,7 +1692,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     <button 
                       onClick={() => handleEdit('usuario', usuario)}
                       style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: '#6b4eff',
                         color: 'white',
                         border: 'none',
                         padding: '8px 12px',
@@ -1776,20 +1725,18 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           gap: '15px',
           marginBottom: '20px',
           flexWrap: 'wrap'
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        }}>          <div style={{
+            background: '#6b4eff',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
             textAlign: 'center',
             minWidth: '140px'
-          }}>
-            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{plantas?.length || 0}</div>
+          }}>            <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>{plantas?.length || 0}</div>
             <div style={{ fontSize: '0.8rem' }}>Total Plantas</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            background: '#1a8a7e',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -1802,8 +1749,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Activas</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-            color: '#333',
+            background: '#d4621a',
+            color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
             textAlign: 'center',
@@ -1811,11 +1758,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           }}>
             <div style={{ fontSize: '1.6rem', fontWeight: 'bold' }}>
               {plantas?.filter(p => !p.status).length || 0}
-            </div>
-            <div style={{ fontSize: '0.8rem' }}>Suspendidas</div>
+            </div>            <div style={{ fontSize: '0.8rem' }}>Suspendidas</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            background: '#ff6b6b',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -1855,10 +1801,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </thead>
             <tbody>
               {plantas.map((planta) => (
-                <tr key={planta.planta_id}>
-                  <td>
+                <tr key={planta.planta_id}>                  <td>
                     <div style={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: '#6b4eff',
                       color: 'white',
                       padding: '8px 12px',
                       borderRadius: '8px',
@@ -1871,27 +1816,25 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   </td>
                   <td>
                     <div>
-                      <strong style={{ fontSize: '1.1rem', color: '#333' }}>{planta.nombre}</strong>
-                      <div style={{ 
+                      <strong style={{ fontSize: '1.1rem', color: '#fff' }}>{planta.nombre}</strong>                      <div style={{ 
                         marginTop: '4px',
                         fontSize: '0.85rem',
-                        color: '#666',
+                        color: '#d0d0e0',
                         fontWeight: 'normal'
                       }}>
                         🏭 {planta.nombre?.length > 25 ? planta.nombre.substring(0, 25) + '...' : planta.nombre}
                       </div>
                     </div>
-                  </td>
-                  <td>
+                  </td>                  <td>
                     <div style={{
-                      background: '#f8f9fa',
+                      background: '#2c2c3d',
                       padding: '8px 12px',
                       borderRadius: '6px',
-                      border: '1px solid #e9ecef',
+                      border: '1px solid #444',
                       lineHeight: '1.4'
                     }}>
-                      <strong style={{ color: '#333' }}>🏢 {planta.empresa?.nombre || 'Sin empresa'}</strong>
-                      <div style={{ fontSize: '0.8rem', color: '#666', marginTop: '2px' }}>
+                      <strong style={{ color: '#fff' }}>🏢 {planta.empresa?.nombre || 'Sin empresa'}</strong>
+                      <div style={{ fontSize: '0.8rem', color: '#d0d0e0', marginTop: '2px' }}>
                         ID: {planta.empresa?.id || 'N/A'}
                       </div>
                     </div>
@@ -1903,7 +1846,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                           📍 {planta.direccion.length > 30 ? planta.direccion.substring(0, 30) + '...' : planta.direccion}
                         </div>
                       ) : (
-                        <div style={{ fontSize: '0.9rem', color: '#999', fontStyle: 'italic' }}>
+                        <div style={{ fontSize: '0.9rem', color: '#a0a0a0', fontStyle: 'italic' }}>
                           📍 Sin dirección
                         </div>
                       )}
@@ -1914,9 +1857,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '4px'
-                    }}>
-                      <div style={{
-                        background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                    }}>                      <div style={{
+                        background: '#1a8a7e',
                         color: 'white',
                         padding: '4px 8px',
                         borderRadius: '12px',
@@ -1926,7 +1868,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                         🏢 {planta.departamentos_count || 0} Depts.
                       </div>
                       <div style={{
-                        background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                        background: '#ff6b6b',
                         color: 'white',
                         padding: '4px 8px',
                         borderRadius: '12px',
@@ -1958,11 +1900,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       display: 'flex',
                       gap: '8px',
                       justifyContent: 'center'
-                    }}>
-                      <button 
+                    }}>                      <button 
                         onClick={() => handleEdit('planta', planta)}
                         style={{
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          background: '#6b4eff',
                           color: 'white',
                           border: 'none',
                           padding: '8px 12px',
@@ -1977,9 +1918,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       <button 
                         onClick={() => handleToggleStatus('planta', planta.planta_id, planta.status, planta.nombre)}
                         style={{
-                          background: planta.status 
-                            ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' 
-                            : 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)',
+                          background: planta.status ? '#ff6b6b' : '#1a8a7e',
                           color: 'white',
                           border: 'none',
                           padding: '8px 12px',
@@ -2008,8 +1947,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderDepartamentos = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>🏢 Gestión de Departamentos</h3>
-        <div className="stats-mini" style={{
+        <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>🏢 Gestión de Departamentos</h3>        <div className="stats-mini" style={{
           display: 'flex',
           justifyContent: 'center',
           gap: '15px',
@@ -2017,7 +1955,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           flexWrap: 'wrap'
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: '#6b4eff',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -2028,7 +1966,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Total Departamentos</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            background: '#1a8a7e',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -2041,8 +1979,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Activos</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-            color: '#333',
+            background: '#d4621a',
+            color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
             textAlign: 'center',
@@ -2054,7 +1992,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Suspendidos</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            background: '#ff6b6b',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -2086,10 +2024,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           </thead>
           <tbody>
             {departamentos?.map((departamento) => (
-              <tr key={departamento.departamento_id}>
-                <td>
+              <tr key={departamento.departamento_id}>                <td>
                   <div style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: '#6b4eff',
                     color: 'white',
                     padding: '8px 12px',
                     borderRadius: '8px',
@@ -2102,39 +2039,37 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                 </td>
                 <td>
                   <div>
-                    <strong style={{ fontSize: '1.1rem', color: '#333' }}>{departamento.nombre}</strong>
-                    {departamento.descripcion && (
-                      <div style={{ 
+                    <strong style={{ fontSize: '1.1rem', color: '#fff' }}>{departamento.nombre}</strong>
+                    {departamento.descripcion && (                      <div style={{ 
                         marginTop: '4px',
                         fontSize: '0.85rem',
-                        color: '#666',
+                        color: '#d0d0e0',
                         fontWeight: 'normal'
                       }}>
                         📝 {departamento.descripcion}
                       </div>
                     )}
                   </div>
-                </td>
-                <td>
+                </td>                <td>
                   <div style={{
-                    background: '#f8f9fa',
+                    background: '#2c2c3d',
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #e9ecef',
+                    border: '1px solid #444',
                     lineHeight: '1.4'
                   }}>
-                    <strong style={{ color: '#333' }}>🏭 {departamento.planta?.nombre || "Sin planta"}</strong>
+                    <strong style={{ color: '#fff' }}>🏭 {departamento.planta?.nombre || "Sin planta"}</strong>
                   </div>
                 </td>
                 <td>
                   <div style={{
-                    background: '#f8f9fa',
+                    background: '#2c2c3d',
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #e9ecef',
+                    border: '1px solid #444',
                     lineHeight: '1.4'
                   }}>
-                    <strong style={{ color: '#333' }}>🏢 {departamento.empresa?.nombre || "Sin empresa"}</strong>
+                    <strong style={{ color: '#fff' }}>🏢 {departamento.empresa?.nombre || "Sin empresa"}</strong>
                   </div>
                 </td>
                 <td>
@@ -2142,9 +2077,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '4px'
-                  }}>
-                    <div style={{
-                      background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                  }}>                    <div style={{
+                      background: '#1a8a7e',
                       color: 'white',
                       padding: '4px 8px',
                       borderRadius: '12px',
@@ -2154,7 +2088,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       💼 {departamento.puestos_count || 0} Puestos
                     </div>
                     <div style={{
-                      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                      background: '#ff6b6b',
                       color: 'white',
                       padding: '4px 8px',
                       borderRadius: '12px',
@@ -2186,13 +2120,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     display: 'flex',
                     gap: '8px',
                     justifyContent: 'center'
-                  }}>
-                    <button 
+                  }}>                    <button 
                       onClick={() => handleToggleStatus('departamento', departamento.departamento_id, departamento.status, departamento.nombre)}
                       style={{
-                        background: departamento.status 
-                          ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' 
-                          : 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)',
+                        background: departamento.status ? '#ff6b6b' : '#1a8a7e',
                         color: 'white',
                         border: 'none',
                         padding: '8px 12px',
@@ -2207,7 +2138,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     <button 
                       onClick={() => handleEdit('departamento', departamento)}
                       style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: '#6b4eff',
                         color: 'white',
                         border: 'none',
                         padding: '8px 12px',
@@ -2233,8 +2164,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderPuestos = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>💼 Gestión de Puestos</h3>
-        <div className="stats-mini" style={{
+        <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>💼 Gestión de Puestos</h3>        <div className="stats-mini" style={{
           display: 'flex',
           justifyContent: 'center',
           gap: '15px',
@@ -2242,7 +2172,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           flexWrap: 'wrap'
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: '#6b4eff',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -2253,7 +2183,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Total Puestos</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            background: '#1a8a7e',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -2266,8 +2196,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Activos</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-            color: '#333',
+            background: '#d4621a',
+            color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
             textAlign: 'center',
@@ -2279,7 +2209,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Suspendidos</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            background: '#ff6b6b',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -2312,10 +2242,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           </thead>
           <tbody>
             {puestos?.map((puesto) => (
-              <tr key={puesto.puesto_id}>
-                <td>
+              <tr key={puesto.puesto_id}>                <td>
                   <div style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: '#6b4eff',
                     color: 'white',
                     padding: '8px 12px',
                     borderRadius: '8px',
@@ -2325,58 +2254,53 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   }}>
                     #{puesto.puesto_id}
                   </div>
-                </td>
-                <td>
+                </td>                <td>
                   <div>
-                    <strong style={{ fontSize: '1.1rem', color: '#333' }}>{puesto.nombre}</strong>
+                    <strong style={{ fontSize: '1.1rem', color: '#fff' }}>{puesto.nombre}</strong>
                     {puesto.descripcion && (
                       <div style={{ 
                         marginTop: '4px',
                         fontSize: '0.85rem',
-                        color: '#666',
+                        color: '#d0d0e0',
                         fontWeight: 'normal'
                       }}>
                         📝 {puesto.descripcion}
                       </div>
                     )}
                   </div>
-                </td>
-                <td>
+                </td>                <td>
                   <div style={{
-                    background: '#f8f9fa',
+                    background: '#2c2c3d',
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #e9ecef',
+                    border: '1px solid #444',
                     lineHeight: '1.4'
                   }}>
-                    <strong style={{ color: '#333' }}>🏢 {puesto.departamento?.nombre || "Sin departamento"}</strong>
+                    <strong style={{ color: '#fff' }}>🏢 {puesto.departamento?.nombre || "Sin departamento"}</strong>
                   </div>
-                </td>
-                <td>
+                </td>                <td>
                   <div style={{
-                    background: '#f8f9fa',
+                    background: '#2c2c3d',
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #e9ecef',
+                    border: '1px solid #444',
                     lineHeight: '1.4'
                   }}>
-                    <strong style={{ color: '#333' }}>🏭 {puesto.planta?.nombre || "Sin planta"}</strong>
+                    <strong style={{ color: '#fff' }}>🏭 {puesto.planta?.nombre || "Sin planta"}</strong>
                   </div>
-                </td>
-                <td>
+                </td>                <td>
                   <div style={{
-                    background: '#f8f9fa',
+                    background: '#2c2c3d',
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #e9ecef',
+                    border: '1px solid #444',
                     lineHeight: '1.4'
                   }}>
-                    <strong style={{ color: '#333' }}>🏢 {puesto.empresa?.nombre || "Sin empresa"}</strong>
+                    <strong style={{ color: '#fff' }}>🏢 {puesto.empresa?.nombre || "Sin empresa"}</strong>
                   </div>
-                </td>
-                <td>
+                </td>                <td>
                   <div style={{
-                    background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                    background: '#ff6b6b',
                     color: 'white',
                     padding: '8px 12px',
                     borderRadius: '12px',
@@ -2408,13 +2332,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     display: 'flex',
                     gap: '8px',
                     justifyContent: 'center'
-                  }}>
-                    <button 
+                  }}>                    <button 
                       onClick={() => handleToggleStatus('puesto', puesto.puesto_id, puesto.status, puesto.nombre)}
                       style={{
                         background: puesto.status 
-                          ? 'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' 
-                          : 'linear-gradient(135deg, #51cf66 0%, #40c057 100%)',
+                          ? '#ff6b6b' 
+                          : '#1a8a7e',
                         color: 'white',
                         border: 'none',
                         padding: '8px 12px',
@@ -2429,7 +2352,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     <button 
                       onClick={() => handleEdit('puesto', puesto)}
                       style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: '#6b4eff',
                         color: 'white',
                         border: 'none',
                         padding: '8px 12px',
@@ -2455,8 +2378,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   const renderEmpleados = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>👤 Gestión de Empleados</h3>
-        <div className="stats-mini" style={{
+        <h3 style={{ textAlign: 'center', marginBottom: '20px', color: '#fff' }}>👤 Gestión de Empleados</h3><div className="stats-mini" style={{
           display: 'flex',
           justifyContent: 'center',
           gap: '15px',
@@ -2464,7 +2386,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           flexWrap: 'wrap'
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: '#6b4eff',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -2475,7 +2397,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Total Empleados</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            background: '#1a8a7e',
             color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
@@ -2488,8 +2410,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>Activos</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-            color: '#333',
+            background: '#d4621a',
+            color: 'white',
             padding: '12px 20px',
             borderRadius: '10px',
             textAlign: 'center',
@@ -2529,10 +2451,9 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </thead>
             <tbody>
               {empleados.map((empleado) => (
-                <tr key={empleado.empleado_id}>
-                  <td>
+                <tr key={empleado.empleado_id}>                  <td>
                     <div style={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: '#6b4eff',
                       color: 'white',
                       padding: '8px 12px',
                       borderRadius: '8px',
@@ -2543,15 +2464,14 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       #{empleado.empleado_id}
                     </div>
                   </td>
-                  <td>
-                    <div>
-                      <strong style={{ fontSize: '1.1rem', color: '#333' }}>
+                  <td>                    <div>
+                      <strong style={{ fontSize: '1.1rem', color: '#fff' }}>
                         {empleado.nombre_completo || `${empleado.nombre} ${empleado.apellido_paterno} ${empleado.apellido_materno || ''}`.trim()}
                       </strong>
                       <div style={{ 
                         marginTop: '4px',
                         fontSize: '0.85rem',
-                        color: '#666',
+                        color: '#d0d0e0',
                         fontWeight: 'normal'
                       }}>
                         👤 Empleado #{empleado.numero_empleado || 'Sin número'}
@@ -2602,15 +2522,15 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                         </div>
                       )}
                     </div>
-                  </td>
-                  <td>
+                  </td>                  <td>
                     <div style={{
-                      background: '#f8f9fa',
+                      background: '#2c2c3d',
                       padding: '8px 12px',
                       borderRadius: '6px',
-                      border: '1px solid #e9ecef',
+                      border: '1px solid #444',
                       textAlign: 'center',
-                      fontSize: '0.9rem'
+                      fontSize: '0.9rem',
+                      color: '#fff'
                     }}>
                       {empleado.fecha_ingreso ? new Date(empleado.fecha_ingreso).toLocaleDateString('es-MX') : 'Sin fecha'}
                     </div>
@@ -2636,13 +2556,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       display: 'flex',
                       gap: '8px',
                       justifyContent: 'center'
-                    }}>
-                      <button
+                    }}>                      <button
                         onClick={() => handleEdit('empleado', empleado)}
                         className="btn-icon btn-edit"
                         title="Editar empleado"
                         style={{
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          background: '#6b4eff',
                           color: 'white',
                           border: 'none',
                           borderRadius: '8px',
@@ -2660,9 +2579,7 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                         className={`btn-icon ${empleado.status ? 'btn-suspend' : 'btn-activate'}`}
                         title={empleado.status ? 'Suspender empleado' : 'Activar empleado'}
                         style={{
-                          background: empleado.status ? 
-                            'linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%)' : 
-                            'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+                          background: empleado.status ? '#ff6b6b' : '#1a8a7e',
                           color: 'white',
                           border: 'none',
                           borderRadius: '8px',
@@ -2684,66 +2601,81 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
         ) : (
           <div className="no-data">No se encontraron empleados. {debouncedFiltroTexto ? "Intente con otros filtros." : ""}</div>
         )}
-      </div>
-    </div>
+      </div>    </div>
   );
 
   // Render de tabla de planes (RF-001)
   const renderPlanes = () => (
     <div className="section-content">
-      <div className="section-header">
-        <h3>📋 Gestión de Planes de Suscripción</h3>
+      <div className="section-header">        {/* Título y botón separados */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '20px',
+          gap: '20px'
+        }}>
+          <h3 style={{ color: '#fff', margin: 0, flex: 1 }}>📋 Gestión de Planes de Suscripción</h3>
+          <button 
+            onClick={() => setModalCrearPlan(true)}
+            className="btn-primary"
+            style={{
+              background: '#6b4eff',
+              border: 'none',
+              padding: '12px 24px',
+              borderRadius: '8px',
+              color: 'white',
+              fontWeight: 'bold',
+              whiteSpace: 'nowrap',
+              marginLeft: '20px'
+            }}
+          >
+            ➕ Crear Nuevo Plan
+          </button>
+        </div>
+
+        {/* Stats organizados horizontalmente debajo */}
         <div className="stats-mini" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '10px',
-          marginBottom: '20px'
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '15px',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: '#6b4eff',
             color: 'white',
             padding: '15px',
             borderRadius: '10px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minWidth: '140px'
           }}>
             <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{planes.length}</div>
             <div style={{ fontSize: '0.8rem' }}>Total Planes</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            background: '#1a8a7e',
             color: 'white',
             padding: '15px',
             borderRadius: '10px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minWidth: '140px'
           }}>
             <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{planes.filter(p => p.status).length}</div>
             <div style={{ fontSize: '0.8rem' }}>✅ Activos</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-            color: '#333',
+            background: '#d4621a',
+            color: 'white',
             padding: '15px',
             borderRadius: '10px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minWidth: '140px'
           }}>
             <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{planes.filter(p => !p.status).length}</div>
             <div style={{ fontSize: '0.8rem' }}>❌ Inactivos</div>
           </div>
         </div>
-        <button 
-          onClick={() => setModalCrearPlan(true)}
-          className="btn-primary"
-          style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            color: 'white',
-            fontWeight: 'bold'
-          }}
-        >
-          ➕ Crear Nuevo Plan
-        </button>
       </div>
 
       <div className="table-container">
@@ -2816,44 +2748,54 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
       </div>
     </div>
   );
-
   // Render de tabla de suscripciones (RF-003)
   const renderSuscripciones = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3>💳 Empresas con Suscripciones Activas</h3>
+        {/* Título centrado */}
+        <h3 style={{ 
+          textAlign: 'center', 
+          marginBottom: '20px',
+          color: '#fff' 
+        }}>💳 Empresas con Suscripciones Activas</h3>
+
+        {/* Stats organizados horizontalmente */}
         <div className="stats-mini" style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '10px',
-          marginBottom: '20px'
+          display: 'flex',
+          justifyContent: 'center',
+          gap: '15px',
+          marginBottom: '20px',
+          flexWrap: 'wrap'
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: '#6b4eff',
             color: 'white',
             padding: '15px',
             borderRadius: '10px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minWidth: '140px'
           }}>
             <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{suscripciones?.length || 0}</div>
             <div style={{ fontSize: '0.8rem' }}>Total</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+            background: '#1a8a7e',
             color: 'white',
             padding: '15px',
             borderRadius: '10px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minWidth: '140px'
           }}>
             <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{suscripciones?.filter(s => s.estado === 'Activa').length || 0}</div>
             <div style={{ fontSize: '0.8rem' }}>✅ Activas</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            background: '#ff6b6b',
             color: 'white',
             padding: '15px',
             borderRadius: '10px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minWidth: '140px'
           }}>
             <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{suscripciones?.filter(s => {
               const fechaFin = new Date(s.fecha_fin);
@@ -2864,11 +2806,12 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             <div style={{ fontSize: '0.8rem' }}>⏰ Por Vencer</div>
           </div>
           <div style={{
-            background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
-            color: '#333',
+            background: '#d4621a',
+            color: 'white',
             padding: '15px',
             borderRadius: '10px',
-            textAlign: 'center'
+            textAlign: 'center',
+            minWidth: '140px'
           }}>
             <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{suscripciones?.filter(s => s.estado !== 'Activa').length || 0}</div>
             <div style={{ fontSize: '0.8rem' }}>❌ Vencidas</div>
@@ -2972,11 +2915,10 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
   );
 
   // Render de tabla de pagos (RF-004) - Desactivado temporalmente
-  /*
-  const renderPagos = () => (
+  /*  const renderPagos = () => (
     <div className="section-content">
       <div className="section-header">
-        <h3>💰 Gestión de Pagos</h3>
+        <h3 style={{ color: '#fff' }}>💰 Gestión de Pagos</h3>
         <div className="stats-mini">
           <span>Total: {pagos?.length || 0}</span>
           <span>Completados: {pagos?.filter(p => p.estado_pago === 'Completado').length || 0}</span>

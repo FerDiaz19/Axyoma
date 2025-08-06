@@ -53,7 +53,7 @@
 }
 
 .loading-spinner {
-  background: white;
+  background: #1e1e2a;
   padding: 20px 40px;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -162,7 +162,7 @@
 }
 
 .respaldo-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 8px;
   padding: 20px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -223,7 +223,7 @@
 
 /* Vista crear respaldo */
 .crear-respaldo {
-  background: white;
+  background: #1e1e2a;
   border-radius: 8px;
   padding: 24px;
 }
@@ -320,7 +320,7 @@ textarea:focus {
 
 /* Vista información del sistema */
 .sistema-info {
-  background: white;
+  background: #1e1e2a;
   border-radius: 8px;
   padding: 24px;
 }

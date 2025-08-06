@@ -3,14 +3,15 @@
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
-  background: #f8f9fa;
+  background: #12121a;
   min-height: 100vh;
+  color: #d0d0e0;
 }
 
 .gestion-bd-header {
   text-align: center;
   margin-bottom: 30px;
-  background: white;
+  background: #1e1e2a;
   padding: 25px;
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -18,21 +19,21 @@
 
 .gestion-bd-header h2 {
   margin: 0 0 10px 0;
-  color: #2c3e50;
+  color: #fff;
   font-size: 28px;
   font-weight: 600;
 }
 
 .gestion-bd-descripcion {
   margin: 0;
-  color: #7f8c8d;
+  color: #a0a0a0;
   font-size: 16px;
   line-height: 1.5;
 }
 
 /* Sistema de pestañas */
 .gestion-bd-tabs {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -41,8 +42,8 @@
 
 .tabs-header {
   display: flex;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+  background: #2c2c3d;
+  border-bottom: 1px solid #3a3a4d;
   overflow-x: auto;
 }
 
@@ -52,7 +53,7 @@
   padding: 16px 20px;
   border: none;
   background: transparent;
-  color: #666;
+  color: #a0a0a0;
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
@@ -65,12 +66,12 @@
 }
 
 .tab-button:hover {
-  background: #e9ecef;
-  color: #333;
+  background: #3a3a4d;
+  color: #d0d0e0;
 }
 
 .tab-button.active {
-  background: white;
+  background: #1e1e2a;
   color: #007bff;
   border-bottom-color: #007bff;
 }
@@ -102,7 +103,7 @@
 
 .exportaciones-header h3 {
   margin: 0 0 8px 0;
-  color: #333;
+  color: #d0d0e0;
   font-size: 1.5rem;
 }
 
@@ -123,7 +124,7 @@
 }
 
 .gestion-bd-footer {
-  background: white;
+  background: #1e1e2a;
   border-radius: 10px;
   padding: 25px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -155,6 +156,166 @@
   margin-bottom: 0;
 }
 
+/* Mejoras para tarjetas de backup organizadas */
+.backup-cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.backup-info-card {
+  background: #1e1e2a;
+  border: 1px solid #2c2c3d;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.backup-info-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border-color: #6b4eff;
+}
+
+.backup-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #2c2c3d;
+}
+
+.backup-card-icon {
+  font-size: 24px;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #6b4eff 0%, #8d70ff 100%);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.backup-card-title {
+  flex: 1;
+}
+
+.backup-card-title h3 {
+  margin: 0 0 4px 0;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.backup-card-subtitle {
+  margin: 0;
+  color: #a0a0a0;
+  font-size: 14px;
+}
+
+.backup-card-body {
+  margin-bottom: 20px;
+}
+
+.backup-info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.backup-info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #2c2c3d;
+  border-radius: 8px;
+  color: #d0d0e0;
+  font-size: 14px;
+}
+
+.backup-info-label {
+  color: #a0a0a0;
+}
+
+.backup-info-value {
+  font-weight: 600;
+  color: #fff;
+}
+
+.backup-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.backup-action-btn {
+  flex: 1;
+  min-width: 100px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.backup-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.btn-download {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.btn-restore {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+}
+
+.btn-delete {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.backup-status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-available {
+  background: #0f3d2c;
+  color: #34d399;
+}
+
+.status-corrupted {
+  background: #4c1d1d;
+  color: #f87171;
+}
+
+.status-old {
+  background: #3d3211;
+  color: #fbbf24;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .gestion-bd-container {
@@ -180,6 +341,19 @@
   
   .gestion-bd-footer {
     padding: 20px 15px;
+  }
+
+  .backup-cards-container {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  
+  .backup-card-actions {
+    flex-direction: column;
+  }
+  
+  .backup-action-btn {
+    min-width: unset;
   }
 }
 

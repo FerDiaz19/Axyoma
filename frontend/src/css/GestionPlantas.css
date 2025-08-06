@@ -1,8 +1,9 @@
-/* Gestión de Plantas - Diseño Moderno */
+/* Gestión de Plantas - Tema oscuro moderno */
 .gestion-plantas {
   padding: 24px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: #12121a;
   min-height: 100vh;
+  color: #d0d0e0;
 }
 
 .gestion-plantas .header {
@@ -11,18 +12,18 @@
   align-items: center;
   margin-bottom: 32px;
   padding: 24px;
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border: 1px solid #2c2c3d;
 }
 
 .gestion-plantas .header h2 {
-  color: #1a365d;
+  color: #fff;
   margin: 0;
   font-size: 2rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6b4eff 0%, #8d70ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -37,14 +38,15 @@
 }
 
 .planta-card {
-  background: white;
-  border: none;
+  background: #1e1e2a;
+  border: 1px solid #2c2c3d;
   border-radius: 16px;
   padding: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  color: #d0d0e0;
 }
 
 .planta-card::before {
@@ -72,7 +74,7 @@
 }
 
 .planta-card h3::before {
-  content: '🏭';
+  content: '';
   margin-right: 8px;
   font-size: 1.2em;
 }
@@ -87,7 +89,7 @@
 }
 
 .planta-card .direccion::before {
-  content: '📍';
+  content: '';
   margin-right: 6px;
   opacity: 0.8;
 }
@@ -102,7 +104,7 @@
 }
 
 .planta-card .fecha::before {
-  content: '📅';
+  content: '';
   margin-right: 6px;
   opacity: 0.8;
 }
@@ -276,14 +278,14 @@
 .empty-state {
   text-align: center;
   padding: 80px 20px;
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   margin: 20px 0;
 }
 
 .empty-state::before {
-  content: '🏭';
+  content: '';
   font-size: 4rem;
   display: block;
   margin-bottom: 20px;
@@ -325,7 +327,7 @@
 }
 
 .modal {
-  background: white;
+  background: #1e1e2a;
   border-radius: 20px;
   padding: 32px;
   width: 90%;
@@ -391,7 +393,7 @@
 .form-group textarea:focus {
   outline: none;
   border-color: #667eea;
-  background: white;
+  background: #1e1e2a;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
   transform: translateY(-1px);
 }
@@ -458,7 +460,7 @@
 .loading {
   text-align: center;
   padding: 60px 20px;
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
   margin: 20px 0;

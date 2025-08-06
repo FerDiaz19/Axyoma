@@ -28,7 +28,7 @@
   padding: 10px 20px;
   border: 2px solid #3498db;
   border-radius: 6px;
-  background: white;
+  background: #1e1e2a;
   cursor: pointer;
   font-weight: 500;
   transition: all 0.3s ease;
@@ -40,7 +40,7 @@
 }
 
 .tab-inactive {
-  background: white;
+  background: #1e1e2a;
   color: #3498db;
 }
 
@@ -74,7 +74,7 @@
 }
 
 .usuario-card {
-  background: white;
+  background: #1e1e2a;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 20px;
@@ -155,7 +155,7 @@
 }
 
 .credencial-card {
-  background: white;
+  background: #1e1e2a;
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 20px;
@@ -389,7 +389,7 @@
 }
 
 .modal {
-  background: white;
+  background: #1e1e2a;
   padding: 30px;
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);

@@ -1,53 +1,66 @@
-@layer components {
-    .modal-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-    }
-    .dark .modal-overlay {
-        background: rgba(0, 0, 0, 0.7);
-    }
+/* Modales para tema oscuro */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
 
-    .modal-container {
-        @apply max-w-[350px] sm:max-w-[500px] md:max-w-[800px] xl:max-w-[1100px];
-        min-height: 300px;
-        border-radius: 8px;
-        width: 100%;
-        overflow-y: auto;
-        position: relative;
-    }
-    .dark .modal-container {
-        background-color: var(--dark-bg-secondary);
-        color: var(--dark-text-primary);
-    }
+.modal-container {
+  max-width: 90vw;
+  max-height: 90vh;
+  width: 100%;
+  min-height: 300px;
+  background: #2d2d3a;
+  border-radius: 12px;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  color: #d0d0e0;
+}
 
-    .modal-close-btn {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        background: none;
-        border: none;
-        font-size: 1.2rem;
-        cursor: pointer;
-    }
+.modal-close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #1f1f2a;
+  border: 1px solid #444;
+  color: #ccc;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
 
-    /* Fade in */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
+.modal-close-btn:hover {
+  background: #ff4b5c;
+  color: white;
+  border-color: #ff4b5c;
+}
 
-        to {
-            opacity: 1;
-        }
-    }
+/* Fade in animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
 
     .animate-fadeIn {
         animation: fadeIn 0.3s forwards;
@@ -67,4 +80,3 @@
     .animate-scaleUp {
         animation: scaleUp 0.3s forwards;
     }
-}

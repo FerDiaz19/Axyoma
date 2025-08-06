@@ -36,12 +36,12 @@
 }
 
 .suscripcion-header h2 {
-  color: #333;
+  color: #d0d0e0;
   margin-bottom: 10px;
 }
 
 .suscripcion-actual {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   padding: 30px;
   margin-bottom: 30px;
@@ -78,7 +78,7 @@
 }
 
 .planes-disponibles {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   padding: 30px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -102,7 +102,7 @@
   border-radius: 12px;
   padding: 25px;
   transition: all 0.3s ease;
-  background: white;
+  background: #1e1e2a;
 }
 
 .plan-card:hover {
@@ -113,7 +113,7 @@
 
 .plan-header h4 {
   margin: 0 0 10px 0;
-  color: #333;
+  color: #d0d0e0;
   font-size: 1.5em;
 }
 

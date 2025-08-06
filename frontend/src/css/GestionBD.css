@@ -2,8 +2,9 @@
   padding: 24px;
   max-width: 1400px;
   margin: 0 auto;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: #12121a;
   min-height: 100vh;
+  color: #d0d0e0;
 }
 
 /* Header de la página */
@@ -13,7 +14,7 @@
   align-items: center;
   margin-bottom: 32px;
   padding: 24px;
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
@@ -24,7 +25,7 @@
 }
 
 .gestion-bd-title {
-  color: #2d3748;
+  color: #fff;
   font-size: 32px;
   font-weight: 700;
   margin: 0 0 8px 0;
@@ -42,7 +43,7 @@
 }
 
 .gestion-bd-subtitle {
-  color: #718096;
+  color: #a0a0a0;
   font-size: 16px;
   margin: 0;
   line-height: 1.6;
@@ -81,7 +82,7 @@
 }
 
 .stats-summary-card {
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -89,7 +90,7 @@
 }
 
 .stats-summary-card h3 {
-  color: #2d3748;
+  color: #fff;
   font-size: 20px;
   font-weight: 600;
   margin: 0 0 16px 0;
@@ -107,9 +108,9 @@
 .stat-mini {
   text-align: center;
   padding: 16px;
-  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  background: #2c2c3d;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #3a3a4d;
 }
 
 .stat-mini-number {
@@ -122,7 +123,7 @@
 
 .stat-mini-label {
   font-size: 12px;
-  color: #718096;
+  color: #a0a0a0;
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -130,7 +131,7 @@
 
 /* Sección de exportación */
 .exportacion-section {
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   padding: 32px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -138,7 +139,7 @@
 }
 
 .section-title {
-  color: #2d3748;
+  color: #fff;
   font-size: 24px;
   font-weight: 600;
   margin: 0 0 8px 0;
@@ -153,7 +154,7 @@
 }
 
 .section-description {
-  color: #718096;
+  color: #a0a0a0;
   font-size: 16px;
   margin: 0 0 32px 0;
   line-height: 1.6;
@@ -168,12 +169,12 @@
 
 /* Tarjeta individual de exportación */
 .export-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-  border: 2px solid #e2e8f0;
+  background: #1e1e2a;
+  border: 2px solid #2c2c3d;
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   position: relative;
 }
 
@@ -208,7 +209,7 @@
 }
 
 .export-card-title {
-  color: #2d3748;
+  color: #fff;
   font-size: 18px;
   font-weight: 600;
   margin: 0 0 8px 0;
@@ -230,7 +231,7 @@
 
 .count-label {
   font-size: 12px;
-  color: #718096;
+  color: #a0a0a0;
   font-weight: 500;
 }
 
@@ -239,7 +240,7 @@
 }
 
 .export-card-description {
-  color: #4a5568;
+  color: #d0d0e0;
   font-size: 14px;
   line-height: 1.6;
   margin: 0;
@@ -309,7 +310,7 @@
 .error-container {
   text-align: center;
   padding: 80px 20px;
-  background: white;
+  background: #1e1e2a;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
@@ -352,7 +353,7 @@
   top: 20px;
   right: 20px;
   z-index: 9999;
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   padding: 16px 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
@@ -465,7 +466,7 @@
 .tabs-header {
   display: flex;
   gap: 4px;
-  background: white;
+  background: #1e1e2a;
   padding: 8px;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);

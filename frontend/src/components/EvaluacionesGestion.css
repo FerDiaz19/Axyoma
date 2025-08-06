@@ -1,10 +1,12 @@
-/* Estilos para EvaluacionesGestion.tsx */
+/* Estilos para EvaluacionesGestion.tsx - Tema oscuro compatible */
 
 .evaluaciones-gestion {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #12121a;
+  color: #d0d0e0;
 }
 
 .evaluaciones-loading {
@@ -14,13 +16,14 @@
   justify-content: center;
   height: 300px;
   gap: 16px;
+  color: #d0d0e0;
 }
 
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f4f6;
-  border-top: 4px solid #3b82f6;
+  border: 4px solid #2c2c3d;
+  border-top: 4px solid #6b4eff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -38,12 +41,12 @@
 .evaluaciones-header h2 {
   font-size: 28px;
   font-weight: bold;
-  color: #1f2937;
+  color: #fff;
   margin-bottom: 8px;
 }
 
 .evaluaciones-header p {
-  color: #6b7280;
+  color: #d0d0e0;
   font-size: 16px;
 }
 
@@ -53,7 +56,8 @@
   align-items: center;
   margin-bottom: 24px;
   padding: 16px;
-  background: #f9fafb;
+  background: #1e1e2a;
+  border: 1px solid #2c2c3d;
   border-radius: 12px;
 }
 
@@ -67,23 +71,24 @@
   align-items: center;
   gap: 8px;
   padding: 12px 20px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid #2c2c3d;
   border-radius: 8px;
-  background: white;
-  color: #6b7280;
+  background: #2c2c3d;
+  color: #d0d0e0;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .normativa-tab:hover {
-  border-color: #d1d5db;
-  background: #f9fafb;
+  border-color: #6b4eff;
+  background: #3a3a4d;
+  color: #fff;
 }
 
 .normativa-tab.active {
-  border-color: #3b82f6;
-  background: #3b82f6;
+  border-color: #6b4eff;
+  background: #6b4eff;
   color: white;
 }
 
@@ -123,9 +128,9 @@
 .estado-vacio {
   text-align: center;
   padding: 64px 32px;
-  background: #f9fafb;
+  background: #2c2c3d;
   border-radius: 12px;
-  border: 2px dashed #d1d5db;
+  border: 2px dashed #4a4a5f;
 }
 
 .icono-vacio {
@@ -136,26 +141,27 @@
 .estado-vacio h3 {
   font-size: 20px;
   font-weight: 600;
-  color: #374151;
+  color: #d0d0e0;
   margin-bottom: 8px;
 }
 
 .estado-vacio p {
-  color: #6b7280;
+  color: #a0a0a0;
   margin-bottom: 24px;
 }
 
 .pregunta-item {
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: #1e1e2a;
+  border: 1px solid #2c2c3d;
   border-radius: 12px;
   padding: 20px;
   transition: all 0.2s ease;
+  color: #d0d0e0;
 }
 
 .pregunta-item:hover {
-  border-color: #d1d5db;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border-color: #4a4a5f;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
 }
 
 .pregunta-header {
@@ -175,8 +181,8 @@
 }
 
 .pregunta-tipo {
-  background: #f3f4f6;
-  color: #374151;
+  background: #3a3a4d;
+  color: #d0d0e0;
   padding: 4px 12px;
   border-radius: 6px;
   font-size: 12px;
@@ -195,7 +201,7 @@
 .pregunta-contenido h4 {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: #d0d0e0;
   margin-bottom: 12px;
   line-height: 1.5;
 }
@@ -206,7 +212,7 @@
 
 .pregunta-opciones strong {
   display: block;
-  color: #374151;
+  color: #d0d0e0;
   font-size: 14px;
   margin-bottom: 8px;
 }
@@ -225,24 +231,24 @@
 }
 
 .opcion-item {
-  background: #f9fafb;
+  background: #2c2c3d;
   padding: 8px 12px;
   border-radius: 6px;
   font-size: 14px;
-  color: #4b5563;
+  color: #d0d0e0;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .opcion-item.escala {
-  background: #fef3c7;
-  color: #92400e;
+  background: #3d3211;
+  color: #fbbf24;
 }
 
 .opcion-item.si_no {
-  background: #ecfdf5;
-  color: #065f46;
+  background: #0f3d2c;
+  color: #34d399;
 }
 
 .nivel-numero {
@@ -257,11 +263,11 @@
 }
 
 .info-tipo-texto {
-  background: #f0f9ff;
-  border: 1px solid #bae6fd;
+  background: #1e2a3a;
+  border: 1px solid #2563eb;
   border-radius: 8px;
   padding: 12px;
-  color: #0c4a6e;
+  color: #7dd3fc;
   font-style: italic;
 }
 
@@ -316,7 +322,7 @@
 }
 
 .modal-content {
-  background: white;
+  background: #1e1e2a;
   border-radius: 12px;
   width: 90%;
   max-width: 600px;
@@ -364,7 +370,7 @@
 .form-group label {
   display: block;
   font-weight: 600;
-  color: #374151;
+  color: #d0d0e0;
   margin-bottom: 6px;
   font-size: 14px;
 }
@@ -373,11 +379,13 @@
 .form-group select {
   width: 100%;
   padding: 12px;
-  border: 1px solid #d1d5db;
+  border: 1px solid #2c2c3d;
   border-radius: 8px;
   font-size: 14px;
   font-family: inherit;
   transition: border-color 0.2s ease;
+  background: #1e1e2a;
+  color: #d0d0e0;
 }
 
 .form-group textarea:focus,
