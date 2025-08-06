@@ -542,18 +542,25 @@
 .welcome-section {
   position: relative;
   z-index: 2;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
+/* Hero Banner - Estilos unificados */
 .hero-banner {
   background: linear-gradient(135deg, #6b4eff 0%, #8d70ff 100%);
   border-radius: 25px;
   padding: 3rem 2rem;
-  margin-bottom: 3rem;
+  margin: 0 0 3rem 0;
   text-align: center;
   position: relative;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(107, 78, 255, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: none;
 }
 
 .hero-banner::before {
@@ -576,6 +583,19 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   position: relative;
   z-index: 1;
+}
+
+.hero-banner h2 svg {
+  width: 2rem;
+  height: 2rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.hero-banner h2:has(svg) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
 }
 
 .hero-banner p {
@@ -1338,62 +1358,6 @@
 
 .info-banner li:last-child {
   border-bottom: none;
-}
-
-/* Hero Banner para Gráficas */
-.hero-banner {
-  margin: 1.5rem 0;
-  padding: 2rem;
-  background: linear-gradient(135deg, #6b4eff 0%, #8d70ff 50%, #a855f7 100%);
-  border-radius: 20px;
-  text-align: center;
-  box-shadow: 0 8px 32px rgba(107, 78, 255, 0.3);
-  position: relative;
-  overflow: hidden;
-}
-
-.hero-banner::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: 
-    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 40% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-.hero-banner h2 {
-  color: white;
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0 0 0.5rem 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.8rem;
-  position: relative;
-  z-index: 1;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.hero-banner h2 svg {
-  width: 2rem;
-  height: 2rem;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-}
-
-.hero-banner p {
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 1.1rem;
-  margin: 0;
-  position: relative;
-  z-index: 1;
-  font-weight: 400;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Estilos para Gráficas de Evaluaciones - REORGANIZADO */
