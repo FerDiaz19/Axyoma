@@ -50,8 +50,9 @@ class SuscripcionEmpresa(models.Model):
     )
 
     fecha_inicio = models.DateField(auto_now_add=True, verbose_name="Fecha de inicio")
-    fecha_fin = models.DateField(null=True,  blank=True, verbose_name="Fecha de fin")
-    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, blank=True, null=True, verbose_name="Estado")
+    fecha_fin = models.DateField(verbose_name="Fecha de fin")  # No puede ser null según la DB
+    estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, verbose_name="Estado")  # No puede ser null según la DB
+    status = models.BooleanField(default=True, verbose_name="Activo")  # Campo faltante en el modelo
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
 
     class Meta:

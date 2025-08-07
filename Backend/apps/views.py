@@ -10,6 +10,7 @@ from django.utils.decorators import method_decorator
 from django.utils import timezone
 from datetime import timedelta
 from django.db import transaction
+from django.db.models import Q
 
 import string
 import random
@@ -2210,101 +2211,70 @@ class SuperAdminViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['get'])
     def listar_usuarios(self, request):
-        """Listar todos los usuarios del sistema - VERSIÓN SIMPLIFICADA"""
-        self._verify_superadmin(request.user)
-
+        """Listar todos los usuarios del sistema - VERSIÓN MINIMALISTA"""
         try:
-            # Filtros opcionales
-            buscar = request.query_params.get('buscar', '')
-            nivel_usuario = request.query_params.get('nivel_usuario', '')
-            activo = request.query_params.get('activo', '')
+            print("🔍 Iniciando listar_usuarios...")
+            
+            # Verificación básica de usuario
+            if not request.user or not request.user.is_authenticated:
+                return Response({
+                    'error': 'No autenticado',
+                    'usuarios': [],
+                    'total': 0
+                }, status=status.HTTP_401_UNAUTHORIZED)
 
-            # Solo obtener usuarios que tienen user asociado
-            usuarios = PerfilUsuario.objects.filter(user__isnull=False)
+            print(f"🔍 Usuario autenticado: {request.user.username}")
 
-            if buscar:
-                usuarios = usuarios.filter(
-                    nombre__icontains=buscar
-                ) | usuarios.filter(
-                    apellido_paterno__icontains=buscar
-                ) | usuarios.filter(
-                    correo__icontains=buscar
-                )
-
-            if nivel_usuario:
-                usuarios = usuarios.filter(nivel_usuario=nivel_usuario)
-
-            if activo:
-                activo_bool = activo.lower() == 'true'
-                usuarios = usuarios.filter(user__is_active=activo_bool)
-
+            # Lista básica de usuarios
             usuarios_data = []
-            for usuario in usuarios:
-                try:
-                    # Información básica del usuario
-                    usuario_info = {
-                        'user_id': usuario.user.id,
-                        'profile_id': usuario.id,
-                        'username': usuario.user.username,
-                        'email': usuario.user.email,
-                        'nombre': usuario.nombre,
-                        'apellido_paterno': usuario.apellido_paterno,
-                        'apellido_materno': getattr(usuario, 'apellido_materno', '') or '',
-                        'nombre_completo': f"{usuario.nombre} {usuario.apellido_paterno} {getattr(usuario, 'apellido_materno', '') or ''}".strip(),
-                        'correo': usuario.correo,
-                        'nivel_usuario': usuario.nivel_usuario,
-                        'fecha_registro': usuario.user.date_joined,
-                        'ultimo_login': usuario.user.last_login,
-                        'is_active': usuario.user.is_active,
-                        'empresa': None,
-                        'planta': None,
-                    }
-
-                    print(f"🔍 DEBUG: Usuario {usuario.user.username} - nivel_usuario: '{usuario.nivel_usuario}'")
-
-                    # Información de empresa/planta según el rol (de forma segura)
-                    if usuario.nivel_usuario == 'admin-empresa':
-                        try:
-                            empresa = Empresa.objects.get(administrador=usuario)
-                            usuario_info['empresa'] = {
-                                'id': empresa.empresa_id,
-                                'nombre': empresa.nombre,
-                                'status': empresa.status
-                            }
-                        except:
-                            pass
-
-                    elif usuario.nivel_usuario == 'admin-planta':
-                        try:
-                            from apps.users.models import AdminPlanta
-                            admin_planta = AdminPlanta.objects.get(usuario=usuario)
-                            planta = admin_planta.planta
-                            usuario_info['planta'] = {
-                                'id': planta.planta_id,
-                                'nombre': planta.nombre,
-                                'empresa_nombre': planta.empresa.nombre,
-                                'status': admin_planta.status
-                            }
-                        except:
-                            pass
-
-                    usuarios_data.append(usuario_info)
-
-                except Exception as e:
-                    # Si hay error con un usuario específico, saltar
-                    continue
+            
+            try:
+                # Obtener todos los perfiles que tengan user asociado
+                perfiles = PerfilUsuario.objects.filter(user_id__isnull=False)
+                print(f"🔍 Perfiles encontrados: {perfiles.count()}")
+                
+                for perfil in perfiles:
+                    try:
+                        usuario_info = {
+                            'user_id': perfil.user_id.id,
+                            'profile_id': perfil.id,
+                            'username': perfil.user_id.username,
+                            'email': perfil.user_id.email,
+                            'nombre': perfil.nombre or 'N/A',
+                            'apellido_paterno': perfil.apellido_paterno or '',
+                            'nombre_completo': f"{perfil.nombre or 'N/A'} {perfil.apellido_paterno or ''}".strip(),
+                            'correo': perfil.correo or 'N/A',
+                            'nivel_usuario': perfil.nivel_usuario or 'N/A',
+                            'is_active': perfil.user_id.is_active,
+                        }
+                        usuarios_data.append(usuario_info)
+                    except Exception as e:
+                        print(f"❌ Error procesando perfil {perfil.id}: {str(e)}")
+                        continue
+                
+                print(f"🔍 Usuarios procesados: {len(usuarios_data)}")
+                
+            except Exception as e:
+                print(f"❌ Error obteniendo perfiles: {str(e)}")
+                return Response({
+                    'error': f'Error accediendo a la base de datos: {str(e)}',
+                    'usuarios': [],
+                    'total': 0
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
             return Response({
                 'usuarios': usuarios_data,
                 'total': len(usuarios_data),
-                'mensaje': 'Lista de usuarios válidos'
+                'mensaje': f'Lista de {len(usuarios_data)} usuarios procesados exitosamente'
             })
 
         except Exception as e:
+            print(f"❌ Error general en listar_usuarios: {str(e)}")
             import traceback
+            traceback.print_exc()
+            
             return Response({
-                'error': f'Error: {str(e)}',
-                'trace': traceback.format_exc(),
+                'error': f'Error interno: {str(e)}',
                 'usuarios': [],
                 'total': 0
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -3693,37 +3663,31 @@ class SuscripcionViewSet(viewsets.ViewSet):
     def listar_suscripciones(self, request):
         """Lista todas las suscripciones de empresas"""
         try:
-            from django.db import connection
-
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT
-                        s.suscripcion_id,
-                        e.nombre as empresa_nombre,
-                        e.empresa_id,
-                        p.nombre as plan_nombre,
-                        p.precio,
-                        p.duracion,
-                        s.fecha_inicio,
-                        s.fecha_fin,
-                        s.estado
-                    FROM suscripciones s
-                    JOIN empresas e ON s.empresa = e.empresa_id
-                    JOIN planes p ON s.plan = p.plan_id
-                    ORDER BY s.fecha_registro DESC
-                """)
-
-                columns = [col[0] for col in cursor.description]
-                results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-                # Formatear fechas
-                for result in results:
-                    if result['fecha_inicio']:
-                        result['fecha_inicio'] = result['fecha_inicio'].strftime('%Y-%m-%d')
-                    if result['fecha_fin']:
-                        result['fecha_fin'] = result['fecha_fin'].strftime('%Y-%m-%d')
-
-                return Response(results)
+            from apps.subscriptions.models import SuscripcionEmpresa
+            from apps.users.models import Empresa
+            
+            # Usar ORM en lugar de SQL crudo para mejor manejo de errores
+            suscripciones = SuscripcionEmpresa.objects.select_related('empresa', 'plan').all()
+            
+            results = []
+            for suscripcion in suscripciones:
+                result = {
+                    'suscripcion_id': suscripcion.suscripcion_id,
+                    'empresa_nombre': suscripcion.empresa.nombre if suscripcion.empresa else 'N/A',
+                    'empresa_id': suscripcion.empresa.empresa_id if suscripcion.empresa else None,
+                    'plan_nombre': suscripcion.plan.nombre if suscripcion.plan else 'N/A',
+                    'precio': float(suscripcion.plan.precio) if suscripcion.plan else 0,
+                    'duracion': suscripcion.plan.duracion if suscripcion.plan else 0,
+                    'fecha_inicio': suscripcion.fecha_inicio.strftime('%Y-%m-%d') if suscripcion.fecha_inicio else None,
+                    'fecha_fin': suscripcion.fecha_fin.strftime('%Y-%m-%d') if suscripcion.fecha_fin else None,
+                    'estado': suscripcion.estado or 'N/A'
+                }
+                results.append(result)
+            
+            # Ordenar por fecha de registro descendente
+            results.sort(key=lambda x: x['fecha_inicio'] or '1900-01-01', reverse=True)
+            
+            return Response(results)
 
         except Exception as e:
             return Response(

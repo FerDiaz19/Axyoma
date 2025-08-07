@@ -49,7 +49,8 @@ urlpatterns = [
     path('suscripciones/planes/', SuscripcionViewSet.as_view({'get': 'planes'})),
     path('suscripciones/crear_suscripcion/', crear_suscripcion_publica, name='crear_suscripcion_publica'),
     path('suscripciones/info_empresa/', SuscripcionViewSet.as_view({'get': 'info_empresa'})),
-    path('suscripciones/actual/', SuscripcionViewSet.as_view({'get': 'actual'})),  # ← NUEVA RUTA AGREGADA
+    path('suscripciones/actual/', SuscripcionViewSet.as_view({'get': 'actual'})),
+    path('suscripciones/listar_suscripciones/', SuscripcionViewSet.as_view({'get': 'listar_suscripciones'})),  # ← RUTA FALTANTE
 
     # Rutas de Admin BD - Agregar estas líneas
     path('admin-bd/exportar/<str:tabla>/', AdminBDViewSet.as_view({'get': 'exportar_tabla'})),

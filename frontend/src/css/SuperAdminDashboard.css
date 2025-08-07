@@ -908,7 +908,8 @@
 }
 
 .data-table tbody tr {
-  background: #1e1e2a;  color: #d0d0e0;
+  background: #1e1e2a;
+  color: #d0d0e0;
 }
 
 .data-table tbody tr:hover {
@@ -932,6 +933,28 @@
 
 .data-table tbody tr:nth-child(even) {
   background-color: #1a1a27;
+}
+
+/* Estilos específicos para tabla de suscripciones */
+.data-table td {
+  color: #fff !important;  /* Forzar color blanco para todas las celdas */
+}
+
+.data-table td strong {
+  color: #fff !important;  /* Forzar color blanco para texto en negrita */
+}
+
+.data-table td div {
+  color: #fff !important;  /* Forzar color blanco para divs dentro de celdas */
+}
+
+.data-table td small {
+  color: #d0d0e0 !important;  /* Color gris claro para texto pequeño */
+}
+
+.data-table .precio {
+  color: #4CAF50 !important;  /* Verde para precios */
+  font-weight: bold;
 }
 
 /* Filtros */
