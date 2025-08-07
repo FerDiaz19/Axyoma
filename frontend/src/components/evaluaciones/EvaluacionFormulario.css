@@ -497,6 +497,252 @@ input:checked + .slider:before {
 }
 
 
+/* Estilos específicos para SuperAdmin Theme - Tarjetas de Preguntas */
+.super-admin-theme .pregunta-form-item.card {
+    background-color: #2c2c3d !important;
+    border: 1px solid #3c3c4d !important;
+    color: #ffffff !important;
+}
+
+.super-admin-theme .pregunta-header {
+    color: #ffffff !important;
+}
+
+.super-admin-theme .pregunta-order {
+    color: #6b4eff !important;
+}
+
+.super-admin-theme .pregunta-text {
+    color: #ffffff !important;
+}
+
+.super-admin-theme .pregunta-type {
+    color: #d0d0e0 !important;
+}
+
+.super-admin-theme .pregunta-details {
+    color: #ffffff !important;
+}
+
+.super-admin-theme .pregunta-meta {
+    color: #ffffff !important;
+}
+
+.super-admin-theme .badge-obligatoria {
+    background-color: #ffc107 !important;
+    color: #212529 !important;
+}
+
+.super-admin-theme .badge-opcional {
+    background-color: #6c757d !important;
+    color: #ffffff !important;
+}
+
+.super-admin-theme .badge-correcta {
+    background-color: #28a745 !important;
+    color: #ffffff !important;
+}
+
+.super-admin-theme .btn-icon-remove {
+    background-color: #dc3545 !important;
+    color: #ffffff !important;
+    border: 1px solid #dc3545 !important;
+}
+
+.super-admin-theme .btn-icon-remove:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+}
+
+.super-admin-theme .add-pregunta-form-container {
+    background-color: #2c2c3d !important;
+    border: 1px solid #3c3c4d !important;
+    color: #ffffff !important;
+}
+
+.super-admin-theme .add-pregunta-form-container .form-section-title {
+    color: #ffffff !important;
+    border-bottom-color: #3c3c4d !important;
+}
+
+.super-admin-theme .opciones-container {
+    background-color: #1e1e2a !important;
+    border: 1px dashed #3c3c4d !important;
+}
+
+.super-admin-theme .option-item input {
+    background-color: #12121a !important;
+    border: 1px solid #3c3c4d !important;
+    color: #ffffff !important;
+}
+
+.super-admin-theme .option-item input:focus {
+    border-color: #6b4eff !important;
+    box-shadow: 0 0 0 0.2rem rgba(107, 78, 255, 0.25) !important;
+}
+
+.super-admin-theme .btn-add-option {
+    background-color: #28a745 !important;
+    border-color: #28a745 !important;
+}
+
+.super-admin-theme .btn-add-pregunta {
+    background-color: #28a745 !important;
+    color: #ffffff !important;
+    border: 1px solid #28a745 !important;
+}
+
+.super-admin-theme .btn-add-pregunta:hover {
+    background-color: #218838 !important;
+    border-color: #1e7e34 !important;
+}
+
+.super-admin-theme .no-items-message {
+    color: #d0d0e0 !important;
+    background-color: #2c2c3d !important;
+    border: 1px dashed #3c3c4d !important;
+    padding: 1rem !important;
+    border-radius: 6px !important;
+    text-align: center !important;
+}
+
+.super-admin-theme .form-group-inline select,
+.super-admin-theme .form-group-inline input {
+    background-color: #12121a !important;
+    border: 1px solid #3c3c4d !important;
+    color: #ffffff !important;
+}
+
+.super-admin-theme .form-group-inline select:focus,
+.super-admin-theme .form-group-inline input:focus {
+    border-color: #6b4eff !important;
+    box-shadow: 0 0 0 0.2rem rgba(107, 78, 255, 0.25) !important;
+}
+
+.super-admin-theme .form-group-inline label {
+    color: #ffffff !important;
+}
+
+/* Estilos para los switches y checkboxes */
+.super-admin-theme .switch {
+    background-color: #3c3c4d !important;
+}
+
+.super-admin-theme .switch input:checked + .slider {
+    background-color: #6b4eff !important;
+}
+
+.super-admin-theme .switch .slider:before {
+    background-color: #ffffff !important;
+}
+
+.super-admin-theme input[type="checkbox"] + label {
+    color: #ffffff !important;
+}
+
+/* Estilos adicionales para todos los botones en super-admin-theme */
+.super-admin-theme .btn-primary {
+    background-color: #007bff !important;
+    border-color: #007bff !important;
+    color: #ffffff !important;
+}
+
+.super-admin-theme .btn-primary:hover {
+    background-color: #0056b3 !important;
+    border-color: #004085 !important;
+}
+
+.super-admin-theme .btn-secondary {
+    background-color: #6c757d !important;
+    border-color: #6c757d !important;
+    color: #ffffff !important;
+}
+
+.super-admin-theme .btn-secondary:hover {
+    background-color: #5a6268 !important;
+    border-color: #545b62 !important;
+}
+
+.super-admin-theme .btn-add-seccion {
+    background-color: #17a2b8 !important;
+    border-color: #17a2b8 !important;
+    color: #ffffff !important;
+}
+
+.super-admin-theme .btn-add-seccion:hover {
+    background-color: #138496 !important;
+    border-color: #117a8b !important;
+}
+
+/* Asegurar que los elementos de formulario tengan el estilo correcto */
+.super-admin-theme textarea,
+.super-admin-theme select,
+.super-admin-theme input[type="text"],
+.super-admin-theme input[type="number"] {
+    background-color: #12121a !important;
+    border: 1px solid #3c3c4d !important;
+    color: #ffffff !important;
+}
+
+.super-admin-theme textarea:focus,
+.super-admin-theme select:focus,
+.super-admin-theme input[type="text"]:focus,
+.super-admin-theme input[type="number"]:focus {
+    border-color: #6b4eff !important;
+    box-shadow: 0 0 0 0.2rem rgba(107, 78, 255, 0.25) !important;
+}
+
+.super-admin-theme textarea::placeholder,
+.super-admin-theme input::placeholder {
+    color: #d0d0e0 !important;
+    opacity: 0.8 !important;
+}
+
+.super-admin-theme textarea::placeholder,
+.super-admin-theme input::placeholder {
+    color: #d0d0e0 !important;
+    opacity: 0.8 !important;
+}
+
+/* Asegurar visibilidad de elementos de acción */
+.super-admin-theme .form-actions,
+.super-admin-theme .form-actions-small {
+    border-top-color: #3c3c4d !important;
+}
+
+.super-admin-theme .seccion-container.card {
+    background-color: #2c2c3d !important;
+    border: 1px solid #3c3c4d !important;
+}
+
+.super-admin-theme .seccion-header {
+    background-color: #1e1e2a !important;
+    border-bottom-color: #3c3c4d !important;
+}
+
+.super-admin-theme .seccion-header h5 {
+    color: #ffffff !important;
+}
+
+.super-admin-theme .preguntas-section h5 {
+    color: #ffffff !important;
+}
+
+.super-admin-theme .seccion-actions {
+    background-color: transparent !important;
+}
+
+.super-admin-theme .seccion-actions button {
+    color: #ffffff !important;
+}
+
+/* Estilos específicos para elementos disabled */
+.super-admin-theme .disabled-input {
+    background-color: #1e1e2a !important;
+    border: 1px solid #3c3c4d !important;
+    color: #d0d0e0 !important;
+}
+
 /* Media Queries para Responsividad */
 @media (max-width: 768px) {
     .modal-content {
@@ -565,4 +811,447 @@ input:checked + .slider:before {
     .pregunta-details, .pregunta-meta {
         padding-left: 0;
     }
+}
+
+/* ================================================== */
+/* TEMA OSCURO PARA SUPERADMIN - EVALUACIONES */
+/* ================================================== */
+
+/* Override para tema oscuro del SuperAdmin */
+.super-admin-theme .modal-title {
+    color: #fff !important;
+    font-weight: 600 !important;
+}
+
+.super-admin-theme .form-section-title {
+    color: #fff !important;
+    font-weight: 600 !important;
+}
+
+.super-admin-theme .seccion-title {
+    color: #fff !important;
+    font-weight: 600 !important;
+}
+
+.super-admin-theme .modal-formulario {
+    background-color: #2d2d3a !important;
+    color: #fff !important;
+}
+
+.super-admin-theme .modal-content {
+    background-color: #2d2d3a !important;
+    color: #fff !important;
+    border: 1px solid #404040 !important;
+}
+
+.super-admin-theme .modal-header {
+    background-color: #353545 !important;
+    border-bottom: 1px solid #404040 !important;
+}
+
+.super-admin-theme .modal-body {
+    background-color: #2d2d3a !important;
+    color: #fff !important;
+}
+
+.super-admin-theme .modal-footer {
+    background-color: #353545 !important;
+    border-top: 1px solid #404040 !important;
+}
+
+/* Formularios en tema oscuro */
+.super-admin-theme input,
+.super-admin-theme textarea,
+.super-admin-theme select {
+    background-color: #404040 !important;
+    color: #fff !important;
+    border: 1px solid #555 !important;
+}
+
+.super-admin-theme input:focus,
+.super-admin-theme textarea:focus,
+.super-admin-theme select:focus {
+    background-color: #4a4a4a !important;
+    color: #fff !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
+}
+
+.super-admin-theme label {
+    color: #fff !important;
+    font-weight: 500 !important;
+}
+
+.super-admin-theme .help-text,
+.super-admin-theme .description {
+    color: #b0b0b0 !important;
+}
+
+/* Secciones y preguntas */
+.super-admin-theme .seccion-formulario {
+    background-color: #353545 !important;
+    border: 1px solid #404040 !important;
+    color: #fff !important;
+}
+
+.super-admin-theme .seccion-header {
+    background-color: #404040 !important;
+    color: #fff !important;
+}
+
+.super-admin-theme .pregunta-item {
+    background-color: #2d2d3a !important;
+    border: 1px solid #404040 !important;
+    color: #fff !important;
+}
+
+.super-admin-theme .pregunta-texto {
+    color: #fff !important;
+}
+
+.super-admin-theme .pregunta-tipo {
+    color: #b0b0b0 !important;
+}
+
+/* ========================================= */
+/* ESTILOS FORZADOS PARA MÁXIMA VISIBILIDAD */
+/* ========================================= */
+
+/* Forzar visibilidad de TODOS los títulos en tema oscuro */
+.super-admin-theme h1,
+.super-admin-theme h2,
+.super-admin-theme h3,
+.super-admin-theme h4,
+.super-admin-theme h5,
+.super-admin-theme h6 {
+    color: #fff !important;
+    font-weight: 600 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Forzar todos los elementos con clases de título */
+.super-admin-theme .title,
+.super-admin-theme .section-title,
+.super-admin-theme .form-title,
+.super-admin-theme .modal-title,
+.super-admin-theme .form-section-title,
+.super-admin-theme .seccion-title {
+    color: #fff !important;
+    font-weight: 600 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Forzar visibilidad de párrafos y textos */
+.super-admin-theme p,
+.super-admin-theme span,
+.super-admin-theme div {
+    color: #fff !important;
+}
+
+/* Texto de instrucciones y ayuda */
+.super-admin-theme .instruction-text,
+.super-admin-theme .help-text,
+.super-admin-theme .description-text {
+    color: #d0d0d0 !important;
+}
+
+/* Headers personalizados */
+.super-admin-theme .modal-header-custom {
+    background-color: #353545 !important;
+    color: #fff !important;
+    border-bottom: 1px solid #404040 !important;
+}
+
+/* Contenedores de formulario */
+.super-admin-theme .form-section {
+    background-color: #2d2d3a !important;
+    border: 1px solid #404040 !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1.5rem !important;
+    border-radius: 8px !important;
+}
+
+/* Overrides específicos para clases que pueden estar interfiriendo */
+.super-admin-theme .form-section h4,
+.super-admin-theme .modal-content h3,
+.super-admin-theme .modal-content h4,
+.super-admin-theme .form-content h4,
+.super-admin-theme .section-content h4,
+.super-admin-theme .evaluation-section h4 {
+    color: #fff !important;
+    font-weight: 600 !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Para asegurar que los elementos en línea también sean visibles */
+.super-admin-theme .inline-title,
+.super-admin-theme .field-title,
+.super-admin-theme .input-label {
+    color: #fff !important;
+    font-weight: 500 !important;
+}
+
+/* Botones en tema oscuro */
+.super-admin-theme .btn-volver {
+    background-color: #6b7280 !important;
+    color: #fff !important;
+}
+
+.super-admin-theme .btn-guardar {
+    background-color: #3b82f6 !important;
+    color: #fff !important;
+}
+
+.super-admin-theme .btn-volver:hover {
+    background-color: #4b5563 !important;
+}
+
+.super-admin-theme .btn-guardar:hover {
+  background-color: #2563eb !important;
+}
+
+/* ========================================= */
+/* CORRECCIÓN ESPECÍFICA PARA ELEMENTOS ADICIONALES */
+/* ========================================= */
+
+/* Todos los h5 y títulos menores */
+.super-admin-theme h5,
+.super-admin-theme h6 {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+/* Específico para el título "Preguntas" */
+.super-admin-theme .form-section h5,
+.super-admin-theme .preguntas-section h5 {
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  margin-bottom: 1rem !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Botones amarillos (OBLIGATORIA, INDICATORIA) */
+.super-admin-theme .btn-categoria,
+.super-admin-theme .btn-tipo,
+.super-admin-theme .categoria-btn,
+.super-admin-theme button[class*="yellow"],
+.super-admin-theme .btn-warning {
+  background-color: #fbbf24 !important;  /* Amarillo más visible */
+  color: #1f2937 !important;  /* Texto oscuro */
+  border: 1px solid #f59e0b !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.super-admin-theme .btn-categoria:hover,
+.super-admin-theme .btn-tipo:hover,
+.super-admin-theme .categoria-btn:hover,
+.super-admin-theme .btn-warning:hover {
+  background-color: #f59e0b !important;
+  color: #111827 !important;
+}
+
+/* Contenedores y elementos de lista */
+.super-admin-theme .preguntas-container,
+.super-admin-theme .questions-container,
+.super-admin-theme .pregunta-list-container {
+  background-color: #2d2d3a !important;
+  border: 1px solid #404040 !important;
+  border-radius: 6px !important;
+  padding: 1rem !important;
+}
+
+.super-admin-theme .pregunta-list-item,
+.super-admin-theme .question-item,
+.super-admin-theme .list-item {
+  background-color: #353545 !important;
+  border: 1px solid #404040 !important;
+  color: #fff !important;
+  padding: 0.75rem !important;
+  margin-bottom: 0.5rem !important;
+  border-radius: 4px !important;
+}
+
+/* Texto dentro de elementos */
+.super-admin-theme .pregunta-list-item *,
+.super-admin-theme .question-item *,
+.super-admin-theme .list-item * {
+  color: #fff !important;
+}
+
+/* Botones pequeños dentro de listas */
+.super-admin-theme .pregunta-actions button,
+.super-admin-theme .question-actions button,
+.super-admin-theme .list-actions button {
+  background-color: #4b5563 !important;
+  color: #fff !important;
+  border: 1px solid #6b7280 !important;
+  padding: 0.25rem 0.75rem !important;
+  font-size: 0.8rem !important;
+  border-radius: 3px !important;
+}
+
+.super-admin-theme .pregunta-actions button:hover,
+.super-admin-theme .question-actions button:hover,
+.super-admin-theme .list-actions button:hover {
+  background-color: #374151 !important;
+}
+
+/* Elementos de texto pequeño */
+.super-admin-theme small,
+.super-admin-theme .small-text,
+.super-admin-theme .help-text,
+.super-admin-theme .subtitle-text {
+  color: #d0d0d0 !important;
+}
+
+/* Asegurar visibilidad global de elementos */
+.super-admin-theme * {
+  color: inherit;
+}
+
+.super-admin-theme .form-section *,
+.super-admin-theme .preguntas-section *,
+.super-admin-theme .modal-content * {
+  color: inherit;
+}
+
+/* ========================================= */
+/* DISEÑO UNIFORME PARA TODAS LAS SECCIONES */
+/* ========================================= */
+
+/* Todas las secciones del formulario tendrán el mismo diseño */
+.super-admin-theme .form-section,
+.super-admin-theme .secciones-evaluacion,
+.super-admin-theme .preguntas-section {
+  background-color: #353545 !important;
+  border: 1px solid #404040 !important;
+  margin-bottom: 1.5rem !important;
+  padding: 1.5rem !important;
+  border-radius: 8px !important;
+}
+
+/* Headers uniformes para todas las secciones */
+.super-admin-theme .form-section h4,
+.super-admin-theme .secciones-evaluacion h4,
+.super-admin-theme .preguntas-section h5,
+.super-admin-theme .form-section-title,
+.super-admin-theme .secciones-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 1.25rem !important;
+  margin-bottom: 1rem !important;
+  padding-bottom: 0.5rem !important;
+  border-bottom: 1px solid #404040 !important;
+}
+
+/* Contenedores de elementos individuales uniformes */
+.super-admin-theme .seccion-item,
+.super-admin-theme .pregunta-item,
+.super-admin-theme .evaluation-item,
+.super-admin-theme .form-item {
+  background-color: #2d2d3a !important;
+  border: 1px solid #404040 !important;
+  margin-bottom: 0.75rem !important;
+  padding: 1rem !important;
+  border-radius: 4px !important;
+  color: #fff !important;
+}
+
+/* Headers de elementos individuales */
+.super-admin-theme .seccion-header,
+.super-admin-theme .pregunta-header,
+.super-admin-theme .item-header {
+  background-color: #404040 !important;
+  color: #fff !important;
+  padding: 0.75rem !important;
+  margin: -1rem -1rem 1rem -1rem !important;
+  border-radius: 4px 4px 0 0 !important;
+  border-bottom: 1px solid #555 !important;
+}
+
+/* Nombres y títulos de elementos */
+.super-admin-theme .seccion-nombre,
+.super-admin-theme .pregunta-nombre,
+.super-admin-theme .item-name {
+  color: #fff !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Formularios dentro de secciones uniformes */
+.super-admin-theme .add-seccion-form,
+.super-admin-theme .add-pregunta-form,
+.super-admin-theme .inline-form {
+  background-color: #2d2d3a !important;
+  border: 1px solid #404040 !important;
+  padding: 1rem !important;
+  border-radius: 6px !important;
+  margin-top: 1rem !important;
+}
+
+/* Botones uniformes en todas las secciones */
+.super-admin-theme .btn-add-seccion,
+.super-admin-theme .btn-add-pregunta,
+.super-admin-theme .btn-agregar {
+  background-color: #22c55e !important;
+  color: #fff !important;
+  border: 1px solid #16a34a !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+  margin-bottom: 1rem !important;
+}
+
+.super-admin-theme .btn-add-seccion:hover,
+.super-admin-theme .btn-add-pregunta:hover,
+.super-admin-theme .btn-agregar:hover {
+  background-color: #16a34a !important;
+  border-color: #15803d !important;
+}
+
+/* Botones de editar uniformes */
+.super-admin-theme .btn-edit,
+.super-admin-theme .btn-editar {
+  background-color: #3b82f6 !important;
+  color: #fff !important;
+  border: 1px solid #2563eb !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 4px !important;
+  font-size: 0.875rem !important;
+}
+
+.super-admin-theme .btn-edit:hover,
+.super-admin-theme .btn-editar:hover {
+  background-color: #2563eb !important;
+  border-color: #1d4ed8 !important;
+}
+
+/* Botones de eliminar uniformes */
+.super-admin-theme .btn-delete,
+.super-admin-theme .btn-eliminar {
+  background-color: #ef4444 !important;
+  color: #fff !important;
+  border: 1px solid #dc2626 !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 4px !important;
+  font-size: 0.875rem !important;
+}
+
+.super-admin-theme .btn-delete:hover,
+.super-admin-theme .btn-eliminar:hover {
+  background-color: #dc2626 !important;
+  border-color: #b91c1c !important;
+}
+
+/* Grupos de botones uniformes */
+.super-admin-theme .button-group,
+.super-admin-theme .action-buttons {
+  display: flex !important;
+  gap: 0.5rem !important;
+  margin-top: 0.75rem !important;
+  padding-top: 0.75rem !important;
+  border-top: 1px solid #404040 !important;
 }

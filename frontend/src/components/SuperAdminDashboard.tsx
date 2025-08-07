@@ -2991,18 +2991,20 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                     <strong>{fechaFin.toLocaleDateString()}</strong>
                   </td>
                   <td>
-                    <div style={{
-                      display: 'inline-block',
-                      padding: '8px 16px',
-                      borderRadius: '20px',
-                      fontWeight: 'bold',
-                      fontSize: '0.9rem',
-                      background: estaVencida ? '#ffebee' : porVencer ? '#fff3e0' : '#e8f5e8',
-                      color: estaVencida ? '#d32f2f' : porVencer ? '#f57c00' : '#2e7d32',
-                      border: `2px solid ${estaVencida ? '#d32f2f' : porVencer ? '#f57c00' : '#2e7d32'}`,
-                      textAlign: 'center',
-                      minWidth: '120px'
-                    }}>
+                    <div 
+                      className={`dias-restantes-badge ${
+                        estaVencida ? 'vencida' : porVencer ? 'por-vencer' : 'activa'
+                      }`}
+                      style={{
+                        display: 'inline-block',
+                        padding: '8px 16px',
+                        borderRadius: '20px',
+                        fontWeight: 'bold',
+                        fontSize: '0.9rem',
+                        textAlign: 'center',
+                        minWidth: '120px'
+                      }}
+                    >
                       {estaVencida ? (
                         <div>
                           <div>⚠️ VENCIDA</div>

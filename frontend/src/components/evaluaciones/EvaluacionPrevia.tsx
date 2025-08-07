@@ -5,12 +5,13 @@ import './EvaluacionPrevia.css'; // Asegúrate de crear este archivo CSS
 interface EvaluacionPreviaProps {
     evaluacion: Evaluacion;
     onClose: () => void;
+    darkTheme?: boolean;
 }
 
-const EvaluacionPrevia: React.FC<EvaluacionPreviaProps> = ({ evaluacion, onClose }) => {
+const EvaluacionPrevia: React.FC<EvaluacionPreviaProps> = ({ evaluacion, onClose, darkTheme = false }) => {
 
     return (
-        <div className="modal-overlay">
+        <div className={`modal-overlay ${darkTheme ? 'super-admin-theme' : ''}`}>
             <div className="modal-content preview-modal">
                 <div className="modal-header-custom">
                     <h3 className="modal-title">👁️ Vista Previa de Evaluación: {evaluacion.titulo}</h3>

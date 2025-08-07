@@ -957,6 +957,219 @@
   font-weight: bold;
 }
 
+/* Estilos específicos para super-admin-theme - Tarjetas de preguntas en evaluaciones */
+.super-admin-theme .pregunta-card {
+  background-color: #2c2c3d !important;
+  border: 1px solid #3c3c4d !important;
+  color: #ffffff !important;
+}
+
+.super-admin-theme .pregunta-header {
+  background-color: #1e1e2a !important;
+  border-bottom: 1px solid #3c3c4d !important;
+  color: #ffffff !important;
+}
+
+.super-admin-theme .pregunta-numero {
+  background-color: #6b4eff !important;
+  color: #ffffff !important;
+}
+
+.super-admin-theme .pregunta-tipo {
+  color: #d0d0e0 !important;
+}
+
+.super-admin-theme .pregunta-texto {
+  color: #ffffff !important;
+}
+
+.super-admin-theme .pregunta-opciones {
+  color: #ffffff !important;
+}
+
+.super-admin-theme .pregunta-opciones ul {
+  color: #d0d0e0 !important;
+}
+
+.super-admin-theme .pregunta-opciones li {
+  color: #d0d0e0 !important;
+}
+
+.super-admin-theme .pregunta-escala {
+  color: #ffffff !important;
+}
+
+.super-admin-theme .pregunta-actions {
+  background-color: transparent !important;
+}
+
+.super-admin-theme .pregunta-actions button {
+  margin-right: 8px !important;
+}
+
+.super-admin-theme .empty-preguntas {
+  background-color: #2c2c3d !important;
+  border: 1px dashed #3c3c4d !important;
+  color: #d0d0e0 !important;
+}
+
+.super-admin-theme .empty-preguntas h3 {
+  color: #ffffff !important;
+}
+
+.super-admin-theme .empty-preguntas p {
+  color: #d0d0e0 !important;
+}
+
+/* Estilos para botones de acción en tablas - Planes, Suscripciones, etc. */
+.btn-action {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+  margin-right: 4px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn-action.primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-action.primary:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+.btn-action.success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-action.success:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+.btn-action.warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+.btn-action.warning:hover {
+  background-color: #e0a800;
+  transform: translateY(-1px);
+}
+
+.btn-action.danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-action.danger:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Container para acciones en tablas */
+.actions {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+/* Estilos para status badges */
+.status {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.status.active {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status.inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Estilos específicos para días restantes en suscripciones del SuperAdmin */
+.super-admin-theme .data-table td {
+  color: #ffffff !important;
+}
+
+.super-admin-theme .data-table td strong {
+  color: #ffffff !important;
+}
+
+.super-admin-theme .data-table td small {
+  color: #d0d0e0 !important;
+}
+
+/* Estilos para badges de días restantes - tema por defecto */
+.dias-restantes-badge {
+  background: #e8f5e8 !important;
+  color: #2e7d32 !important;
+  border: 2px solid #2e7d32 !important;
+}
+
+.dias-restantes-badge.vencida {
+  background: #ffebee !important;
+  color: #d32f2f !important;
+  border: 2px solid #d32f2f !important;
+}
+
+.dias-restantes-badge.por-vencer {
+  background: #fff3e0 !important;
+  color: #f57c00 !important;
+  border: 2px solid #f57c00 !important;
+}
+
+.dias-restantes-badge.activa {
+  background: #e8f5e8 !important;
+  color: #2e7d32 !important;
+  border: 2px solid #2e7d32 !important;
+}
+
+/* Estilos para badges de días restantes - SuperAdmin theme */
+.super-admin-theme .dias-restantes-badge {
+  background: #1a4a2a !important;
+  color: #4caf50 !important;
+  border: 2px solid #28a745 !important;
+}
+
+.super-admin-theme .dias-restantes-badge.vencida {
+  background: #4a1a1a !important;
+  color: #ff6b6b !important;
+  border: 2px solid #dc3545 !important;
+}
+
+.super-admin-theme .dias-restantes-badge.por-vencer {
+  background: #4a3a1a !important;
+  color: #ffc107 !important;
+  border: 2px solid #f57c00 !important;
+}
+
+.super-admin-theme .dias-restantes-badge.activa {
+  background: #1a4a2a !important;
+  color: #4caf50 !important;
+  border: 2px solid #28a745 !important;
+}
+
 /* Filtros */
 .filters-container {
   background: #1e1e2a;
@@ -1800,4 +2013,661 @@
 
 .btn-info:hover {
   background: #138496;
+}
+
+/* ========================================= */
+/* EVALUACIONES - Corrección de visibilidad en tema oscuro */
+/* ========================================= */
+
+/* Dashboard Container para Evaluaciones */
+.dashboard-container {
+  background-color: #1a1a27 !important;
+  color: #fff !important;
+}
+
+.dashboard-container h2 {
+  color: #fff !important;
+  border-bottom: 3px solid #3b82f6 !important;
+}
+
+/* Lista de Evaluaciones */
+.evaluaciones-list .evaluacion-card {
+  background-color: #2d2d3a !important;
+  border: 1px solid #404040 !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3) !important;
+}
+
+.evaluaciones-list .evaluacion-card:hover {
+  background-color: #353545 !important;
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Títulos y textos de las tarjetas de evaluación */
+.evaluacion-card h4 {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+.evaluacion-card p {
+  color: #b0b0b0 !important;
+}
+
+.evaluacion-card p strong {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+/* Modal de Formulario - Títulos */
+.modal-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+.form-section-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+.seccion-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+/* Títulos específicos de normativas */
+.normativa-title,
+.evaluation-title,
+.section-title,
+.form-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+/* Cualquier h1, h2, h3, h4, h5, h6 dentro de evaluaciones */
+.dashboard-container h1,
+.dashboard-container h3,
+.dashboard-container h4,
+.dashboard-container h5,
+.dashboard-container h6 {
+  color: #fff !important;
+}
+
+/* Etiquetas y labels en formularios */
+.dashboard-container label,
+.dashboard-container .form-label {
+  color: #fff !important;
+  font-weight: 500 !important;
+}
+
+/* Texto de ayuda y descripciones */
+.dashboard-container .help-text,
+.dashboard-container .description,
+.dashboard-container .subtitle {
+  color: #b0b0b0 !important;
+}
+
+/* Estados específicos para botones */
+.evaluacion-card .btn-secondary {
+  background-color: #4a5568 !important;
+  color: #fff !important;
+}
+
+.evaluacion-card .btn-secondary:hover {
+  background-color: #2d3748 !important;
+}
+
+/* ========================================= */
+/* FORMULARIOS DE EVALUACION - CSS Override */
+/* ========================================= */
+
+/* Modal de formulario de evaluación */
+.modal-formulario {
+  background-color: #2d2d3a !important;
+  color: #fff !important;
+}
+
+.modal-formulario .modal-content {
+  background-color: #2d2d3a !important;
+  color: #fff !important;
+  border: 1px solid #404040 !important;
+}
+
+.modal-formulario .modal-header {
+  background-color: #353545 !important;
+  border-bottom: 1px solid #404040 !important;
+}
+
+.modal-formulario .modal-body {
+  background-color: #2d2d3a !important;
+  color: #fff !important;
+}
+
+.modal-formulario .modal-footer {
+  background-color: #353545 !important;
+  border-top: 1px solid #404040 !important;
+}
+
+/* Inputs y controles de formulario */
+.modal-formulario input,
+.modal-formulario textarea,
+.modal-formulario select {
+  background-color: #404040 !important;
+  color: #fff !important;
+  border: 1px solid #555 !important;
+}
+
+.modal-formulario input:focus,
+.modal-formulario textarea:focus,
+.modal-formulario select:focus {
+  background-color: #4a4a4a !important;
+  color: #fff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Secciones del formulario */
+.seccion-formulario {
+  background-color: #353545 !important;
+  border: 1px solid #404040 !important;
+}
+
+.seccion-formulario .seccion-header {
+  background-color: #404040 !important;
+  color: #fff !important;
+}
+
+.seccion-formulario .seccion-title {
+  color: #fff !important;
+}
+
+/* Preguntas dentro de las secciones */
+.pregunta-item {
+  background-color: #2d2d3a !important;
+  border: 1px solid #404040 !important;
+  color: #fff !important;
+}
+
+.pregunta-item .pregunta-texto {
+  color: #fff !important;
+}
+
+.pregunta-item .pregunta-tipo {
+  color: #b0b0b0 !important;
+}
+
+/* Botones de acción dentro del formulario */
+.modal-formulario .btn-agregar {
+  background-color: #22c55e !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+.modal-formulario .btn-agregar:hover {
+  background-color: #16a34a !important;
+}
+
+.modal-formulario .btn-eliminar {
+  background-color: #ef4444 !important;
+  color: #fff !important;
+  border: none !important;
+}
+
+.modal-formulario .btn-eliminar:hover {
+  background-color: #dc2626 !important;
+}
+
+/* ========================================= */
+/* CORRECCIÓN ESPECÍFICA PARA TÍTULOS DE FORMULARIOS */
+/* ========================================= */
+
+/* Tema oscuro - Override más específico para formularios de evaluación */
+.super-admin-theme .modal-overlay {
+  background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.super-admin-theme .modal-content {
+  background-color: #2d2d3a !important;
+  color: #fff !important;
+  border: 1px solid #404040 !important;
+}
+
+/* Headers y títulos principales */
+.super-admin-theme .modal-header-custom {
+  background-color: #353545 !important;
+  border-bottom: 1px solid #404040 !important;
+  color: #fff !important;
+}
+
+.super-admin-theme .modal-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+/* Secciones del formulario */
+.super-admin-theme .form-section {
+  background-color: #353545 !important;
+  border: 1px solid #404040 !important;
+  margin-bottom: 1.5rem !important;
+  padding: 1.5rem !important;
+  border-radius: 8px !important;
+}
+
+.super-admin-theme .form-section-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 1.25rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Labels de formulario */
+.super-admin-theme label,
+.super-admin-theme .form-label {
+  color: #fff !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.5rem !important;
+  display: block !important;
+}
+
+/* Inputs del formulario */
+.super-admin-theme input,
+.super-admin-theme textarea,
+.super-admin-theme select {
+  background-color: #404040 !important;
+  color: #fff !important;
+  border: 1px solid #555 !important;
+  padding: 0.75rem !important;
+  border-radius: 4px !important;
+  width: 100% !important;
+}
+
+.super-admin-theme input:focus,
+.super-admin-theme textarea:focus,
+.super-admin-theme select:focus {
+  background-color: #4a4a4a !important;
+  color: #fff !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Contenedores de campos */
+.super-admin-theme .form-group {
+  margin-bottom: 1rem !important;
+}
+
+.super-admin-theme .form-row {
+  display: flex !important;
+  gap: 1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Secciones específicas de la evaluación */
+.super-admin-theme .seccion-evaluacion {
+  background-color: #2d2d3a !important;
+  border: 1px solid #404040 !important;
+  margin-bottom: 1rem !important;
+  border-radius: 6px !important;
+}
+
+.super-admin-theme .seccion-header {
+  background-color: #404040 !important;
+  color: #fff !important;
+  padding: 1rem !important;
+  border-bottom: 1px solid #555 !important;
+}
+
+.super-admin-theme .seccion-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+  margin: 0 !important;
+}
+
+.super-admin-theme .seccion-content {
+  padding: 1rem !important;
+  color: #fff !important;
+}
+
+/* ========================================= */
+/* DISEÑO UNIFORME PARA TODAS LAS SECCIONES */
+/* ========================================= */
+
+/* Todas las secciones tendrán el mismo estilo que "Información General" */
+.super-admin-theme .form-section,
+.super-admin-theme .secciones-section,
+.super-admin-theme .preguntas-section,
+.super-admin-theme .seccion-evaluacion {
+  background-color: #353545 !important;
+  border: 1px solid #404040 !important;
+  margin-bottom: 1.5rem !important;
+  padding: 1.5rem !important;
+  border-radius: 8px !important;
+}
+
+/* Todos los títulos de sección uniformes */
+.super-admin-theme .form-section-title,
+.super-admin-theme .secciones-title,
+.super-admin-theme .preguntas-title,
+.super-admin-theme .seccion-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 1.25rem !important;
+  margin-bottom: 1rem !important;
+  padding-bottom: 0.5rem !important;
+  border-bottom: 1px solid #404040 !important;
+}
+
+/* Contenedores internos uniformes */
+.super-admin-theme .seccion-contenido,
+.super-admin-theme .preguntas-contenido,
+.super-admin-theme .form-contenido {
+  background-color: #2d2d3a !important;
+  border: 1px solid #404040 !important;
+  padding: 1rem !important;
+  border-radius: 6px !important;
+  margin-top: 1rem !important;
+}
+
+/* Lista de secciones con diseño uniforme */
+.super-admin-theme .seccion-item,
+.super-admin-theme .pregunta-item,
+.super-admin-theme .evaluation-item {
+  background-color: #2d2d3a !important;
+  border: 1px solid #404040 !important;
+  margin-bottom: 0.75rem !important;
+  padding: 1rem !important;
+  border-radius: 4px !important;
+  color: #fff !important;
+}
+
+.super-admin-theme .seccion-item:hover,
+.super-admin-theme .pregunta-item:hover,
+.super-admin-theme .evaluation-item:hover {
+  background-color: #404040 !important;
+  border-color: #555 !important;
+}
+
+/* Headers de elementos individuales */
+.super-admin-theme .seccion-item-header,
+.super-admin-theme .pregunta-item-header {
+  background-color: #404040 !important;
+  color: #fff !important;
+  padding: 0.75rem !important;
+  margin: -1rem -1rem 1rem -1rem !important;
+  border-radius: 4px 4px 0 0 !important;
+  border-bottom: 1px solid #555 !important;
+}
+
+/* Títulos dentro de elementos */
+.super-admin-theme .seccion-nombre,
+.super-admin-theme .pregunta-texto,
+.super-admin-theme .item-title {
+  color: #fff !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.5rem !important;
+}
+
+/* Descripciones y subtextos uniformes */
+.super-admin-theme .seccion-descripcion,
+.super-admin-theme .pregunta-descripcion,
+.super-admin-theme .item-description {
+  color: #b0b0b0 !important;
+  font-size: 0.9rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+/* Botones de acción uniformes */
+.super-admin-theme .seccion-actions,
+.super-admin-theme .pregunta-actions,
+.super-admin-theme .item-actions {
+  display: flex !important;
+  gap: 0.5rem !important;
+  margin-top: 0.75rem !important;
+  padding-top: 0.75rem !important;
+  border-top: 1px solid #404040 !important;
+}
+
+.super-admin-theme .seccion-actions button,
+.super-admin-theme .pregunta-actions button,
+.super-admin-theme .item-actions button {
+  background-color: #4b5563 !important;
+  color: #fff !important;
+  border: 1px solid #6b7280 !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 4px !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+.super-admin-theme .seccion-actions button:hover,
+.super-admin-theme .pregunta-actions button:hover,
+.super-admin-theme .item-actions button:hover {
+  background-color: #374151 !important;
+  border-color: #4b5563 !important;
+}
+
+/* Botones de agregar uniformes */
+.super-admin-theme .btn-agregar,
+.super-admin-theme .add-button,
+.super-admin-theme .btn-add {
+  background-color: #22c55e !important;
+  color: #fff !important;
+  border: 1px solid #16a34a !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+  margin-bottom: 1rem !important;
+}
+
+.super-admin-theme .btn-agregar:hover,
+.super-admin-theme .add-button:hover,
+.super-admin-theme .btn-add:hover {
+  background-color: #16a34a !important;
+  border-color: #15803d !important;
+}
+
+/* Campos de entrada uniformes dentro de todas las secciones */
+.super-admin-theme .form-section input,
+.super-admin-theme .secciones-section input,
+.super-admin-theme .preguntas-section input,
+.super-admin-theme .form-section textarea,
+.super-admin-theme .secciones-section textarea,
+.super-admin-theme .preguntas-section textarea,
+.super-admin-theme .form-section select,
+.super-admin-theme .secciones-section select,
+.super-admin-theme .preguntas-section select {
+  background-color: #404040 !important;
+  color: #fff !important;
+  border: 1px solid #555 !important;
+  padding: 0.75rem !important;
+  border-radius: 4px !important;
+  width: 100% !important;
+}
+
+.super-admin-theme .form-section input:focus,
+.super-admin-theme .secciones-section input:focus,
+.super-admin-theme .preguntas-section input:focus,
+.super-admin-theme .form-section textarea:focus,
+.super-admin-theme .secciones-section textarea:focus,
+.super-admin-theme .preguntas-section textarea:focus,
+.super-admin-theme .form-section select:focus,
+.super-admin-theme .secciones-section select:focus,
+.super-admin-theme .preguntas-section select:focus {
+  background-color: #4a4a4a !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25) !important;
+}
+
+/* Labels uniformes en todas las secciones */
+.super-admin-theme .form-section label,
+.super-admin-theme .secciones-section label,
+.super-admin-theme .preguntas-section label {
+  color: #fff !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.5rem !important;
+  display: block !important;
+}
+
+/* Preguntas */
+.super-admin-theme .pregunta-item {
+  background-color: #353545 !important;
+  border: 1px solid #404040 !important;
+  margin-bottom: 0.75rem !important;
+  padding: 1rem !important;
+  border-radius: 4px !important;
+}
+
+.super-admin-theme .pregunta-texto {
+  color: #fff !important;
+  font-weight: 500 !important;
+}
+
+.super-admin-theme .pregunta-tipo {
+  color: #b0b0b0 !important;
+  font-size: 0.875rem !important;
+}
+
+/* Botones mejorados */
+.super-admin-theme .btn-primary {
+  background-color: #3b82f6 !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+}
+
+.super-admin-theme .btn-primary:hover {
+  background-color: #2563eb !important;
+}
+
+.super-admin-theme .btn-secondary {
+  background-color: #6b7280 !important;
+  color: #fff !important;
+  border: none !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 4px !important;
+  font-weight: 500 !important;
+}
+
+.super-admin-theme .btn-secondary:hover {
+  background-color: #4b5563 !important;
+}
+
+/* ========================================= */
+/* CORRECCIÓN ESPECÍFICA PARA ZONA DE PREGUNTAS Y BOTONES */
+/* ========================================= */
+
+/* Títulos de preguntas y subtítulos */
+.super-admin-theme .preguntas-section h5,
+.super-admin-theme .questions-title,
+.super-admin-theme .preguntas-title {
+  color: #fff !important;
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Corrección para el título "Preguntas" específicamente */
+.super-admin-theme h5 {
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+/* Botones de categoría (OBLIGATORIA, INDICATORIA) */
+.super-admin-theme .btn-categoria,
+.super-admin-theme .btn-tipo,
+.super-admin-theme .categoria-btn {
+  background-color: #fbbf24 !important;  /* Amarillo más oscuro */
+  color: #1f2937 !important;  /* Texto oscuro para contraste */
+  border: 1px solid #f59e0b !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.5px !important;
+}
+
+.super-admin-theme .btn-categoria:hover,
+.super-admin-theme .btn-tipo:hover,
+.super-admin-theme .categoria-btn:hover {
+  background-color: #f59e0b !important;
+  color: #111827 !important;
+}
+
+/* Para botones amarillos específicos que puedan tener otras clases */
+.super-admin-theme button[class*="yellow"],
+.super-admin-theme button[style*="yellow"],
+.super-admin-theme .btn-warning {
+  background-color: #fbbf24 !important;
+  color: #1f2937 !important;
+  border: 1px solid #f59e0b !important;
+  font-weight: 600 !important;
+}
+
+.super-admin-theme .btn-warning:hover {
+  background-color: #f59e0b !important;
+  color: #111827 !important;
+}
+
+/* Contenedores de preguntas */
+.super-admin-theme .preguntas-container,
+.super-admin-theme .questions-container {
+  background-color: #2d2d3a !important;
+  border: 1px solid #404040 !important;
+  padding: 1rem !important;
+  border-radius: 6px !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Lista de preguntas */
+.super-admin-theme .pregunta-list,
+.super-admin-theme .questions-list {
+  background-color: transparent !important;
+}
+
+.super-admin-theme .pregunta-list-item,
+.super-admin-theme .question-item {
+  background-color: #353545 !important;
+  border: 1px solid #404040 !important;
+  margin-bottom: 0.75rem !important;
+  padding: 1rem !important;
+  border-radius: 4px !important;
+  color: #fff !important;
+}
+
+/* Texto dentro de elementos de pregunta */
+.super-admin-theme .pregunta-list-item p,
+.super-admin-theme .question-item p,
+.super-admin-theme .pregunta-list-item span,
+.super-admin-theme .question-item span {
+  color: #fff !important;
+}
+
+/* Botones de acción dentro de preguntas */
+.super-admin-theme .pregunta-actions button,
+.super-admin-theme .question-actions button {
+  background-color: #4b5563 !important;
+  color: #fff !important;
+  border: 1px solid #6b7280 !important;
+  padding: 0.25rem 0.75rem !important;
+  border-radius: 3px !important;
+  font-size: 0.8rem !important;
+  margin-right: 0.5rem !important;
+}
+
+.super-admin-theme .pregunta-actions button:hover,
+.super-admin-theme .question-actions button:hover {
+  background-color: #374151 !important;
+}
+
+/* Elementos pequeños y subtextos */
+.super-admin-theme small,
+.super-admin-theme .small-text,
+.super-admin-theme .subtitle {
+  color: #d0d0d0 !important;
+}
+
+/* Asegurar que todos los elementos dentro de la sección de preguntas sean visibles */
+.super-admin-theme .form-section *,
+.super-admin-theme .preguntas-section * {
+  color: inherit !important;
 }

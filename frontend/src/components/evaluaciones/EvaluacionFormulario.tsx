@@ -426,9 +426,10 @@ interface EvaluacionFormularioProps {
     onClose: () => void;
     tiposEvaluacion: TipoEvaluacion[];
     user: { nivel_usuario: string; empresa_id?: number; user_id?: number };
+    darkTheme?: boolean;
 }
 
-const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion, onClose, tiposEvaluacion, user }) => {
+const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion, onClose, tiposEvaluacion, user, darkTheme = false }) => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState<Partial<EvaluacionRequest>>({
         titulo: '',
@@ -478,7 +479,7 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
                     })),
                 })),
                 empresa_id: evaluacion.empresa_id,
-                creado_por_id: user?.user_id,
+                creado_por_id: evaluacion.creado_por_id, // Mantener el creador original
             });
         } else {
             const tipoPornivel_usuario = user?.nivel_usuario === 'superadmin'
@@ -595,13 +596,23 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
             onClose();
         } catch (error) {
             console.error('Error al guardar la evaluación:', error);
+            // Mostrar más detalles del error para debugging
+            if (error instanceof Error && 'response' in error) {
+                const axiosError = error as any;
+                if (axiosError.response?.data) {
+                    console.error('Detalles del error:', axiosError.response.data);
+                }
+                if (axiosError.response?.status === 400) {
+                    console.error('Error 400 - Datos inválidos. Revisa los campos requeridos.');
+                }
+            }
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="modal-overlay">
+        <div className={`modal-overlay ${darkTheme ? 'super-admin-theme' : ''}`}>
             <div className="modal-content">
                 <div className="modal-header-custom">
                     <h3 className="modal-title">{evaluacion ? '✏️ Editar Evaluación' : '➕ Crear Evaluación'}</h3>

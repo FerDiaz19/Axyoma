@@ -147,7 +147,7 @@ const EvaluacionesDashboard: React.FC<{ userData: UserData | null }> = ({ userDa
     // ---------------------------------------------------------------------- //
 
     return (
-        <div className="dashboard-container">
+        <div className={`dashboard-container ${userData?.nivel_usuario === 'superadmin' ? 'super-admin-theme' : ''}`}>
             <h2>Gestión de evaluaciones</h2>
             <button onClick={handleCreate}
                 className="btn-primary"
@@ -216,6 +216,7 @@ const EvaluacionesDashboard: React.FC<{ userData: UserData | null }> = ({ userDa
                     }}
                     tiposEvaluacion={tiposEvaluacion}
                     user={userData}
+                    darkTheme={userData?.nivel_usuario === 'superadmin'}
                 />
             )}
 
@@ -223,6 +224,7 @@ const EvaluacionesDashboard: React.FC<{ userData: UserData | null }> = ({ userDa
                 <EvaluacionPrevia
                     evaluacion={selectedEvaluacion}
                     onClose={() => setShowPreview(false)}
+                    darkTheme={userData?.nivel_usuario === 'superadmin'}
                 />
             )}
         </div>
