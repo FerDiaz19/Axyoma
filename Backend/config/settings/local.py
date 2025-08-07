@@ -11,8 +11,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'axyomadb',
-        'USER': 'postgres',
-        'PASSWORD': '12345678',
+        'USER': 'doadmin',
+        'PASSWORD': 'AVNS_iTjipbPzd7UqeYmTqs6',
         'HOST': 'localhost',
         'PORT': '5432',
         'CONN_MAX_AGE': 600,
