@@ -38,14 +38,14 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
   useEffect(() => {
     // Aplicar filtros
     let plantasFiltradas = plantas;
-    
+
     if (filtroNombre.trim()) {
       plantasFiltradas = plantasFiltradas.filter(planta =>
         planta.nombre.toLowerCase().includes(filtroNombre.toLowerCase()) ||
         planta.direccion.toLowerCase().includes(filtroNombre.toLowerCase())
       );
     }
-    
+
     setPlantasFiltradas(plantasFiltradas);
   }, [plantas, filtroNombre]);
 
@@ -55,7 +55,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
       console.log('🔍 Cargando plantas para empresa:', empresaId);
       console.log('🔗 URL completa:', `http://localhost:8000/api/plantas/?empresa_id=${empresaId}&incluir_suspendidas=true`);
       console.log('🔑 Token en localStorage:', localStorage.getItem('authToken') ? 'SÍ' : 'NO');
-      
+
       // Filtrar plantas por empresa (incluir suspendidas para poder reactivarlas)
       const response = await api.get(`/plantas/?empresa_id=${empresaId}&incluir_suspendidas=true`);
       console.log('📦 Plantas obtenidas:', response.data);
@@ -65,7 +65,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
       console.error('❌ Error cargando plantas:', error);
       console.error('📋 Error response:', error.response?.data);
       console.error('🔢 Status code:', error.response?.status);
-      
+
       if (error.response?.status === 500) {
         setError(`Error del servidor (500): Problema en el backend al obtener plantas para empresa ${empresaId}. Revisa los logs del servidor Django.`);
       } else if (error.response?.status === 404) {
@@ -89,7 +89,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
     try {
       console.log('📝 Datos del formulario a enviar:', formData);
       console.log('🔑 Token disponible:', localStorage.getItem('authToken') ? 'SÍ' : 'NO');
-      
+
       if (editingPlanta) {
         // Actualizar planta existente
         const result = await actualizarPlanta(editingPlanta.planta_id, formData);
@@ -99,7 +99,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
         const result = await crearPlanta(formData);
         console.log('✅ Planta creada exitosamente:', result);
       }
-      
+
       // Recargar lista y resetear formulario
       await cargarPlantas();
       resetForm();
@@ -108,7 +108,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
       console.error('❌ Respuesta del servidor:', error.response?.data);
       console.error('❌ Status code:', error.response?.status);
       console.error('❌ Headers de respuesta:', error.response?.headers);
-      
+
       setError(error.message || 'Error al guardar la planta');
     } finally {
       setSaving(false);
@@ -126,18 +126,18 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
 
   const handleToggleStatus = async (planta: Planta) => {
     const accion = planta.status ? 'suspender' : 'activar';
-    const confirmMessage = planta.status 
+    const confirmMessage = planta.status
       ? `¿Suspender la planta "${planta.nombre}"? Esto también suspenderá todos los departamentos, puestos y empleados asociados.`
       : `¿Activar la planta "${planta.nombre}"? Esto también activará todos los departamentos, puestos y empleados asociados.`;
-    
+
     if (window.confirm(confirmMessage)) {
       try {
         setError(null);
         setSaving(true);
-        
+
         // Llamar al endpoint de toggle_status
         await api.post(`/plantas/${planta.planta_id}/toggle_status/`);
-        
+
         await cargarPlantas();
         alert(`Planta ${accion}da exitosamente`);
       } catch (error: any) {
@@ -166,7 +166,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
       <div className="header">
         <h2>Gestión de Plantas</h2>
         <div className="header-actions">
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => setShowForm(true)}
           >
@@ -210,14 +210,14 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
               Estado: {planta.status ? 'Activa' : 'Inactiva'}
             </p>
             <div className="actions">
-              <button 
+              <button
                 className="btn btn-secondary"
                 onClick={() => handleEdit(planta)}
                 disabled={saving}
               >
                 Editar
               </button>
-              <button 
+              <button
                 className={`btn ${planta.status ? 'btn-warning' : 'btn-success'}`}
                 onClick={() => handleToggleStatus(planta)}
                 disabled={saving}
@@ -238,7 +238,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
       {plantas.length === 0 && (
         <div className="empty-state">
           <p>No hay plantas registradas</p>
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => setShowForm(true)}
           >
@@ -258,7 +258,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
                   {error}
                 </div>
               )}
-              
+
               <div className="form-group">
                 <label>Nombre de la Planta:</label>
                 <input
@@ -268,7 +268,7 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
                   required
                 />
               </div>
-              
+
               <div className="form-group">
                 <label>Dirección:</label>
                 <textarea
@@ -282,8 +282,8 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
                 <button type="submit" className="btn btn-primary" disabled={saving}>
                   {saving ? 'Guardando...' : (editingPlanta ? 'Actualizar' : 'Guardar')}
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={resetForm}
                   disabled={saving}

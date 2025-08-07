@@ -9,7 +9,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 from datetime import timedelta
-import traceback
+from django.db import transaction
+
 import string
 import random
 import csv
@@ -19,7 +20,9 @@ from apps.users.models import PerfilUsuario, Empresa, Planta, AdminPlanta, Depar
 from apps.subscriptions.models import SuscripcionEmpresa, PlanSuscripcion
 from .serializers import (
     LoginSerializer, EmpresaRegistroSerializer,
-    PlantaSerializer, PlantaCreateSerializer,
+    PlantaSerializer, PuestoCreateSerializer,
+
+
     DepartamentoSerializer, DepartamentoCreateSerializer,
     PuestoSerializer, PuestoCreateSerializer,
     EmpleadoSerializer, EmpleadoCreateSerializer, PlanSuscripcionSerializer
@@ -636,7 +639,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action in ['create', 'update', 'partial_update']:
-            return PlantaCreateSerializer
+            return PlantaSerializer
         return PlantaSerializer
 
     def get_queryset(self):
@@ -1016,7 +1019,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
             if not usuario_id or not accion:
                 return Response({'error': 'Faltan parámetros usuario_id o accion'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             user = request.user
             if not hasattr(user, 'perfil'):
@@ -1037,7 +1040,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
                 if admin_planta.planta.empresa != empresa_admin:
                     return Response({'error': 'Sin permisos para este usuario'},
-                                  status=status.HTTP_403_FORBIDDEN)
+                        status=status.HTTP_403_FORBIDDEN)
 
             nuevo_status = accion == 'activar'
             usuario_planta.is_active = nuevo_status
@@ -1052,10 +1055,10 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
         except User.DoesNotExist:
             return Response({'error': 'Usuario no encontrado'},
-                          status=status.HTTP_404_NOT_FOUND)
+                status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': f'Error: {str(e)}'},
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'], url_path='crear-usuario-planta')
     def crear_usuario_planta(self, request):
@@ -1064,7 +1067,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
             user = request.user
             if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'admin-empresa':
                 return Response({'error': 'Solo admin-empresa puede crear usuarios de planta'},
-                              status=status.HTTP_403_FORBIDDEN)
+                    status=status.HTTP_403_FORBIDDEN)
 
             # Obtener datos del request
             username = request.data.get('username')
@@ -1076,24 +1079,24 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
             if not all([username, nombre, apellido_paterno, email, password]):
                 return Response({'error': 'Faltan datos requeridos: username, nombre, apellido_paterno, email, password'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             # Verificar que el username no existe
             from django.contrib.auth.models import User
             if User.objects.filter(username=username).exists():
                 return Response({'error': f'El usuario {username} ya existe'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             # Verificar que el email no existe
             if User.objects.filter(email=email).exists():
                 return Response({'error': f'El email {email} ya está registrado'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             # Obtener empresa del admin
             empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
             if not empresa:
                 return Response({'error': 'Usuario sin empresa asignada'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             # Crear usuario
             nuevo_user = User.objects.create_user(
@@ -1132,7 +1135,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             return Response({'error': f'Error creando usuario: {str(e)}'},
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['post'], url_path='asignar-usuario-planta')
     def asignar_usuario_planta(self, request):
@@ -1141,14 +1144,14 @@ class PlantaViewSet(viewsets.ModelViewSet):
             user = request.user
             if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'admin-empresa':
                 return Response({'error': 'Solo admin-empresa puede asignar usuarios a plantas'},
-                              status=status.HTTP_403_FORBIDDEN)
+                    status=status.HTTP_403_FORBIDDEN)
 
             usuario_id = request.data.get('usuario_id')
             planta_id = request.data.get('planta_id')
 
             if not usuario_id or not planta_id:
                 return Response({'error': 'Se requiere usuario_id y planta_id'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             # Verificar que la planta pertenece a la empresa del admin
             empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
@@ -1156,7 +1159,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
             if not planta:
                 return Response({'error': 'Planta no encontrada o sin permisos'},
-                              status=status.HTTP_404_NOT_FOUND)
+                    status=status.HTTP_404_NOT_FOUND)
 
             # Verificar que el usuario existe y es admin-planta
             from django.contrib.auth.models import User
@@ -1165,7 +1168,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 perfil_target = PerfilUsuario.objects.get(user=usuario_target)
             except (User.DoesNotExist, PerfilUsuario.DoesNotExist):
                 return Response({'error': 'Usuario no encontrado'},
-                              status=status.HTTP_404_NOT_FOUND)
+                    status=status.HTTP_404_NOT_FOUND)
 
             if perfil_target.nivel_usuario != 'admin-planta':
                 return Response({'error': 'El usuario debe ser de nivel admin-planta'},
@@ -1174,18 +1177,18 @@ class PlantaViewSet(viewsets.ModelViewSet):
             # Verificar que el usuario pertenece a la empresa
             if perfil_target.admin_empresa != empresa.administrador:
                 return Response({'error': 'El usuario no pertenece a esta empresa'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             # Verificar que la planta no tenga ya un usuario asignado
             if AdminPlanta.objects.filter(planta=planta).exists():
                 return Response({'error': f'La planta {planta.nombre} ya tiene un usuario asignado'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             # Verificar que el usuario no esté ya asignado a otra planta
             if AdminPlanta.objects.filter(usuario=perfil_target).exists():
                 admin_planta_existente = AdminPlanta.objects.get(usuario=perfil_target)
                 return Response({'error': f'El usuario ya está asignado a la planta {admin_planta_existente.planta.nombre}'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             # Crear la asignación
             admin_planta = AdminPlanta.objects.create(
@@ -1203,7 +1206,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             return Response({'error': f'Error asignando usuario: {str(e)}'},
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'], url_path='usuarios-disponibles')
     def usuarios_disponibles(self, request):
@@ -1218,7 +1221,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
             empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
             if not empresa:
                 return Response({'error': 'Usuario sin empresa asignada'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             # Obtener usuarios admin-planta de la empresa que NO tienen planta asignada
             usuarios_empresa = PerfilUsuario.objects.filter(
@@ -1245,7 +1248,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             return Response({'error': f'Error obteniendo usuarios: {str(e)}'},
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'], url_path='plantas-sin-usuario')
     def plantas_sin_usuario(self, request):
@@ -1254,13 +1257,13 @@ class PlantaViewSet(viewsets.ModelViewSet):
             user = request.user
             if not hasattr(user, 'perfil') or user.perfil.nivel_usuario != 'admin-empresa':
                 return Response({'error': 'Solo admin-empresa puede ver plantas sin usuario'},
-                              status=status.HTTP_403_FORBIDDEN)
+                    status=status.HTTP_403_FORBIDDEN)
 
             # Obtener empresa del admin
             empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
             if not empresa:
                 return Response({'error': 'Usuario sin empresa asignada'},
-                              status=status.HTTP_400_BAD_REQUEST)
+                    status=status.HTTP_400_BAD_REQUEST)
 
             # Obtener plantas de la empresa que NO tienen usuario asignado
             plantas_empresa = Planta.objects.filter(empresa=empresa, status=True)
@@ -1281,7 +1284,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
         except Exception as e:
             return Response({'error': f'Error obteniendo plantas: {str(e)}'},
-                          status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def destroy(self, request, pk=None):
         """

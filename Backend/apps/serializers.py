@@ -1,22 +1,21 @@
-
-# ---------------------------------------------------------------------------- #
-
-import traceback
+# -*- coding: utf-8 -*-
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.hashers import make_password
-
-from apps.users.models import *
-from apps.subscriptions.models import *
-
-# ---------------------------------------------------------------------------- #
+import string
+import random
+import traceback
+# Agregar import específico para evitar conflictos
+try:
+    from apps.users.models import PerfilUsuario, Empresa, Planta, Departamento, Puesto, Empleado
+    from apps.subscriptions.models import PlanSuscripcion
+except ImportError as e:
+    print(f"Error importing models: {e}")
 
 # Serializers para LOGIN
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField()
     password = serializers.CharField()
-
-# ---------------------------------------------------------------------------- #
 
 # Serializers para REGISTRO DE EMPRESA
 class EmpresaRegistroSerializer(serializers.ModelSerializer):
@@ -28,7 +27,7 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
     class Meta:
         model = Empresa
         fields = ['nombre', 'rfc', 'direccion', 'email_contacto', 'telefono_contacto',
-            'usuario', 'password', 'nombre_completo']
+                 'usuario', 'password', 'nombre_completo']
         extra_kwargs = {
             'nombre': {'required': True},
             'rfc': {'required': True},
@@ -105,7 +104,7 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
 
                 # CREAR AUTOMÁTICAMENTE LA PLANTA PRINCIPAL
                 planta_principal = Planta.objects.create(
-                    nombre='Planta principal',
+                    nombre='Planta Principal',
                     empresa=empresa,
                     direccion=empresa.direccion,  # Misma dirección que la empresa
                     status=True
@@ -194,10 +193,10 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                     # Si no existe, crear uno básico
                     if not plan_basico:
                         plan_basico = PlanSuscripcion.objects.create(
-                            nombre="Plan sencillo",
-                            descripcion="Plan sencillo para empresas nuevas (prueba gratuita)",
+                            nombre="Plan Básico",
+                            descripcion="Plan básico para empresas nuevas - Prueba gratuita",
                             duracion=30,
-                            precio=0.00,
+                            precio=0.00,  # Plan gratuito inicial
                             status=True
                         )
                         print(f"✅ PASO 9.1: Plan básico creado - ID: {plan_basico.plan_id}")
@@ -228,7 +227,6 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                         transaccion_id=f"TRIAL-{empresa.empresa_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
                         usuario=user
                     )
-
                     print(f"✅ PASO 9.3: Pago de prueba creado - ID: {pago.pago_id}")
 
                 except Exception as e:
@@ -272,8 +270,6 @@ class DepartamentoSerializer(serializers.ModelSerializer):
         fields = ['departamento_id', 'nombre', 'descripcion', 'status', 'planta_id', 'planta_nombre']
         read_only_fields = ['departamento_id']
 
-# ---------------------------------------------------------------------------- #
-
 class PuestoSerializer(serializers.ModelSerializer):
     departamento_id = serializers.IntegerField(source='departamento.departamento_id', read_only=True)
     departamento_nombre = serializers.CharField(source='departamento.nombre', read_only=True)
@@ -283,22 +279,10 @@ class PuestoSerializer(serializers.ModelSerializer):
         fields = ['puesto_id', 'nombre', 'descripcion', 'status', 'departamento_id', 'departamento_nombre']
         read_only_fields = ['puesto_id']
 
-# ---------------------------------------------------------------------------- #
-
-# Serializers para crear registros (sin campos read-only)
-class PlantaCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Planta
-        fields = ['nombre', 'direccion']  # NO incluir empresa, se asigna automáticamente
-
-# ---------------------------------------------------------------------------- #
-
 class PlanSuscripcionSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlanSuscripcion
         fields = '__all__'
-
-# ---------------------------------------------------------------------------- #
 
 class DepartamentoCreateSerializer(serializers.ModelSerializer):
     planta_id = serializers.IntegerField()
@@ -351,8 +335,6 @@ class DepartamentoCreateSerializer(serializers.ModelSerializer):
         planta = Planta.objects.get(planta_id=planta_id)
         return Departamento.objects.create(planta=planta, **validated_data)
 
-# ---------------------------------------------------------------------------- #
-
 class PuestoCreateSerializer(serializers.ModelSerializer):
     departamento_id = serializers.IntegerField()
 
@@ -390,9 +372,6 @@ class PuestoCreateSerializer(serializers.ModelSerializer):
         departamento = Departamento.objects.get(departamento_id=departamento_id)
         return Puesto.objects.create(departamento=departamento, **validated_data)
 
-# ---------------------------------------------------------------------------- #
-
-# EMPLEADOS SERIALIZERS - VERSION CORREGIDA
 class EmpleadoSerializer(serializers.ModelSerializer):
     """Serializer para lectura de empleados con información completa"""
     # Campos de lectura con información relacionada
@@ -459,8 +438,6 @@ class EmpleadoSerializer(serializers.ModelSerializer):
     def get_numero_empleado(self, obj):
         return f"EMP-{obj.empleado_id:06d}"
 
-# ---------------------------------------------------------------------------- #
-
 class EmpleadoCreateSerializer(serializers.ModelSerializer):
     """Serializer para creación y actualización de empleados"""
     puesto = serializers.IntegerField()
@@ -504,5 +481,3 @@ class EmpleadoCreateSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
-# ---------------------------------------------------------------------------- #
