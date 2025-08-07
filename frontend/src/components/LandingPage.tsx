@@ -1,12 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [token, setToken] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [tokenError, setTokenError] = useState('');
 
   const handleLoginClick = () => {
     navigate('/login');
@@ -14,39 +11,6 @@ const LandingPage: React.FC = () => {
 
   const handleRegisterClick = () => {
     navigate('/registro');
-  };
-
-  const handleTokenAccess = async () => {
-    if (!token.trim()) {
-      setTokenError('Por favor ingresa un token válido');
-      return;
-    }
-
-    setIsLoading(true);
-    setTokenError('');
-
-    try {
-      const response = await fetch(`http://localhost:8000/api/evaluaciones/asignacion/validar-token/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token: token.trim() }),
-      });
-
-      if (response.ok) {
-        await response.json(); // Validate response
-        // Redirigir a la página de evaluación con el token
-        navigate(`/evaluacion/${token.trim()}`);
-      } else {
-        const errorData = await response.json();
-        setTokenError(errorData.detail || 'Token inválido o expirado');
-      }
-    } catch (error) {
-      setTokenError('Error de conexión. Por favor intenta nuevamente.');
-    } finally {
-      setIsLoading(false);
-    }
   };
   return (
     <div className="landing-container">
@@ -84,26 +48,33 @@ const LandingPage: React.FC = () => {
       </section>      {/* Token Access Section */}
       <section className="token-access">
         <div className="token-card">
-          <h2><a href="http://127.0.0.1:8000/axyoma/">Acceso para Empleados</a></h2>
-          <p>¿Tienes un token de evaluación? Ingrésalo aquí para acceder a tu evaluación asignada.</p>
+          <h2>Acceso para Empleados</h2>
+          <p>¿Tienes un token de evaluación? Haz clic aquí para acceder al sistema de evaluaciones.</p>
           <div className="token-form">
-            <input
-              type="text"
-              placeholder="Ingresa tu token de 8 caracteres"
-              value={token}
-              onChange={(e) => setToken(e.target.value.toUpperCase())}
-              maxLength={8}
-              className={`token-input ${tokenError ? 'error' : ''}`}
-            />
             <button 
-              onClick={handleTokenAccess}
-              disabled={isLoading || !token.trim()}
-              className="btn-token"
+              onClick={() => window.open('http://localhost:8000/axyoma/', '_blank')}
+              className="btn-evaluation"
+              style={{
+                background: '#6b4eff',
+                color: 'white',
+                border: 'none',
+                padding: '16px 32px',
+                borderRadius: '8px',
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                textDecoration: 'none',
+                display: 'inline-block',
+                margin: '0 auto'
+              }}
             >
-              {isLoading ? 'Verificando...' : 'Acceder'}
+              📝 Ir a Evaluaciones
             </button>
           </div>
-          {tokenError && <div className="token-error">{tokenError}</div>}
+          <div style={{ marginTop: '15px', fontSize: '0.9rem', color: '#666' }}>
+            Se abrirá en una nueva pestaña donde podrás ingresar tu token
+          </div>
         </div>
       </section>      {/* Features */}
       <section className="features">

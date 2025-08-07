@@ -205,6 +205,7 @@ class AdminPlanta(models.Model):
         db_column='planta_id', verbose_name="Planta asignada"
     )
 
+    fecha_asignacion = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de asignación")
     status = models.BooleanField(default=True, verbose_name='¿El usuario puede administrar esta planta?')
 
     password_temporal = models.CharField(

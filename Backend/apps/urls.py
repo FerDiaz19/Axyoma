@@ -43,10 +43,12 @@ urlpatterns = [
     path('superadmin/listar_todos_empleados/', SuperAdminViewSet.as_view({'get': 'listar_todos_empleados'})),
     path('superadmin/estadisticas_sistema/', SuperAdminViewSet.as_view({'get': 'estadisticas_sistema'})),
     path('superadmin/listar_planes_admin/', SuperAdminViewSet.as_view({'get': 'listar_planes_admin'})),
+    path('superadmin/listar_suscripciones/', SuperAdminViewSet.as_view({'get': 'listar_suscripciones'})),
     path('superadmin/suspender_plan/<int:plan_id>/', SuperAdminViewSet.as_view({'post': 'suspender_plan'})),
 
     # Rutas de suscripciones - AGREGAMOS LA RUTA FALTANTE
     path('suscripciones/planes/', SuscripcionViewSet.as_view({'get': 'planes'})),
+    path('suscripciones/listar_suscripciones/', SuscripcionViewSet.as_view({'get': 'listar_suscripciones'})),
     path('suscripciones/crear_suscripcion/', crear_suscripcion_publica, name='crear_suscripcion_publica'),
     path('suscripciones/info_empresa/', SuscripcionViewSet.as_view({'get': 'info_empresa'})),
     path('suscripciones/actual/', SuscripcionViewSet.as_view({'get': 'actual'})),  # ← NUEVA RUTA AGREGADA

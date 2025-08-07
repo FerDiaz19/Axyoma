@@ -52,6 +52,7 @@ class SuscripcionEmpresa(models.Model):
     fecha_inicio = models.DateField(auto_now_add=True, verbose_name="Fecha de inicio")
     fecha_fin = models.DateField(null=True,  blank=True, verbose_name="Fecha de fin")
     estado = models.CharField(max_length=20, choices=ESTADO_CHOICES, blank=True, null=True, verbose_name="Estado")
+    status = models.BooleanField(default=True, verbose_name="Activa")  # Campo agregado para coincidir con BD
     fecha_registro = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Registro")
 
     class Meta:
@@ -66,6 +67,8 @@ class SuscripcionEmpresa(models.Model):
     @property
     def esta_activa(self):
         """Verifica si la suscripción está activa"""
+        if not self.status:  # Campo status debe ser True
+            return False
         if self.estado != 'activa':
             return False
         if self.fecha_fin and self.fecha_fin < timezone.now().date():
@@ -94,6 +97,7 @@ class SuscripcionEmpresa(models.Model):
 
         self.fecha_fin = nueva_fecha
         self.estado = 'activa'
+        self.status = True
         self.save()
 
     def save(self, *args, **kwargs):

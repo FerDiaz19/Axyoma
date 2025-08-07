@@ -757,7 +757,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
             # Crear perfil de usuario
             perfil = PerfilUsuario.objects.create(
-                user=user,
+                user_id=user,
                 nombre=f"Admin {planta.nombre}",
                 apellido_paterno="Plant",
                 apellido_materno="Manager",
@@ -967,7 +967,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
             from django.contrib.auth.models import User
             try:
                 usuario_target = User.objects.get(id=usuario_id)
-                perfil_target = PerfilUsuario.objects.get(user=usuario_target)
+                perfil_target = PerfilUsuario.objects.get(user_id=usuario_target)
                 admin_planta = AdminPlanta.objects.get(usuario=perfil_target)
 
                 if admin_planta.planta.empresa != empresa:
@@ -1021,7 +1021,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
             # Verificar que es un usuario de planta de la empresa correcta
             if user.perfil.nivel_usuario == 'admin-empresa':
-                perfil_planta = PerfilUsuario.objects.get(user=usuario_planta)
+                perfil_planta = PerfilUsuario.objects.get(user_id=usuario_planta)
                 admin_planta = AdminPlanta.objects.get(usuario=perfil_planta)
                 empresa_admin = Empresa.objects.filter(administrador_id=user.perfil.id).first()
 
@@ -1152,7 +1152,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
             from django.contrib.auth.models import User
             try:
                 usuario_target = User.objects.get(id=usuario_id)
-                perfil_target = PerfilUsuario.objects.get(user=usuario_target)
+                perfil_target = PerfilUsuario.objects.get(user_id=usuario_target)
             except (User.DoesNotExist, PerfilUsuario.DoesNotExist):
                 return Response({'error': 'Usuario no encontrado'},
                               status=status.HTTP_404_NOT_FOUND)
@@ -2351,7 +2351,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
 
             # Verificar si es admin de empresa
             try:
-                perfil = PerfilUsuario.objects.get(user=user)
+                perfil = PerfilUsuario.objects.get(user_id=user)
                 if perfil.nivel_usuario == 'admin-empresa':
                     empresa = Empresa.objects.get(administrador=perfil)
                     return Response({
@@ -3130,7 +3130,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
         try:
             from django.contrib.auth.models import User
             user = User.objects.get(id=user_id)
-            perfil = PerfilUsuario.objects.get(user=user)
+            perfil = PerfilUsuario.objects.get(user_id=user)
 
             print(f"🔧 DEBUG: Usuario encontrado: {user.username}")
             print(f"🔧 DEBUG: Datos originales - nombre: {perfil.nombre}, apellido_paterno: {perfil.apellido_paterno}, apellido_materno: {perfil.apellido_materno}")
@@ -3667,45 +3667,37 @@ class SuscripcionViewSet(viewsets.ViewSet):
             return Response(
                 {'error': f'Error actualizando plan: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )    @action(detail=False, methods=['get'], permission_classes=[])
+            )
+
+    @action(detail=False, methods=['get'], permission_classes=[])
     def listar_suscripciones(self, request):
         """Lista todas las suscripciones de empresas"""
         try:
-            from django.db import connection
-
-            with connection.cursor() as cursor:
-                cursor.execute("""
-                    SELECT
-                        s.suscripcion_id,
-                        e.nombre as empresa_nombre,
-                        e.empresa_id,
-                        p.nombre as plan_nombre,
-                        p.precio,
-                        p.duracion,
-                        s.fecha_inicio,
-                        s.fecha_fin,
-                        s.estado
-                    FROM suscripciones s
-                    JOIN empresas e ON s.empresa = e.empresa_id
-                    JOIN planes p ON s.plan = p.plan_id
-                    ORDER BY s.fecha_registro DESC
-                """)
-
-                columns = [col[0] for col in cursor.description]
-                results = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-                # Formatear fechas
-                for result in results:
-                    if result['fecha_inicio']:
-                        result['fecha_inicio'] = result['fecha_inicio'].strftime('%Y-%m-%d')
-                    if result['fecha_fin']:
-                        result['fecha_fin'] = result['fecha_fin'].strftime('%Y-%m-%d')
-
-                return Response(results)
+            # Usar ORM en lugar de SQL directo para evitar problemas
+            from apps.subscriptions.models import SuscripcionEmpresa
+            
+            suscripciones = SuscripcionEmpresa.objects.select_related('empresa', 'plan').all()
+            
+            results = []
+            for suscripcion in suscripciones:
+                results.append({
+                    'suscripcion_id': suscripcion.suscripcion_id,
+                    'empresa_nombre': suscripcion.empresa.nombre,
+                    'empresa_id': suscripcion.empresa.empresa_id,
+                    'plan_nombre': suscripcion.plan.nombre,
+                    'plan_precio': float(suscripcion.plan.precio),
+                    'plan_duracion': suscripcion.plan.duracion,
+                    'fecha_inicio': suscripcion.fecha_inicio.strftime('%Y-%m-%d'),
+                    'fecha_fin': suscripcion.fecha_fin.strftime('%Y-%m-%d') if suscripcion.fecha_fin else None,
+                    'estado': suscripcion.estado or 'activa'
+                })
+            
+            return Response(results)
 
         except Exception as e:
+            import traceback
             return Response(
-                {'error': f'Error obteniendo suscripciones: {str(e)}'},
+                {'error': f'Error obteniendo suscripciones: {str(e)}', 'traceback': traceback.format_exc()},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -4266,7 +4258,8 @@ def crear_suscripcion_publica(request):
                 plan=plan,
                 fecha_inicio=fecha_inicio,
                 fecha_fin=fecha_fin,
-                estado='activa'
+                estado='activa',
+                status=True  # Agregado campo status faltante
             )
 
             print(f"✅ Suscripción creada: ID={suscripcion.suscripcion_id}")

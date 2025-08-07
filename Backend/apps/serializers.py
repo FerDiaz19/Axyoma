@@ -57,6 +57,7 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         from django.db import transaction
+        import traceback
 
         print(f"🔄 INICIO: Creando empresa con datos: {validated_data}")
 
@@ -78,6 +79,7 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                 print(f"🔄 PASO 2: Nombres separados - '{nombre}' '{apellido_paterno}' '{apellido_materno}'")
 
                 # Crear usuario Django
+                from django.contrib.auth.models import User
                 user = User.objects.create_user(
                     username=usuario,
                     email=validated_data.get('email_contacto', ''),
@@ -86,8 +88,9 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                 print(f"✅ PASO 3: Usuario Django creado - ID: {user.id}")
 
                 # Crear perfil de usuario
+                from apps.users.models import PerfilUsuario
                 user_profile = PerfilUsuario.objects.create(
-                    user=user,
+                    user_id=user,  # Corregido: usar 'user_id' en lugar de 'user'
                     nombre=nombre,
                     apellido_paterno=apellido_paterno,
                     apellido_materno=apellido_materno,
@@ -104,10 +107,11 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                 print(f"✅ PASO 5: Empresa creada - ID: {empresa.empresa_id}, Nombre: {empresa.nombre}")
 
                 # CREAR AUTOMÁTICAMENTE LA PLANTA PRINCIPAL
+                from apps.users.models import Planta, Departamento, Puesto  # Corregido el import
                 planta_principal = Planta.objects.create(
-                    nombre='Planta principal',
+                    nombre='Planta Principal',
                     empresa=empresa,
-                    direccion=empresa.direccion,  # Misma dirección que la empresa
+                    direccion=empresa.direccion or 'Sin dirección especificada',
                     status=True
                 )
                 print(f"✅ PASO 6: Planta principal creada - ID: {planta_principal.planta_id}")
@@ -116,137 +120,52 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
                 departamentos_data = [
                     {'nombre': 'Administración', 'descripcion': 'Gestión administrativa general'},
                     {'nombre': 'Recursos Humanos', 'descripcion': 'Gestión del personal y nómina'},
-                    {'nombre': 'Finanzas', 'descripcion': 'Gestión financiera y contable'},
-                    {'nombre': 'Producción', 'descripcion': 'Operaciones de manufactura'},
-                    {'nombre': 'Calidad', 'descripcion': 'Control y aseguramiento de calidad'},
-                    {'nombre': 'Mantenimiento', 'descripcion': 'Mantenimiento de equipos e instalaciones'},
-                    {'nombre': 'Logística', 'descripcion': 'Almacén y distribución'},
+                    {'nombre': 'Operaciones', 'descripcion': 'Operaciones principales de la empresa'},
                 ]
 
                 departamentos = []
                 for dept_data in departamentos_data:
-                    dept = Departamento.objects.create(
-                        nombre=dept_data['nombre'],
-                        descripcion=dept_data['descripcion'],
-                        planta=planta_principal
-                    )
-                    departamentos.append(dept)
-                    print(f"✅ PASO 7.{len(departamentos)}: Departamento creado - {dept.nombre}")
+                    try:
+                        dept = Departamento.objects.create(
+                            nombre=dept_data['nombre'],
+                            descripcion=dept_data['descripcion'],
+                            planta=planta_principal
+                        )
+                        departamentos.append(dept)
+                        print(f"✅ PASO 7.{len(departamentos)}: Departamento creado - {dept.nombre}")
+                    except Exception as e:
+                        print(f"⚠️ Error creando departamento {dept_data['nombre']}: {str(e)}")
 
                 # CREAR PUESTOS BÁSICOS
                 puestos_data = [
-                    # Administración
                     {'nombre': 'Gerente General', 'departamento': 'Administración'},
                     {'nombre': 'Asistente Administrativo', 'departamento': 'Administración'},
-
-                    # Recursos Humanos
                     {'nombre': 'Gerente de RRHH', 'departamento': 'Recursos Humanos'},
-                    {'nombre': 'Especialista en Nómina', 'departamento': 'Recursos Humanos'},
-                    {'nombre': 'Reclutador', 'departamento': 'Recursos Humanos'},
-
-                    # Finanzas
-                    {'nombre': 'Contador', 'departamento': 'Finanzas'},
-                    {'nombre': 'Analista Financiero', 'departamento': 'Finanzas'},
-
-                    # Producción
-                    {'nombre': 'Supervisor de Producción', 'departamento': 'Producción'},
-                    {'nombre': 'Operador de Máquina', 'departamento': 'Producción'},
-                    {'nombre': 'Técnico de Proceso', 'departamento': 'Producción'},
-
-                    # Calidad
-                    {'nombre': 'Inspector de Calidad', 'departamento': 'Calidad'},
-                    {'nombre': 'Auditor Interno', 'departamento': 'Calidad'},
-
-                    # Mantenimiento
-                    {'nombre': 'Técnico de Mantenimiento', 'departamento': 'Mantenimiento'},
-                    {'nombre': 'Electricista Industrial', 'departamento': 'Mantenimiento'},
-
-                    # Logística
-                    {'nombre': 'Coordinador de Almacén', 'departamento': 'Logística'},
-                    {'nombre': 'Montacarguista', 'departamento': 'Logística'},
+                    {'nombre': 'Supervisor', 'departamento': 'Operaciones'},
+                    {'nombre': 'Empleado General', 'departamento': 'Operaciones'},
                 ]
 
                 puestos_creados = 0
                 for puesto_data in puestos_data:
-                    dept = next((d for d in departamentos if d.nombre == puesto_data['departamento']), None)
-                    if dept:
-                        Puesto.objects.create(
-                            nombre=puesto_data['nombre'],
-                            departamento=dept
-                        )
-                        puestos_creados += 1
+                    try:
+                        dept = next((d for d in departamentos if d.nombre == puesto_data['departamento']), None)
+                        if dept:
+                            Puesto.objects.create(
+                                nombre=puesto_data['nombre'],
+                                departamento=dept
+                            )
+                            puestos_creados += 1
+                    except Exception as e:
+                        print(f"⚠️ Error creando puesto {puesto_data['nombre']}: {str(e)}")
 
                 print(f"✅ PASO 8: {puestos_creados} puestos creados")
 
-                # CREAR SUSCRIPCIÓN BÁSICA AUTOMÁTICA - Opcional, no debe fallar el registro
-                try:
-                    from apps.subscriptions.models import PlanSuscripcion, SuscripcionEmpresa, Pago
-                    from django.utils import timezone
-                    from datetime import timedelta
-
-                    print("🔄 PASO 9: Iniciando creación de suscripción automática...")
-
-                    # Buscar plan básico existente
-                    plan_basico = PlanSuscripcion.objects.filter(
-                        nombre__icontains="básico"
-                    ).first()
-
-                    # Si no existe, crear uno básico
-                    if not plan_basico:
-                        plan_basico = PlanSuscripcion.objects.create(
-                            nombre="Plan sencillo",
-                            descripcion="Plan sencillo para empresas nuevas (prueba gratuita)",
-                            duracion=30,
-                            precio=0.00,
-                            status=True
-                        )
-                        print(f"✅ PASO 9.1: Plan básico creado - ID: {plan_basico.plan_id}")
-                    else:
-                        print(f"✅ PASO 9.1: Plan básico encontrado - {plan_basico.nombre}")
-
-                    # Crear suscripción automática de prueba
-                    fecha_inicio = timezone.now().date()
-                    fecha_fin = fecha_inicio + timedelta(days=30)  # 30 días de prueba
-
-                    suscripcion = SuscripcionEmpresa.objects.create(
-                        empresa=empresa,
-                        plan_suscripcion=plan_basico,
-                        fecha_inicio=fecha_inicio,
-                        fecha_fin=fecha_fin,
-                        estado='Activa',
-                        status=True
-                    )
-                    print(f"✅ PASO 9.2: Suscripción de prueba creada - ID: {suscripcion.suscripcion_id}")
-
-                    # Crear pago automático (gratuito para prueba)
-                    pago = Pago.objects.create(
-                        suscripcion=suscripcion,
-                        costo=0.00,
-                        monto_pago=0.00,
-                        estado_pago='Completado',
-                        fecha_pago=timezone.now(),
-                        transaccion_id=f"TRIAL-{empresa.empresa_id}-{timezone.now().strftime('%Y%m%d%H%M%S')}",
-                        usuario=user
-                    )
-
-                    print(f"✅ PASO 9.3: Pago de prueba creado - ID: {pago.pago_id}")
-
-                except Exception as e:
-                    # La suscripción es opcional - no debe hacer fallar el registro
-                    print(f"⚠️ PASO 9 ADVERTENCIA: Error creando suscripción automática: {str(e)}")
-                    print("📝 La empresa se ha creado exitosamente, la suscripción se puede agregar después")
-                    # No hacer raise - continuar con el registro
-
-                print(f"🎉 ÉXITO TOTAL: Empresa {empresa.nombre} creada con ID {empresa.empresa_id}")
-
-                # Verificar que la empresa realmente existe en la base de datos
-                empresa_verificacion = Empresa.objects.get(empresa_id=empresa.empresa_id)
-                print(f"🔍 VERIFICACIÓN: Empresa encontrada en BD - {empresa_verificacion.nombre}")
-
+                print(f"🎉 ÉXITO: Empresa {empresa.nombre} creada con ID {empresa.empresa_id}")
                 return empresa
 
         except Exception as e:
             print(f"❌ ERROR CRÍTICO: Error durante la creación: {str(e)}")
+            print(f"❌ Tipo de error: {type(e)}")
             traceback.print_exc()
             raise e
 

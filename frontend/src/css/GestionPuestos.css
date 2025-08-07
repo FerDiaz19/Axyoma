@@ -64,13 +64,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-bottom: 1px solid #dee2e6;
+  background: linear-gradient(135deg, #2c2c3d 0%, #3a3a4f 100%);
+  border-bottom: 1px solid #2c2c3d;
 }
 
 .card-header h3 {
   margin: 0;
-  color: #d0d0e0;
+  color: #ffffff !important;
   font-size: 1.2rem;
 }
 
@@ -102,13 +102,13 @@
 }
 
 .description {
-  color: #666;
+  color: #d0d0e0 !important;
   margin-bottom: 1rem;
   line-height: 1.5;
 }
 
 .departamento-info {
-  color: #555;
+  color: #b8b8c8 !important;
   margin-bottom: 1rem;
   font-size: 0.9rem;
 }
@@ -239,7 +239,7 @@
   text-align: center;
   padding: 2rem;
   font-size: 1.1rem;
-  color: #666;
+  color: #d0d0e0 !important;
 }
 
 @media (max-width: 768px) {

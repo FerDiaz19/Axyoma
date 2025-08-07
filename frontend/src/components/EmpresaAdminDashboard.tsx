@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import EmpleadosCRUD from './EmpleadosCRUD';
-import GestionPlantas from './GestionPlantas';
 import GestionDepartamentos from './GestionDepartamentos';
 import GestionPuestos from './GestionPuestos';
-import EvaluacionesGestion from './EvaluacionesGestion';
-import AsignacionEvaluaciones from './AsignacionEvaluaciones';
+import EvaluacionesAdminPanel from './evaluaciones/EvaluacionesAdminPanel';
 import GestionSuscripcion from './GestionSuscripcion';
 import UsuariosPlantasView from './UsuariosPlantasView';
 import { logout } from '../services/authService';
-import { crearPlanta, obtenerPlantas, actualizarPlanta } from '../services/organizacionService';
+import { crearPlanta, actualizarPlanta } from '../services/organizacionService';
 import api from '../api';
 import '../css/EmpresaAdminDashboard.css';
 import '../css/GestionPlantas.css';
@@ -78,7 +76,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
     setShowPlantaModal(false);
   };
 
-  const cargarPlantas = async () => {
+  const cargarPlantas = useCallback(async () => {
     if (!empresaId) return;
     
     try {
@@ -95,7 +93,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
     } finally {
       setLoadingPlantas(false);
     }
-  };
+  }, [empresaId]);
   const handleEditPlanta = (planta: any) => {
     console.log('✏️ Editando planta:', planta);
     // Set the editing planta and pre-fill the form
@@ -137,7 +135,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
     if (empresaId && activeSection === 'plantas') {
       cargarPlantas();
     }
-  }, [empresaId, activeSection]);
+  }, [empresaId, activeSection, cargarPlantas]);
 
   const renderActiveSection = () => {
     switch (activeSection) {
@@ -233,18 +231,18 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
                       <path d="M2 7a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7Zm2 3.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Zm0 2.5a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1-.75-.75Z" />
                     </svg>
                   </span>
-                  <span>Crear Evaluación</span>
+                  <span>Gestión de Evaluaciones</span>
                 </button>
                 <button 
                   className="action-btn"
-                  onClick={() => setActiveSection('asignaciones')}
+                  onClick={() => setActiveSection('evaluaciones')}
                 >
                   <span className="action-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
                       <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
                     </svg>
                   </span>
-                  <span>Asignar Evaluaciones</span>
+                  <span>Asignar y Ver Resultados</span>
                 </button>
               </div>
             </div>          </div>
@@ -571,12 +569,6 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
             <div className="plants-actions-section">
               <button 
                 className="btn btn-violet"
-                onClick={() => {/* Navegar a gestión completa */}}
-              >
-                <span className="action-icon">⚙️</span>
-                Gestión Completa de Plantas
-              </button>              <button 
-                className="btn btn-violet"
                 onClick={() => {
                   setEditingPlanta(null);
                   setPlantaFormData({ nombre: '', direccion: '' });
@@ -607,17 +599,7 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
           <GestionPuestos empresaId={empresaId || 1} />
         );
       case 'evaluaciones':
-        return (
-          <EvaluacionesGestion 
-            userData={userData}
-          />
-        );
-      case 'asignaciones':
-        return (
-          <AsignacionEvaluaciones 
-            userData={userData}
-          />
-        );
+        return <EvaluacionesAdminPanel userData={userData} />;
       case 'suscripcion':
         return (
           <GestionSuscripcion 
@@ -722,16 +704,6 @@ const EmpresaAdminDashboard: React.FC<EmpresaAdminDashboardProps> = ({ userData 
               </svg>
             </span>
             <span className="nav-text">Evaluaciones</span>
-          </button>          <button 
-            className={activeSection === 'asignaciones' ? 'active' : ''}
-            onClick={() => setActiveSection('asignaciones')}
-          >
-            <span className="nav-icon">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
-                <path fillRule="evenodd" d="M10 1a4.5 4.5 0 0 0-4.5 4.5V9H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-.5V5.5A4.5 4.5 0 0 0 10 1Zm3 8V5.5a3 3 0 1 0-6 0V9h6Z" clipRule="evenodd" />
-              </svg>
-            </span>
-            <span className="nav-text">Asignaciones</span>
           </button>          <button 
             className={activeSection === 'graficas' ? 'active' : ''}
             onClick={() => setActiveSection('graficas')}

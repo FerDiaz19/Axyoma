@@ -2815,41 +2815,67 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
           <tbody>
             {planes?.map((plan) => (
               <tr key={plan.plan_id}>
-                <td>{plan.plan_id}</td>
+                <td>
+                  <div style={{
+                    background: '#6b4eff',
+                    color: 'white',
+                    padding: '8px 12px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    textAlign: 'center',
+                    minWidth: '50px'
+                  }}>
+                    #{plan.plan_id}
+                  </div>
+                </td>
                 <td>
                   <div>
-                    <strong>{plan.nombre}</strong>
+                    <strong style={{ color: '#fff' }}>{plan.nombre}</strong>
                   </div>
                 </td>
                 <td>
                   <div>
                     {plan.descripcion ? (
-                      <small>{plan.descripcion.length > 100 ?
+                      <small style={{ color: '#d0d0e0' }}>{plan.descripcion.length > 100 ?
                         `${plan.descripcion.substring(0, 100)}...` :
                         plan.descripcion}
                       </small>
                     ) : (
-                      <span className="text-muted">Sin descripción</span>
+                      <span style={{ color: '#888' }}>Sin descripción</span>
                     )}
                   </div>
                 </td>
                 <td>
-                  <strong>{formatearDuracion(plan.duracion)}</strong>
+                  <strong style={{ color: '#fff' }}>{formatearDuracion(plan.duracion)}</strong>
                 </td>
                 <td>
-                  <strong className="precio">{formatearPrecio(plan.precio)}</strong>
+                  <strong className="precio" style={{ color: '#1a8a7e', fontSize: '1.1rem' }}>{formatearPrecio(plan.precio)}</strong>
                 </td>
                 <td>
-                  <span className={`status ${plan.status ? 'active' : 'inactive'}`}>
+                  <span className={`status ${plan.status ? 'active' : 'inactive'}`} style={{
+                    color: plan.status ? '#1a8a7e' : '#ff6b6b',
+                    fontWeight: 'bold'
+                  }}>
                     {plan.status ? '🟢 Activo' : '🔴 Inactivo'}
                   </span>
                 </td>
                 <td>
-                  <div className="actions">
+                  <div className="actions" style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                     <button
                       onClick={() => handleEdit('plan', plan)}
                       className="btn-action primary"
                       title="Editar plan"
+                      style={{
+                        background: '#6b4eff',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        transition: 'all 0.3s ease'
+                      }}
                     >
                       ✏️ Editar
                     </button>
@@ -2857,6 +2883,17 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       onClick={() => handleToggleStatus('plan', plan.plan_id, plan.status, plan.nombre)}
                       className={`btn-action ${plan.status ? 'warning' : 'success'}`}
                       title={plan.status ? 'Desactivar plan' : 'Activar plan'}
+                      style={{
+                        background: plan.status ? '#ff6b6b' : '#1a8a7e',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '8px 12px',
+                        cursor: 'pointer',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        transition: 'all 0.3s ease'
+                      }}
                     >
                       {plan.status ? '🚫 Desactivar' : '✅ Activar'}
                     </button>
@@ -2968,27 +3005,39 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
 
               return (
                 <tr key={suscripcion.suscripcion_id} className={estaVencida ? 'expired' : porVencer ? 'expiring' : ''}>
-                  <td>{suscripcion.suscripcion_id}</td>
                   <td>
-                    <div>
-                      <strong>{suscripcion.empresa_nombre || `Empresa #${suscripcion.empresa_id}`}</strong>
-                      <small>ID: {suscripcion.empresa_id}</small>
+                    <div style={{
+                      background: '#6b4eff',
+                      color: 'white',
+                      padding: '8px 12px',
+                      borderRadius: '8px',
+                      fontWeight: 'bold',
+                      textAlign: 'center',
+                      minWidth: '50px'
+                    }}>
+                      #{suscripcion.suscripcion_id}
                     </div>
                   </td>
                   <td>
                     <div>
-                      <strong>{suscripcion.plan_nombre || `Plan #${suscripcion.plan_id}`}</strong>
-                      <small>{suscripcion.plan_duracion ? formatearDuracion(suscripcion.plan_duracion) : ''}</small>
+                      <strong style={{ color: '#fff' }}>{(suscripcion as any).empresa?.nombre || (suscripcion as any).empresa_nombre || `Empresa #${suscripcion.empresa_id}`}</strong>
+                      <small style={{ color: '#d0d0e0', display: 'block', marginTop: '2px' }}>ID: {suscripcion.empresa_id}</small>
                     </div>
                   </td>
                   <td>
-                    <strong className="precio">{formatearPrecio(parseFloat(String(suscripcion.plan_precio || '0')))}</strong>
+                    <div>
+                      <strong style={{ color: '#fff' }}>{(suscripcion as any).plan?.nombre || (suscripcion as any).plan_nombre || `Plan #${suscripcion.plan_id}`}</strong>
+                      <small style={{ color: '#d0d0e0', display: 'block', marginTop: '2px' }}>{(suscripcion as any).plan?.duracion ? formatearDuracion((suscripcion as any).plan.duracion) : (suscripcion as any).plan_duracion ? formatearDuracion((suscripcion as any).plan_duracion) : ''}</small>
+                    </div>
                   </td>
                   <td>
-                    <strong>{new Date(suscripcion.fecha_inicio).toLocaleDateString()}</strong>
+                    <strong className="precio" style={{ color: '#1a8a7e', fontSize: '1.1rem' }}>{formatearPrecio(parseFloat(String((suscripcion as any).plan?.precio || (suscripcion as any).plan_precio || '0')))}</strong>
                   </td>
                   <td>
-                    <strong>{fechaFin.toLocaleDateString()}</strong>
+                    <strong style={{ color: '#fff' }}>{new Date(suscripcion.fecha_inicio).toLocaleDateString()}</strong>
+                  </td>
+                  <td>
+                    <strong style={{ color: '#fff' }}>{fechaFin.toLocaleDateString()}</strong>
                   </td>
                   <td>
                     <div style={{
