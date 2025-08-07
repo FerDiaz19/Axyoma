@@ -34,7 +34,11 @@ urlpatterns = [
     path('estructura/mi_estructura/', EstructuraViewSet.as_view({'get': 'mi_estructura'})),
     path('estructura/usuarios_planta/', EstructuraViewSet.as_view({'get': 'usuarios_planta'})),
 
+    # Test endpoints
+    path('test-plantas/', test_plantas_simple),
+
     # Rutas de SuperAdmin
+    path('superadmin/test_simple/', SuperAdminViewSet.as_view({'get': 'test_simple'})),
     path('superadmin/listar_empresas/', SuperAdminViewSet.as_view({'get': 'listar_empresas'})),
     path('superadmin/listar_usuarios/', SuperAdminViewSet.as_view({'get': 'listar_usuarios'})),
     path('superadmin/listar_todas_plantas/', SuperAdminViewSet.as_view({'get': 'listar_todas_plantas'})),

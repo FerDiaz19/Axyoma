@@ -1,8 +1,8 @@
-/* EmpresaAdminDashboard.css - Tema oscuro moderno */
+/* EmpresaAdminDashboard.css - Tema claro con buen contraste */
 .empresa-admin-dashboard {
   display: flex;
   min-height: 100vh;
-  background: #12121a;
+  background: #f8f9fa;
   position: relative;
 }
 
@@ -21,19 +21,19 @@
   pointer-events: none;
 }
 
-/* Sidebar - Moderno con tema oscuro */
+/* Sidebar - Moderno con tema claro */
 .dashboard-sidebar {
   width: 300px;
-  background: rgba(30, 30, 42, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
-  border-right: 1px solid #2c2c3d;
+  border-right: 1px solid #e9ecef;
   position: fixed;
   top: 0;
   left: 0;
   height: 100vh;
   overflow-y: auto;
   z-index: 1000;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-header {
@@ -89,7 +89,7 @@
   width: 100%;
   background: none;
   border: none;
-  color: #2d3748;
+  color: #ffffff !important;
   padding: 1.2rem 2rem;
   text-align: left;
   display: flex;
@@ -126,7 +126,7 @@
   background: rgba(107, 76, 255, 0.1);
   border-left-color: #6b4eff;
   transform: translateX(8px);
-  color: #1a365d;
+  color: #2c3e50 !important;
 }
 
 .sidebar-nav button.active {
@@ -135,7 +135,7 @@
     rgba(118, 75, 162, 0.2) 100%
   );
   border-left-color: #667eea;
-  color: #1a365d;
+  color: #2c3e50 !important;
   font-weight: 700;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
@@ -171,9 +171,9 @@
 
 /* Header mejorado */
 .dashboard-header {
-  background: #1e1e2a;
+  background: #ffffff;
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid #2c2c3d;
+  border-bottom: 1px solid #e9ecef;
   padding: 2rem 2.5rem;
   display: flex;
   justify-content: space-between;
@@ -186,13 +186,13 @@
 .header-left h1 {
   margin: 0;
   font-size: 2.2rem;
-  color: #6b4eff;
+  color: #2c3e50 !important;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
 
 .header-subtitle {
-  color: #4a5568;
+  color: #6c757d !important;
   font-size: 1rem;
   margin-top: 0.5rem;
   font-weight: 500;
@@ -209,10 +209,10 @@
   align-items: center;
   gap: 1.2rem;
   padding: 0.8rem 1.5rem;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .empresa-avatar {
@@ -237,7 +237,7 @@
 
 .empresa-name {
   font-weight: 700;
-  color: #1a365d;
+  color: #2c3e50 !important;
   font-size: 1rem;
   letter-spacing: -0.2px;
 }
@@ -296,7 +296,7 @@
 .dashboard-content {
   flex: 1;
   padding: 2.5rem;
-  background: #12121a;
+  background: #f8f9fa;
   min-height: 100vh;
   position: relative;
   overflow-x: hidden;
@@ -332,12 +332,12 @@
 .content-wrapper {
   position: relative;
   z-index: 2;
-  background: rgba(30, 30, 42, 0.95);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
   border-radius: 25px;
   padding: 2rem;
   margin: 1rem 0;
-  border: 1px solid #2c2c3d;
+  border: 1px solid #e9ecef;
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -1198,6 +1198,49 @@
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
+/* Estilos de contraste para todos los elementos del dashboard */
+.dashboard-container input,
+.dashboard-container select,
+.dashboard-container textarea {
+  background-color: #ffffff !important;
+  color: #2c3e50 !important;
+  border: 1px solid #ced4da !important;
+}
+
+.dashboard-container input:focus,
+.dashboard-container select:focus,
+.dashboard-container textarea:focus {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+}
+
+.dashboard-container label,
+.dashboard-container .form-label {
+  color: #2c3e50 !important;
+  font-weight: 500;
+}
+
+.dashboard-container h1,
+.dashboard-container h2,
+.dashboard-container h3,
+.dashboard-container h4,
+.dashboard-container h5,
+.dashboard-container h6 {
+  color: #2c3e50 !important;
+}
+
+.dashboard-container p,
+.dashboard-container span,
+.dashboard-container div {
+  color: #495057 !important;
+}
+
+.dashboard-container .text-muted,
+.dashboard-container .help-text,
+.dashboard-container .description {
+  color: #6c757d !important;
+}
+
 /* Estados de carga */
 .loading-state {
   opacity: 0.7;
@@ -1484,7 +1527,7 @@
   margin: 0 0 0.8rem 0;
   font-size: 1.2rem;
   font-weight: 700;
-  color: white;
+  color: #6b4eff;
 }
 
 .dashboard-description {
@@ -1717,4 +1760,174 @@
   color: rgba(255, 255, 255, 0.7);
   font-size: 0.75rem;
   font-weight: 500;
+}
+
+/* ===== ESTILOS ESPECÍFICOS PARA EVALUACIONES - CONTRASTE MEJORADO ===== */
+
+/* Asegurar contraste en formularios de evaluación */
+.dashboard-container .form-group input,
+.dashboard-container .form-group select,
+.dashboard-container .form-group textarea,
+.dashboard-container .form-control {
+  background-color: #ffffff !important;
+  color: #2c3e50 !important;
+  border: 2px solid #e9ecef !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
+.dashboard-container .form-group input:focus,
+.dashboard-container .form-group select:focus,
+.dashboard-container .form-group textarea:focus,
+.dashboard-container .form-control:focus {
+  border-color: #007bff !important;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25) !important;
+  outline: none !important;
+}
+
+/* Etiquetas de formulario */
+.dashboard-container .form-group label,
+.dashboard-container .form-label,
+.dashboard-container label {
+  color: #2c3e50 !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  margin-bottom: 8px !important;
+  display: block !important;
+}
+
+/* Contenedores de formulario */
+.dashboard-container .form-container,
+.dashboard-container .create-form,
+.dashboard-container .modal-body {
+  background-color: #ffffff !important;
+  padding: 24px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Checkboxes y radio buttons */
+.dashboard-container input[type="checkbox"],
+.dashboard-container input[type="radio"] {
+  width: auto !important;
+  height: auto !important;
+  margin-right: 8px !important;
+  transform: scale(1.2) !important;
+}
+
+/* Botones del formulario */
+.dashboard-container .btn,
+.dashboard-container button {
+  padding: 10px 20px !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+}
+
+.dashboard-container .btn-primary {
+  background-color: #007bff !important;
+  color: #ffffff !important;
+}
+
+.dashboard-container .btn-primary:hover {
+  background-color: #0056b3 !important;
+  transform: translateY(-2px) !important;
+}
+
+.dashboard-container .btn-secondary {
+  background-color: #6c757d !important;
+  color: #ffffff !important;
+}
+
+.dashboard-container .btn-success {
+  background-color: #28a745 !important;
+  color: #ffffff !important;
+}
+
+.dashboard-container .btn-danger {
+  background-color: #dc3545 !important;
+  color: #ffffff !important;
+}
+
+/* Texto de ayuda y descripciones */
+.dashboard-container .help-text,
+.dashboard-container .form-help,
+.dashboard-container .description,
+.dashboard-container .text-muted {
+  color: #6c757d !important;
+  font-size: 12px !important;
+  margin-top: 4px !important;
+}
+
+/* Cards de evaluación */
+.dashboard-container .card,
+.dashboard-container .evaluacion-card {
+  background-color: #ffffff !important;
+  border: 1px solid #e9ecef !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  padding: 20px !important;
+}
+
+.dashboard-container .card-header,
+.dashboard-container .card-title {
+  color: #2c3e50 !important;
+  font-weight: 700 !important;
+  border-bottom: 1px solid #e9ecef !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 16px !important;
+}
+
+.dashboard-container .card-body,
+.dashboard-container .card-content {
+  color: #495057 !important;
+}
+
+/* Tabs y navegación */
+.dashboard-container .nav-tabs .nav-link {
+  color: #495057 !important;
+  background-color: #f8f9fa !important;
+  border: 1px solid #e9ecef !important;
+}
+
+.dashboard-container .nav-tabs .nav-link.active {
+  color: #007bff !important;
+  background-color: #ffffff !important;
+  border-bottom-color: transparent !important;
+}
+
+/* Alertas y mensajes */
+.dashboard-container .alert {
+  padding: 16px !important;
+  border-radius: 8px !important;
+  margin-bottom: 20px !important;
+}
+
+.dashboard-container .alert-success {
+  background-color: #d4edda !important;
+  color: #155724 !important;
+  border: 1px solid #c3e6cb !important;
+}
+
+.dashboard-container .alert-warning {
+  background-color: #fff3cd !important;
+  color: #856404 !important;
+  border: 1px solid #ffeaa7 !important;
+}
+
+.dashboard-container .alert-danger {
+  background-color: #f8d7da !important;
+  color: #721c24 !important;
+  border: 1px solid #f5c6cb !important;
+}
+
+.dashboard-container .alert-info {
+  background-color: #cce7ff !important;
+  color: #004085 !important;
+  border: 1px solid #b6d7ff !important;
 }

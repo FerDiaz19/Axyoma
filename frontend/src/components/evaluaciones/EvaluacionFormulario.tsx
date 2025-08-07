@@ -425,7 +425,7 @@ interface EvaluacionFormularioProps {
     evaluacion: Evaluacion | null;
     onClose: () => void;
     tiposEvaluacion: TipoEvaluacion[];
-    user: { nivel_usuario: string; empresa_id?: number; user_id?: number };
+    user: { nivel_usuario: string; empresa_id?: number; user_id?: number; profile_id?: number };
     darkTheme?: boolean;
 }
 
@@ -497,7 +497,7 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
                 tipo_evaluacion_id: tipoPornivel_usuario,
                 secciones: [],
                 empresa_id: user?.nivel_usuario !== 'superadmin' ? user?.empresa_id : null,
-                creado_por_id: user?.user_id,
+                creado_por_id: user?.profile_id, // Usar profile_id en lugar de user_id
             });
         }
     }, [evaluacion, tiposEvaluacion, user]);
@@ -571,6 +571,7 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
+        
         try {
             const dataToSubmit: EvaluacionRequest = { ...formData,
                 secciones: formData.secciones || [],
@@ -599,11 +600,18 @@ const EvaluacionFormulario: React.FC<EvaluacionFormularioProps> = ({ evaluacion,
             // Mostrar más detalles del error para debugging
             if (error instanceof Error && 'response' in error) {
                 const axiosError = error as any;
+                console.log('Respuesta completa del servidor:', axiosError.response);
                 if (axiosError.response?.data) {
-                    console.error('Detalles del error:', axiosError.response.data);
+                    console.log('Detalles del error:', axiosError.response.data);
+                    
+                    // Si hay detalles específicos de validación, mostrarlos
+                    if (axiosError.response.data.details) {
+                        console.log('Errores de validación específicos:');
+                        console.log(JSON.stringify(axiosError.response.data.details, null, 2));
+                    }
                 }
                 if (axiosError.response?.status === 400) {
-                    console.error('Error 400 - Datos inválidos. Revisa los campos requeridos.');
+                    console.log('Error 400 - Datos inválidos. Revisa los campos requeridos.');
                 }
             }
         } finally {

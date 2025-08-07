@@ -14,6 +14,13 @@ interface UsuarioPlanta {
   fecha_creacion?: string;
 }
 
+interface InfoPlantas {
+  total_plantas_empresa: number;
+  plantas_con_usuarios: number;
+  planta_principal_sin_usuario: boolean;
+  mensaje: string;
+}
+
 interface CredencialUsuario {
   planta_id: number;
   planta_nombre: string;
@@ -34,25 +41,36 @@ interface UsuariosPlantasViewProps {
 const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) => {
   const [usuarios, setUsuarios] = useState<UsuarioPlanta[]>([]);
   const [credenciales, setCredenciales] = useState<CredencialUsuario[]>([]);
+  const [infoPlantas, setInfoPlantas] = useState<InfoPlantas | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [vistaActual, setVistaActual] = useState<'usuarios' | 'credenciales'>('usuarios');
   const [passwordResetData, setPasswordResetData] = useState<any>(null);
 
-  useEffect(() => {
-    if (empresaId) {
-      cargarUsuarios();
-    }
-  }, [empresaId]); // Solo dependemos de empresaId para evitar bucles infinitos
-
-  const cargarUsuarios = async () => {
+  const cargarUsuarios = React.useCallback(async () => {
     try {
       setError(null);
       console.log('Cargando usuarios de planta para empresa:', empresaId);
       
       const response = await api.get(`/plantas/usuarios-planta/?empresa_id=${empresaId}`);
-      console.log('Usuarios obtenidos:', response.data);
-      setUsuarios(response.data);
+      console.log('Respuesta completa:', response.data);
+      
+      // Manejar la nueva estructura de respuesta
+      if (response.data.usuarios) {
+        setUsuarios(response.data.usuarios);
+        // Guardar información adicional
+        if (response.data.info) {
+          setInfoPlantas(response.data.info);
+          console.log('Info adicional:', response.data.info);
+          if (response.data.info.planta_principal_sin_usuario) {
+            console.log('Información: La Planta Principal no requiere usuario específico');
+          }
+        }
+      } else {
+        // Compatibilidad con respuesta anterior
+        setUsuarios(response.data);
+        setInfoPlantas(null);
+      }
     } catch (error: any) {
       console.error('Error cargando usuarios:', error);
       
@@ -64,7 +82,13 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
     } finally {
       setLoading(false);
     }
-  };
+  }, [empresaId]);
+
+  useEffect(() => {
+    if (empresaId) {
+      cargarUsuarios();
+    }
+  }, [empresaId, cargarUsuarios]);
 
   const cargarCredenciales = async () => {
     try {
@@ -166,10 +190,25 @@ const UsuariosPlantasView: React.FC<UsuariosPlantasViewProps> = ({ empresaId }) 
             <p className="subtitle">Administradores de planta activos</p>
           </div>
 
+          {/* Mensaje informativo sobre la Planta Principal */}
+          {infoPlantas && infoPlantas.planta_principal_sin_usuario && (
+            <div className="info-message">
+              <div className="info-icon">ℹ️</div>
+              <div className="info-content">
+                <strong>Información:</strong> {infoPlantas.mensaje}
+                <br />
+                <small>
+                  Total de plantas: {infoPlantas.total_plantas_empresa} | 
+                  Plantas con usuarios: {infoPlantas.plantas_con_usuarios}
+                </small>
+              </div>
+            </div>
+          )}
+
           {usuarios.length === 0 ? (
             <div className="empty-state">
               <p>No hay usuarios de planta registrados</p>
-              <p className="help-text">Los usuarios se crean automáticamente al crear plantas</p>
+              <p className="help-text">Los usuarios se crean automáticamente al crear plantas adicionales</p>
             </div>
           ) : (
             <div className="usuarios-grid">

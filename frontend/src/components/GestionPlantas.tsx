@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../api';
-import { crearPlanta, actualizarPlanta } from '../services/organizacionService';
+import { crearPlanta, actualizarPlanta, eliminarPlantaCompleta } from '../services/organizacionService';
+import '../css/GestionPlantas.css';
 
 interface Planta {
   planta_id: number;
@@ -13,9 +14,10 @@ interface Planta {
 
 interface GestionPlantasProps {
   empresaId: number;
+  userData?: any; // Agregar userData para verificar permisos
 }
 
-const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
+const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId, userData }) => {
   const [plantas, setPlantas] = useState<Planta[]>([]);
   const [plantasFiltradas, setPlantasFiltradas] = useState<Planta[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,27 +31,20 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
     direccion: '',
   });
 
-  useEffect(() => {
-    if (empresaId) {
-      cargarPlantas();
-    }
-  }, [empresaId]); // Solo dependemos de empresaId para evitar bucles infinitos
+  // Verificar si el usuario puede eliminar plantas (superadmin o admin de empresa)
+  const canDeletePlants = userData?.nivel_usuario?.toLowerCase() === 'superadmin' || 
+                          userData?.nivel_usuario?.toLowerCase() === 'super_admin' || 
+                          userData?.nivel_usuario?.toLowerCase() === 'super-admin' ||
+                          userData?.nivel_usuario?.toLowerCase() === 'admin_empresa' ||
+                          userData?.nivel_usuario?.toLowerCase() === 'admin-empresa' ||
+                          userData?.tipo_dashboard?.toLowerCase() === 'admin-empresa';
+  
+  console.log('🔍 Debug userData en GestionPlantas:', userData);
+  console.log('🔍 Debug nivel_usuario:', userData?.nivel_usuario);
+  console.log('🔍 Debug tipo_dashboard:', userData?.tipo_dashboard);
+  console.log('🔍 Debug canDeletePlants:', canDeletePlants);
 
-  useEffect(() => {
-    // Aplicar filtros
-    let plantasFiltradas = plantas;
-
-    if (filtroNombre.trim()) {
-      plantasFiltradas = plantasFiltradas.filter(planta =>
-        planta.nombre.toLowerCase().includes(filtroNombre.toLowerCase()) ||
-        planta.direccion.toLowerCase().includes(filtroNombre.toLowerCase())
-      );
-    }
-
-    setPlantasFiltradas(plantasFiltradas);
-  }, [plantas, filtroNombre]);
-
-  const cargarPlantas = async () => {
+  const cargarPlantas = useCallback(async () => {
     try {
       setError(null);
       console.log('🔍 Cargando plantas para empresa:', empresaId);
@@ -80,7 +75,27 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [empresaId]); // Dependencias del useCallback
+
+  useEffect(() => {
+    if (empresaId) {
+      cargarPlantas();
+    }
+  }, [empresaId, cargarPlantas]); // Incluir cargarPlantas en las dependencias
+
+  useEffect(() => {
+    // Aplicar filtros
+    let plantasFiltradas = plantas;
+
+    if (filtroNombre.trim()) {
+      plantasFiltradas = plantasFiltradas.filter(planta =>
+        planta.nombre.toLowerCase().includes(filtroNombre.toLowerCase()) ||
+        planta.direccion.toLowerCase().includes(filtroNombre.toLowerCase())
+      );
+    }
+
+    setPlantasFiltradas(plantasFiltradas);
+  }, [plantas, filtroNombre]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,6 +162,43 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
         alert(`Error al ${accion} la planta: ${errorMessage}`);
       } finally {
         setSaving(false);
+      }
+    }
+  };
+
+  const handleEliminarPlanta = async (planta: Planta) => {
+    const confirmMessage = `⚠️ ELIMINAR COMPLETAMENTE LA PLANTA "${planta.nombre}"
+
+Esta acción es IRREVERSIBLE y eliminará:
+• La planta
+• Todos los departamentos
+• Todos los puestos de trabajo
+• Todos los empleados
+• El administrador de planta
+
+¿Está ABSOLUTAMENTE SEGURO de que desea continuar?`;
+
+    if (window.confirm(confirmMessage)) {
+      const finalConfirmation = window.confirm(
+        `🚨 ÚLTIMA CONFIRMACIÓN\n\n¿Realmente desea ELIMINAR PERMANENTEMENTE la planta "${planta.nombre}" y TODOS sus datos relacionados?\n\nEsta acción NO se puede deshacer.`
+      );
+
+      if (finalConfirmation) {
+        try {
+          setError(null);
+          setSaving(true);
+
+          await eliminarPlantaCompleta(planta.planta_id);
+          await cargarPlantas();
+          alert(`✅ Planta "${planta.nombre}" eliminada exitosamente junto con todos sus datos relacionados.`);
+        } catch (error: any) {
+          console.error('Error eliminando planta:', error);
+          const errorMessage = error.message || 'Error al eliminar la planta';
+          setError(errorMessage);
+          alert(`❌ Error al eliminar la planta: ${errorMessage}`);
+        } finally {
+          setSaving(false);
+        }
       }
     }
   };
@@ -224,6 +276,21 @@ const GestionPlantas: React.FC<GestionPlantasProps> = ({ empresaId }) => {
               >
                 {planta.status ? 'Suspender' : 'Activar'}
               </button>
+              {canDeletePlants ? (
+                <button
+                  className="btn btn-danger"
+                  onClick={() => handleEliminarPlanta(planta)}
+                  disabled={saving}
+                  title="Eliminar planta completa"
+                  style={{ marginLeft: '8px' }}
+                >
+                  🗑️ Eliminar
+                </button>
+              ) : (
+                <span style={{ fontSize: '12px', color: '#888', marginLeft: '8px' }}>
+                  (Solo administradores pueden eliminar)
+                </span>
+              )}
             </div>
           </div>
         ))}

@@ -81,6 +81,26 @@ export const eliminarPlanta = async (id: number): Promise<void> => {
   await api.delete(`/plantas/${id}/`);
 };
 
+// Nuevo método para eliminación completa de plantas (admin-empresa y superadmin)
+export const eliminarPlantaCompleta = async (plantaId: number): Promise<any> => {
+  try {
+    console.log('🗑️ Eliminando planta completa ID:', plantaId);
+    const response = await api.delete(`/plantas/${plantaId}/eliminar_planta_completa/`);
+    console.log('✅ Planta eliminada exitosamente:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error eliminando planta:', error);
+    if (error.response?.data?.error) {
+      throw new Error(error.response.data.error);
+    } else if (error.response?.status === 403) {
+      throw new Error('No tiene permisos para eliminar plantas.');
+    } else if (error.response?.status === 404) {
+      throw new Error('Planta no encontrada');
+    }
+    throw new Error('Error al eliminar la planta');
+  }
+};
+
 // Servicios para Departamentos
 export const obtenerDepartamentos = async (): Promise<Departamento[]> => {
   const response = await api.get('/departamentos/');

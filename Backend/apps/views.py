@@ -5,6 +5,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import ValidationError
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from django.utils import timezone
@@ -88,6 +89,19 @@ class SuscripcionBasicaViewSet(viewsets.ViewSet):
             return Response({
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def test_plantas_simple(request):
+    """Test endpoint sin autenticación para verificar que funciona"""
+    print(f"🔥 DEBUG: test_plantas_simple llamado desde {request.META.get('HTTP_USER_AGENT', 'unknown')}")
+    plantas_count = Planta.objects.count()
+    print(f"🔥 DEBUG: Total plantas en BD: {plantas_count}")
+    return Response({
+        'message': 'Test endpoint funcionando',
+        'plantas_count': plantas_count,
+        'timestamp': timezone.now().isoformat()
+    })
 
 @method_decorator(csrf_exempt, name='dispatch')
 class AuthViewSet(viewsets.ViewSet):
@@ -610,7 +624,7 @@ class EmpleadoViewSet(viewsets.ModelViewSet):
                 if not empresa or empleado.puesto.departamento.planta.empresa != empresa:
                     return Response({'error': 'Sin permisos para este empleado'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario == 'admin-planta':
-                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta=empleado.puesto.departamento.planta)
+                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta_id=empleado.puesto.departamento.planta.planta_id)
                 if not admin_plantas.exists():
                     return Response({'error': 'Sin permisos para este empleado'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario != 'superadmin':
@@ -827,9 +841,9 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
             # Activar/desactivar cuenta del administrador de planta
             try:
-                admin_planta = AdminPlanta.objects.get(planta=planta)
-                admin_planta.usuario.user.is_active = nuevo_status
-                admin_planta.usuario.user.save()
+                admin_planta = AdminPlanta.objects.get(planta_id=planta.planta_id)
+                admin_planta.usuario.user_id.is_active = nuevo_status
+                admin_planta.usuario.user_id.save()
                 admin_planta.status = nuevo_status
                 admin_planta.save()
             except AdminPlanta.DoesNotExist:
@@ -846,6 +860,89 @@ class PlantaViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Planta no encontrada'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['delete'])
+    def eliminar_planta_completa(self, request, pk=None):
+        """Eliminar completamente una planta y todas sus entidades relacionadas (admin-empresa y superadmin)"""
+        print(f"🔥 DEBUG: eliminar_planta_completa llamado con pk={pk}")
+        print(f"🔥 DEBUG: user={request.user}")
+        print(f"🔥 DEBUG: method={request.method}")
+        
+        try:
+            # Obtener planta
+            planta = Planta.objects.get(planta_id=pk)
+            user = request.user
+            
+            print(f"🔥 DEBUG: planta encontrada={planta.nombre}")
+            print(f"🔥 DEBUG: user.perfil exists={hasattr(user, 'perfil')}")
+            
+            # Verificar permisos
+            if not hasattr(user, 'perfil'):
+                return Response({'error': 'Usuario sin perfil'}, status=status.HTTP_403_FORBIDDEN)
+
+            print(f"🔥 DEBUG: nivel_usuario={user.perfil.nivel_usuario}")
+
+            # Solo superadmin y admin-empresa pueden eliminar plantas
+            if user.perfil.nivel_usuario == 'admin-empresa':
+                empresa = Empresa.objects.filter(administrador_id=user.perfil.id).first()
+                print(f"🔥 DEBUG: empresa del admin={empresa}")
+                print(f"🔥 DEBUG: planta.empresa={planta.empresa}")
+                if not empresa or planta.empresa != empresa:
+                    return Response({'error': 'Sin permisos para esta planta'}, status=status.HTTP_403_FORBIDDEN)
+            elif user.perfil.nivel_usuario != 'superadmin':
+                return Response({'error': 'Sin permisos para eliminar plantas'}, status=status.HTTP_403_FORBIDDEN)
+
+            print(f"🔥 DEBUG: Permisos OK, procediendo a eliminar...")
+            
+            nombre_planta = planta.nombre
+            empresa_nombre = planta.empresa.nombre
+
+            # Eliminar en orden inverso para respetar las foreign keys
+
+            # 1. Eliminar empleados (a través de puesto -> departamento -> planta)
+            empleados = Empleado.objects.filter(puesto__departamento__planta=planta)
+            empleados_count = empleados.count()
+            empleados.delete()
+
+            # 2. Eliminar puestos
+            puestos = Puesto.objects.filter(departamento__planta=planta)
+            puestos_count = puestos.count()
+            puestos.delete()
+
+            # 3. Eliminar departamentos
+            departamentos = Departamento.objects.filter(planta=planta)
+            departamentos_count = departamentos.count()
+            departamentos.delete()
+
+            # 4. Eliminar administrador de planta y su usuario
+            admin_planta = None
+            try:
+                admin_planta = AdminPlanta.objects.get(planta_id=planta.planta_id)
+                if admin_planta.usuario.user_id:  # Corregir el acceso al user
+                    User.objects.get(id=admin_planta.usuario.user_id).delete()
+                admin_planta.usuario.delete()
+                admin_planta.delete()
+            except AdminPlanta.DoesNotExist:
+                pass
+
+            # 5. Eliminar planta
+            planta.delete()
+
+            return Response({
+                'message': f'Planta "{nombre_planta}" de la empresa "{empresa_nombre}" eliminada exitosamente',
+                'entidades_eliminadas': {
+                    'planta': 1,
+                    'departamentos': departamentos_count,
+                    'puestos': puestos_count,
+                    'empleados': empleados_count,
+                    'admin_planta': 1 if admin_planta else 0
+                }
+            })
+
+        except Planta.DoesNotExist:
+            return Response({'error': 'Planta no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'Error eliminando planta: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'], url_path='usuarios-planta')
     def usuarios_planta(self, request):
@@ -877,28 +974,47 @@ class PlantaViewSet(viewsets.ModelViewSet):
             else:
                 return Response({'error': 'Sin permisos'}, status=status.HTTP_403_FORBIDDEN)
 
-            # Obtener plantas de la empresa
-            plantas = Planta.objects.filter(empresa=empresa, status=True)
+            # Obtener plantas de la empresa (excluyendo la Planta Principal que no debe tener usuarios)
+            plantas = Planta.objects.filter(empresa=empresa, status=True).exclude(nombre='Planta Principal')
 
             # Obtener usuarios administradores de estas plantas
-            admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user', 'planta')
+            admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user_id', 'planta')
 
             usuarios_data = []
             for admin_planta in admin_plantas:
                 usuario_data = {
-                    'usuario_id': admin_planta.usuario.user.id,
-                    'username': admin_planta.usuario.user.username,
-                    'email': admin_planta.usuario.user.email,
-                    'first_name': admin_planta.usuario.user.first_name,
-                    'last_name': admin_planta.usuario.user.last_name,
-                    'is_active': admin_planta.usuario.user.is_active,
+                    'usuario_id': admin_planta.usuario.user_id.id,
+                    'username': admin_planta.usuario.user_id.username,
+                    'email': admin_planta.usuario.user_id.email,
+                    'first_name': admin_planta.usuario.user_id.first_name,
+                    'last_name': admin_planta.usuario.user_id.last_name,
+                    'is_active': admin_planta.usuario.user_id.is_active,
                     'planta_id': admin_planta.planta.planta_id,
                     'planta_nombre': admin_planta.planta.nombre,
-                    'fecha_creacion': admin_planta.usuario.user.date_joined.isoformat() if admin_planta.usuario.user.date_joined else None
+                    'fecha_creacion': admin_planta.usuario.user_id.date_joined.isoformat() if admin_planta.usuario.user_id.date_joined else None
                 }
                 usuarios_data.append(usuario_data)
 
-            return Response(usuarios_data)
+            # Agregar información sobre plantas sin usuarios (como la Planta Principal)
+            plantas_sin_usuarios = Planta.objects.filter(
+                empresa=empresa, 
+                status=True,
+                nombre='Planta Principal'
+            ).exclude(
+                planta_id__in=admin_plantas.values_list('planta__planta_id', flat=True)
+            )
+
+            info_adicional = {
+                'total_plantas_empresa': Planta.objects.filter(empresa=empresa, status=True).count(),
+                'plantas_con_usuarios': len(usuarios_data),
+                'planta_principal_sin_usuario': plantas_sin_usuarios.exists(),
+                'mensaje': 'La Planta Principal no requiere usuario específico, es administrada por el admin de empresa.'
+            }
+
+            return Response({
+                'usuarios': usuarios_data,
+                'info': info_adicional
+            })
 
         except Exception as e:
             import traceback
@@ -928,7 +1044,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
             plantas = Planta.objects.filter(empresa=empresa, status=True)
 
             # Obtener usuarios administradores de estas plantas
-            admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user', 'planta')
+            admin_plantas = AdminPlanta.objects.filter(planta__in=plantas).select_related('usuario__user_id', 'planta')
 
             credenciales_data = []
             for admin_planta in admin_plantas:
@@ -937,12 +1053,12 @@ class PlantaViewSet(viewsets.ModelViewSet):
                 credencial_data = {
                     'planta_id': admin_planta.planta.planta_id,
                     'planta_nombre': admin_planta.planta.nombre,
-                    'usuario_id': admin_planta.usuario.user.id,
-                    'username': admin_planta.usuario.user.username,
-                    'email': admin_planta.usuario.user.email,
-                    'nombre_completo': f"{admin_planta.usuario.user.first_name} {admin_planta.usuario.user.last_name}",
-                    'is_active': admin_planta.usuario.user.is_active,
-                    'fecha_creacion': admin_planta.usuario.user.date_joined.isoformat() if admin_planta.usuario.user.date_joined else None,
+                    'usuario_id': admin_planta.usuario.user_id.id,
+                    'username': admin_planta.usuario.user_id.username,
+                    'email': admin_planta.usuario.user_id.email,
+                    'nombre_completo': f"{admin_planta.usuario.user_id.first_name} {admin_planta.usuario.user_id.last_name}",
+                    'is_active': admin_planta.usuario.user_id.is_active,
+                    'fecha_creacion': admin_planta.usuario.user_id.date_joined.isoformat() if admin_planta.usuario.user_id.date_joined else None,
                     'password_visible': '⚠️ Revise los logs del servidor para la contraseña original',
                     'instrucciones': 'Las contraseñas se generan automáticamente al crear la planta y aparecen en los logs del servidor Django'
                 }
@@ -981,7 +1097,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
             from django.contrib.auth.models import User
             try:
                 usuario_target = User.objects.get(id=usuario_id)
-                perfil_target = PerfilUsuario.objects.get(user=usuario_target)
+                perfil_target = PerfilUsuario.objects.get(user_id=usuario_target)
                 admin_planta = AdminPlanta.objects.get(usuario=perfil_target)
 
                 if admin_planta.planta.empresa != empresa:
@@ -1035,7 +1151,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
             # Verificar que es un usuario de planta de la empresa correcta
             if user.perfil.nivel_usuario == 'admin-empresa':
-                perfil_planta = PerfilUsuario.objects.get(user=usuario_planta)
+                perfil_planta = PerfilUsuario.objects.get(user_id=usuario_planta)
                 admin_planta = AdminPlanta.objects.get(usuario=perfil_planta)
                 empresa_admin = Empresa.objects.filter(administrador_id=user.perfil.id).first()
 
@@ -1166,7 +1282,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
             from django.contrib.auth.models import User
             try:
                 usuario_target = User.objects.get(id=usuario_id)
-                perfil_target = PerfilUsuario.objects.get(user=usuario_target)
+                perfil_target = PerfilUsuario.objects.get(user_id=usuario_target)
             except (User.DoesNotExist, PerfilUsuario.DoesNotExist):
                 return Response({'error': 'Usuario no encontrado'},
                     status=status.HTTP_404_NOT_FOUND)
@@ -1181,7 +1297,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST)
 
             # Verificar que la planta no tenga ya un usuario asignado
-            if AdminPlanta.objects.filter(planta=planta).exists():
+            if AdminPlanta.objects.filter(planta_id=planta.planta_id).exists():
                 return Response({'error': f'La planta {planta.nombre} ya tiene un usuario asignado'},
                     status=status.HTTP_400_BAD_REQUEST)
 
@@ -1271,7 +1387,7 @@ class PlantaViewSet(viewsets.ModelViewSet):
 
             plantas_sin_usuario = []
             for planta in plantas_empresa:
-                if not AdminPlanta.objects.filter(planta=planta).exists():
+                if not AdminPlanta.objects.filter(planta_id=planta.planta_id).exists():
                     plantas_sin_usuario.append({
                         'planta_id': planta.planta_id,
                         'nombre': planta.nombre,
@@ -1357,7 +1473,7 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
                 except Empresa.DoesNotExist:
                     raise ValidationError("Usuario sin empresa asignada")
             elif user.perfil.nivel_usuario == 'admin-planta':
-                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta=planta)
+                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta_id=planta.planta_id)
                 if not admin_plantas.exists():
                     raise ValidationError("No tiene acceso a esta planta")
 
@@ -1392,7 +1508,7 @@ class DepartamentoViewSet(viewsets.ModelViewSet):
                 if not empresa or departamento.planta.empresa != empresa:
                     return Response({'error': 'Sin permisos para este departamento'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario == 'admin-planta':
-                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta=departamento.planta)
+                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta_id=departamento.planta.planta_id)
                 if not admin_plantas.exists():
                     return Response({'error': 'Sin permisos para este departamento'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario != 'superadmin':
@@ -1478,7 +1594,7 @@ class PuestoViewSet(viewsets.ModelViewSet):
                 except Empresa.DoesNotExist:
                     raise ValidationError("Usuario sin empresa asignada")
             elif user.perfil.nivel_usuario == 'admin-planta':
-                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta=departamento.planta)
+                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta_id=departamento.planta.planta_id)
                 if not admin_plantas.exists():
                     raise ValidationError("No tiene acceso a este departamento")
 
@@ -1513,7 +1629,7 @@ class PuestoViewSet(viewsets.ModelViewSet):
                 if not empresa or puesto.departamento.planta.empresa != empresa:
                     return Response({'error': 'Sin permisos para este puesto'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario == 'admin-planta':
-                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta=puesto.departamento.planta)
+                admin_plantas = AdminPlanta.objects.filter(usuario=user.perfil, planta_id=puesto.departamento.planta.planta_id)
                 if not admin_plantas.exists():
                     return Response({'error': 'Sin permisos para este puesto'}, status=status.HTTP_403_FORBIDDEN)
             elif user.perfil.nivel_usuario != 'superadmin':
@@ -1613,7 +1729,7 @@ class EstructuraViewSet(viewsets.ViewSet):
 
                 usuarios_planta = []
                 for planta in plantas:
-                    admin_planta = AdminPlanta.objects.filter(planta=planta).first()
+                    admin_planta = AdminPlanta.objects.filter(planta_id=planta.planta_id).first()
                     if admin_planta:
                         usuario = admin_planta.usuario.user
                         usuarios_planta.append({
@@ -2338,7 +2454,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
 
             # Verificar si es admin de empresa
             try:
-                perfil = PerfilUsuario.objects.get(user=user)
+                perfil = PerfilUsuario.objects.get(user_id=user)
                 if perfil.nivel_usuario == 'admin-empresa':
                     empresa = Empresa.objects.get(administrador=perfil)
                     return Response({
@@ -2371,63 +2487,98 @@ class SuperAdminViewSet(viewsets.ViewSet):
                           status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=False, methods=['get'])
+    def test_simple(self, request):
+        """Test endpoint simple para verificar que SuperAdmin funciona"""
+        print(f"🔥 DEBUG: test_simple llamado")
+        self._verify_superadmin(request.user)
+        print(f"🔥 DEBUG: SuperAdmin verificado en test_simple")
+        return Response({'message': 'SuperAdmin test OK', 'plantas_count': Planta.objects.count()})
+
+    @action(detail=False, methods=['get'])
     def listar_todas_plantas(self, request):
         """Listar todas las plantas del sistema con filtros"""
-        self._verify_superadmin(request.user)
+        print(f"🔥 DEBUG: listar_todas_plantas iniciado")
+        
+        try:
+            self._verify_superadmin(request.user)
+            print(f"🔥 DEBUG: SuperAdmin verificado")
 
-        # Filtros opcionales
-        buscar = request.query_params.get('buscar', '')
-        empresa_id = request.query_params.get('empresa_id', '')
-        status_filter = request.query_params.get('status', '')
+            # Filtros opcionales
+            buscar = request.query_params.get('buscar', '')
+            empresa_id = request.query_params.get('empresa_id', '')
+            status_filter = request.query_params.get('status', '')
+            print(f"🔥 DEBUG: Filtros - buscar={buscar}, empresa_id={empresa_id}, status={status_filter}")
 
-        plantas = Planta.objects.all()
+            plantas = Planta.objects.all()
+            print(f"🔥 DEBUG: Total plantas en BD: {plantas.count()}")
 
-        if buscar:
-            plantas = plantas.filter(nombre__icontains=buscar)
+            if buscar:
+                plantas = plantas.filter(nombre__icontains=buscar)
 
-        if empresa_id:
-            plantas = plantas.filter(empresa_id=empresa_id)
+            if empresa_id:
+                plantas = plantas.filter(empresa_id=empresa_id)
 
-        if status_filter:
-            status_bool = status_filter.lower() == 'true'
-            plantas = plantas.filter(status=status_bool)
+            if status_filter:
+                status_bool = status_filter.lower() == 'true'
+                plantas = plantas.filter(status=status_bool)
 
-        plantas_data = []
-        for planta in plantas:
-            # Obtener admin de planta
-            admin_info = None
-            try:
-                admin_planta = AdminPlanta.objects.get(planta=planta)
-                admin_user = admin_planta.usuario.user
-                admin_info = {
-                    'id': admin_user.id,
-                    'username': admin_user.username,
-                    'email': admin_user.email,
-                    'nombre_completo': f"{admin_planta.usuario.nombre} {admin_planta.usuario.apellido_paterno}",
-                    'activo': admin_user.is_active
-                }
-            except AdminPlanta.DoesNotExist:
-                pass
+            plantas_data = []
+            for planta in plantas:
+                print(f"🔥 DEBUG: Procesando planta: {planta.nombre}")
+                
+                # Obtener admin de planta de forma segura
+                admin_info = None
+                try:
+                    admin_planta = AdminPlanta.objects.get(planta_id=planta.planta_id)
+                    if admin_planta.usuario and admin_planta.usuario.user_id:
+                        admin_user = admin_planta.usuario.user_id
+                        admin_info = {
+                            'id': admin_user.id,
+                            'username': admin_user.username,
+                            'email': admin_user.email,
+                            'nombre_completo': f"{admin_planta.usuario.nombre} {admin_planta.usuario.apellido_paterno}",
+                            'activo': admin_user.is_active
+                        }
+                except AdminPlanta.DoesNotExist:
+                    print(f"🔥 DEBUG: Sin admin para planta {planta.nombre}")
+                except Exception as e:
+                    print(f"🔥 DEBUG: Error admin info: {e}")
 
-            # Contar entidades relacionadas
-            departamentos_count = Departamento.objects.filter(planta=planta).count()
-            empleados_count = Empleado.objects.filter(puesto__departamento__planta=planta).count()
+                # Contar entidades de forma segura
+                try:
+                    departamentos_count = Departamento.objects.filter(planta_id=planta.planta_id).count()
+                    empleados_count = Empleado.objects.filter(puesto__departamento__planta_id=planta.planta_id).count()
+                except Exception as e:
+                    print(f"🔥 DEBUG: Error contando entidades: {e}")
+                    departamentos_count = 0
+                    empleados_count = 0
+                
+                plantas_data.append({
+                    'planta_id': planta.planta_id,
+                    'nombre': planta.nombre,
+                    'direccion': planta.direccion or '',
+                    'telefono': None,
+                    'status': planta.status,
+                    'empresa': {
+                        'id': planta.empresa.empresa_id,
+                        'nombre': planta.empresa.nombre,
+                        'status': planta.empresa.status
+                    },
+                    'administrador': admin_info,
+                    'departamentos_count': departamentos_count,
+                    'empleados_count': empleados_count,
+                })
 
-            plantas_data.append({
-                'planta_id': planta.planta_id,
-                'nombre': planta.nombre,
-                'direccion': planta.direccion,
-                'telefono': None,  # El modelo Planta no tiene campo telefono
-                'status': planta.status,
-                'empresa': {
-                    'id': planta.empresa.empresa_id,
-                    'nombre': planta.empresa.nombre,
-                    'status': planta.empresa.status
-                },
-                'administrador': admin_info,
-                'departamentos_count': departamentos_count,
-                'empleados_count': empleados_count,
-            })
+            print(f"🔥 DEBUG: Procesamiento completado. Total: {len(plantas_data)}")
+            print(f"🔥 DEBUG: Primeras plantas: {[p['nombre'] for p in plantas_data[:3]]}")
+            print(f"🔥 DEBUG: Response data length: {len(str(plantas_data))}")
+            return Response(plantas_data)
+            
+        except Exception as e:
+            print(f"🔥 DEBUG ERROR: {type(e).__name__}: {str(e)}")
+            import traceback
+            print(f"🔥 DEBUG TRACEBACK: {traceback.format_exc()}")
+            return Response({'error': f'Error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response({
             'plantas': plantas_data,
@@ -2746,12 +2897,16 @@ class SuperAdminViewSet(viewsets.ViewSet):
 
             # Activar/desactivar cuenta del administrador de planta
             try:
-                admin_planta = AdminPlanta.objects.get(planta=planta)
-                admin_planta.usuario.user.is_active = nuevo_status
-                admin_planta.usuario.user.save()
+                admin_planta = AdminPlanta.objects.get(planta_id=planta.planta_id)
+                if admin_planta.usuario.user_id:
+                    admin_user = User.objects.get(id=admin_planta.usuario.user_id)
+                    admin_user.is_active = nuevo_status
+                    admin_user.save()
                 admin_planta.status = nuevo_status
                 admin_planta.save()
             except AdminPlanta.DoesNotExist:
+                pass
+            except User.DoesNotExist:
                 pass
 
             return Response({
@@ -2802,12 +2957,14 @@ class SuperAdminViewSet(viewsets.ViewSet):
             # 4. Eliminar administrador de planta y su usuario
             admin_planta = None
             try:
-                admin_planta = AdminPlanta.objects.get(planta=planta)
-                if admin_planta.usuario.user:
-                    admin_planta.usuario.user.delete()
+                admin_planta = AdminPlanta.objects.get(planta_id=planta.planta_id)
+                if admin_planta.usuario.user_id:
+                    User.objects.get(id=admin_planta.usuario.user_id).delete()
                 admin_planta.usuario.delete()
                 admin_planta.delete()
             except AdminPlanta.DoesNotExist:
+                pass
+            except User.DoesNotExist:
                 pass
 
             # 5. Eliminar planta
@@ -3119,7 +3276,7 @@ class SuperAdminViewSet(viewsets.ViewSet):
         try:
             from django.contrib.auth.models import User
             user = User.objects.get(id=user_id)
-            perfil = PerfilUsuario.objects.get(user=user)
+            perfil = PerfilUsuario.objects.get(user_id=user)
 
             print(f"🔧 DEBUG: Usuario encontrado: {user.username}")
             print(f"🔧 DEBUG: Datos originales - nombre: {perfil.nombre}, apellido_paterno: {perfil.apellido_paterno}, apellido_materno: {perfil.apellido_materno}")

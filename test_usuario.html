@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Usuario Actual</title>
+</head>
+<body>
+    <h1>Test de Usuario Actual</h1>
+    <div id="resultado"></div>
+
+    <script>
+        // Función para hacer login y obtener datos del usuario
+        async function testUsuario() {
+            const resultado = document.getElementById('resultado');
+            
+            try {
+                // Obtener token del localStorage
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    resultado.innerHTML = '<p style="color: red;">❌ No hay token en localStorage</p>';
+                    return;
+                }
+
+                console.log('🔑 Token encontrado:', token.substring(0, 20) + '...');
+
+                // Hacer request al endpoint de perfil de usuario
+                const response = await fetch('http://localhost:8000/api/auth/user_profile/', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Token ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const userData = await response.json();
+                    console.log('👤 Datos del usuario:', userData);
+                    
+                    resultado.innerHTML = `
+                        <h3>✅ Usuario actual:</h3>
+                        <pre>${JSON.stringify(userData, null, 2)}</pre>
+                        <hr>
+                        <p><strong>nivel_usuario:</strong> ${userData.nivel_usuario}</p>
+                        <p><strong>tipo_dashboard:</strong> ${userData.tipo_dashboard}</p>
+                        <p><strong>Es SuperAdmin?:</strong> ${userData.nivel_usuario?.toLowerCase() === 'superadmin' ? 'SÍ' : 'NO'}</p>
+                    `;
+                } else {
+                    resultado.innerHTML = `<p style="color: red;">❌ Error ${response.status}: ${response.statusText}</p>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultado.innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            }
+        }
+
+        // Ejecutar al cargar la página
+        testUsuario();
+    </script>
+</body>
+</html>

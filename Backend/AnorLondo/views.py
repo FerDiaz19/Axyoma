@@ -54,7 +54,12 @@ class AccesoEvaluacion(generic.View):
 
         # A continuación, toca verificar el estado de la asignación del empleado.
         if asignacion_empleado.status == 'Completada':
-            messages.error(request, 'La evaluación asignada a este token ha sido contestada.')
+            empleado_nombre = asignacion_empleado.empleado.nombre_completo
+            fecha_completado = asignacion_empleado.fecha_completado
+            evaluacion_nombre = asignacion_empleado.asignacion.evaluacion.titulo
+            
+            mensaje_completada = f'La evaluación "{evaluacion_nombre}" ya fue completada por {empleado_nombre} el {fecha_completado.strftime("%d/%m/%Y a las %H:%M")}. Para realizar una nueva evaluación, contacte al administrador para obtener un nuevo token.'
+            messages.warning(request, mensaje_completada)
             return render(request, self.template_name)
 
         # De no haber sido completada verificamos la expiración de la asignación.e
@@ -293,6 +298,9 @@ class EvaluacionCompletada(generic.View):
         except ResultadoEvaluacion.DoesNotExist:
             messages.error(request, 'Ha ocurrido un error al encontrar el resultado de tu evaluación.')
             return redirect(reverse('AnorLondo:AccesoEvaluacion'))
+
+        # Limpiar la caché después de obtener el resultado para evitar mostrar la constancia en sesiones futuras
+        cache.delete(f'resultado')
 
         # Si todo sale bien pasamos la información relevante al contexto.
         self.context = {
