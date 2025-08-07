@@ -31,7 +31,7 @@
 }
 
 * {
-    overflow: hidden;
+    /* overflow: hidden; */
     font-family: 'GemunuLibre', sans-serif;
 }
 
