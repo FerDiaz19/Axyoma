@@ -86,7 +86,7 @@ class EmpresaRegistroSerializer(serializers.ModelSerializer):
 
                 # Crear perfil de usuario
                 user_profile = PerfilUsuario.objects.create(
-                    user=user,
+                    user_id=user,
                     nombre=nombre,
                     apellido_paterno=apellido_paterno,
                     apellido_materno=apellido_materno,

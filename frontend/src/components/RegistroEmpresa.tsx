@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { registrarEmpresa } from '../services/empresaService';
 import PlanSelection from './PlanSelection';
-import '../css/RegistroEmpresa.css';
+import styles from '../css/RegistroEmpresa.module.css';
 
 interface RegistroEmpresaProps {
   onRegistroSuccess: () => void;
@@ -142,24 +142,24 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
   }
 
   return (
-    <div className="registro-container">
-      <form onSubmit={handleSubmit} className="registro-form">
-        <div className="form-header">
+    <div className={styles['registro-container']}>
+      <form onSubmit={handleSubmit} className={styles['registro-form']}>
+        <div className={styles['form-header']}>
           <h2>🏢 Registrar Nueva Empresa</h2>
           <p>Completa el formulario para crear tu cuenta empresarial</p>
         </div>
-        
+
         {error && (
-          <div className="error-message">
+          <div className={styles['error-message']}>
             <span>❌</span>
             {error}
           </div>
         )}
-        
-        <div className="form-section">
+
+        <div className={styles['form-section']}>
           <h3>📋 Datos de la Empresa</h3>
-          
-          <div className="form-group">
+
+          <div className={styles['form-group']}>
             <label htmlFor="nombre">Nombre de la Empresa:</label>
             <input
               type="text"
@@ -171,7 +171,7 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="rfc">RFC:</label>
             <input
               type="text"
@@ -183,7 +183,7 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="direccion">Dirección:</label>
             <textarea
               id="direccion"
@@ -194,7 +194,7 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="email_contacto">Email de Contacto:</label>
             <input
               type="email"
@@ -205,7 +205,7 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="telefono_contacto">Teléfono de Contacto:</label>
             <input
               type="tel"
@@ -216,7 +216,7 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="logotipo">URL del Logotipo:</label>
             <input
               type="url"
@@ -228,11 +228,11 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
           </div>
         </div>
 
-        <div className="form-section">
+        <div className={styles['form-section']}>
           <h3>👤 Datos del Administrador</h3>
           <p>Esta será la cuenta principal para administrar tu empresa</p>
-          
-          <div className="form-group">
+
+          <div className={styles['form-group']}>
             <label htmlFor="admin_username">Usuario:</label>
             <input
               type="text"
@@ -244,7 +244,7 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="admin_password">Contraseña:</label>
             <input
               type="password"
@@ -256,7 +256,7 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="admin_email">Email:</label>
             <input
               type="email"
@@ -268,7 +268,7 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="admin_nombre">Nombre:</label>
             <input
               type="text"
@@ -280,7 +280,7 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="admin_apellido_paterno">Apellido Paterno:</label>
             <input
               type="text"
@@ -292,7 +292,7 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
             />
           </div>
 
-          <div className="form-group">
+          <div className={styles['form-group']}>
             <label htmlFor="admin_apellido_materno">Apellido Materno:</label>
             <input
               type="text"
@@ -304,11 +304,11 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
           </div>
         </div>
 
-        <div className="form-buttons">
-          <button type="submit" disabled={loading} className="btn-submit">
+        <div className={styles['form-buttons']}>
+          <button type="submit" disabled={loading} className={styles['btn-submit']}>
             {loading ? (
               <>
-                <span className="spinner">⏳</span>
+                <span className={styles['spinner']}>⏳</span>
                 Registrando empresa...
               </>
             ) : (
@@ -320,13 +320,13 @@ const RegistroEmpresa: React.FC<RegistroEmpresaProps> = ({ onRegistroSuccess, on
           </button>
         </div>
 
-        <div className="form-footer">
+        <div className={styles['form-footer']}>
           {onSwitchToLogin && (
-            <div className="back-to-login">
-              <button type="button" onClick={onSwitchToLogin} className="btn-back">
+            <div className={styles['back-to-login']}>
+              <button type="button" onClick={onSwitchToLogin} className={styles['btn-back']}>
                 ← Volver al Login
               </button>
-              <p>¿Ya tienes cuenta? <span onClick={onSwitchToLogin} className="login-link">Iniciar Sesión</span></p>
+              <p>¿Ya tienes cuenta? <span onClick={onSwitchToLogin} className={styles['login-link']}>Iniciar Sesión</span></p>
             </div>
           )}
         </div>
