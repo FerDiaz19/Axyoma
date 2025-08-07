@@ -15,6 +15,7 @@ import './EvaluacionesDashboard.css';
 interface UserData {
     usuario: string;
     user_id?: number;
+    profile_id?: number; // ID del perfil de usuario para creado_por_id
     nivel_usuario: string;
 
     empresa_id?: number;

@@ -1922,7 +1922,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
             </thead>
             <tbody>
               {plantas.map((planta) => (
-                <tr key={planta.planta_id}>                  <td>
+                <tr key={planta.planta_id}>
+                  <td>
                     <div style={{
                       background: '#6b4eff',
                       color: 'white',
@@ -1937,7 +1938,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                   </td>
                   <td>
                     <div>
-                      <strong style={{ fontSize: '1.1rem', color: '#fff' }}>{planta.nombre}</strong>                      <div style={{
+                      <strong style={{ fontSize: '1.1rem', color: '#fff' }}>{planta.nombre}</strong>
+                      <div style={{
                         marginTop: '4px',
                         fontSize: '0.85rem',
                         color: '#d0d0e0',
@@ -1946,7 +1948,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                         🏭 {planta.nombre?.length > 25 ? planta.nombre.substring(0, 25) + '...' : planta.nombre}
                       </div>
                     </div>
-                  </td>                  <td>
+                  </td>
+                  <td>
                     <div style={{
                       background: '#2c2c3d',
                       padding: '8px 12px',
@@ -1978,7 +1981,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       display: 'flex',
                       flexDirection: 'column',
                       gap: '4px'
-                    }}>                      <div style={{
+                    }}>
+                      <div style={{
                         background: '#1a8a7e',
                         color: 'white',
                         padding: '4px 8px',
@@ -2021,7 +2025,8 @@ const SuperAdminDashboard: React.FC<SuperAdminDashboardProps> = ({ userData, onL
                       display: 'flex',
                       gap: '8px',
                       justifyContent: 'center'
-                    }}>                      <button
+                    }}>
+                      <button
                         onClick={() => handleEdit('planta', planta)}
                         style={{
                           background: '#6b4eff',

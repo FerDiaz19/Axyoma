@@ -126,6 +126,7 @@
 .empleados-table table {
   width: 100%;
   border-collapse: collapse;
+  color: #ffffff;
 }
 
 .empleados-table th {
@@ -138,11 +139,17 @@
 
 .empleados-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #2c2c3d;
+  color: #ffffff;
 }
 
 .empleados-table tr:hover {
-  background: #f8f9fa;
+  background: #2c2c3d;
+}
+
+/* Asegurar que todo el texto de la tabla sea blanco */
+.empleados-table tbody tr {
+  color: #ffffff;
 }
 
 /* Botones de acciones */

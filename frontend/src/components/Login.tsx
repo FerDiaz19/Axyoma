@@ -119,7 +119,20 @@ const Login: React.FC<LoginProps> = ({ onLogin }) => {
 
       {/* Lado derecho - Formulario */}
       <div className="login-right">
-        <div className="login-form-container">          <div className="login-header">
+        <div className="login-form-container">
+          {/* Botón para regresar a la landing */}
+          <div className="back-to-landing">
+            <button
+              type="button"
+              onClick={() => window.location.href = '/'}
+              className="back-to-landing-btn"
+              title="Regresar a la página principal"
+            >
+              ← Regresar al inicio
+            </button>
+          </div>
+
+          <div className="login-header">
             <p>Inicia sesión para acceder a tu cuenta</p>
           </div>
 

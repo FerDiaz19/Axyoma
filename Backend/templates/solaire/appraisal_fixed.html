@@ -2,8 +2,95 @@
 {% load static %}
 
 {% block title %}{{ evaluacion.titulo }}{% endblock title %}
-{% block childStylesheet %}<link href='{% static "css/appraisal.css" %}' rel='stylesheet' />{% endblock childStylesheet %}
-{% block childScripts %}    <script src='/static/scripts/appraisal_simple.js'></script>{% endblock childScripts %}
+{% block childStylesheet %}<link href='{% static "css/appraisal.css" %}' rel='stylesheet' />
+<style>
+    /* CSS de emergencia para hacer visible todo */
+    .section-content {
+        display: none;
+        background: white !important;
+        color: black !important;
+        padding: 20px !important;
+        border: 2px solid blue;
+    }
+    .section-content:first-child {
+        display: block;
+    }
+    .section-content.hidden {
+        display: none !important;
+    }
+    
+    /* Forzar visibilidad de preguntas */
+    .question-block {
+        display: block !important;
+        background: #f0f0f0 !important;
+        margin: 10px 0 !important;
+        padding: 15px !important;
+        border: 1px solid #ccc !important;
+    }
+    
+    .question-text {
+        color: black !important;
+        font-size: 16px !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .section-info-container {
+        background: lightblue !important;
+        padding: 10px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .section-info-container h3,
+    .section-info-container p {
+        color: black !important;
+    }
+    
+    /* Hacer visible todos los inputs */
+    input, textarea, label {
+        color: black !important;
+        background: white !important;
+        border: 1px solid #333 !important;
+        margin: 5px !important;
+        padding: 5px !important;
+    }
+    
+    .rating-scale, .bool-group, .multiple-group {
+        margin: 10px 0 !important;
+        padding: 10px !important;
+        background: #e0e0e0 !important;
+    }
+</style>{% endblock childStylesheet %}
+{% block childScripts %}    <script src='/static/scripts/appraisal_simple.js'></script>
+    <script>
+        console.log('🚀 Página completamente cargada');
+        console.log('DOM ready:', document.readyState);
+        
+        // Log adicional cuando DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('✅ DOMContentLoaded ejecutado');
+            console.log('Secciones encontradas en DOM:', document.querySelectorAll('.section-content').length);
+            console.log('Preguntas encontradas en DOM:', document.querySelectorAll('.question-block').length);
+            
+            // Debug de clases CSS
+            const primerSeccion = document.querySelector('.section-content');
+            if (primerSeccion) {
+                console.log('Primera sección classes:', primerSeccion.className);
+                console.log('Primera sección style:', primerSeccion.style.cssText);
+                console.log('Primera sección display:', window.getComputedStyle(primerSeccion).display);
+            }
+            
+            // Debug de botones de sección
+            const botones = document.querySelectorAll('.section-button');
+            console.log('Botones de sección encontrados:', botones.length);
+            
+            // Verificar si el JavaScript de appraisal.js se cargó
+            if (typeof showSection === 'function') {
+                console.log('✅ Función showSection está disponible');
+            } else {
+                console.log('❌ Función showSection NO está disponible');
+            }
+        });
+    </script>{% endblock childScripts %}
 
 
 {% block content%}
@@ -41,6 +128,9 @@
 
     <!-- Secciones de la evaluación -->
     <div class='survey-sections'>
+        <script>
+            console.log('🔍 Secciones encontradas: {{ secciones|length }}');
+        </script>
         {% for seccion in secciones %}
             <button class='section-button {% if forloop.first %}active{% endif %}' data-section-id='section-{{ seccion.seccion_id }}'>
                 {{ seccion.nombre }}
@@ -49,10 +139,17 @@
     </div>
 
     <!-- Contenido de la evaluación -->
-    <form method='post' class='survey-form' novalidate>{% csrf_token %}
+    <form method='post' class='survey-form'>{% csrf_token %}
+        <script>
+            console.log('🔥 Iniciando renderizado de contenido...');
+        </script>
 
         {% for seccion in secciones %}
             <div id='section-{{ seccion.seccion_id }}' class='section-content {% if not forloop.first %}hidden{% endif %}'>
+                <script>
+                    console.log('📝 Renderizando sección: {{ seccion.nombre }}');
+                    console.log('💬 Preguntas en sección: {{ seccion.preguntas_seccion.all|length }}');
+                </script>
 
                 <div class='section-info-container'>
                     <div class='section-info'>
@@ -91,8 +188,6 @@
                                                 {{ opcion.valor_numerico }} - {{ opcion.texto_opcion }}
                                             </label>
                                         </div>
-                                    {% empty %}
-                                        <p style="color: red;">❌ No hay opciones de respuesta disponibles</p>
                                     {% endfor %}
                                 </div>
 
@@ -105,8 +200,6 @@
                                                 id='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}' name='pregunta_{{ pregunta.pregunta_id }}'>
                                             <label for='pregunta_{{ pregunta.pregunta_id }}_opcion_{{ opcion.opcion_conjunto_id }}'>{{ opcion.texto_opcion }}</label>
                                         </div>
-                                    {% empty %}
-                                        <p style="color: red;">❌ No hay opciones Bool disponibles</p>
                                     {% endfor %}
                                 </div>
 

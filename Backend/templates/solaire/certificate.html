@@ -55,8 +55,41 @@
             </div>
         </div>
 
+        <!-- Botones de acción -->
+        <div class="certificate-actions">
+            <button type="button" class="btn btn-print" onclick="imprimirConstancia()">
+                <i class="bx bx-printer"></i>
+                Imprimir / Guardar PDF
+            </button>
+            <button type="button" class="btn btn-exit" onclick="salirEvaluacion()">
+                <i class="bx bx-exit"></i>
+                Salir
+            </button>
+        </div>
+
     </div>
 
-
 </div>
+
+<script>
+function imprimirConstancia() {
+    // Ocultar botones antes de imprimir
+    const actions = document.querySelector('.certificate-actions');
+    if (actions) actions.style.display = 'none';
+    
+    // Imprimir
+    window.print();
+    
+    // Mostrar botones después de imprimir
+    setTimeout(() => {
+        if (actions) actions.style.display = 'flex';
+    }, 1000);
+}
+
+function salirEvaluacion() {
+    // Redirigir a la página principal del sistema
+    window.location.href = '/axyoma/';
+}
+</script>
+
 {% endblock content %}

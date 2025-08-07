@@ -1,12 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import './LandingPage.css';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [token, setToken] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [tokenError, setTokenError] = useState('');
 
   const handleLoginClick = () => {
     navigate('/login');
@@ -16,37 +13,9 @@ const LandingPage: React.FC = () => {
     navigate('/registro');
   };
 
-  const handleTokenAccess = async () => {
-    if (!token.trim()) {
-      setTokenError('Por favor ingresa un token válido');
-      return;
-    }
-
-    setIsLoading(true);
-    setTokenError('');
-
-    try {
-      const response = await fetch(`http://localhost:8000/api/evaluaciones/asignacion/validar-token/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token: token.trim() }),
-      });
-
-      if (response.ok) {
-        await response.json(); // Validate response
-        // Redirigir a la página de evaluación con el token
-        navigate(`/evaluacion/${token.trim()}`);
-      } else {
-        const errorData = await response.json();
-        setTokenError(errorData.detail || 'Token inválido o expirado');
-      }
-    } catch (error) {
-      setTokenError('Error de conexión. Por favor intenta nuevamente.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleChosenUndeadAccess = () => {
+    // Redirigir directamente a la URL del chosen-undead
+    window.open('http://localhost:8000/axyoma/chosen-undead/', '_blank');
   };
   return (
     <div className="landing-container">
@@ -81,29 +50,37 @@ const LandingPage: React.FC = () => {
             </button>
           </div>
         </div>
-      </section>      {/* Token Access Section */}
+      </section>      {/* Employee Access Section */}
       <section className="token-access">
         <div className="token-card">
-          <h2><a href="http://127.0.0.1:8000/axyoma/">Acceso para Empleados</a></h2>
-          <p>¿Tienes un token de evaluación? Ingrésalo aquí para acceder a tu evaluación asignada.</p>
-          <div className="token-form">
-            <input
-              type="text"
-              placeholder="Ingresa tu token de 8 caracteres"
-              value={token}
-              onChange={(e) => setToken(e.target.value.toUpperCase())}
-              maxLength={8}
-              className={`token-input ${tokenError ? 'error' : ''}`}
-            />
+          <h2>Acceso para Empleados</h2>
+          <p>¿Eres administrador de evaluaciones? Accede al panel de gestión de tokens.</p>
+          
+          {/* Botón para chosen-undead */}
+          <div style={{ 
+            textAlign: 'center',
+            paddingTop: '20px'
+          }}>
             <button 
-              onClick={handleTokenAccess}
-              disabled={isLoading || !token.trim()}
-              className="btn-token"
+              onClick={handleChosenUndeadAccess}
+              className="btn-secondary"
+              style={{
+                background: '#2c2c3d',
+                color: '#fff',
+                border: 'none',
+                padding: '15px 25px',
+                borderRadius: '8px',
+                fontSize: '1rem',
+                cursor: 'pointer',
+                transition: 'background 0.3s ease',
+                fontWeight: 'bold'
+              }}
+              onMouseOver={(e) => (e.target as HTMLButtonElement).style.background = '#1a1a2e'}
+              onMouseOut={(e) => (e.target as HTMLButtonElement).style.background = '#2c2c3d'}
             >
-              {isLoading ? 'Verificando...' : 'Acceder'}
+              🔥 Panel de Gestión de Tokens
             </button>
           </div>
-          {tokenError && <div className="token-error">{tokenError}</div>}
         </div>
       </section>      {/* Features */}
       <section className="features">

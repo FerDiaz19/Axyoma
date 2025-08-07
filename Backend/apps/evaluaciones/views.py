@@ -28,6 +28,50 @@ class EvaluacionViewSet(viewsets.ModelViewSet):
     serializer_class = EvaluacionSerializer
     permission_classes = [ IsAuthenticated ]
 
+    def create(self, request, *args, **kwargs):
+        print(f"🔄 POST Evaluación - Datos recibidos: {request.data}")
+        
+        # Validar campos requeridos básicos
+        required_fields = ['titulo', 'tipo_evaluacion_id']
+        missing_fields = []
+        
+        for field in required_fields:
+            if field not in request.data or not request.data[field]:
+                missing_fields.append(field)
+        
+        if missing_fields:
+            error_msg = f"Campos requeridos faltantes: {', '.join(missing_fields)}"
+            print(f"❌ Error: {error_msg}")
+            return Response({'error': error_msg}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Intentar crear usando el serializer y capturar errores específicos
+        try:
+            serializer = self.get_serializer(data=request.data)
+            print(f"🔍 Validando serializer...")
+            
+            if not serializer.is_valid():
+                print(f"❌ Errores de validación del serializer: {serializer.errors}")
+                return Response({
+                    'error': 'Errores de validación',
+                    'details': serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            print(f"✅ Serializer válido, procediendo a guardar...")
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            print(f"✅ Evaluación creada exitosamente!")
+            return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+            
+        except Exception as e:
+            print(f"❌ Error inesperado durante la creación: {str(e)}")
+            print(f"❌ Tipo de error: {type(e).__name__}")
+            import traceback
+            print(f"❌ Traceback: {traceback.format_exc()}")
+            return Response({
+                'error': 'Error interno del servidor',
+                'details': str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
     # ------------------------------------------------------------------------ #
 
     @action(detail=True, methods=['patch'])

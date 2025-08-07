@@ -579,7 +579,7 @@ export const editarEmpleado = async (id: number, data: Partial<SuperAdminEmplead
 // CAMBIO: Usar endpoints existentes que sabemos que funcionan
 export const getPlantas = async (params: any = {}): Promise<SuperAdminPlanta[]> => {
   try {
-    console.log('� SuperAdmin: Obteniendo plantas...');
+    console.log('🔍 SuperAdmin: Obteniendo plantas...');
     
     // Construir parámetros
     let queryParams = new URLSearchParams();
@@ -588,9 +588,26 @@ export const getPlantas = async (params: any = {}): Promise<SuperAdminPlanta[]> 
     if (params.status) queryParams.append('status', params.status);
     
     const response = await api.get(`${BASE_URL}/listar_todas_plantas/?${queryParams.toString()}`);
-    console.log(`✅ SuperAdmin: Obtenidas ${response.data?.plantas?.length || 0} plantas`);
+    console.log('🔍 SuperAdmin: Respuesta completa del backend:', response);
+    console.log('🔍 SuperAdmin: Datos de respuesta:', response.data);
+    console.log('🔍 SuperAdmin: Tipo de response.data:', typeof response.data);
+    console.log('🔍 SuperAdmin: response.data?.plantas:', response.data?.plantas);
+    console.log('🔍 SuperAdmin: Es array response.data:', Array.isArray(response.data));
     
-    return response.data?.plantas || [];
+    // Verificar diferentes formatos de respuesta
+    if (Array.isArray(response.data)) {
+      console.log(`✅ SuperAdmin: Respuesta es array directo con ${response.data.length} plantas`);
+      return response.data;
+    } else if (response.data?.plantas && Array.isArray(response.data.plantas)) {
+      console.log(`✅ SuperAdmin: Respuesta tiene propiedad plantas con ${response.data.plantas.length} plantas`);
+      return response.data.plantas;
+    } else if (response.data?.data && Array.isArray(response.data.data)) {
+      console.log(`✅ SuperAdmin: Respuesta tiene propiedad data con ${response.data.data.length} plantas`);
+      return response.data.data;
+    } else {
+      console.error('❌ SuperAdmin: Formato de respuesta no reconocido:', response.data);
+      return [];
+    }
   } catch (error) {
     console.error('❌ SuperAdmin: Error cargando plantas:', error);
     return [];

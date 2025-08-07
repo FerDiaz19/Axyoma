@@ -170,11 +170,25 @@ const AsignacionesDashboard: React.FC<AsignacionesDashboardProps> = ({ userData 
         const fetchEmployeesAndFilters = async () => {
             setLoadingEmpleadosAndFilters(true);
             try {
+                console.log('🔍 Debug userData:', userData);
+                console.log('🔍 Debug empresa_id:', userData.empresa_id, 'tipo:', typeof userData.empresa_id);
+                
                 // Construir URL para plantas con filtro de empresa si es admin-empresa
-                let plantasUrl = '/plantas/listado-plantas';
+                let plantasUrl = '/plantas/';
                 if (userData.nivel_usuario === 'admin-empresa' && userData.empresa_id) {
-                    plantasUrl = `/plantas/listado-plantas?empresa_id=${userData.empresa_id}`;
+                    // Asegurar que empresa_id es un número/string válido sin caracteres extraños
+                    const empresaId = String(userData.empresa_id).split(':')[0]; // Remover cualquier ':' y tomar solo la primera parte
+                    plantasUrl = `/plantas/?empresa_id=${empresaId}`;
+                    console.log('🔍 Debug plantasUrl construida:', plantasUrl);
                 }
+
+                console.log('🚀 Iniciando llamadas a la API...');
+                console.log('🔗 URLs que se van a llamar:', {
+                    empleados: '/empleados/',
+                    plantas: plantasUrl,
+                    puestos: '/puestos/',
+                    departamentos: '/departamentos/'
+                });
 
                 const [empleadosRes, plantasRes, puestosRes, departamentosRes] = await Promise.all([
                     api.get<Empleado[]>('/empleados/'),
@@ -182,6 +196,13 @@ const AsignacionesDashboard: React.FC<AsignacionesDashboardProps> = ({ userData 
                     api.get<Puesto[]>('/puestos/'),
                     api.get<Departamento[]>('/departamentos/'),
                 ]);
+
+                console.log('✅ Respuestas de API recibidas:', {
+                    empleados: empleadosRes.data.length,
+                    plantas: plantasRes.data.length,
+                    puestos: puestosRes.data.length,
+                    departamentos: departamentosRes.data.length
+                });
 
                 // Mapear empleados para añadir nombre_completo
                 const employeesWithFullName = empleadosRes.data.map(emp => ({

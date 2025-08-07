@@ -118,3 +118,71 @@
 }
 
 /* -------------------------------------------------------------------------- */
+
+/* Botones de acción */
+.certificate-actions {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    align-items: center;
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+}
+
+.certificate-actions .btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: white;
+}
+
+.btn-print {
+    background-color: var(--color-accent);
+    color: white;
+}
+
+.btn-print:hover {
+    background-color: var(--color-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(162, 37, 34, 0.3);
+}
+
+.btn-exit {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-exit:hover {
+    background-color: #5a6268;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+/* Ocultar botones al imprimir */
+@media print {
+    .certificate-actions {
+        display: none !important;
+    }
+    
+    .certificate-container {
+        box-shadow: none;
+        border: 2px solid #333;
+        margin: 0;
+        width: 100%;
+        height: auto;
+        padding: 2rem;
+    }
+    
+    .main-container {
+        margin: 0;
+        padding: 0;
+    }
+}
