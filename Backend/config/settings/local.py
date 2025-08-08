@@ -6,7 +6,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '142.93.183.139']
 
+from dotenv import load_dotenv
 import os
+
+load_dotenv()
 
 DATABASES = {
     'default': {
